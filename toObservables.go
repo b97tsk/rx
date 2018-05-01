@@ -10,7 +10,7 @@ type toObservablesOperator struct {
 
 func (op toObservablesOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
-	all := []Observable(nil)
+	observables := []Observable(nil)
 
 	mutable := MutableObserver{}
 
@@ -18,7 +18,7 @@ func (op toObservablesOperator) Call(ctx context.Context, ob Observer) (context.
 		switch {
 		case t.HasValue:
 			if obsv, ok := t.Value.(Observable); ok {
-				all = append(all, obsv)
+				observables = append(observables, obsv)
 			} else {
 				mutable.Observer = NopObserver
 				ob.Error(ErrNotObservable)
@@ -28,7 +28,7 @@ func (op toObservablesOperator) Call(ctx context.Context, ob Observer) (context.
 			ob.Error(t.Value.(error))
 			cancel()
 		default:
-			ob.Next(all)
+			ob.Next(observables)
 			ob.Complete()
 			cancel()
 		}

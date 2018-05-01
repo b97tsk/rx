@@ -84,6 +84,8 @@ func (op congestingZipAllOperator) Call(ctx context.Context, ob Observer) (conte
 		case t.HasError:
 			ob.Error(t.Value.(error))
 			cancel()
+
+		default:
 		}
 	}))
 

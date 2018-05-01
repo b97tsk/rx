@@ -107,6 +107,8 @@ func (op combineAllOperator) Call(ctx context.Context, ob Observer) (context.Con
 		case t.HasError:
 			ob.Error(t.Value.(error))
 			cancel()
+
+		default:
 		}
 	}))
 

@@ -23,14 +23,14 @@ type connectableNoCopy struct {
 	refCount       int
 }
 
-func (o ConnectableObservable) getSubject() Subject {
+func (o *connectableNoCopy) getSubject() Subject {
 	if o.subject == nil {
 		o.subject = o.subjectFactory()
 	}
 	return o.subject
 }
 
-func (o ConnectableObservable) doConnect(addRef bool) (context.Context, context.CancelFunc) {
+func (o *connectableNoCopy) doConnect(addRef bool) (context.Context, context.CancelFunc) {
 	var try *cancellableLocker
 
 	o.mu.Lock()
@@ -134,7 +134,7 @@ func (o ConnectableObservable) doConnect(addRef bool) (context.Context, context.
 	}
 }
 
-func (o ConnectableObservable) connectAddRef() (context.Context, context.CancelFunc) {
+func (o *connectableNoCopy) connectAddRef() (context.Context, context.CancelFunc) {
 	return o.doConnect(true)
 }
 

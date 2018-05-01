@@ -32,6 +32,7 @@ func (op congestingConcatOperator) Call(ctx context.Context, ob Observer) (conte
 					mutable.Observer = NopObserver
 					ob.Error(t.Value.(error))
 					cancel()
+				default:
 				}
 			}))
 
