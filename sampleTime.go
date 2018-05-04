@@ -47,11 +47,11 @@ func (op sampleTimeOperator) Call(ctx context.Context, ob Observer) (context.Con
 				hasLatestValue = true
 				try.Unlock()
 			case t.HasError:
-				try.Cancel()
+				try.CancelAndUnlock()
 				ob.Error(t.Value.(error))
 				cancel()
 			default:
-				try.Cancel()
+				try.CancelAndUnlock()
 				ob.Complete()
 				cancel()
 			}

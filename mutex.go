@@ -17,10 +17,10 @@ func (op mutexOperator) Call(ctx context.Context, ob Observer) (context.Context,
 				ob.Next(t.Value)
 				try.Unlock()
 			case t.HasError:
-				try.Cancel()
+				try.CancelAndUnlock()
 				ob.Error(t.Value.(error))
 			default:
-				try.Cancel()
+				try.CancelAndUnlock()
 				ob.Complete()
 			}
 		}

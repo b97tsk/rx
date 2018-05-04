@@ -36,13 +36,18 @@ func (o Observable) BlockingFirst(ctx context.Context) (value interface{}, err e
 // by the source; if the source emits no items, it returns with an error
 // ErrEmpty; if the source emits an error, it returns with that error.
 func (o Observable) BlockingLast(ctx context.Context) (value interface{}, err error) {
+	hasValue := false
 	ctx, _ = o.Op.Call(ctx, ObserverFunc(func(t Notification) {
 		switch {
 		case t.HasValue:
 			value = t.Value
+			hasValue = true
 		case t.HasError:
 			err = t.Value.(error)
 		default:
+			if !hasValue {
+				err = ErrEmpty
+			}
 		}
 	}))
 	<-ctx.Done()

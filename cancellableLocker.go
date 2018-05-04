@@ -29,6 +29,7 @@ func (l *cancellableLocker) Unlock() {
 	l.mu.Unlock()
 }
 
-func (l *cancellableLocker) Cancel() {
+func (l *cancellableLocker) CancelAndUnlock() {
 	atomic.StoreUint32(&l.canceled, 1)
+	l.mu.Unlock()
 }

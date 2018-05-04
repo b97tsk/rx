@@ -35,7 +35,7 @@ func (s *subjectImplement) Error(err error) {
 		s.hasError = true
 		s.errValue = err
 
-		s.try.Cancel()
+		s.try.CancelAndUnlock()
 
 		for _, ob := range observers {
 			ob.Error(err)
@@ -48,7 +48,7 @@ func (s *subjectImplement) Complete() {
 		observers := s.observers
 		s.observers = nil
 
-		s.try.Cancel()
+		s.try.CancelAndUnlock()
 
 		for _, ob := range observers {
 			ob.Complete()

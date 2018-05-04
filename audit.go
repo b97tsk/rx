@@ -31,7 +31,7 @@ func (op auditOperator) Call(ctx context.Context, ob Observer) (context.Context,
 		mutable.Observer = ObserverFunc(func(t Notification) {
 			if try.Lock() {
 				if t.HasError {
-					try.Cancel()
+					try.CancelAndUnlock()
 					ob.Error(t.Value.(error))
 					cancel()
 					return
@@ -55,11 +55,11 @@ func (op auditOperator) Call(ctx context.Context, ob Observer) (context.Context,
 				try.Unlock()
 				doSchedule(t.Value)
 			case t.HasError:
-				try.Cancel()
+				try.CancelAndUnlock()
 				ob.Error(t.Value.(error))
 				cancel()
 			default:
-				try.Cancel()
+				try.CancelAndUnlock()
 				ob.Complete()
 				cancel()
 			}

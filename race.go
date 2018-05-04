@@ -26,7 +26,7 @@ func (op raceOperator) Call(ctx context.Context, ob Observer) (context.Context, 
 						cancel()
 					}
 				}
-				try.Cancel()
+				try.CancelAndUnlock()
 				mutable.Observer = withFinalizer(ob, cancel)
 				t.Observe(mutable.Observer)
 			}

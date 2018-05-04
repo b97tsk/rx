@@ -43,7 +43,7 @@ func (o *connectableNoCopy) doConnect(addRef bool) (context.Context, context.Can
 		o.mu.Unlock()
 
 		if try != nil {
-			try.Cancel()
+			try.CancelAndUnlock()
 		}
 	}()
 

@@ -48,11 +48,11 @@ func (op debounceTimeOperator) Call(ctx context.Context, ob Observer) (context.C
 				try.Unlock()
 				doSchedule()
 			case t.HasError:
-				try.Cancel()
+				try.CancelAndUnlock()
 				ob.Error(t.Value.(error))
 				cancel()
 			default:
-				try.Cancel()
+				try.CancelAndUnlock()
 				ob.Complete()
 				cancel()
 			}
