@@ -31,30 +31,6 @@ func (f ObserverFunc) Complete() {
 // NopObserver is an Observer that does nothing.
 var NopObserver Observer = ObserverFunc(func(Notification) {})
 
-// Normalize normalizes an Observer and returns the normalized one. A normalized
-// Observer ignores subsequent notifications after it receives a Complete or
-// Error notification.
-//
-// The returned Observer is also thread-safe.
-func Normalize(ob Observer) Observer {
-	try := cancellableLocker{}
-	return ObserverFunc(func(t Notification) {
-		if try.Lock() {
-			switch {
-			case t.HasValue:
-				ob.Next(t.Value)
-				try.Unlock()
-			case t.HasError:
-				try.Cancel()
-				ob.Error(t.Value.(error))
-			default:
-				try.Cancel()
-				ob.Complete()
-			}
-		}
-	})
-}
-
 func withFinalizer(ob Observer, finalize func()) ObserverFunc {
 	return ObserverFunc(func(t Notification) {
 		switch {

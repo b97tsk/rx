@@ -18,7 +18,6 @@ func (op switchMapOperator) Call(ctx context.Context, ob Observer) (context.Cont
 	outerIndex := -1
 	activeIndex := -1
 	completeSignal := make(chan struct{}, 1)
-	ob = Normalize(ob)
 
 	// Go statement makes this operator non-blocking.
 	go op.source.Call(ctx, ObserverFunc(func(t Notification) {
@@ -99,7 +98,7 @@ func (o Observable) Switch() Observable {
 		source:  o.Op,
 		project: projectToObservable,
 	}
-	return Observable{op}
+	return Observable{op}.Mutex()
 }
 
 // SwitchMap creates an Observable that projects each source value to an
@@ -113,7 +112,7 @@ func (o Observable) SwitchMap(project func(interface{}, int) Observable) Observa
 		source:  o.Op,
 		project: project,
 	}
-	return Observable{op}
+	return Observable{op}.Mutex()
 }
 
 // SwitchMapTo creates an Observable that projects each source value to the
@@ -126,5 +125,5 @@ func (o Observable) SwitchMapTo(inner Observable) Observable {
 		source:  o.Op,
 		project: func(interface{}, int) Observable { return inner },
 	}
-	return Observable{op}
+	return Observable{op}.Mutex()
 }

@@ -26,7 +26,6 @@ func (op timeoutOperator) ApplyOptions(options []Option) Operator {
 func (op timeoutOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	scheduleCancel := noopFunc
-	ob = Normalize(ob)
 
 	doSchedule := func() {
 		scheduleCancel()
@@ -64,5 +63,5 @@ func (o Observable) Timeout(timeout time.Duration) Observable {
 		timeout:   timeout,
 		scheduler: DefaultScheduler,
 	}
-	return Observable{op}
+	return Observable{op}.Mutex()
 }

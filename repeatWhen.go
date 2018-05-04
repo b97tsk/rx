@@ -13,7 +13,6 @@ func (op repeatWhenOperator) Call(ctx context.Context, ob Observer) (context.Con
 	ctx, cancel := context.WithCancel(ctx)
 	sourceCtx, sourceCancel := canceledCtx, noopFunc
 	subject := Subject(nil)
-	ob = Normalize(ob)
 
 	var observer Observer
 
@@ -67,5 +66,5 @@ func (o Observable) RepeatWhen(notifier func(Observable) Observable) Observable 
 		source:   o.Op,
 		notifier: notifier,
 	}
-	return Observable{op}
+	return Observable{op}.Mutex()
 }

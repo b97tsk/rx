@@ -34,7 +34,6 @@ func (op mergeScanOperator) Call(ctx context.Context, ob Observer) (context.Cont
 	hasValue := false
 	buffer := list.List{}
 	completeSignal := make(chan struct{}, 1)
-	ob = Normalize(ob)
 
 	concurrent := op.concurrent
 	if concurrent == 0 {
@@ -137,5 +136,5 @@ func (o Observable) MergeScan(accumulator func(interface{}, interface{}) Observa
 		seed:        seed,
 		concurrent:  -1,
 	}
-	return Observable{op}
+	return Observable{op}.Mutex()
 }

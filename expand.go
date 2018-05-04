@@ -32,7 +32,6 @@ func (op expandOperator) Call(ctx context.Context, ob Observer) (context.Context
 	activeCount := 0
 	buffer := list.List{}
 	completeSignal := make(chan struct{}, 1)
-	ob = Normalize(ob)
 
 	concurrent := op.concurrent
 	if concurrent == 0 {
@@ -138,5 +137,5 @@ func (o Observable) Expand(project func(interface{}, int) Observable) Observable
 		project:    project,
 		concurrent: -1,
 	}
-	return Observable{op}
+	return Observable{op}.Mutex()
 }

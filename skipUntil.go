@@ -15,7 +15,6 @@ func (op skipUntilOperator) Call(ctx context.Context, ob Observer) (context.Cont
 	done := ctx.Done()
 	noSkipping := uint32(0)
 	hasCompleted := uint32(0)
-	ob = Normalize(ob)
 
 	op.notifier.Subscribe(ctx, ObserverFunc(func(t Notification) {
 		switch {
@@ -67,5 +66,5 @@ func (o Observable) SkipUntil(notifier Observable) Observable {
 		source:   o.Op,
 		notifier: notifier,
 	}
-	return Observable{op}
+	return Observable{op}.Mutex()
 }

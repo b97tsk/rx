@@ -32,7 +32,6 @@ func (op mergeMapOperator) Call(ctx context.Context, ob Observer) (context.Conte
 	activeCount := 0
 	buffer := list.List{}
 	completeSignal := make(chan struct{}, 1)
-	ob = Normalize(ob)
 
 	concurrent := op.concurrent
 	if concurrent == 0 {
@@ -135,7 +134,7 @@ func (o Observable) MergeAll() Observable {
 		project:    projectToObservable,
 		concurrent: -1,
 	}
-	return Observable{op}
+	return Observable{op}.Mutex()
 }
 
 // MergeMap creates an Observable that projects each source value to an
@@ -149,7 +148,7 @@ func (o Observable) MergeMap(project func(interface{}, int) Observable) Observab
 		project:    project,
 		concurrent: -1,
 	}
-	return Observable{op}
+	return Observable{op}.Mutex()
 }
 
 // MergeMapTo creates an Observable that projects each source value to the same
@@ -162,5 +161,5 @@ func (o Observable) MergeMapTo(inner Observable) Observable {
 		project:    func(interface{}, int) Observable { return inner },
 		concurrent: -1,
 	}
-	return Observable{op}
+	return Observable{op}.Mutex()
 }

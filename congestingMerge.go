@@ -30,7 +30,6 @@ func (op congestingMergeOperator) Call(ctx context.Context, ob Observer) (contex
 	outerIndex := -1
 	activeCount := 0
 	completeSignal := make(chan struct{}, 1)
-	ob = Normalize(ob)
 
 	concurrent := op.concurrent
 	if concurrent == 0 {
@@ -115,7 +114,7 @@ func (op congestingMergeOperator) Call(ctx context.Context, ob Observer) (contex
 //
 // It's like Merge, but it may congest the source due to concurrent limit.
 func CongestingMerge(observables ...interface{}) Observable {
-	return FromSlice(observables).MergeAll()
+	return FromSlice(observables).CongestingMergeAll()
 }
 
 // CongestingMergeAll converts a higher-order Observable into a first-order
@@ -129,7 +128,7 @@ func (o Observable) CongestingMergeAll() Observable {
 		project:    projectToObservable,
 		concurrent: -1,
 	}
-	return Observable{op}
+	return Observable{op}.Mutex()
 }
 
 // CongestingMergeMap creates an Observable that projects each source value to
@@ -145,7 +144,7 @@ func (o Observable) CongestingMergeMap(project func(interface{}, int) Observable
 		project:    project,
 		concurrent: -1,
 	}
-	return Observable{op}
+	return Observable{op}.Mutex()
 }
 
 // CongestingMergeMapTo creates an Observable that projects each source value
@@ -162,5 +161,5 @@ func (o Observable) CongestingMergeMapTo(inner Observable) Observable {
 		project:    func(interface{}, int) Observable { return inner },
 		concurrent: -1,
 	}
-	return Observable{op}
+	return Observable{op}.Mutex()
 }
