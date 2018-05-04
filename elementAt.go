@@ -11,19 +11,6 @@ type elementAtOperator struct {
 	hasDefaultValue bool
 }
 
-func (op elementAtOperator) ApplyOptions(options []Option) Operator {
-	for _, opt := range options {
-		switch t := opt.(type) {
-		case defaultValueOption:
-			op.defaultValue = t.Value
-			op.hasDefaultValue = true
-		default:
-			panic(ErrUnsupportedOption)
-		}
-	}
-	return op
-}
-
 func (op elementAtOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	index := op.index
@@ -60,13 +47,25 @@ func (op elementAtOperator) Call(ctx context.Context, ob Observer) (context.Cont
 }
 
 // ElementAt creates an Observable that emits the single value at the specified
-// index in a sequence of emissions from the source Observable.
-//
-// ElementAt emits only the i-th value, then completes.
+// index in a sequence of emissions from the source Observable, if the
+// specified index is out of range, notifies error ErrOutOfRange.
 func (o Observable) ElementAt(index int) Observable {
 	op := elementAtOperator{
 		source: o.Op,
 		index:  index,
+	}
+	return Observable{op}
+}
+
+// ElementAtOrDefault creates an Observable that emits the single value at the
+// specified index in a sequence of emissions from the source Observable, if
+// the specified index is out of range, emits the provided default value.
+func (o Observable) ElementAtOrDefault(index int, defaultValue interface{}) Observable {
+	op := elementAtOperator{
+		source:          o.Op,
+		index:           index,
+		defaultValue:    defaultValue,
+		hasDefaultValue: true,
 	}
 	return Observable{op}
 }
