@@ -19,8 +19,7 @@ func (op switchMapOperator) Call(ctx context.Context, ob Observer) (context.Cont
 	activeIndex := -1
 	completeSignal := make(chan struct{}, 1)
 
-	// Go statement makes this operator non-blocking.
-	go op.source.Call(ctx, ObserverFunc(func(t Notification) {
+	op.source.Call(ctx, ObserverFunc(func(t Notification) {
 		switch {
 		case t.HasValue:
 			mu.Lock()
@@ -70,14 +69,22 @@ func (op switchMapOperator) Call(ctx context.Context, ob Observer) (context.Cont
 
 		default:
 			mu.Lock()
-			for activeIndex != -1 {
-				mu.Unlock()
-				select {
-				case <-done:
-					return
-				case <-completeSignal:
-				}
-				mu.Lock()
+			if activeIndex != -1 {
+				go func() {
+					for activeIndex != -1 {
+						mu.Unlock()
+						select {
+						case <-done:
+							return
+						case <-completeSignal:
+						}
+						mu.Lock()
+					}
+					mu.Unlock()
+					ob.Complete()
+					cancel()
+				}()
+				return
 			}
 			mu.Unlock()
 			ob.Complete()

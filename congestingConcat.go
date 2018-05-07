@@ -48,8 +48,7 @@ func (op congestingConcatOperator) Call(ctx context.Context, ob Observer) (conte
 		}
 	})
 
-	// Go statement makes this operator non-blocking.
-	go op.source.Call(ctx, &mutable)
+	op.source.Call(ctx, &mutable)
 
 	return ctx, cancel
 }

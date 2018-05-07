@@ -36,8 +36,7 @@ func (op congestOperator) Call(ctx context.Context, ob Observer) (context.Contex
 		}
 	}()
 
-	// Go statement makes this operator non-blocking.
-	go op.source.Call(ctx, ObserverFunc(func(t Notification) {
+	op.source.Call(ctx, ObserverFunc(func(t Notification) {
 		select {
 		case <-done:
 		case c <- t:

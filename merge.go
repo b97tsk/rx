@@ -77,8 +77,7 @@ func (op mergeMapOperator) Call(ctx context.Context, ob Observer) (context.Conte
 		}))
 	}
 
-	// Go statement makes this operator non-blocking.
-	go op.source.Call(ctx, ObserverFunc(func(t Notification) {
+	op.source.Call(ctx, ObserverFunc(func(t Notification) {
 		switch {
 		case t.HasValue:
 			mu.Lock()
@@ -98,14 +97,22 @@ func (op mergeMapOperator) Call(ctx context.Context, ob Observer) (context.Conte
 
 		default:
 			mu.Lock()
-			for activeCount > 0 {
-				mu.Unlock()
-				select {
-				case <-done:
-					return
-				case <-completeSignal:
-				}
-				mu.Lock()
+			if activeCount > 0 {
+				go func() {
+					for activeCount > 0 {
+						mu.Unlock()
+						select {
+						case <-done:
+							return
+						case <-completeSignal:
+						}
+						mu.Lock()
+					}
+					mu.Unlock()
+					ob.Complete()
+					cancel()
+				}()
+				return
 			}
 			mu.Unlock()
 			ob.Complete()

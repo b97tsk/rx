@@ -18,8 +18,7 @@ func (op exhaustMapOperator) Call(ctx context.Context, ob Observer) (context.Con
 	isActive := false
 	completeSignal := make(chan struct{}, 1)
 
-	// Go statement makes this operator non-blocking.
-	go op.source.Call(ctx, ObserverFunc(func(t Notification) {
+	op.source.Call(ctx, ObserverFunc(func(t Notification) {
 		switch {
 		case t.HasValue:
 			mu.Lock()
@@ -63,14 +62,22 @@ func (op exhaustMapOperator) Call(ctx context.Context, ob Observer) (context.Con
 
 		default:
 			mu.Lock()
-			for isActive {
-				mu.Unlock()
-				select {
-				case <-done:
-					return
-				case <-completeSignal:
-				}
-				mu.Lock()
+			if isActive {
+				go func() {
+					for isActive {
+						mu.Unlock()
+						select {
+						case <-done:
+							return
+						case <-completeSignal:
+						}
+						mu.Lock()
+					}
+					mu.Unlock()
+					ob.Complete()
+					cancel()
+				}()
+				return
 			}
 			mu.Unlock()
 			ob.Complete()
