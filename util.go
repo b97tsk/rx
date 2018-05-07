@@ -23,10 +23,6 @@ func defaultKeySelector(val interface{}) interface{} {
 	return val
 }
 
-func defaultPredicate(interface{}, int) bool {
-	return true
-}
-
 func projectToObservable(val interface{}, index int) Observable {
 	if obsv, ok := val.(Observable); ok {
 		return obsv

@@ -16,14 +16,14 @@ type ConnectableObservable struct {
 type connectableNoCopy struct {
 	mu             sync.Mutex
 	source         Observable
-	subjectFactory func() Subject
+	subjectFactory func() SubjectLike
 	connection     context.Context
 	disconnect     context.CancelFunc
-	subject        Subject
+	subject        SubjectLike
 	refCount       int
 }
 
-func (o *connectableNoCopy) getSubject() Subject {
+func (o *connectableNoCopy) getSubject() SubjectLike {
 	if o.subject == nil {
 		o.subject = o.subjectFactory()
 	}
@@ -184,7 +184,7 @@ func (o Observable) Publish() ConnectableObservable {
 	subject := NewSubject()
 	return ConnectableObservable{&connectableNoCopy{
 		source:         o,
-		subjectFactory: func() Subject { return subject },
+		subjectFactory: func() SubjectLike { return subject },
 	}}
 }
 
@@ -193,7 +193,7 @@ func (o Observable) PublishBehavior(val interface{}) ConnectableObservable {
 	subject := NewBehaviorSubject(val)
 	return ConnectableObservable{&connectableNoCopy{
 		source:         o,
-		subjectFactory: func() Subject { return subject },
+		subjectFactory: func() SubjectLike { return subject },
 	}}
 }
 
@@ -203,7 +203,7 @@ func (o Observable) PublishBehavior(val interface{}) ConnectableObservable {
 func (o Observable) Share() Observable {
 	connectable := ConnectableObservable{&connectableNoCopy{
 		source:         o,
-		subjectFactory: NewSubject,
+		subjectFactory: func() SubjectLike { return NewSubject() },
 	}}
 	return connectable.RefCount()
 }

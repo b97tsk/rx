@@ -4,22 +4,27 @@ import (
 	"context"
 )
 
-// Subject is a special type of Observable that allows values to be multicasted
-// to many Observers.
-type Subject interface {
+// SubjectLike is the interface represents a Subject.
+type SubjectLike interface {
 	Observer
-	AsObservable() Observable
 	Subscribe(context.Context, Observer) (context.Context, context.CancelFunc)
 }
 
-type subjectImplement struct {
+// Subject is a special type of Observable that allows values to be multicasted
+// to many Observers.
+type Subject struct {
+	Observable
 	try       cancellableLocker
 	observers []*ObserverFunc
 	hasError  bool
 	errValue  error
 }
 
-func (s *subjectImplement) Next(val interface{}) {
+// Subject implements SubjectLike.
+var _ SubjectLike = (*Subject)(nil)
+
+// Next emits an value to the consumers of this Subject.
+func (s *Subject) Next(val interface{}) {
 	if s.try.Lock() {
 		for _, ob := range s.observers {
 			ob.Next(val)
@@ -28,7 +33,8 @@ func (s *subjectImplement) Next(val interface{}) {
 	}
 }
 
-func (s *subjectImplement) Error(err error) {
+// Error emits an error Notification to the consumers of this Subject.
+func (s *Subject) Error(err error) {
 	if s.try.Lock() {
 		observers := s.observers
 		s.observers = nil
@@ -43,7 +49,8 @@ func (s *subjectImplement) Error(err error) {
 	}
 }
 
-func (s *subjectImplement) Complete() {
+// Complete emits a complete Notification to the consumers of this Subject.
+func (s *Subject) Complete() {
 	if s.try.Lock() {
 		observers := s.observers
 		s.observers = nil
@@ -56,11 +63,8 @@ func (s *subjectImplement) Complete() {
 	}
 }
 
-func (s *subjectImplement) AsObservable() Observable {
-	return Observable{OperatorFunc(s.Subscribe)}
-}
-
-func (s *subjectImplement) Subscribe(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
+// Subscribe adds a consumer to this Subject.
+func (s *Subject) Subscribe(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
 	if s.try.Lock() {
 		ctx, cancel := context.WithCancel(ctx)
 
@@ -97,6 +101,8 @@ func (s *subjectImplement) Subscribe(ctx context.Context, ob Observer) (context.
 }
 
 // NewSubject returns a new Subject.
-func NewSubject() Subject {
-	return &subjectImplement{}
+func NewSubject() *Subject {
+	s := &Subject{}
+	s.Op = OperatorFunc(s.Subscribe)
+	return s
 }

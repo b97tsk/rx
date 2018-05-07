@@ -12,8 +12,8 @@ type repeatWhenOperator struct {
 func (op repeatWhenOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	sourceCtx, sourceCancel := canceledCtx, noopFunc
-	subject := Subject(nil)
 
+	var subject *Subject
 	var observer Observer
 
 	observer = ObserverFunc(func(t Notification) {
@@ -26,7 +26,7 @@ func (op repeatWhenOperator) Call(ctx context.Context, ob Observer) (context.Con
 		default:
 			if subject == nil {
 				subject = NewSubject()
-				obsv := op.notifier(subject.AsObservable())
+				obsv := op.notifier(subject.Observable)
 				obsv.Subscribe(ctx, ObserverFunc(func(t Notification) {
 					switch {
 					case t.HasValue:
