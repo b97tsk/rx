@@ -19,10 +19,10 @@ func (op bufferOperator) Call(ctx context.Context, ob Observer) (context.Context
 		if try.Lock() {
 			switch {
 			case t.HasValue:
+				defer try.Unlock()
 				value := buffer
 				buffer = nil
 				ob.Next(value)
-				try.Unlock()
 			case t.HasError:
 				try.CancelAndUnlock()
 				ob.Error(t.Value.(error))
@@ -45,8 +45,8 @@ func (op bufferOperator) Call(ctx context.Context, ob Observer) (context.Context
 		if try.Lock() {
 			switch {
 			case t.HasValue:
+				defer try.Unlock()
 				buffer = append(buffer, t.Value)
-				try.Unlock()
 			case t.HasError:
 				try.CancelAndUnlock()
 				ob.Error(t.Value.(error))

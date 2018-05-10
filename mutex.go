@@ -14,8 +14,8 @@ func (op mutexOperator) Call(ctx context.Context, ob Observer) (context.Context,
 		if try.Lock() {
 			switch {
 			case t.HasValue:
+				defer try.Unlock()
 				ob.Next(t.Value)
-				try.Unlock()
 			case t.HasError:
 				try.CancelAndUnlock()
 				ob.Error(t.Value.(error))

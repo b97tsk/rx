@@ -19,15 +19,15 @@ func (op observeOnOperator) Call(ctx context.Context, ob Observer) (context.Cont
 
 	op.source.Call(ctx, ObserverFunc(func(t Notification) {
 		if try.Lock() {
+			defer try.Unlock()
 			queue.PushBack(t)
-
 			op.scheduler.ScheduleOnce(ctx, op.delay, func() {
 				if try.Lock() {
 					t := queue.Remove(queue.Front()).(Notification)
 					switch {
 					case t.HasValue:
+						defer try.Unlock()
 						ob.Next(t.Value)
-						try.Unlock()
 					case t.HasError:
 						try.CancelAndUnlock()
 						ob.Error(t.Value.(error))
@@ -39,8 +39,6 @@ func (op observeOnOperator) Call(ctx context.Context, ob Observer) (context.Cont
 					}
 				}
 			})
-
-			try.Unlock()
 		}
 	}))
 

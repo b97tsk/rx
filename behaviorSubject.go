@@ -19,11 +19,11 @@ var _ SubjectLike = (*BehaviorSubject)(nil)
 // BehaviorSubject.
 func (s *BehaviorSubject) Next(val interface{}) {
 	if s.try.Lock() {
+		defer s.try.Unlock()
 		s.value = val
 		for _, ob := range s.observers {
 			ob.Next(val)
 		}
-		s.try.Unlock()
 	}
 }
 
@@ -40,6 +40,8 @@ func (s *BehaviorSubject) Value() interface{} {
 // Subscribe adds a consumer to this BehaviorSubject.
 func (s *BehaviorSubject) Subscribe(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
 	if s.try.Lock() {
+		defer s.try.Unlock()
+
 		ctx, cancel := context.WithCancel(ctx)
 
 		observer := withFinalizer(ob, cancel)
@@ -61,8 +63,6 @@ func (s *BehaviorSubject) Subscribe(ctx context.Context, ob Observer) (context.C
 		}()
 
 		ob.Next(s.value)
-		s.try.Unlock()
-
 		return ctx, cancel
 	}
 

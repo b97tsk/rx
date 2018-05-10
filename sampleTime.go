@@ -31,11 +31,11 @@ func (op sampleTimeOperator) Call(ctx context.Context, ob Observer) (context.Con
 
 	op.scheduler.Schedule(ctx, op.interval, func() {
 		if try.Lock() {
+			defer try.Unlock()
 			if hasLatestValue {
 				ob.Next(latestValue)
 				hasLatestValue = false
 			}
-			try.Unlock()
 		}
 	})
 

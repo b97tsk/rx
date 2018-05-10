@@ -26,10 +26,10 @@ var _ SubjectLike = (*Subject)(nil)
 // Next emits an value to the consumers of this Subject.
 func (s *Subject) Next(val interface{}) {
 	if s.try.Lock() {
+		defer s.try.Unlock()
 		for _, ob := range s.observers {
 			ob.Next(val)
 		}
-		s.try.Unlock()
 	}
 }
 
@@ -66,6 +66,8 @@ func (s *Subject) Complete() {
 // Subscribe adds a consumer to this Subject.
 func (s *Subject) Subscribe(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
 	if s.try.Lock() {
+		defer s.try.Unlock()
+
 		ctx, cancel := context.WithCancel(ctx)
 
 		observer := withFinalizer(ob, cancel)
@@ -85,8 +87,6 @@ func (s *Subject) Subscribe(ctx context.Context, ob Observer) (context.Context, 
 				s.try.Unlock()
 			}
 		}()
-
-		s.try.Unlock()
 
 		return ctx, cancel
 	}

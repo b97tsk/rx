@@ -22,11 +22,11 @@ func (op sampleOperator) Call(ctx context.Context, ob Observer) (context.Context
 			return
 		}
 		if try.Lock() {
+			defer try.Unlock()
 			if hasLatestValue {
 				ob.Next(latestValue)
 				hasLatestValue = false
 			}
-			try.Unlock()
 		}
 	}))
 

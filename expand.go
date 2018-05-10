@@ -54,6 +54,7 @@ func (op expandOperator) Call(ctx context.Context, ob Observer) (context.Context
 			switch {
 			case t.HasValue:
 				mu.Lock()
+				defer mu.Unlock()
 
 				buffer.PushBack(t.Value)
 
@@ -61,8 +62,6 @@ func (op expandOperator) Call(ctx context.Context, ob Observer) (context.Context
 					activeCount++
 					doNextLocked()
 				}
-
-				mu.Unlock()
 
 			case t.HasError:
 				ob.Error(t.Value.(error))
@@ -72,8 +71,8 @@ func (op expandOperator) Call(ctx context.Context, ob Observer) (context.Context
 				mu.Lock()
 
 				if buffer.Len() > 0 {
+					defer mu.Unlock()
 					doNextLocked()
-					mu.Unlock()
 					break
 				}
 

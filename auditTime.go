@@ -39,8 +39,8 @@ func (op auditTimeOperator) Call(ctx context.Context, ob Observer) (context.Cont
 
 		scheduleCtx, _ = op.scheduler.ScheduleOnce(ctx, op.duration, func() {
 			if try.Lock() {
+				defer try.Unlock()
 				ob.Next(latestValue)
-				try.Unlock()
 			}
 		})
 		scheduleDone = scheduleCtx.Done()

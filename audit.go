@@ -36,10 +36,10 @@ func (op auditOperator) Call(ctx context.Context, ob Observer) (context.Context,
 					cancel()
 					return
 				}
+				defer try.Unlock()
+				defer scheduleCancel()
 				mutable.Observer = NopObserver
 				ob.Next(latestValue)
-				scheduleCancel()
-				try.Unlock()
 			}
 		})
 

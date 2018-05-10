@@ -34,8 +34,8 @@ func (op debounceTimeOperator) Call(ctx context.Context, ob Observer) (context.C
 
 		_, scheduleCancel = op.scheduler.ScheduleOnce(ctx, op.duration, func() {
 			if try.Lock() {
+				defer try.Unlock()
 				ob.Next(latestValue)
-				try.Unlock()
 			}
 		})
 	}

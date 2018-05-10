@@ -66,8 +66,8 @@ func (op mergeScanOperator) Call(ctx context.Context, ob Observer) (context.Cont
 				mu.Lock()
 
 				if buffer.Len() > 0 {
+					defer mu.Unlock()
 					doNextLocked()
-					mu.Unlock()
 					break
 				}
 

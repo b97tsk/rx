@@ -23,11 +23,17 @@ type connectableNoCopy struct {
 	refCount       int
 }
 
-func (o *connectableNoCopy) getSubject() SubjectLike {
+func (o *connectableNoCopy) getSubjectLocked() SubjectLike {
 	if o.subject == nil {
 		o.subject = o.subjectFactory()
 	}
 	return o.subject
+}
+
+func (o *connectableNoCopy) getSubject() SubjectLike {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+	return o.getSubjectLocked()
 }
 
 func (o *connectableNoCopy) doConnect(addRef bool) (context.Context, context.CancelFunc) {
@@ -38,13 +44,9 @@ func (o *connectableNoCopy) doConnect(addRef bool) (context.Context, context.Can
 	defer func() {
 		if try != nil {
 			try.Lock()
+			defer try.CancelAndUnlock()
 		}
-
 		o.mu.Unlock()
-
-		if try != nil {
-			try.CancelAndUnlock()
-		}
 	}()
 
 	connection := o.connection
@@ -52,7 +54,7 @@ func (o *connectableNoCopy) doConnect(addRef bool) (context.Context, context.Can
 	if connection == nil {
 		try = &cancellableLocker{}
 
-		subject := o.getSubject()
+		subject := o.getSubjectLocked()
 
 		ctx, cancel := o.source.Subscribe(context.Background(), ObserverFunc(func(t Notification) {
 			if t.HasValue {
@@ -145,10 +147,7 @@ func (o ConnectableObservable) Connect() (context.Context, context.CancelFunc) {
 
 // Subscribe subscribes a local Subject, which is used to multicast to many Observers.
 func (o ConnectableObservable) Subscribe(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
-	o.mu.Lock()
-	subject := o.getSubject()
-	o.mu.Unlock()
-	return subject.Subscribe(ctx, ob)
+	return o.getSubject().Subscribe(ctx, ob)
 }
 
 type refCountOperator struct {

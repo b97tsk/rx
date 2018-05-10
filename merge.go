@@ -61,8 +61,8 @@ func (op mergeMapOperator) Call(ctx context.Context, ob Observer) (context.Conte
 				mu.Lock()
 
 				if buffer.Len() > 0 {
+					defer mu.Unlock()
 					doNextLocked()
-					mu.Unlock()
 					break
 				}
 
@@ -81,6 +81,7 @@ func (op mergeMapOperator) Call(ctx context.Context, ob Observer) (context.Conte
 		switch {
 		case t.HasValue:
 			mu.Lock()
+			defer mu.Unlock()
 
 			buffer.PushBack(t.Value)
 
@@ -88,8 +89,6 @@ func (op mergeMapOperator) Call(ctx context.Context, ob Observer) (context.Conte
 				activeCount++
 				doNextLocked()
 			}
-
-			mu.Unlock()
 
 		case t.HasError:
 			ob.Error(t.Value.(error))

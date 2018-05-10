@@ -30,10 +30,10 @@ func (op debounceOperator) Call(ctx context.Context, ob Observer) (context.Conte
 					cancel()
 					return
 				}
+				defer try.Unlock()
+				defer scheduleCancel()
 				mutable.Observer = NopObserver
 				ob.Next(latestValue)
-				scheduleCancel()
-				try.Unlock()
 			}
 		})
 
