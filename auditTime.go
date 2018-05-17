@@ -46,7 +46,7 @@ func (op auditTimeOperator) Call(ctx context.Context, ob Observer) (context.Cont
 		scheduleDone = scheduleCtx.Done()
 	}
 
-	op.source.Call(ctx, ObserverFunc(func(t Notification) {
+	op.source.Call(ctx, func(t Notification) {
 		if try.Lock() {
 			switch {
 			case t.HasValue:
@@ -63,7 +63,7 @@ func (op auditTimeOperator) Call(ctx context.Context, ob Observer) (context.Cont
 				cancel()
 			}
 		}
-	}))
+	})
 
 	return ctx, cancel
 }

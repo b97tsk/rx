@@ -15,7 +15,7 @@ func (op repeatOperator) Call(ctx context.Context, ob Observer) (context.Context
 
 	var observer Observer
 
-	observer = ObserverFunc(func(t Notification) {
+	observer = func(t Notification) {
 		switch {
 		case t.HasValue:
 			ob.Next(t.Value)
@@ -33,7 +33,7 @@ func (op repeatOperator) Call(ctx context.Context, ob Observer) (context.Context
 				op.source.Call(ctx, observer)
 			}
 		}
-	})
+	}
 
 	op.source.Call(ctx, observer)
 

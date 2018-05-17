@@ -16,7 +16,7 @@ func (op repeatWhenOperator) Call(ctx context.Context, ob Observer) (context.Con
 	var subject *Subject
 	var observer Observer
 
-	observer = ObserverFunc(func(t Notification) {
+	observer = func(t Notification) {
 		switch {
 		case t.HasValue:
 			ob.Next(t.Value)
@@ -27,7 +27,7 @@ func (op repeatWhenOperator) Call(ctx context.Context, ob Observer) (context.Con
 			if subject == nil {
 				subject = NewSubject()
 				obsv := op.notifier(subject.Observable)
-				obsv.Subscribe(ctx, ObserverFunc(func(t Notification) {
+				obsv.Subscribe(ctx, func(t Notification) {
 					switch {
 					case t.HasValue:
 						sourceCancel()
@@ -43,11 +43,11 @@ func (op repeatWhenOperator) Call(ctx context.Context, ob Observer) (context.Con
 						ob.Complete()
 						cancel()
 					}
-				}))
+				})
 			}
 			subject.Next(nil)
 		}
-	})
+	}
 
 	sourceCtx, sourceCancel = context.WithCancel(ctx)
 	op.source.Call(sourceCtx, observer)

@@ -23,7 +23,7 @@ func (op distinctOperator) ApplyOptions(options []Option) Operator {
 
 func (op distinctOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
 	keys := make(map[interface{}]struct{})
-	return op.source.Call(ctx, ObserverFunc(func(t Notification) {
+	return op.source.Call(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			key := op.keySelector(t.Value)
@@ -37,7 +37,7 @@ func (op distinctOperator) Call(ctx context.Context, ob Observer) (context.Conte
 		default:
 			ob.Complete()
 		}
-	}))
+	})
 }
 
 // Distinct creates an Observable that emits all items emitted by the source

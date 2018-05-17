@@ -28,7 +28,7 @@ func (op scanOperator) Call(ctx context.Context, ob Observer) (context.Context, 
 	seed := op.seed
 	hasSeed := op.hasSeed
 	outerIndex := -1
-	return op.source.Call(ctx, ObserverFunc(func(t Notification) {
+	return op.source.Call(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			outerIndex++
@@ -48,7 +48,7 @@ func (op scanOperator) Call(ctx context.Context, ob Observer) (context.Context, 
 		default:
 			ob.Complete()
 		}
-	}))
+	})
 }
 
 // Scan creates an Observable that applies an accumulator function over the

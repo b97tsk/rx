@@ -49,12 +49,12 @@ func (op congestingZipOperator) Call(ctx context.Context, ob Observer) (context.
 
 	for index, obsv := range op.observables {
 		c := channels[index]
-		go obsv.Subscribe(ctx, ObserverFunc(func(t Notification) {
+		go obsv.Subscribe(ctx, func(t Notification) {
 			select {
 			case <-done:
 			case c <- t:
 			}
-		}))
+		})
 	}
 
 	return ctx, cancel
@@ -67,7 +67,7 @@ type congestingZipAllOperator struct {
 func (op congestingZipAllOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
-	toObservablesOperator(op).Call(ctx, ObserverFunc(func(t Notification) {
+	toObservablesOperator(op).Call(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			observables := t.Value.([]Observable)
@@ -87,7 +87,7 @@ func (op congestingZipAllOperator) Call(ctx context.Context, ob Observer) (conte
 
 		default:
 		}
-	}))
+	})
 
 	return ctx, cancel
 }

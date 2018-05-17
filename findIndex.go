@@ -13,15 +13,15 @@ func (op findIndexOperator) Call(ctx context.Context, ob Observer) (context.Cont
 	ctx, cancel := context.WithCancel(ctx)
 	outerIndex := -1
 
-	mutable := MutableObserver{}
+	var mutableObserver Observer
 
-	mutable.Observer = ObserverFunc(func(t Notification) {
+	mutableObserver = func(t Notification) {
 		switch {
 		case t.HasValue:
 			outerIndex++
 
 			if op.predicate(t.Value, outerIndex) {
-				mutable.Observer = NopObserver
+				mutableObserver = NopObserver
 				ob.Next(outerIndex)
 				ob.Complete()
 				cancel()
@@ -35,9 +35,9 @@ func (op findIndexOperator) Call(ctx context.Context, ob Observer) (context.Cont
 			ob.Complete()
 			cancel()
 		}
-	})
+	}
 
-	op.source.Call(ctx, &mutable)
+	op.source.Call(ctx, func(t Notification) { t.Observe(mutableObserver) })
 
 	return ctx, cancel
 }

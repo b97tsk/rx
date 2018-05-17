@@ -78,7 +78,7 @@ func (op delayOperator) Call(ctx context.Context, ob Observer) (context.Context,
 		scheduleDone = scheduleCtx.Done()
 	}
 
-	op.source.Call(ctx, ObserverFunc(func(t Notification) {
+	op.source.Call(ctx, func(t Notification) {
 		mu.Lock()
 		defer mu.Unlock()
 		switch {
@@ -99,7 +99,7 @@ func (op delayOperator) Call(ctx context.Context, ob Observer) (context.Context,
 			})
 			doSchedule(op.timeout)
 		}
-	}))
+	})
 
 	return ctx, cancel
 }

@@ -14,7 +14,7 @@ func (op throttleOperator) Call(ctx context.Context, ob Observer) (context.Conte
 	scheduleCtx, scheduleCancel := canceledCtx, noopFunc
 	scheduleDone := scheduleCtx.Done()
 
-	op.source.Call(ctx, ObserverFunc(func(t Notification) {
+	op.source.Call(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			select {
@@ -28,20 +28,20 @@ func (op throttleOperator) Call(ctx context.Context, ob Observer) (context.Conte
 			scheduleCtx, scheduleCancel = context.WithCancel(ctx)
 			scheduleDone = scheduleCtx.Done()
 
-			mutable := MutableObserver{}
+			var mutableObserver Observer
 
-			mutable.Observer = ObserverFunc(func(t Notification) {
+			mutableObserver = func(t Notification) {
 				if t.HasError {
 					ob.Error(t.Value.(error))
 					cancel()
 					return
 				}
-				mutable.Observer = NopObserver
+				mutableObserver = NopObserver
 				scheduleCancel()
-			})
+			}
 
 			obsv := op.durationSelector(t.Value)
-			obsv.Subscribe(scheduleCtx, &mutable)
+			obsv.Subscribe(scheduleCtx, func(t Notification) { t.Observe(mutableObserver) })
 
 		case t.HasError:
 			ob.Error(t.Value.(error))
@@ -51,7 +51,7 @@ func (op throttleOperator) Call(ctx context.Context, ob Observer) (context.Conte
 			ob.Complete()
 			cancel()
 		}
-	}))
+	})
 
 	return ctx, cancel
 }

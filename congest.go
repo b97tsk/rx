@@ -36,12 +36,12 @@ func (op congestOperator) Call(ctx context.Context, ob Observer) (context.Contex
 		}
 	}()
 
-	op.source.Call(ctx, ObserverFunc(func(t Notification) {
+	op.source.Call(ctx, func(t Notification) {
 		select {
 		case <-done:
 		case c <- t:
 		}
-	}))
+	})
 
 	return ctx, cancel
 }

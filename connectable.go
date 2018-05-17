@@ -16,21 +16,21 @@ type ConnectableObservable struct {
 type connectableNoCopy struct {
 	mu             sync.Mutex
 	source         Observable
-	subjectFactory func() SubjectLike
+	subjectFactory func() *Subject
 	connection     context.Context
 	disconnect     context.CancelFunc
-	subject        SubjectLike
+	subject        *Subject
 	refCount       int
 }
 
-func (o *connectableNoCopy) getSubjectLocked() SubjectLike {
+func (o *connectableNoCopy) getSubjectLocked() *Subject {
 	if o.subject == nil {
 		o.subject = o.subjectFactory()
 	}
 	return o.subject
 }
 
-func (o *connectableNoCopy) getSubject() SubjectLike {
+func (o *connectableNoCopy) getSubject() *Subject {
 	o.mu.Lock()
 	defer o.mu.Unlock()
 	return o.getSubjectLocked()
@@ -56,7 +56,7 @@ func (o *connectableNoCopy) doConnect(addRef bool) (context.Context, context.Can
 
 		subject := o.getSubjectLocked()
 
-		ctx, cancel := o.source.Subscribe(context.Background(), ObserverFunc(func(t Notification) {
+		ctx, cancel := o.source.Subscribe(context.Background(), func(t Notification) {
 			if t.HasValue {
 				subject.Next(t.Value)
 				return
@@ -81,8 +81,8 @@ func (o *connectableNoCopy) doConnect(addRef bool) (context.Context, context.Can
 				o.mu.Unlock()
 			}
 
-			t.Observe(subject)
-		}))
+			t.Observe(subject.Observer)
+		})
 
 		select {
 		case <-ctx.Done():
@@ -183,16 +183,16 @@ func (o Observable) Publish() ConnectableObservable {
 	subject := NewSubject()
 	return ConnectableObservable{&connectableNoCopy{
 		source:         o,
-		subjectFactory: func() SubjectLike { return subject },
+		subjectFactory: func() *Subject { return subject },
 	}}
 }
 
 // PublishBehavior is like Publish, but it uses a BehaviorSubject instead.
 func (o Observable) PublishBehavior(val interface{}) ConnectableObservable {
-	subject := NewBehaviorSubject(val)
+	bs := NewBehaviorSubject(val)
 	return ConnectableObservable{&connectableNoCopy{
 		source:         o,
-		subjectFactory: func() SubjectLike { return subject },
+		subjectFactory: func() *Subject { return &bs.Subject },
 	}}
 }
 
@@ -202,7 +202,7 @@ func (o Observable) PublishBehavior(val interface{}) ConnectableObservable {
 func (o Observable) Share() Observable {
 	connectable := ConnectableObservable{&connectableNoCopy{
 		source:         o,
-		subjectFactory: func() SubjectLike { return NewSubject() },
+		subjectFactory: NewSubject,
 	}}
 	return connectable.RefCount()
 }

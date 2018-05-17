@@ -12,9 +12,6 @@ type BehaviorSubject struct {
 	value interface{}
 }
 
-// BehaviorSubject implements SubjectLike.
-var _ SubjectLike = (*BehaviorSubject)(nil)
-
 // Next stores the latest value and emits it to the consumers of this
 // BehaviorSubject.
 func (s *BehaviorSubject) Next(val interface{}) {
@@ -66,7 +63,7 @@ func (s *BehaviorSubject) Subscribe(ctx context.Context, ob Observer) (context.C
 		return ctx, cancel
 	}
 
-	if s.hasError {
+	if s.errValue != nil {
 		ob.Error(s.errValue)
 	} else {
 		ob.Next(s.value)
@@ -79,6 +76,16 @@ func (s *BehaviorSubject) Subscribe(ctx context.Context, ob Observer) (context.C
 // NewBehaviorSubject returns a new BehaviorSubject.
 func NewBehaviorSubject(val interface{}) *BehaviorSubject {
 	s := &BehaviorSubject{value: val}
+	s.Observer = func(t Notification) {
+		switch {
+		case t.HasValue:
+			s.Next(t.Value)
+		case t.HasError:
+			s.Error(t.Value.(error))
+		default:
+			s.Complete()
+		}
+	}
 	s.Op = OperatorFunc(s.Subscribe)
 	return s
 }

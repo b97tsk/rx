@@ -26,9 +26,9 @@ func (op auditOperator) Call(ctx context.Context, ob Observer) (context.Context,
 		scheduleCtx, scheduleCancel = context.WithCancel(ctx)
 		scheduleDone = scheduleCtx.Done()
 
-		mutable := MutableObserver{}
+		var mutableObserver Observer
 
-		mutable.Observer = ObserverFunc(func(t Notification) {
+		mutableObserver = func(t Notification) {
 			if try.Lock() {
 				if t.HasError {
 					try.CancelAndUnlock()
@@ -38,16 +38,16 @@ func (op auditOperator) Call(ctx context.Context, ob Observer) (context.Context,
 				}
 				defer try.Unlock()
 				defer scheduleCancel()
-				mutable.Observer = NopObserver
+				mutableObserver = NopObserver
 				ob.Next(latestValue)
 			}
-		})
+		}
 
 		obsv := op.durationSelector(val)
-		obsv.Subscribe(scheduleCtx, &mutable)
+		obsv.Subscribe(scheduleCtx, func(t Notification) { t.Observe(mutableObserver) })
 	}
 
-	op.source.Call(ctx, ObserverFunc(func(t Notification) {
+	op.source.Call(ctx, func(t Notification) {
 		if try.Lock() {
 			switch {
 			case t.HasValue:
@@ -64,7 +64,7 @@ func (op auditOperator) Call(ctx context.Context, ob Observer) (context.Context,
 				cancel()
 			}
 		}
-	}))
+	})
 
 	return ctx, cancel
 }

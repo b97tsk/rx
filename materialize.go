@@ -9,7 +9,7 @@ type materializeOperator struct {
 }
 
 func (op materializeOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
-	return op.source.Call(ctx, ObserverFunc(func(t Notification) {
+	return op.source.Call(ctx, func(t Notification) {
 		ob.Next(t)
 
 		if t.HasValue {
@@ -17,7 +17,7 @@ func (op materializeOperator) Call(ctx context.Context, ob Observer) (context.Co
 		}
 
 		ob.Complete()
-	}))
+	})
 }
 
 // Materialize creates an Observable that represents all of the notifications

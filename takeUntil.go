@@ -13,7 +13,7 @@ func (op takeUntilOperator) Call(ctx context.Context, ob Observer) (context.Cont
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 
-	op.notifier.Subscribe(ctx, ObserverFunc(func(t Notification) {
+	op.notifier.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			ob.Complete()
@@ -23,7 +23,7 @@ func (op takeUntilOperator) Call(ctx context.Context, ob Observer) (context.Cont
 			ob.Complete()
 		}
 		cancel()
-	}))
+	})
 
 	select {
 	case <-done:

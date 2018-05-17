@@ -11,7 +11,7 @@ type pairwiseOperator struct {
 func (op pairwiseOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
 	prev := interface{}(nil)
 	hasPrev := false
-	return op.source.Call(ctx, ObserverFunc(func(t Notification) {
+	return op.source.Call(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			if hasPrev {
@@ -26,7 +26,7 @@ func (op pairwiseOperator) Call(ctx context.Context, ob Observer) (context.Conte
 		default:
 			ob.Complete()
 		}
-	}))
+	})
 }
 
 // Pairwise creates an Observable that groups pairs of consecutive emissions

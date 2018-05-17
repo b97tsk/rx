@@ -48,7 +48,7 @@ func (op mergeScanOperator) Call(ctx context.Context, ob Observer) (context.Cont
 		// calls accumulator synchronously
 		obsv := op.accumulator(seed, outerValue)
 
-		go obsv.Subscribe(ctx, ObserverFunc(func(t Notification) {
+		go obsv.Subscribe(ctx, func(t Notification) {
 			switch {
 			case t.HasValue:
 				mu.Lock()
@@ -79,10 +79,10 @@ func (op mergeScanOperator) Call(ctx context.Context, ob Observer) (context.Cont
 				default:
 				}
 			}
-		}))
+		})
 	}
 
-	op.source.Call(ctx, ObserverFunc(func(t Notification) {
+	op.source.Call(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			mu.Lock()
@@ -128,7 +128,7 @@ func (op mergeScanOperator) Call(ctx context.Context, ob Observer) (context.Cont
 			ob.Complete()
 			cancel()
 		}
-	}))
+	})
 
 	return ctx, cancel
 }

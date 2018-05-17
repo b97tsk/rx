@@ -38,7 +38,7 @@ func (op timeoutOperator) Call(ctx context.Context, ob Observer) (context.Contex
 
 	doSchedule()
 
-	op.source.Call(ctx, ObserverFunc(func(t Notification) {
+	op.source.Call(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			ob.Next(t.Value)
@@ -50,7 +50,7 @@ func (op timeoutOperator) Call(ctx context.Context, ob Observer) (context.Contex
 			ob.Complete()
 			cancel()
 		}
-	}))
+	})
 
 	return ctx, cancel
 }

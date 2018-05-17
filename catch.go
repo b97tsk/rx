@@ -12,7 +12,7 @@ type catchOperator struct {
 func (op catchOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
-	op.source.Call(ctx, ObserverFunc(func(t Notification) {
+	op.source.Call(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			ob.Next(t.Value)
@@ -23,7 +23,7 @@ func (op catchOperator) Call(ctx context.Context, ob Observer) (context.Context,
 			ob.Complete()
 			cancel()
 		}
-	}))
+	})
 
 	return ctx, cancel
 }

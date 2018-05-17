@@ -11,7 +11,7 @@ type mapOperator struct {
 
 func (op mapOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
 	outerIndex := -1
-	return op.source.Call(ctx, ObserverFunc(func(t Notification) {
+	return op.source.Call(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			outerIndex++
@@ -25,7 +25,7 @@ func (op mapOperator) Call(ctx context.Context, ob Observer) (context.Context, c
 		default:
 			ob.Complete()
 		}
-	}))
+	})
 }
 
 // Map creates an Observable that applies a given project function to each

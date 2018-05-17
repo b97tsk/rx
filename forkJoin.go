@@ -69,12 +69,12 @@ func (op forkJoinOperator) Call(ctx context.Context, ob Observer) (context.Conte
 
 	for index, obsv := range op.observables {
 		index := index
-		obsv.Subscribe(ctx, ObserverFunc(func(t Notification) {
+		obsv.Subscribe(ctx, func(t Notification) {
 			select {
 			case <-done:
 			case q <- forkJoinValue{index, t}:
 			}
-		}))
+		})
 	}
 
 	return ctx, cancel

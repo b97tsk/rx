@@ -11,7 +11,7 @@ type defaultIfEmptyOperator struct {
 
 func (op defaultIfEmptyOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
 	hasValue := false
-	return op.source.Call(ctx, ObserverFunc(func(t Notification) {
+	return op.source.Call(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			hasValue = true
@@ -24,7 +24,7 @@ func (op defaultIfEmptyOperator) Call(ctx context.Context, ob Observer) (context
 			}
 			ob.Complete()
 		}
-	}))
+	})
 }
 
 // DefaultIfEmpty creates an Observable that emits a given value if the source

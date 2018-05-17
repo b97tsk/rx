@@ -6,8 +6,8 @@ import (
 
 type multicastOperator struct {
 	source         Operator
-	subjectFactory func() SubjectLike
-	selector       func(context.Context, SubjectLike) Observable
+	subjectFactory func() *Subject
+	selector       func(context.Context, *Subject) Observable
 }
 
 func (op multicastOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
@@ -18,7 +18,7 @@ func (op multicastOperator) Call(ctx context.Context, ob Observer) (context.Cont
 	select {
 	case <-ctx.Done():
 	default:
-		op.source.Call(ctx, subject)
+		op.source.Call(ctx, subject.Observer)
 	}
 	return ctx, cancel
 }
@@ -29,7 +29,7 @@ func (op multicastOperator) Call(ctx context.Context, ob Observer) (context.Cont
 // Observable to emit values to that Subject. Moreover, the selector function
 // returns an Observable which is subscribed to the Observer, if it completes
 // or emits an error, all subscriptions shall be canceled.
-func (o Observable) Multicast(subjectFactory func() SubjectLike, selector func(context.Context, SubjectLike) Observable) Observable {
+func (o Observable) Multicast(subjectFactory func() *Subject, selector func(context.Context, *Subject) Observable) Observable {
 	op := multicastOperator{
 		source:         o.Op,
 		subjectFactory: subjectFactory,

@@ -10,12 +10,12 @@ import (
 func (o Observable) BlockingFirst(ctx context.Context) (value interface{}, err error) {
 	ctx, cancel := context.WithCancel(ctx)
 
-	mutable := MutableObserver{}
+	var mutableObserver Observer
 
-	mutable.Observer = ObserverFunc(func(t Notification) {
+	mutableObserver = func(t Notification) {
 		switch {
 		case t.HasValue:
-			mutable.Observer = NopObserver
+			mutableObserver = NopObserver
 			value = t.Value
 			cancel()
 		case t.HasError:
@@ -25,9 +25,9 @@ func (o Observable) BlockingFirst(ctx context.Context) (value interface{}, err e
 			err = ErrEmpty
 			cancel()
 		}
-	})
+	}
 
-	o.Op.Call(ctx, &mutable)
+	o.Op.Call(ctx, func(t Notification) { t.Observe(mutableObserver) })
 	<-ctx.Done()
 	return
 }
@@ -37,7 +37,7 @@ func (o Observable) BlockingFirst(ctx context.Context) (value interface{}, err e
 // ErrEmpty; if the source emits an error, it returns with that error.
 func (o Observable) BlockingLast(ctx context.Context) (value interface{}, err error) {
 	hasValue := false
-	ctx, _ = o.Op.Call(ctx, ObserverFunc(func(t Notification) {
+	ctx, _ = o.Op.Call(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			value = t.Value
@@ -49,7 +49,7 @@ func (o Observable) BlockingLast(ctx context.Context) (value interface{}, err er
 				err = ErrEmpty
 			}
 		}
-	}))
+	})
 	<-ctx.Done()
 	return
 }
@@ -62,13 +62,13 @@ func (o Observable) BlockingSingle(ctx context.Context) (value interface{}, err 
 	ctx, cancel := context.WithCancel(ctx)
 	hasValue := false
 
-	mutable := MutableObserver{}
+	var mutableObserver Observer
 
-	mutable.Observer = ObserverFunc(func(t Notification) {
+	mutableObserver = func(t Notification) {
 		switch {
 		case t.HasValue:
 			if hasValue {
-				mutable.Observer = NopObserver
+				mutableObserver = NopObserver
 				err = ErrNotSingle
 				cancel()
 			} else {
@@ -84,9 +84,9 @@ func (o Observable) BlockingSingle(ctx context.Context) (value interface{}, err 
 			}
 			cancel()
 		}
-	})
+	}
 
-	o.Op.Call(ctx, &mutable)
+	o.Op.Call(ctx, func(t Notification) { t.Observe(mutableObserver) })
 	<-ctx.Done()
 	return
 }
@@ -95,12 +95,12 @@ func (o Observable) BlockingSingle(ctx context.Context) (value interface{}, err 
 // source completes or emits an error; if the source completes, it returns nil;
 // if the source emits an error, it returns that error.
 func (o Observable) BlockingSubscribe(ctx context.Context, ob Observer) (err error) {
-	ctx, _ = o.Op.Call(ctx, ObserverFunc(func(t Notification) {
+	ctx, _ = o.Op.Call(ctx, func(t Notification) {
 		if t.HasError {
 			err = t.Value.(error)
 		}
 		t.Observe(ob)
-	}))
+	})
 	<-ctx.Done()
 	return
 }

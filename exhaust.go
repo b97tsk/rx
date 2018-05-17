@@ -18,7 +18,7 @@ func (op exhaustMapOperator) Call(ctx context.Context, ob Observer) (context.Con
 	isActive := false
 	completeSignal := make(chan struct{}, 1)
 
-	op.source.Call(ctx, ObserverFunc(func(t Notification) {
+	op.source.Call(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			mu.Lock()
@@ -36,7 +36,7 @@ func (op exhaustMapOperator) Call(ctx context.Context, ob Observer) (context.Con
 
 			obsv := op.project(outerValue, outerIndex)
 
-			go obsv.Subscribe(ctx, ObserverFunc(func(t Notification) {
+			go obsv.Subscribe(ctx, func(t Notification) {
 				switch {
 				case t.HasValue:
 					ob.Next(t.Value)
@@ -54,7 +54,7 @@ func (op exhaustMapOperator) Call(ctx context.Context, ob Observer) (context.Con
 					default:
 					}
 				}
-			}))
+			})
 
 		case t.HasError:
 			ob.Error(t.Value.(error))
@@ -83,7 +83,7 @@ func (op exhaustMapOperator) Call(ctx context.Context, ob Observer) (context.Con
 			ob.Complete()
 			cancel()
 		}
-	}))
+	})
 
 	return ctx, cancel
 }

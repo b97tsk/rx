@@ -13,9 +13,9 @@ func (op congestingConcatOperator) Call(ctx context.Context, ob Observer) (conte
 	ctx, cancel := context.WithCancel(ctx)
 	outerIndex := -1
 
-	mutable := MutableObserver{}
+	var mutableObserver Observer
 
-	mutable.Observer = ObserverFunc(func(t Notification) {
+	mutableObserver = func(t Notification) {
 		switch {
 		case t.HasValue:
 			outerValue := t.Value
@@ -24,17 +24,17 @@ func (op congestingConcatOperator) Call(ctx context.Context, ob Observer) (conte
 
 			obsv := op.project(outerValue, outerIndex)
 
-			childCtx, _ := obsv.Subscribe(ctx, ObserverFunc(func(t Notification) {
+			childCtx, _ := obsv.Subscribe(ctx, func(t Notification) {
 				switch {
 				case t.HasValue:
 					ob.Next(t.Value)
 				case t.HasError:
-					mutable.Observer = NopObserver
+					mutableObserver = NopObserver
 					ob.Error(t.Value.(error))
 					cancel()
 				default:
 				}
-			}))
+			})
 
 			<-childCtx.Done()
 
@@ -46,9 +46,9 @@ func (op congestingConcatOperator) Call(ctx context.Context, ob Observer) (conte
 			ob.Complete()
 			cancel()
 		}
-	})
+	}
 
-	op.source.Call(ctx, &mutable)
+	op.source.Call(ctx, func(t Notification) { t.Observe(mutableObserver) })
 
 	return ctx, cancel
 }

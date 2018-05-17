@@ -15,7 +15,7 @@ func (op bufferOperator) Call(ctx context.Context, ob Observer) (context.Context
 	try := cancellableLocker{}
 	buffer := []interface{}(nil)
 
-	op.notifier.Subscribe(ctx, ObserverFunc(func(t Notification) {
+	op.notifier.Subscribe(ctx, func(t Notification) {
 		if try.Lock() {
 			switch {
 			case t.HasValue:
@@ -33,7 +33,7 @@ func (op bufferOperator) Call(ctx context.Context, ob Observer) (context.Context
 				cancel()
 			}
 		}
-	}))
+	})
 
 	select {
 	case <-done:
@@ -41,7 +41,7 @@ func (op bufferOperator) Call(ctx context.Context, ob Observer) (context.Context
 	default:
 	}
 
-	op.source.Call(ctx, ObserverFunc(func(t Notification) {
+	op.source.Call(ctx, func(t Notification) {
 		if try.Lock() {
 			switch {
 			case t.HasValue:
@@ -57,7 +57,7 @@ func (op bufferOperator) Call(ctx context.Context, ob Observer) (context.Context
 				cancel()
 			}
 		}
-	}))
+	})
 
 	return ctx, cancel
 }

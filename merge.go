@@ -48,7 +48,7 @@ func (op mergeMapOperator) Call(ctx context.Context, ob Observer) (context.Conte
 		// calls project synchronously
 		obsv := op.project(outerValue, outerIndex)
 
-		go obsv.Subscribe(ctx, ObserverFunc(func(t Notification) {
+		go obsv.Subscribe(ctx, func(t Notification) {
 			switch {
 			case t.HasValue:
 				ob.Next(t.Value)
@@ -74,10 +74,10 @@ func (op mergeMapOperator) Call(ctx context.Context, ob Observer) (context.Conte
 				default:
 				}
 			}
-		}))
+		})
 	}
 
-	op.source.Call(ctx, ObserverFunc(func(t Notification) {
+	op.source.Call(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			mu.Lock()
@@ -117,7 +117,7 @@ func (op mergeMapOperator) Call(ctx context.Context, ob Observer) (context.Conte
 			ob.Complete()
 			cancel()
 		}
-	}))
+	})
 
 	return ctx, cancel
 }

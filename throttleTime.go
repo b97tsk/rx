@@ -28,7 +28,7 @@ func (op throttleTimeOperator) Call(ctx context.Context, ob Observer) (context.C
 	scheduleCtx := canceledCtx
 	scheduleDone := scheduleCtx.Done()
 
-	op.source.Call(ctx, ObserverFunc(func(t Notification) {
+	op.source.Call(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			select {
@@ -50,7 +50,7 @@ func (op throttleTimeOperator) Call(ctx context.Context, ob Observer) (context.C
 			ob.Complete()
 			cancel()
 		}
-	}))
+	})
 
 	return ctx, cancel
 }

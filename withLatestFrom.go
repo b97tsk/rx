@@ -73,12 +73,12 @@ func (op withLatestFromOperator) Call(ctx context.Context, ob Observer) (context
 
 	for index, obsv := range op.observables {
 		index := index
-		obsv.Subscribe(ctx, ObserverFunc(func(t Notification) {
+		obsv.Subscribe(ctx, func(t Notification) {
 			select {
 			case <-done:
 			case q <- withLatestFromValue{index, t}:
 			}
-		}))
+		})
 	}
 
 	return ctx, cancel

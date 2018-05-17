@@ -12,15 +12,15 @@ func (op toObservablesOperator) Call(ctx context.Context, ob Observer) (context.
 	ctx, cancel := context.WithCancel(ctx)
 	observables := []Observable(nil)
 
-	mutable := MutableObserver{}
+	var mutableObserver Observer
 
-	mutable.Observer = ObserverFunc(func(t Notification) {
+	mutableObserver = func(t Notification) {
 		switch {
 		case t.HasValue:
 			if obsv, ok := t.Value.(Observable); ok {
 				observables = append(observables, obsv)
 			} else {
-				mutable.Observer = NopObserver
+				mutableObserver = NopObserver
 				ob.Error(ErrNotObservable)
 				cancel()
 			}
@@ -32,9 +32,9 @@ func (op toObservablesOperator) Call(ctx context.Context, ob Observer) (context.
 			ob.Complete()
 			cancel()
 		}
-	})
+	}
 
-	op.source.Call(ctx, &mutable)
+	op.source.Call(ctx, func(t Notification) { t.Observe(mutableObserver) })
 
 	return ctx, cancel
 }

@@ -15,7 +15,7 @@ func (op retryOperator) Call(ctx context.Context, ob Observer) (context.Context,
 
 	var observer Observer
 
-	observer = ObserverFunc(func(t Notification) {
+	observer = func(t Notification) {
 		switch {
 		case t.HasValue:
 			ob.Next(t.Value)
@@ -33,7 +33,7 @@ func (op retryOperator) Call(ctx context.Context, ob Observer) (context.Context,
 			ob.Complete()
 			cancel()
 		}
-	})
+	}
 
 	op.source.Call(ctx, observer)
 

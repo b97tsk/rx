@@ -15,7 +15,7 @@ func (op sampleOperator) Call(ctx context.Context, ob Observer) (context.Context
 	latestValue := interface{}(nil)
 	hasLatestValue := false
 
-	op.notifier.Subscribe(ctx, ObserverFunc(func(t Notification) {
+	op.notifier.Subscribe(ctx, func(t Notification) {
 		if t.HasError {
 			ob.Error(t.Value.(error))
 			cancel()
@@ -28,9 +28,9 @@ func (op sampleOperator) Call(ctx context.Context, ob Observer) (context.Context
 				hasLatestValue = false
 			}
 		}
-	}))
+	})
 
-	op.source.Call(ctx, ObserverFunc(func(t Notification) {
+	op.source.Call(ctx, func(t Notification) {
 		if try.Lock() {
 			switch {
 			case t.HasValue:
@@ -47,7 +47,7 @@ func (op sampleOperator) Call(ctx context.Context, ob Observer) (context.Context
 				cancel()
 			}
 		}
-	}))
+	})
 
 	return ctx, cancel
 }

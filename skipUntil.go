@@ -16,7 +16,7 @@ func (op skipUntilOperator) Call(ctx context.Context, ob Observer) (context.Cont
 	noSkipping := uint32(0)
 	hasCompleted := uint32(0)
 
-	op.notifier.Subscribe(ctx, ObserverFunc(func(t Notification) {
+	op.notifier.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			atomic.StoreUint32(&noSkipping, 1)
@@ -30,7 +30,7 @@ func (op skipUntilOperator) Call(ctx context.Context, ob Observer) (context.Cont
 			ob.Complete()
 			cancel()
 		}
-	}))
+	})
 
 	select {
 	case <-done:
@@ -38,7 +38,7 @@ func (op skipUntilOperator) Call(ctx context.Context, ob Observer) (context.Cont
 	default:
 	}
 
-	op.source.Call(ctx, ObserverFunc(func(t Notification) {
+	op.source.Call(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			if atomic.LoadUint32(&noSkipping) != 0 {
@@ -54,7 +54,7 @@ func (op skipUntilOperator) Call(ctx context.Context, ob Observer) (context.Cont
 			ob.Complete()
 			cancel()
 		}
-	}))
+	})
 
 	return ctx, cancel
 }

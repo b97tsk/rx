@@ -11,7 +11,7 @@ type lastOperator struct {
 func (op lastOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
 	lastValue := interface{}(nil)
 	hasLastValue := false
-	return op.source.Call(ctx, ObserverFunc(func(t Notification) {
+	return op.source.Call(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			lastValue = t.Value
@@ -26,7 +26,7 @@ func (op lastOperator) Call(ctx context.Context, ob Observer) (context.Context, 
 				ob.Error(ErrEmpty)
 			}
 		}
-	}))
+	})
 }
 
 // Last creates an Observable that emits only the last item emitted by the

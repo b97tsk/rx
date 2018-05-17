@@ -17,7 +17,7 @@ func (op observeOnOperator) Call(ctx context.Context, ob Observer) (context.Cont
 	try := cancellableLocker{}
 	queue := list.List{}
 
-	op.source.Call(ctx, ObserverFunc(func(t Notification) {
+	op.source.Call(ctx, func(t Notification) {
 		if try.Lock() {
 			defer try.Unlock()
 			queue.PushBack(t)
@@ -40,7 +40,7 @@ func (op observeOnOperator) Call(ctx context.Context, ob Observer) (context.Cont
 				}
 			})
 		}
-	}))
+	})
 
 	return ctx, cancel
 }

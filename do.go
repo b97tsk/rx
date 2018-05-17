@@ -10,7 +10,7 @@ type doOperator struct {
 }
 
 func (op doOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
-	return op.source.Call(ctx, ObserverFunc(func(t Notification) {
+	return op.source.Call(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			op.target.Next(t.Value)
@@ -23,16 +23,12 @@ func (op doOperator) Call(ctx context.Context, ob Observer) (context.Context, co
 			op.target.Complete()
 			ob.Complete()
 		}
-	}))
+	})
 }
 
 // Do creates an Observable that mirrors the source Observable, but perform
-// a side effect (re-emits each emission to the target Observer) before each
-// emission.
+// a side effect before each emission.
 func (o Observable) Do(target Observer) Observable {
-	op := doOperator{
-		source: o.Op,
-		target: target,
-	}
+	op := doOperator{o.Op, target}
 	return Observable{op}
 }

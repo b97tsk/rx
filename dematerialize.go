@@ -11,9 +11,9 @@ type dematerializeOperator struct {
 func (op dematerializeOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
-	mutable := MutableObserver{}
+	var mutableObserver Observer
 
-	mutable.Observer = ObserverFunc(func(t Notification) {
+	mutableObserver = func(t Notification) {
 		switch {
 		case t.HasValue:
 			if t, ok := t.Value.(Notification); ok {
@@ -21,16 +21,16 @@ func (op dematerializeOperator) Call(ctx context.Context, ob Observer) (context.
 				case t.HasValue:
 					ob.Next(t.Value)
 				case t.HasError:
-					mutable.Observer = NopObserver
+					mutableObserver = NopObserver
 					ob.Error(t.Value.(error))
 					cancel()
 				default:
-					mutable.Observer = NopObserver
+					mutableObserver = NopObserver
 					ob.Complete()
 					cancel()
 				}
 			} else {
-				mutable.Observer = NopObserver
+				mutableObserver = NopObserver
 				ob.Error(ErrNotNotification)
 				cancel()
 			}
@@ -41,9 +41,9 @@ func (op dematerializeOperator) Call(ctx context.Context, ob Observer) (context.
 			ob.Complete()
 			cancel()
 		}
-	})
+	}
 
-	op.source.Call(ctx, &mutable)
+	op.source.Call(ctx, func(t Notification) { t.Observe(mutableObserver) })
 
 	return ctx, cancel
 }

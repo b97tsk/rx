@@ -40,7 +40,7 @@ func (op debounceTimeOperator) Call(ctx context.Context, ob Observer) (context.C
 		})
 	}
 
-	op.source.Call(ctx, ObserverFunc(func(t Notification) {
+	op.source.Call(ctx, func(t Notification) {
 		if try.Lock() {
 			switch {
 			case t.HasValue:
@@ -57,7 +57,7 @@ func (op debounceTimeOperator) Call(ctx context.Context, ob Observer) (context.C
 				cancel()
 			}
 		}
-	}))
+	})
 
 	return ctx, cancel
 }

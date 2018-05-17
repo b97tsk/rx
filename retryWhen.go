@@ -16,7 +16,7 @@ func (op retryWhenOperator) Call(ctx context.Context, ob Observer) (context.Cont
 	var subject *Subject
 	var observer Observer
 
-	observer = ObserverFunc(func(t Notification) {
+	observer = func(t Notification) {
 		switch {
 		case t.HasValue:
 			ob.Next(t.Value)
@@ -24,7 +24,7 @@ func (op retryWhenOperator) Call(ctx context.Context, ob Observer) (context.Cont
 			if subject == nil {
 				subject = NewSubject()
 				obsv := op.notifier(subject.Observable)
-				obsv.Subscribe(ctx, ObserverFunc(func(t Notification) {
+				obsv.Subscribe(ctx, func(t Notification) {
 					switch {
 					case t.HasValue:
 						sourceCancel()
@@ -40,14 +40,14 @@ func (op retryWhenOperator) Call(ctx context.Context, ob Observer) (context.Cont
 						ob.Complete()
 						cancel()
 					}
-				}))
+				})
 			}
 			subject.Next(t.Value.(error))
 		default:
 			ob.Complete()
 			cancel()
 		}
-	})
+	}
 
 	sourceCtx, sourceCancel = context.WithCancel(ctx)
 	op.source.Call(sourceCtx, observer)

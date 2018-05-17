@@ -13,7 +13,7 @@ type bufferCountOperator struct {
 func (op bufferCountOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
 	buffer := make([]interface{}, 0, op.bufferSize)
 	skipCount := 0
-	return op.source.Call(ctx, ObserverFunc(func(t Notification) {
+	return op.source.Call(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			if skipCount > 0 {
@@ -45,7 +45,7 @@ func (op bufferCountOperator) Call(ctx context.Context, ob Observer) (context.Co
 			}
 			ob.Complete()
 		}
-	}))
+	})
 }
 
 // BufferCount buffers the source Observable values until the size hits the

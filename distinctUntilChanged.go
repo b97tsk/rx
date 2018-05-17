@@ -27,7 +27,7 @@ func (op distinctUntilChangedOperator) ApplyOptions(options []Option) Operator {
 func (op distinctUntilChangedOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
 	key := interface{}(nil)
 	hasKey := false
-	return op.source.Call(ctx, ObserverFunc(func(t Notification) {
+	return op.source.Call(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			newKey := op.keySelector(t.Value)
@@ -42,7 +42,7 @@ func (op distinctUntilChangedOperator) Call(ctx context.Context, ob Observer) (c
 		default:
 			ob.Complete()
 		}
-	}))
+	})
 }
 
 // DistinctUntilChanged creates an Observable that emits all items emitted by

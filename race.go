@@ -18,8 +18,10 @@ func (op raceOperator) Call(ctx context.Context, ob Observer) (context.Context, 
 
 	for index, obsv := range op.observables {
 		index := index
-		mutable := MutableObserver{}
-		mutable.Observer = ObserverFunc(func(t Notification) {
+
+		var mutableObserver Observer
+
+		mutableObserver = func(t Notification) {
 			if try.Lock() {
 				for i, cancel := range subscriptions {
 					if i != index {
@@ -27,11 +29,13 @@ func (op raceOperator) Call(ctx context.Context, ob Observer) (context.Context, 
 					}
 				}
 				try.CancelAndUnlock()
-				mutable.Observer = withFinalizer(ob, cancel)
-				t.Observe(mutable.Observer)
+				mutableObserver = withFinalizer(ob, cancel)
+				t.Observe(mutableObserver)
 			}
-		})
-		_, cancel := obsv.Subscribe(ctx, &mutable)
+		}
+
+		_, cancel := obsv.Subscribe(ctx, func(t Notification) { t.Observe(mutableObserver) })
+
 		if try.Lock() {
 			subscriptions = append(subscriptions, cancel)
 			try.Unlock()

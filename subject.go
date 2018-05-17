@@ -4,24 +4,15 @@ import (
 	"context"
 )
 
-// SubjectLike is the interface represents a Subject.
-type SubjectLike interface {
-	Observer
-	Subscribe(context.Context, Observer) (context.Context, context.CancelFunc)
-}
-
 // Subject is a special type of Observable that allows values to be multicasted
 // to many Observers.
 type Subject struct {
+	Observer
 	Observable
 	try       cancellableLocker
-	observers []*ObserverFunc
-	hasError  bool
+	observers []*Observer
 	errValue  error
 }
-
-// Subject implements SubjectLike.
-var _ SubjectLike = (*Subject)(nil)
 
 // Next emits an value to the consumers of this Subject.
 func (s *Subject) Next(val interface{}) {
@@ -38,7 +29,6 @@ func (s *Subject) Error(err error) {
 	if s.try.Lock() {
 		observers := s.observers
 		s.observers = nil
-		s.hasError = true
 		s.errValue = err
 
 		s.try.CancelAndUnlock()
@@ -91,7 +81,7 @@ func (s *Subject) Subscribe(ctx context.Context, ob Observer) (context.Context, 
 		return ctx, cancel
 	}
 
-	if s.hasError {
+	if s.errValue != nil {
 		ob.Error(s.errValue)
 	} else {
 		ob.Complete()
@@ -102,7 +92,17 @@ func (s *Subject) Subscribe(ctx context.Context, ob Observer) (context.Context, 
 
 // NewSubject returns a new Subject.
 func NewSubject() *Subject {
-	s := &Subject{}
+	s := new(Subject)
+	s.Observer = func(t Notification) {
+		switch {
+		case t.HasValue:
+			s.Next(t.Value)
+		case t.HasError:
+			s.Error(t.Value.(error))
+		default:
+			s.Complete()
+		}
+	}
 	s.Op = OperatorFunc(s.Subscribe)
 	return s
 }

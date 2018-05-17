@@ -13,9 +13,9 @@ func (op takeOperator) Call(ctx context.Context, ob Observer) (context.Context, 
 	ctx, cancel := context.WithCancel(ctx)
 	count := op.count
 
-	mutable := MutableObserver{}
+	var mutableObserver Observer
 
-	mutable.Observer = ObserverFunc(func(t Notification) {
+	mutableObserver = func(t Notification) {
 		switch {
 		case t.HasValue:
 			if count > 0 {
@@ -23,13 +23,13 @@ func (op takeOperator) Call(ctx context.Context, ob Observer) (context.Context, 
 				if count > 0 {
 					ob.Next(t.Value)
 				} else {
-					mutable.Observer = NopObserver
+					mutableObserver = NopObserver
 					ob.Next(t.Value)
 					ob.Complete()
 					cancel()
 				}
 			} else {
-				mutable.Observer = NopObserver
+				mutableObserver = NopObserver
 				ob.Complete()
 				cancel()
 			}
@@ -40,9 +40,9 @@ func (op takeOperator) Call(ctx context.Context, ob Observer) (context.Context, 
 			ob.Complete()
 			cancel()
 		}
-	})
+	}
 
-	op.source.Call(ctx, &mutable)
+	op.source.Call(ctx, func(t Notification) { t.Observe(mutableObserver) })
 
 	return ctx, cancel
 }

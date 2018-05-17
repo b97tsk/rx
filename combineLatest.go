@@ -72,12 +72,12 @@ func (op combineLatestOperator) Call(ctx context.Context, ob Observer) (context.
 
 	for index, obsv := range op.observables {
 		index := index
-		obsv.Subscribe(ctx, ObserverFunc(func(t Notification) {
+		obsv.Subscribe(ctx, func(t Notification) {
 			select {
 			case <-done:
 			case q <- combineLatestValue{index, t}:
 			}
-		}))
+		})
 	}
 
 	return ctx, cancel
@@ -90,7 +90,7 @@ type combineAllOperator struct {
 func (op combineAllOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
-	toObservablesOperator(op).Call(ctx, ObserverFunc(func(t Notification) {
+	toObservablesOperator(op).Call(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			observables := t.Value.([]Observable)
@@ -110,7 +110,7 @@ func (op combineAllOperator) Call(ctx context.Context, ob Observer) (context.Con
 
 		default:
 		}
-	}))
+	})
 
 	return ctx, cancel
 }

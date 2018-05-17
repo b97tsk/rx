@@ -10,7 +10,7 @@ type mapToOperator struct {
 }
 
 func (op mapToOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
-	return op.source.Call(ctx, ObserverFunc(func(t Notification) {
+	return op.source.Call(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			ob.Next(op.value)
@@ -19,7 +19,7 @@ func (op mapToOperator) Call(ctx context.Context, ob Observer) (context.Context,
 		default:
 			ob.Complete()
 		}
-	}))
+	})
 }
 
 // MapTo creates an Observable that emits the given constant value on the

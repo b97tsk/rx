@@ -12,7 +12,7 @@ type takeLastOperator struct {
 
 func (op takeLastOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
 	buffer := list.List{}
-	return op.source.Call(ctx, ObserverFunc(func(t Notification) {
+	return op.source.Call(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			if buffer.Len() >= op.count {
@@ -27,7 +27,7 @@ func (op takeLastOperator) Call(ctx context.Context, ob Observer) (context.Conte
 			}
 			ob.Complete()
 		}
-	}))
+	})
 }
 
 // TakeLast creates an Observable that emits only the last count values emitted

@@ -10,7 +10,7 @@ type mutexOperator struct {
 
 func (op mutexOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
 	try := cancellableLocker{}
-	return op.source.Call(ctx, ObserverFunc(func(t Notification) {
+	return op.source.Call(ctx, func(t Notification) {
 		if try.Lock() {
 			switch {
 			case t.HasValue:
@@ -24,7 +24,7 @@ func (op mutexOperator) Call(ctx context.Context, ob Observer) (context.Context,
 				ob.Complete()
 			}
 		}
-	}))
+	})
 }
 
 // Mutex creates an Observable that mirrors the source Observable in a mutually

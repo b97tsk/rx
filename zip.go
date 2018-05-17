@@ -91,12 +91,12 @@ func (op zipOperator) Call(ctx context.Context, ob Observer) (context.Context, c
 
 	for index, obsv := range op.observables {
 		index := index
-		obsv.Subscribe(ctx, ObserverFunc(func(t Notification) {
+		obsv.Subscribe(ctx, func(t Notification) {
 			select {
 			case <-done:
 			case q <- zipValue{index, t}:
 			}
-		}))
+		})
 	}
 
 	return ctx, cancel
@@ -109,7 +109,7 @@ type zipAllOperator struct {
 func (op zipAllOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
-	toObservablesOperator(op).Call(ctx, ObserverFunc(func(t Notification) {
+	toObservablesOperator(op).Call(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			observables := t.Value.([]Observable)
@@ -129,7 +129,7 @@ func (op zipAllOperator) Call(ctx context.Context, ob Observer) (context.Context
 
 		default:
 		}
-	}))
+	})
 
 	return ctx, cancel
 }

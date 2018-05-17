@@ -19,7 +19,7 @@ func (op switchMapOperator) Call(ctx context.Context, ob Observer) (context.Cont
 	activeIndex := -1
 	completeSignal := make(chan struct{}, 1)
 
-	op.source.Call(ctx, ObserverFunc(func(t Notification) {
+	op.source.Call(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			mu.Lock()
@@ -36,7 +36,7 @@ func (op switchMapOperator) Call(ctx context.Context, ob Observer) (context.Cont
 
 			childCtx, childCancel = context.WithCancel(ctx)
 
-			go obsv.Subscribe(childCtx, ObserverFunc(func(t Notification) {
+			go obsv.Subscribe(childCtx, func(t Notification) {
 				switch {
 				case t.HasValue:
 					ob.Next(t.Value)
@@ -61,7 +61,7 @@ func (op switchMapOperator) Call(ctx context.Context, ob Observer) (context.Cont
 					default:
 					}
 				}
-			}))
+			})
 
 		case t.HasError:
 			ob.Error(t.Value.(error))
@@ -90,7 +90,7 @@ func (op switchMapOperator) Call(ctx context.Context, ob Observer) (context.Cont
 			ob.Complete()
 			cancel()
 		}
-	}))
+	})
 
 	return ctx, cancel
 }

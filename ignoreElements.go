@@ -9,7 +9,7 @@ type ignoreElementsOperator struct {
 }
 
 func (op ignoreElementsOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
-	return op.source.Call(ctx, ObserverFunc(func(t Notification) {
+	return op.source.Call(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 		case t.HasError:
@@ -17,7 +17,7 @@ func (op ignoreElementsOperator) Call(ctx context.Context, ob Observer) (context
 		default:
 			ob.Complete()
 		}
-	}))
+	})
 }
 
 // IgnoreElements creates an Observable that ignores all items emitted by the

@@ -14,7 +14,7 @@ func (op skipLastOperator) Call(ctx context.Context, ob Observer) (context.Conte
 	bufferSize := op.count
 	index := 0
 	count := 0
-	return op.source.Call(ctx, ObserverFunc(func(t Notification) {
+	return op.source.Call(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			if count < bufferSize {
@@ -29,7 +29,7 @@ func (op skipLastOperator) Call(ctx context.Context, ob Observer) (context.Conte
 		default:
 			ob.Complete()
 		}
-	}))
+	})
 }
 
 // SkipLast creates an Observable that skip the last count values emitted by

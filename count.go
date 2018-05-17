@@ -10,7 +10,7 @@ type countOperator struct {
 
 func (op countOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
 	count := 0
-	return op.source.Call(ctx, ObserverFunc(func(t Notification) {
+	return op.source.Call(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			count++
@@ -20,7 +20,7 @@ func (op countOperator) Call(ctx context.Context, ob Observer) (context.Context,
 			ob.Next(count)
 			ob.Complete()
 		}
-	}))
+	})
 }
 
 // Count creates an Observable that counts the number of emissions on the

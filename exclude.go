@@ -11,7 +11,7 @@ type excludeOperator struct {
 
 func (op excludeOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
 	outerIndex := -1
-	return op.source.Call(ctx, ObserverFunc(func(t Notification) {
+	return op.source.Call(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			outerIndex++
@@ -26,7 +26,7 @@ func (op excludeOperator) Call(ctx context.Context, ob Observer) (context.Contex
 		default:
 			ob.Complete()
 		}
-	}))
+	})
 }
 
 // Exclude creates an Observable that filter items emitted by the source

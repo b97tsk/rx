@@ -20,9 +20,9 @@ func (op debounceOperator) Call(ctx context.Context, ob Observer) (context.Conte
 
 		scheduleCtx, scheduleCancel = context.WithCancel(ctx)
 
-		mutable := MutableObserver{}
+		var mutableObserver Observer
 
-		mutable.Observer = ObserverFunc(func(t Notification) {
+		mutableObserver = func(t Notification) {
 			if try.Lock() {
 				if t.HasError {
 					try.CancelAndUnlock()
@@ -32,16 +32,16 @@ func (op debounceOperator) Call(ctx context.Context, ob Observer) (context.Conte
 				}
 				defer try.Unlock()
 				defer scheduleCancel()
-				mutable.Observer = NopObserver
+				mutableObserver = NopObserver
 				ob.Next(latestValue)
 			}
-		})
+		}
 
 		obsv := op.durationSelector(val)
-		obsv.Subscribe(scheduleCtx, &mutable)
+		obsv.Subscribe(scheduleCtx, func(t Notification) { t.Observe(mutableObserver) })
 	}
 
-	op.source.Call(ctx, ObserverFunc(func(t Notification) {
+	op.source.Call(ctx, func(t Notification) {
 		if try.Lock() {
 			switch {
 			case t.HasValue:
@@ -58,7 +58,7 @@ func (op debounceOperator) Call(ctx context.Context, ob Observer) (context.Conte
 				cancel()
 			}
 		}
-	}))
+	})
 
 	return ctx, cancel
 }

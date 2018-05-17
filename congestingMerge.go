@@ -36,7 +36,7 @@ func (op congestingMergeOperator) Call(ctx context.Context, ob Observer) (contex
 		concurrent = -1
 	}
 
-	op.source.Call(ctx, ObserverFunc(func(t Notification) {
+	op.source.Call(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			mu.Lock()
@@ -60,7 +60,7 @@ func (op congestingMergeOperator) Call(ctx context.Context, ob Observer) (contex
 			// calls project synchronously
 			obsv := op.project(outerValue, outerIndex)
 
-			go obsv.Subscribe(ctx, ObserverFunc(func(t Notification) {
+			go obsv.Subscribe(ctx, func(t Notification) {
 				switch {
 				case t.HasValue:
 					ob.Next(t.Value)
@@ -79,7 +79,7 @@ func (op congestingMergeOperator) Call(ctx context.Context, ob Observer) (contex
 					default:
 					}
 				}
-			}))
+			})
 
 		case t.HasError:
 			ob.Error(t.Value.(error))
@@ -108,7 +108,7 @@ func (op congestingMergeOperator) Call(ctx context.Context, ob Observer) (contex
 			ob.Complete()
 			cancel()
 		}
-	}))
+	})
 
 	return ctx, cancel
 }
