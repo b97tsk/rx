@@ -28,7 +28,7 @@ func (op debounceOperator) Call(ctx context.Context, ob Observer, source Observa
 			if try.Lock() {
 				if t.HasError {
 					try.CancelAndUnlock()
-					ob.Error(t.Value.(error))
+					t.Observe(ob)
 					cancel()
 					return
 				}
@@ -50,13 +50,9 @@ func (op debounceOperator) Call(ctx context.Context, ob Observer, source Observa
 				latestValue = t.Value
 				try.Unlock()
 				doSchedule(t.Value)
-			case t.HasError:
-				try.CancelAndUnlock()
-				ob.Error(t.Value.(error))
-				cancel()
 			default:
 				try.CancelAndUnlock()
-				ob.Complete()
+				t.Observe(ob)
 				cancel()
 			}
 		}

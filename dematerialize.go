@@ -17,14 +17,10 @@ func (op dematerializeOperator) Call(ctx context.Context, ob Observer, source Ob
 			if t, ok := t.Value.(Notification); ok {
 				switch {
 				case t.HasValue:
-					ob.Next(t.Value)
-				case t.HasError:
-					mutableObserver = NopObserver
-					ob.Error(t.Value.(error))
-					cancel()
+					t.Observe(ob)
 				default:
 					mutableObserver = NopObserver
-					ob.Complete()
+					t.Observe(ob)
 					cancel()
 				}
 			} else {
@@ -32,11 +28,8 @@ func (op dematerializeOperator) Call(ctx context.Context, ob Observer, source Ob
 				ob.Error(ErrNotNotification)
 				cancel()
 			}
-		case t.HasError:
-			ob.Error(t.Value.(error))
-			cancel()
 		default:
-			ob.Complete()
+			t.Observe(ob)
 			cancel()
 		}
 	}

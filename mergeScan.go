@@ -45,10 +45,10 @@ func (op mergeScanOperator) Call(ctx context.Context, ob Observer, source Observ
 				hasValue = true
 				mu.Unlock()
 
-				ob.Next(t.Value)
+				t.Observe(ob)
 
 			case t.HasError:
-				ob.Error(t.Value.(error))
+				t.Observe(ob)
 				cancel()
 
 			default:
@@ -85,7 +85,7 @@ func (op mergeScanOperator) Call(ctx context.Context, ob Observer, source Observ
 			}
 
 		case t.HasError:
-			ob.Error(t.Value.(error))
+			t.Observe(ob)
 			cancel()
 
 		default:

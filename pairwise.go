@@ -21,10 +21,8 @@ func (op pairwiseOperator) Call(ctx context.Context, ob Observer, source Observa
 				prev = t.Value
 				hasPrev = true
 			}
-		case t.HasError:
-			ob.Error(t.Value.(error))
 		default:
-			ob.Complete()
+			t.Observe(ob)
 		}
 	})
 }

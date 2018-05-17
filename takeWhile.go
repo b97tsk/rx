@@ -22,7 +22,7 @@ func (op takeWhileOperator) Call(ctx context.Context, ob Observer, source Observ
 			outerIndex++
 
 			if op.predicate(t.Value, outerIndex) {
-				ob.Next(t.Value)
+				t.Observe(ob)
 				break
 			}
 
@@ -30,12 +30,8 @@ func (op takeWhileOperator) Call(ctx context.Context, ob Observer, source Observ
 			ob.Complete()
 			cancel()
 
-		case t.HasError:
-			ob.Error(t.Value.(error))
-			cancel()
-
 		default:
-			ob.Complete()
+			t.Observe(ob)
 			cancel()
 		}
 	}

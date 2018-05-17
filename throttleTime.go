@@ -24,17 +24,13 @@ func (op throttleTimeOperator) Call(ctx context.Context, ob Observer, source Obs
 				return
 			}
 
-			ob.Next(t.Value)
+			t.Observe(ob)
 
 			scheduleCtx, _ = op.scheduler.ScheduleOnce(ctx, op.duration, noopFunc)
 			scheduleDone = scheduleCtx.Done()
 
-		case t.HasError:
-			ob.Error(t.Value.(error))
-			cancel()
-
 		default:
-			ob.Complete()
+			t.Observe(ob)
 			cancel()
 		}
 	})

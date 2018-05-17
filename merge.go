@@ -40,10 +40,10 @@ func (op mergeMapOperator) Call(ctx context.Context, ob Observer, source Observa
 		go obsv.Subscribe(ctx, func(t Notification) {
 			switch {
 			case t.HasValue:
-				ob.Next(t.Value)
+				t.Observe(ob)
 
 			case t.HasError:
-				ob.Error(t.Value.(error))
+				t.Observe(ob)
 				cancel()
 
 			default:
@@ -80,7 +80,7 @@ func (op mergeMapOperator) Call(ctx context.Context, ob Observer, source Observa
 			}
 
 		case t.HasError:
-			ob.Error(t.Value.(error))
+			t.Observe(ob)
 			cancel()
 
 		default:

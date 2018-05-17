@@ -36,13 +36,9 @@ func (op sampleTimeOperator) Call(ctx context.Context, ob Observer, source Obser
 				latestValue = t.Value
 				hasLatestValue = true
 				try.Unlock()
-			case t.HasError:
-				try.CancelAndUnlock()
-				ob.Error(t.Value.(error))
-				cancel()
 			default:
 				try.CancelAndUnlock()
-				ob.Complete()
+				t.Observe(ob)
 				cancel()
 			}
 		}

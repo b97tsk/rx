@@ -24,12 +24,12 @@ func (op elementAtOperator) Call(ctx context.Context, ob Observer, source Observ
 			index--
 			if index == -1 {
 				mutableObserver = NopObserver
-				ob.Next(t.Value)
+				t.Observe(ob)
 				ob.Complete()
 				cancel()
 			}
 		case t.HasError:
-			ob.Error(t.Value.(error))
+			t.Observe(ob)
 			cancel()
 		default:
 			if op.hasDefaultValue {

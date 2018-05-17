@@ -53,10 +53,10 @@ func (op congestingMergeOperator) Call(ctx context.Context, ob Observer, source 
 			go obsv.Subscribe(ctx, func(t Notification) {
 				switch {
 				case t.HasValue:
-					ob.Next(t.Value)
+					t.Observe(ob)
 
 				case t.HasError:
-					ob.Error(t.Value.(error))
+					t.Observe(ob)
 					cancel()
 
 				default:
@@ -72,7 +72,7 @@ func (op congestingMergeOperator) Call(ctx context.Context, ob Observer, source 
 			})
 
 		case t.HasError:
-			ob.Error(t.Value.(error))
+			t.Observe(ob)
 			cancel()
 
 		default:

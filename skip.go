@@ -22,10 +22,8 @@ func (op skipOperator) Call(ctx context.Context, ob Observer, source Observable)
 			} else {
 				mutableObserver = ob
 			}
-		case t.HasError:
-			ob.Error(t.Value.(error))
 		default:
-			ob.Complete()
+			t.Observe(ob)
 		}
 	}
 

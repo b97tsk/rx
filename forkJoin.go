@@ -41,7 +41,7 @@ func (op forkJoinOperator) Call(ctx context.Context, ob Observer, source Observa
 					}
 
 				case t.HasError:
-					ob.Error(t.Value.(error))
+					t.Observe(ob)
 					cancel()
 					return
 
@@ -49,7 +49,7 @@ func (op forkJoinOperator) Call(ctx context.Context, ob Observer, source Observa
 					completeCount++
 
 					if !hasValues[index] {
-						ob.Complete()
+						t.Observe(ob)
 						cancel()
 						return
 					}

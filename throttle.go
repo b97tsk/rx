@@ -22,7 +22,7 @@ func (op throttleOperator) Call(ctx context.Context, ob Observer, source Observa
 				return
 			}
 
-			ob.Next(t.Value)
+			t.Observe(ob)
 
 			scheduleCtx, scheduleCancel = context.WithCancel(ctx)
 			scheduleDone = scheduleCtx.Done()
@@ -31,7 +31,7 @@ func (op throttleOperator) Call(ctx context.Context, ob Observer, source Observa
 
 			mutableObserver = func(t Notification) {
 				if t.HasError {
-					ob.Error(t.Value.(error))
+					t.Observe(ob)
 					cancel()
 					return
 				}
@@ -42,12 +42,8 @@ func (op throttleOperator) Call(ctx context.Context, ob Observer, source Observa
 			obsv := op.durationSelector(t.Value)
 			obsv.Subscribe(scheduleCtx, func(t Notification) { t.Observe(mutableObserver) })
 
-		case t.HasError:
-			ob.Error(t.Value.(error))
-			cancel()
-
 		default:
-			ob.Complete()
+			t.Observe(ob)
 			cancel()
 		}
 	})

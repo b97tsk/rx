@@ -34,7 +34,7 @@ func (op bufferCountOperator) Call(ctx context.Context, ob Observer, source Obse
 			ob.Next(buffer)
 			buffer = newBuffer
 		case t.HasError:
-			ob.Error(t.Value.(error))
+			t.Observe(ob)
 		default:
 			if len(buffer) > 0 {
 				for op.startBufferEvery < len(buffer) {
@@ -44,7 +44,7 @@ func (op bufferCountOperator) Call(ctx context.Context, ob Observer, source Obse
 				}
 				ob.Next(buffer)
 			}
-			ob.Complete()
+			t.Observe(ob)
 		}
 	})
 }

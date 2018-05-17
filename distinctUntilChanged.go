@@ -23,11 +23,9 @@ func (op distinctUntilChangedOperator) Call(ctx context.Context, ob Observer, so
 			}
 			key = newKey
 			hasKey = true
-			ob.Next(t.Value)
-		case t.HasError:
-			ob.Error(t.Value.(error))
+			t.Observe(ob)
 		default:
-			ob.Complete()
+			t.Observe(ob)
 		}
 	})
 }

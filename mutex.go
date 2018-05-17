@@ -13,13 +13,10 @@ func (op mutexOperator) Call(ctx context.Context, ob Observer, source Observable
 			switch {
 			case t.HasValue:
 				defer try.Unlock()
-				ob.Next(t.Value)
-			case t.HasError:
-				try.CancelAndUnlock()
-				ob.Error(t.Value.(error))
+				t.Observe(ob)
 			default:
 				try.CancelAndUnlock()
-				ob.Complete()
+				t.Observe(ob)
 			}
 		}
 	})

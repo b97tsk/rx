@@ -51,7 +51,7 @@ func (op combineLatestOperator) Call(ctx context.Context, ob Observer, source Ob
 					ob.Next(append([]interface{}(nil), values...))
 
 				case t.HasError:
-					ob.Error(t.Value.(error))
+					t.Observe(ob)
 					cancel()
 					return
 
@@ -62,7 +62,7 @@ func (op combineLatestOperator) Call(ctx context.Context, ob Observer, source Ob
 							break
 						}
 					}
-					ob.Complete()
+					t.Observe(ob)
 					cancel()
 					return
 				}
@@ -103,7 +103,7 @@ func (op combineAllOperator) Call(ctx context.Context, ob Observer, source Obser
 			combineLatest.Call(ctx, withFinalizer(ob, cancel), Observable{})
 
 		case t.HasError:
-			ob.Error(t.Value.(error))
+			t.Observe(ob)
 			cancel()
 
 		default:

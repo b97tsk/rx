@@ -13,7 +13,7 @@ func (op countOperator) Call(ctx context.Context, ob Observer, source Observable
 		case t.HasValue:
 			count++
 		case t.HasError:
-			ob.Error(t.Value.(error))
+			t.Observe(ob)
 		default:
 			ob.Next(count)
 			ob.Complete()

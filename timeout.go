@@ -28,13 +28,10 @@ func (op timeoutOperator) Call(ctx context.Context, ob Observer, source Observab
 	source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
-			ob.Next(t.Value)
+			t.Observe(ob)
 			doSchedule()
-		case t.HasError:
-			ob.Error(t.Value.(error))
-			cancel()
 		default:
-			ob.Complete()
+			t.Observe(ob)
 			cancel()
 		}
 	})

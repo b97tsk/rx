@@ -20,9 +20,9 @@ func (op repeatWhenOperator) Call(ctx context.Context, ob Observer, source Obser
 	observer = func(t Notification) {
 		switch {
 		case t.HasValue:
-			ob.Next(t.Value)
+			t.Observe(ob)
 		case t.HasError:
-			ob.Error(t.Value.(error))
+			t.Observe(ob)
 			cancel()
 		default:
 			if subject == nil {
@@ -36,12 +36,8 @@ func (op repeatWhenOperator) Call(ctx context.Context, ob Observer, source Obser
 						sourceCtx, sourceCancel = context.WithCancel(ctx)
 						source.Subscribe(sourceCtx, observer)
 
-					case t.HasError:
-						ob.Error(t.Value.(error))
-						cancel()
-
 					default:
-						ob.Complete()
+						t.Observe(ob)
 						cancel()
 					}
 				})

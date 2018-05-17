@@ -23,17 +23,13 @@ func (op findOperator) Call(ctx context.Context, ob Observer, source Observable)
 
 			if op.predicate(t.Value, outerIndex) {
 				mutableObserver = NopObserver
-				ob.Next(t.Value)
+				t.Observe(ob)
 				ob.Complete()
 				cancel()
 			}
 
-		case t.HasError:
-			ob.Error(t.Value.(error))
-			cancel()
-
 		default:
-			ob.Complete()
+			t.Observe(ob)
 			cancel()
 		}
 	}

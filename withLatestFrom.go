@@ -54,7 +54,7 @@ func (op withLatestFromOperator) Call(ctx context.Context, ob Observer, source O
 					ob.Next(append([]interface{}(nil), values...))
 
 				case t.HasError:
-					ob.Error(t.Value.(error))
+					t.Observe(ob)
 					cancel()
 					return
 
@@ -63,7 +63,7 @@ func (op withLatestFromOperator) Call(ctx context.Context, ob Observer, source O
 						break
 					}
 
-					ob.Complete()
+					t.Observe(ob)
 					cancel()
 					return
 				}

@@ -28,12 +28,8 @@ func (op findIndexOperator) Call(ctx context.Context, ob Observer, source Observ
 				cancel()
 			}
 
-		case t.HasError:
-			ob.Error(t.Value.(error))
-			cancel()
-
 		default:
-			ob.Complete()
+			t.Observe(ob)
 			cancel()
 		}
 	}

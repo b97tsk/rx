@@ -19,13 +19,13 @@ func (op repeatOperator) Call(ctx context.Context, ob Observer, source Observabl
 	observer = func(t Notification) {
 		switch {
 		case t.HasValue:
-			ob.Next(t.Value)
+			t.Observe(ob)
 		case t.HasError:
-			ob.Error(t.Value.(error))
+			t.Observe(ob)
 			cancel()
 		default:
 			if count == 0 {
-				ob.Complete()
+				t.Observe(ob)
 				cancel()
 			} else {
 				if count > 0 {

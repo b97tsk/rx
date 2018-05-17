@@ -22,10 +22,10 @@ func (op takeOperator) Call(ctx context.Context, ob Observer, source Observable)
 			if count > 0 {
 				count--
 				if count > 0 {
-					ob.Next(t.Value)
+					t.Observe(ob)
 				} else {
 					mutableObserver = NopObserver
-					ob.Next(t.Value)
+					t.Observe(ob)
 					ob.Complete()
 					cancel()
 				}
@@ -34,11 +34,8 @@ func (op takeOperator) Call(ctx context.Context, ob Observer, source Observable)
 				ob.Complete()
 				cancel()
 			}
-		case t.HasError:
-			ob.Error(t.Value.(error))
-			cancel()
 		default:
-			ob.Complete()
+			t.Observe(ob)
 			cancel()
 		}
 	}

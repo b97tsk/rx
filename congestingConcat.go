@@ -28,10 +28,10 @@ func (op congestingConcatOperator) Call(ctx context.Context, ob Observer, source
 			childCtx, _ := obsv.Subscribe(ctx, func(t Notification) {
 				switch {
 				case t.HasValue:
-					ob.Next(t.Value)
+					t.Observe(ob)
 				case t.HasError:
 					mutableObserver = NopObserver
-					ob.Error(t.Value.(error))
+					t.Observe(ob)
 					cancel()
 				default:
 				}
@@ -39,12 +39,8 @@ func (op congestingConcatOperator) Call(ctx context.Context, ob Observer, source
 
 			<-childCtx.Done()
 
-		case t.HasError:
-			ob.Error(t.Value.(error))
-			cancel()
-
 		default:
-			ob.Complete()
+			t.Observe(ob)
 			cancel()
 		}
 	}

@@ -29,14 +29,10 @@ func (op observeOnOperator) Call(ctx context.Context, ob Observer, source Observ
 					switch {
 					case t.HasValue:
 						defer try.Unlock()
-						ob.Next(t.Value)
-					case t.HasError:
-						try.CancelAndUnlock()
-						ob.Error(t.Value.(error))
-						cancel()
+						t.Observe(ob)
 					default:
 						try.CancelAndUnlock()
-						ob.Complete()
+						t.Observe(ob)
 						cancel()
 					}
 				}

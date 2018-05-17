@@ -31,12 +31,8 @@ func (op congestingZipOperator) Call(ctx context.Context, ob Observer, source Ob
 					switch {
 					case t.HasValue:
 						nextValues[i] = t.Value
-					case t.HasError:
-						ob.Error(t.Value.(error))
-						cancel()
-						return
 					default:
-						ob.Complete()
+						t.Observe(ob)
 						cancel()
 						return
 					}
@@ -80,7 +76,7 @@ func (op congestingZipAllOperator) Call(ctx context.Context, ob Observer, source
 			zip.Call(ctx, withFinalizer(ob, cancel), Observable{})
 
 		case t.HasError:
-			ob.Error(t.Value.(error))
+			t.Observe(ob)
 			cancel()
 
 		default:

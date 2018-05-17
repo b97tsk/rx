@@ -19,7 +19,7 @@ func (op isEmptyOperator) Call(ctx context.Context, ob Observer, source Observab
 			ob.Complete()
 			cancel()
 		case t.HasError:
-			ob.Error(t.Value.(error))
+			t.Observe(ob)
 			cancel()
 		default:
 			ob.Next(true)

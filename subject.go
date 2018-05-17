@@ -18,8 +18,9 @@ type Subject struct {
 func (s *Subject) Next(val interface{}) {
 	if s.try.Lock() {
 		defer s.try.Unlock()
+		t := Notification{Value: val, HasValue: true}
 		for _, ob := range s.observers {
-			ob.Next(val)
+			t.Observe(*ob)
 		}
 	}
 }
@@ -33,8 +34,9 @@ func (s *Subject) Error(err error) {
 
 		s.try.CancelAndUnlock()
 
+		t := Notification{Value: err, HasError: true}
 		for _, ob := range observers {
-			ob.Error(err)
+			t.Observe(*ob)
 		}
 	}
 }
@@ -47,8 +49,9 @@ func (s *Subject) Complete() {
 
 		s.try.CancelAndUnlock()
 
+		t := Notification{}
 		for _, ob := range observers {
-			ob.Complete()
+			t.Observe(*ob)
 		}
 	}
 }

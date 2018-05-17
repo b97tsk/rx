@@ -17,7 +17,7 @@ func (op lastOperator) Call(ctx context.Context, ob Observer, source Observable)
 			lastValue = t.Value
 			hasLastValue = true
 		case t.HasError:
-			ob.Error(t.Value.(error))
+			t.Observe(ob)
 		default:
 			if hasLastValue {
 				ob.Next(lastValue)

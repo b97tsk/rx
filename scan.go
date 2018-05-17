@@ -30,11 +30,8 @@ func (op scanOperator) Call(ctx context.Context, ob Observer, source Observable)
 
 			ob.Next(seed)
 
-		case t.HasError:
-			ob.Error(t.Value.(error))
-
 		default:
-			ob.Complete()
+			t.Observe(ob)
 		}
 	})
 }

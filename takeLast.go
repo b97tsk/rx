@@ -19,7 +19,7 @@ func (op takeLastOperator) Call(ctx context.Context, ob Observer, source Observa
 			}
 			buffer.PushBack(t.Value)
 		case t.HasError:
-			ob.Error(t.Value.(error))
+			t.Observe(ob)
 		default:
 			for e := buffer.Front(); e != nil; e = e.Next() {
 				ob.Next(e.Value)

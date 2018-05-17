@@ -73,14 +73,14 @@ func (op zipOperator) Call(ctx context.Context, ob Observer, source Observable) 
 					}
 
 				case t.HasError:
-					ob.Error(t.Value.(error))
+					t.Observe(ob)
 					cancel()
 					return
 
 				default:
 					hasCompleted[index] = true
 					if !hasValues[index] {
-						ob.Complete()
+						t.Observe(ob)
 						cancel()
 						return
 					}
@@ -122,7 +122,7 @@ func (op zipAllOperator) Call(ctx context.Context, ob Observer, source Observabl
 			zip.Call(ctx, withFinalizer(ob, cancel), Observable{})
 
 		case t.HasError:
-			ob.Error(t.Value.(error))
+			t.Observe(ob)
 			cancel()
 
 		default:

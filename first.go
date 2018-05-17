@@ -15,11 +15,11 @@ func (op firstOperator) Call(ctx context.Context, ob Observer, source Observable
 		switch {
 		case t.HasValue:
 			mutableObserver = NopObserver
-			ob.Next(t.Value)
+			t.Observe(ob)
 			ob.Complete()
 			cancel()
 		case t.HasError:
-			ob.Error(t.Value.(error))
+			t.Observe(ob)
 			cancel()
 		default:
 			ob.Error(ErrEmpty)

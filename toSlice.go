@@ -13,7 +13,7 @@ func (op toSliceOperator) Call(ctx context.Context, ob Observer, source Observab
 		case t.HasValue:
 			values = append(values, t.Value)
 		case t.HasError:
-			ob.Error(t.Value.(error))
+			t.Observe(ob)
 		default:
 			ob.Next(values)
 			ob.Complete()

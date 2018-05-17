@@ -19,10 +19,10 @@ func (op retryOperator) Call(ctx context.Context, ob Observer, source Observable
 	observer = func(t Notification) {
 		switch {
 		case t.HasValue:
-			ob.Next(t.Value)
+			t.Observe(ob)
 		case t.HasError:
 			if count == 0 {
-				ob.Error(t.Value.(error))
+				t.Observe(ob)
 				cancel()
 			} else {
 				if count > 0 {
@@ -31,7 +31,7 @@ func (op retryOperator) Call(ctx context.Context, ob Observer, source Observable
 				source.Subscribe(ctx, observer)
 			}
 		default:
-			ob.Complete()
+			t.Observe(ob)
 			cancel()
 		}
 	}

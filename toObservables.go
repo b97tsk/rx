@@ -25,7 +25,7 @@ func (op toObservablesOperator) Call(ctx context.Context, ob Observer, source Ob
 				cancel()
 			}
 		case t.HasError:
-			ob.Error(t.Value.(error))
+			t.Observe(ob)
 			cancel()
 		default:
 			ob.Next(observables)

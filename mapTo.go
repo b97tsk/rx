@@ -13,10 +13,8 @@ func (op mapToOperator) Call(ctx context.Context, ob Observer, source Observable
 		switch {
 		case t.HasValue:
 			ob.Next(op.value)
-		case t.HasError:
-			ob.Error(t.Value.(error))
 		default:
-			ob.Complete()
+			t.Observe(ob)
 		}
 	})
 }

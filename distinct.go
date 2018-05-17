@@ -18,11 +18,9 @@ func (op distinctOperator) Call(ctx context.Context, ob Observer, source Observa
 				break
 			}
 			keys[key] = struct{}{}
-			ob.Next(t.Value)
-		case t.HasError:
-			ob.Error(t.Value.(error))
+			t.Observe(ob)
 		default:
-			ob.Complete()
+			t.Observe(ob)
 		}
 	})
 }

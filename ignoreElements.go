@@ -10,10 +10,8 @@ func (op ignoreElementsOperator) Call(ctx context.Context, ob Observer, source O
 	return source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
-		case t.HasError:
-			ob.Error(t.Value.(error))
 		default:
-			ob.Complete()
+			t.Observe(ob)
 		}
 	})
 }

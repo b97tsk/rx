@@ -43,13 +43,9 @@ func (op auditTimeOperator) Call(ctx context.Context, ob Observer, source Observ
 				latestValue = t.Value
 				try.Unlock()
 				doSchedule()
-			case t.HasError:
-				try.CancelAndUnlock()
-				ob.Error(t.Value.(error))
-				cancel()
 			default:
 				try.CancelAndUnlock()
-				ob.Complete()
+				t.Observe(ob)
 				cancel()
 			}
 		}

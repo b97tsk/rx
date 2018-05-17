@@ -29,7 +29,7 @@ func (op reduceOperator) Call(ctx context.Context, ob Observer, source Observabl
 			}
 
 		case t.HasError:
-			ob.Error(t.Value.(error))
+			t.Observe(ob)
 
 		default:
 			if hasSeed {

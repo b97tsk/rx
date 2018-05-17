@@ -16,14 +16,11 @@ func (op filterOperator) Call(ctx context.Context, ob Observer, source Observabl
 			outerIndex++
 
 			if op.predicate(t.Value, outerIndex) {
-				ob.Next(t.Value)
+				t.Observe(ob)
 			}
 
-		case t.HasError:
-			ob.Error(t.Value.(error))
-
 		default:
-			ob.Complete()
+			t.Observe(ob)
 		}
 	})
 }

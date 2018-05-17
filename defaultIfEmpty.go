@@ -14,14 +14,14 @@ func (op defaultIfEmptyOperator) Call(ctx context.Context, ob Observer, source O
 		switch {
 		case t.HasValue:
 			hasValue = true
-			ob.Next(t.Value)
+			t.Observe(ob)
 		case t.HasError:
-			ob.Error(t.Value.(error))
+			t.Observe(ob)
 		default:
 			if !hasValue {
 				ob.Next(op.defaultValue)
 			}
-			ob.Complete()
+			t.Observe(ob)
 		}
 	})
 }

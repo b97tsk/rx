@@ -25,10 +25,8 @@ func (op skipLastOperator) Call(ctx context.Context, ob Observer, source Observa
 			}
 			buffer[index] = t.Value
 			index = (index + 1) % bufferSize
-		case t.HasError:
-			ob.Error(t.Value.(error))
 		default:
-			ob.Complete()
+			t.Observe(ob)
 		}
 	})
 }

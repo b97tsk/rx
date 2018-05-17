@@ -55,12 +55,9 @@ func (op delayOperator) Call(ctx context.Context, ob Observer, source Observable
 				}
 				switch {
 				case t.HasValue:
-					ob.Next(t.Value)
-				case t.HasError:
-					ob.Error(t.Value.(error))
-					cancel()
+					t.Observe(ob)
 				default:
-					ob.Complete()
+					t.Observe(ob)
 					cancel()
 				}
 			}
@@ -81,7 +78,7 @@ func (op delayOperator) Call(ctx context.Context, ob Observer, source Observable
 		case t.HasError:
 			// Error notification will not be delayed.
 			queue.Init()
-			ob.Error(t.Value.(error))
+			t.Observe(ob)
 			cancel()
 		default:
 			queue.PushBack(delayValue{

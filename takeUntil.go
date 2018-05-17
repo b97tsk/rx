@@ -16,10 +16,8 @@ func (op takeUntilOperator) Call(ctx context.Context, ob Observer, source Observ
 		switch {
 		case t.HasValue:
 			ob.Complete()
-		case t.HasError:
-			ob.Error(t.Value.(error))
 		default:
-			ob.Complete()
+			t.Observe(ob)
 		}
 		cancel()
 	})

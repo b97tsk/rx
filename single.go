@@ -27,7 +27,7 @@ func (op singleOperator) Call(ctx context.Context, ob Observer, source Observabl
 				hasValue = true
 			}
 		case t.HasError:
-			ob.Error(t.Value.(error))
+			t.Observe(ob)
 			cancel()
 		default:
 			if hasValue {

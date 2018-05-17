@@ -19,7 +19,7 @@ func (op sampleOperator) Call(ctx context.Context, ob Observer, source Observabl
 
 	op.notifier.Subscribe(ctx, func(t Notification) {
 		if t.HasError {
-			ob.Error(t.Value.(error))
+			t.Observe(ob)
 			cancel()
 			return
 		}
@@ -39,13 +39,9 @@ func (op sampleOperator) Call(ctx context.Context, ob Observer, source Observabl
 				latestValue = t.Value
 				hasLatestValue = true
 				try.Unlock()
-			case t.HasError:
-				try.CancelAndUnlock()
-				ob.Error(t.Value.(error))
-				cancel()
 			default:
 				try.CancelAndUnlock()
-				ob.Complete()
+				t.Observe(ob)
 				cancel()
 			}
 		}

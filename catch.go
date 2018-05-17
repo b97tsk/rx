@@ -14,12 +14,12 @@ func (op catchOperator) Call(ctx context.Context, ob Observer, source Observable
 	source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
-			ob.Next(t.Value)
+			t.Observe(ob)
 		case t.HasError:
 			obsv := op.selector(t.Value.(error))
 			obsv.Subscribe(ctx, withFinalizer(ob, cancel))
 		default:
-			ob.Complete()
+			t.Observe(ob)
 			cancel()
 		}
 	})

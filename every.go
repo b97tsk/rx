@@ -29,7 +29,7 @@ func (op everyOperator) Call(ctx context.Context, ob Observer, source Observable
 			}
 
 		case t.HasError:
-			ob.Error(t.Value.(error))
+			t.Observe(ob)
 			cancel()
 
 		default:

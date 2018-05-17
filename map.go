@@ -18,11 +18,8 @@ func (op mapOperator) Call(ctx context.Context, ob Observer, source Observable) 
 			val := op.project(t.Value, outerIndex)
 			ob.Next(val)
 
-		case t.HasError:
-			ob.Error(t.Value.(error))
-
 		default:
-			ob.Complete()
+			t.Observe(ob)
 		}
 	})
 }

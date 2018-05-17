@@ -25,13 +25,9 @@ func (op bufferOperator) Call(ctx context.Context, ob Observer, source Observabl
 				value := buffer
 				buffer = nil
 				ob.Next(value)
-			case t.HasError:
-				try.CancelAndUnlock()
-				ob.Error(t.Value.(error))
-				cancel()
 			default:
 				try.CancelAndUnlock()
-				ob.Complete()
+				t.Observe(ob)
 				cancel()
 			}
 		}
@@ -49,13 +45,9 @@ func (op bufferOperator) Call(ctx context.Context, ob Observer, source Observabl
 			case t.HasValue:
 				defer try.Unlock()
 				buffer = append(buffer, t.Value)
-			case t.HasError:
-				try.CancelAndUnlock()
-				ob.Error(t.Value.(error))
-				cancel()
 			default:
 				try.CancelAndUnlock()
-				ob.Complete()
+				t.Observe(ob)
 				cancel()
 			}
 		}

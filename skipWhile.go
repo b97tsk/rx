@@ -21,14 +21,11 @@ func (op skipWhileOperator) Call(ctx context.Context, ob Observer, source Observ
 
 			if !op.predicate(t.Value, outerIndex) {
 				mutableObserver = ob
-				ob.Next(t.Value)
+				t.Observe(ob)
 			}
 
-		case t.HasError:
-			ob.Error(t.Value.(error))
-
 		default:
-			ob.Complete()
+			t.Observe(ob)
 		}
 	}
 

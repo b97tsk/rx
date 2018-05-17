@@ -18,8 +18,9 @@ func (s *BehaviorSubject) Next(val interface{}) {
 	if s.try.Lock() {
 		defer s.try.Unlock()
 		s.value = val
+		t := Notification{Value: val, HasValue: true}
 		for _, ob := range s.observers {
-			ob.Next(val)
+			t.Observe(*ob)
 		}
 	}
 }

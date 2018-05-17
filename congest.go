@@ -21,13 +21,9 @@ func (op congestOperator) Call(ctx context.Context, ob Observer, source Observab
 			case t := <-c:
 				switch {
 				case t.HasValue:
-					ob.Next(t.Value)
-				case t.HasError:
-					ob.Error(t.Value.(error))
-					cancel()
-					return
+					t.Observe(ob)
 				default:
-					ob.Complete()
+					t.Observe(ob)
 					cancel()
 					return
 				}
