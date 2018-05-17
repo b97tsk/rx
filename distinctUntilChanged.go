@@ -5,29 +5,16 @@ import (
 )
 
 type distinctUntilChangedOperator struct {
-	source      Operator
 	compare     func(interface{}, interface{}) bool
 	keySelector func(interface{}) interface{}
 }
 
-func (op distinctUntilChangedOperator) ApplyOptions(options []Option) Operator {
-	for _, opt := range options {
-		switch t := opt.(type) {
-		case compareOption:
-			op.compare = t.Value
-		case keySelectorOption:
-			op.keySelector = t.Value
-		default:
-			panic(ErrUnsupportedOption)
-		}
-	}
-	return op
-}
-
-func (op distinctUntilChangedOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
-	key := interface{}(nil)
-	hasKey := false
-	return op.source.Call(ctx, func(t Notification) {
+func (op distinctUntilChangedOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+	var (
+		key    interface{}
+		hasKey bool
+	)
+	return source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			newKey := op.keySelector(t.Value)
@@ -53,10 +40,6 @@ func (op distinctUntilChangedOperator) Call(ctx context.Context, ob Observer) (c
 //
 // If a comparator function is not provided, an equality check is used by default.
 func (o Observable) DistinctUntilChanged() Observable {
-	op := distinctUntilChangedOperator{
-		source:      o.Op,
-		compare:     defaultCompare,
-		keySelector: defaultKeySelector,
-	}
-	return Observable{op}
+	op := distinctUntilChangedOperator{defaultCompare, defaultKeySelector}
+	return o.Lift(op.Call)
 }

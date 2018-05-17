@@ -10,10 +10,10 @@ import (
 // will not subscribe the source, instead, it subscribes a local Subject,
 // which means that its can be called many times with different Observers.
 type ConnectableObservable struct {
-	*connectableNoCopy
+	*connectableObservable
 }
 
-type connectableNoCopy struct {
+type connectableObservable struct {
 	mu             sync.Mutex
 	source         Observable
 	subjectFactory func() *Subject
@@ -23,20 +23,20 @@ type connectableNoCopy struct {
 	refCount       int
 }
 
-func (o *connectableNoCopy) getSubjectLocked() *Subject {
+func (o *connectableObservable) getSubjectLocked() *Subject {
 	if o.subject == nil {
 		o.subject = o.subjectFactory()
 	}
 	return o.subject
 }
 
-func (o *connectableNoCopy) getSubject() *Subject {
+func (o *connectableObservable) getSubject() *Subject {
 	o.mu.Lock()
 	defer o.mu.Unlock()
 	return o.getSubjectLocked()
 }
 
-func (o *connectableNoCopy) doConnect(addRef bool) (context.Context, context.CancelFunc) {
+func (o *connectableObservable) doConnect(addRef bool) (context.Context, context.CancelFunc) {
 	var try *cancellableLocker
 
 	o.mu.Lock()
@@ -136,7 +136,7 @@ func (o *connectableNoCopy) doConnect(addRef bool) (context.Context, context.Can
 	}
 }
 
-func (o *connectableNoCopy) connectAddRef() (context.Context, context.CancelFunc) {
+func (o *connectableObservable) connectAddRef() (context.Context, context.CancelFunc) {
 	return o.doConnect(true)
 }
 
@@ -154,7 +154,7 @@ type refCountOperator struct {
 	connectable ConnectableObservable
 }
 
-func (op refCountOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
+func (op refCountOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := op.connectable.Subscribe(ctx, ob)
 	_, releaseRef := op.connectable.connectAddRef()
 
@@ -173,7 +173,7 @@ func (op refCountOperator) Call(ctx context.Context, ob Observer) (context.Conte
 // further execution.
 func (o ConnectableObservable) RefCount() Observable {
 	op := refCountOperator{o}
-	return Observable{op}
+	return Observable{}.Lift(op.Call)
 }
 
 // Publish returns a ConnectableObservable, which is a variety of Observable
@@ -181,7 +181,7 @@ func (o ConnectableObservable) RefCount() Observable {
 // items to those Observers that have subscribed to it.
 func (o Observable) Publish() ConnectableObservable {
 	subject := NewSubject()
-	return ConnectableObservable{&connectableNoCopy{
+	return ConnectableObservable{&connectableObservable{
 		source:         o,
 		subjectFactory: func() *Subject { return subject },
 	}}
@@ -190,7 +190,7 @@ func (o Observable) Publish() ConnectableObservable {
 // PublishBehavior is like Publish, but it uses a BehaviorSubject instead.
 func (o Observable) PublishBehavior(val interface{}) ConnectableObservable {
 	bs := NewBehaviorSubject(val)
-	return ConnectableObservable{&connectableNoCopy{
+	return ConnectableObservable{&connectableObservable{
 		source:         o,
 		subjectFactory: func() *Subject { return &bs.Subject },
 	}}
@@ -200,7 +200,7 @@ func (o Observable) PublishBehavior(val interface{}) ConnectableObservable {
 // won't subscribe the source Observable twice before the previous subscription
 // finishes.
 func (o Observable) Share() Observable {
-	connectable := ConnectableObservable{&connectableNoCopy{
+	connectable := ConnectableObservable{&connectableObservable{
 		source:         o,
 		subjectFactory: NewSubject,
 	}}

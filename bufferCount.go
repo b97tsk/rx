@@ -5,15 +5,16 @@ import (
 )
 
 type bufferCountOperator struct {
-	source           Operator
 	bufferSize       int
 	startBufferEvery int
 }
 
-func (op bufferCountOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
-	buffer := make([]interface{}, 0, op.bufferSize)
-	skipCount := 0
-	return op.source.Call(ctx, func(t Notification) {
+func (op bufferCountOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+	var (
+		buffer    = make([]interface{}, 0, op.bufferSize)
+		skipCount int
+	)
+	return source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			if skipCount > 0 {
@@ -54,10 +55,6 @@ func (op bufferCountOperator) Call(ctx context.Context, ob Observer) (context.Co
 // BufferCount collects values from the past as a slice, and emits that slice
 // only when its size reaches bufferSize.
 func (o Observable) BufferCount(bufferSize, startBufferEvery int) Observable {
-	op := bufferCountOperator{
-		source:           o.Op,
-		bufferSize:       bufferSize,
-		startBufferEvery: startBufferEvery,
-	}
-	return Observable{op}
+	op := bufferCountOperator{bufferSize, startBufferEvery}
+	return o.Lift(op.Call)
 }

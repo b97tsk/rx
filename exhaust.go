@@ -6,19 +6,21 @@ import (
 )
 
 type exhaustMapOperator struct {
-	source  Operator
 	project func(interface{}, int) Observable
 }
 
-func (op exhaustMapOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
+func (op exhaustMapOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
-	mu := sync.Mutex{}
-	outerIndex := -1
-	isActive := false
-	completeSignal := make(chan struct{}, 1)
 
-	op.source.Call(ctx, func(t Notification) {
+	var (
+		mu             sync.Mutex
+		outerIndex     = -1
+		isActive       bool
+		completeSignal = make(chan struct{}, 1)
+	)
+
+	source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			mu.Lock()
@@ -95,11 +97,8 @@ func (op exhaustMapOperator) Call(ctx context.Context, ob Observer) (context.Con
 // Exhaust flattens an Observable-of-Observables by dropping the next inner
 // Observables while the current inner is still executing.
 func (o Observable) Exhaust() Observable {
-	op := exhaustMapOperator{
-		source:  o.Op,
-		project: projectToObservable,
-	}
-	return Observable{op}.Mutex()
+	op := exhaustMapOperator{projectToObservable}
+	return o.Lift(op.Call).Mutex()
 }
 
 // ExhaustMap creates an Observable that projects each source value to an
@@ -109,9 +108,6 @@ func (o Observable) Exhaust() Observable {
 // ExhaustMap maps each value to an Observable, then flattens all of these
 // inner Observables using Exhaust.
 func (o Observable) ExhaustMap(project func(interface{}, int) Observable) Observable {
-	op := exhaustMapOperator{
-		source:  o.Op,
-		project: project,
-	}
-	return Observable{op}.Mutex()
+	op := exhaustMapOperator{project}
+	return o.Lift(op.Call).Mutex()
 }

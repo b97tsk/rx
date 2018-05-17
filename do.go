@@ -5,12 +5,11 @@ import (
 )
 
 type doOperator struct {
-	source Operator
 	target Observer
 }
 
-func (op doOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
-	return op.source.Call(ctx, func(t Notification) {
+func (op doOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+	return source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			op.target.Next(t.Value)
@@ -29,6 +28,6 @@ func (op doOperator) Call(ctx context.Context, ob Observer) (context.Context, co
 // Do creates an Observable that mirrors the source Observable, but perform
 // a side effect before each emission.
 func (o Observable) Do(target Observer) Observable {
-	op := doOperator{o.Op, target}
-	return Observable{op}
+	op := doOperator{target}
+	return o.Lift(op.Call)
 }

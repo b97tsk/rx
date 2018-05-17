@@ -8,7 +8,7 @@ type createOperator struct {
 	f func(context.Context, Observer) (context.Context, context.CancelFunc)
 }
 
-func (op createOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
+func (op createOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
 	return op.f(ctx, ob)
 }
 
@@ -18,5 +18,5 @@ func (op createOperator) Call(ctx context.Context, ob Observer) (context.Context
 // Create custom Observable, that does whatever you like.
 func Create(f func(context.Context, Observer) (context.Context, context.CancelFunc)) Observable {
 	op := createOperator{f}
-	return Observable{op}
+	return Observable{}.Lift(op.Call)
 }

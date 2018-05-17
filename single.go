@@ -4,16 +4,16 @@ import (
 	"context"
 )
 
-type singleOperator struct {
-	source Operator
-}
+type singleOperator struct{}
 
-func (op singleOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
+func (op singleOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
-	value := interface{}(nil)
-	hasValue := false
 
-	var mutableObserver Observer
+	var (
+		value           interface{}
+		hasValue        bool
+		mutableObserver Observer
+	)
 
 	mutableObserver = func(t Notification) {
 		switch {
@@ -40,7 +40,7 @@ func (op singleOperator) Call(ctx context.Context, ob Observer) (context.Context
 		}
 	}
 
-	op.source.Call(ctx, func(t Notification) { t.Observe(mutableObserver) })
+	source.Subscribe(ctx, func(t Notification) { t.Observe(mutableObserver) })
 
 	return ctx, cancel
 }
@@ -49,6 +49,6 @@ func (op singleOperator) Call(ctx context.Context, ob Observer) (context.Context
 // source Observable. If the source emits more than one item or no items,
 // notify of an ErrNotSingle or ErrEmpty respectively.
 func (o Observable) Single() Observable {
-	op := singleOperator{o.Op}
-	return Observable{op}
+	op := singleOperator{}
+	return o.Lift(op.Call)
 }

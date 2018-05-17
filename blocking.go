@@ -27,7 +27,7 @@ func (o Observable) BlockingFirst(ctx context.Context) (value interface{}, err e
 		}
 	}
 
-	o.Op.Call(ctx, func(t Notification) { t.Observe(mutableObserver) })
+	o.Subscribe(ctx, func(t Notification) { t.Observe(mutableObserver) })
 	<-ctx.Done()
 	return
 }
@@ -36,8 +36,8 @@ func (o Observable) BlockingFirst(ctx context.Context) (value interface{}, err e
 // by the source; if the source emits no items, it returns with an error
 // ErrEmpty; if the source emits an error, it returns with that error.
 func (o Observable) BlockingLast(ctx context.Context) (value interface{}, err error) {
-	hasValue := false
-	ctx, _ = o.Op.Call(ctx, func(t Notification) {
+	var hasValue bool
+	ctx, _ = o.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			value = t.Value
@@ -60,9 +60,11 @@ func (o Observable) BlockingLast(ctx context.Context) (value interface{}, err er
 // emits an error, it returns with that error.
 func (o Observable) BlockingSingle(ctx context.Context) (value interface{}, err error) {
 	ctx, cancel := context.WithCancel(ctx)
-	hasValue := false
 
-	var mutableObserver Observer
+	var (
+		hasValue        bool
+		mutableObserver Observer
+	)
 
 	mutableObserver = func(t Notification) {
 		switch {
@@ -86,7 +88,7 @@ func (o Observable) BlockingSingle(ctx context.Context) (value interface{}, err 
 		}
 	}
 
-	o.Op.Call(ctx, func(t Notification) { t.Observe(mutableObserver) })
+	o.Subscribe(ctx, func(t Notification) { t.Observe(mutableObserver) })
 	<-ctx.Done()
 	return
 }
@@ -95,7 +97,7 @@ func (o Observable) BlockingSingle(ctx context.Context) (value interface{}, err 
 // source completes or emits an error; if the source completes, it returns nil;
 // if the source emits an error, it returns that error.
 func (o Observable) BlockingSubscribe(ctx context.Context, ob Observer) (err error) {
-	ctx, _ = o.Op.Call(ctx, func(t Notification) {
+	ctx, _ = o.Subscribe(ctx, func(t Notification) {
 		if t.HasError {
 			err = t.Value.(error)
 		}

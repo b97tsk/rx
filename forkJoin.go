@@ -13,7 +13,7 @@ type forkJoinValue struct {
 	Notification
 }
 
-func (op forkJoinOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
+func (op forkJoinOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 
@@ -90,5 +90,5 @@ func ForkJoin(observables ...Observable) Observable {
 		return Empty()
 	}
 	op := forkJoinOperator{observables}
-	return Observable{op}
+	return Observable{}.Lift(op.Call)
 }

@@ -8,7 +8,7 @@ type deferOperator struct {
 	factory func() Observable
 }
 
-func (op deferOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
+func (op deferOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
 	return op.factory().Subscribe(ctx, ob)
 }
 
@@ -18,5 +18,5 @@ func (op deferOperator) Call(ctx context.Context, ob Observer) (context.Context,
 // Defer creates the Observable lazily, that is, only when it is subscribed.
 func Defer(f func() Observable) Observable {
 	op := deferOperator{f}
-	return Observable{op}
+	return Observable{}.Lift(op.Call)
 }

@@ -5,16 +5,18 @@ import (
 )
 
 type auditOperator struct {
-	source           Operator
 	durationSelector func(interface{}) Observable
 }
 
-func (op auditOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
+func (op auditOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	scheduleCtx, scheduleCancel := canceledCtx, noopFunc
 	scheduleDone := scheduleCtx.Done()
-	try := cancellableLocker{}
-	latestValue := interface{}(nil)
+
+	var (
+		latestValue interface{}
+		try         cancellableLocker
+	)
 
 	doSchedule := func(val interface{}) {
 		select {
@@ -47,7 +49,7 @@ func (op auditOperator) Call(ctx context.Context, ob Observer) (context.Context,
 		obsv.Subscribe(scheduleCtx, func(t Notification) { t.Observe(mutableObserver) })
 	}
 
-	op.source.Call(ctx, func(t Notification) {
+	source.Subscribe(ctx, func(t Notification) {
 		if try.Lock() {
 			switch {
 			case t.HasValue:
@@ -76,9 +78,6 @@ func (op auditOperator) Call(ctx context.Context, ob Observer) (context.Context,
 // It's like AuditTime, but the silencing duration is determined by a second
 // Observable.
 func (o Observable) Audit(durationSelector func(interface{}) Observable) Observable {
-	op := auditOperator{
-		source:           o.Op,
-		durationSelector: durationSelector,
-	}
-	return Observable{op}
+	op := auditOperator{durationSelector}
+	return o.Lift(op.Call)
 }

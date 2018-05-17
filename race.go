@@ -8,13 +8,13 @@ type raceOperator struct {
 	observables []Observable
 }
 
-func (op raceOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
+func (op raceOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	length := len(op.observables)
 	subscriptions := make([]context.CancelFunc, 0, length)
 
-	try := cancellableLocker{}
+	var try cancellableLocker
 
 	for index, obsv := range op.observables {
 		index := index
@@ -52,5 +52,5 @@ func (op raceOperator) Call(ctx context.Context, ob Observer) (context.Context, 
 func (o Observable) Race(observables ...Observable) Observable {
 	observables = append([]Observable{o}, observables...)
 	op := raceOperator{observables}
-	return Observable{op}
+	return Observable{}.Lift(op.Call)
 }

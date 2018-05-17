@@ -5,30 +5,18 @@ import (
 )
 
 type reduceOperator struct {
-	source      Operator
 	accumulator func(interface{}, interface{}, int) interface{}
 	seed        interface{}
 	hasSeed     bool
 }
 
-func (op reduceOperator) ApplyOptions(options []Option) Operator {
-	for _, opt := range options {
-		switch t := opt.(type) {
-		case seedOption:
-			op.seed = t.Value
-			op.hasSeed = true
-		default:
-			panic(ErrUnsupportedOption)
-		}
-	}
-	return op
-}
-
-func (op reduceOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
-	seed := op.seed
-	hasSeed := op.hasSeed
-	outerIndex := -1
-	return op.source.Call(ctx, func(t Notification) {
+func (op reduceOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+	var (
+		seed       = op.seed
+		hasSeed    = op.hasSeed
+		outerIndex = -1
+	)
+	return source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			outerIndex++
@@ -60,9 +48,6 @@ func (op reduceOperator) Call(ctx context.Context, ob Observer) (context.Context
 // accumulator function that knows how to join a new source value into the
 // accumulation from the past.
 func (o Observable) Reduce(accumulator func(interface{}, interface{}, int) interface{}) Observable {
-	op := reduceOperator{
-		source:      o.Op,
-		accumulator: accumulator,
-	}
-	return Observable{op}
+	op := reduceOperator{accumulator: accumulator}
+	return o.Lift(op.Call)
 }

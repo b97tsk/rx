@@ -6,24 +6,11 @@ import (
 )
 
 type timeoutOperator struct {
-	source    Operator
 	timeout   time.Duration
 	scheduler Scheduler
 }
 
-func (op timeoutOperator) ApplyOptions(options []Option) Operator {
-	for _, opt := range options {
-		switch t := opt.(type) {
-		case schedulerOption:
-			op.scheduler = t.Value
-		default:
-			panic(ErrUnsupportedOption)
-		}
-	}
-	return op
-}
-
-func (op timeoutOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
+func (op timeoutOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	scheduleCancel := noopFunc
 
@@ -38,7 +25,7 @@ func (op timeoutOperator) Call(ctx context.Context, ob Observer) (context.Contex
 
 	doSchedule()
 
-	op.source.Call(ctx, func(t Notification) {
+	source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			ob.Next(t.Value)
@@ -58,10 +45,6 @@ func (op timeoutOperator) Call(ctx context.Context, ob Observer) (context.Contex
 // Timeout creates an Observable that mirrors the source Observable or notify
 // of an ErrTimeout if the source does not emit a value in given time span.
 func (o Observable) Timeout(timeout time.Duration) Observable {
-	op := timeoutOperator{
-		source:    o.Op,
-		timeout:   timeout,
-		scheduler: DefaultScheduler,
-	}
-	return Observable{op}.Mutex()
+	op := timeoutOperator{timeout, DefaultScheduler}
+	return o.Lift(op.Call).Mutex()
 }

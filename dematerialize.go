@@ -4,11 +4,9 @@ import (
 	"context"
 )
 
-type dematerializeOperator struct {
-	source Operator
-}
+type dematerializeOperator struct{}
 
-func (op dematerializeOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
+func (op dematerializeOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	var mutableObserver Observer
@@ -43,7 +41,7 @@ func (op dematerializeOperator) Call(ctx context.Context, ob Observer) (context.
 		}
 	}
 
-	op.source.Call(ctx, func(t Notification) { t.Observe(mutableObserver) })
+	source.Subscribe(ctx, func(t Notification) { t.Observe(mutableObserver) })
 
 	return ctx, cancel
 }
@@ -54,6 +52,6 @@ func (op dematerializeOperator) Call(ctx context.Context, ob Observer) (context.
 // Unwraps Notification objects as actual Next, Error and Complete emissions.
 // The opposite of Materialize.
 func (o Observable) Dematerialize() Observable {
-	op := dematerializeOperator{o.Op}
-	return Observable{op}
+	op := dematerializeOperator{}
+	return o.Lift(op.Call)
 }

@@ -4,12 +4,10 @@ import (
 	"context"
 )
 
-type materializeOperator struct {
-	source Operator
-}
+type materializeOperator struct{}
 
-func (op materializeOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
-	return op.source.Call(ctx, func(t Notification) {
+func (op materializeOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+	return source.Subscribe(ctx, func(t Notification) {
 		ob.Next(t)
 
 		if t.HasValue {
@@ -26,6 +24,6 @@ func (op materializeOperator) Call(ctx context.Context, ob Observer) (context.Co
 // Materialize wraps Next, Error and Complete emissions in Notification objects,
 // emitted as Next on the output Observable.
 func (o Observable) Materialize() Observable {
-	op := materializeOperator{o.Op}
-	return Observable{op}
+	op := materializeOperator{}
+	return o.Lift(op.Call)
 }

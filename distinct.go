@@ -5,25 +5,12 @@ import (
 )
 
 type distinctOperator struct {
-	source      Operator
 	keySelector func(interface{}) interface{}
 }
 
-func (op distinctOperator) ApplyOptions(options []Option) Operator {
-	for _, opt := range options {
-		switch t := opt.(type) {
-		case keySelectorOption:
-			op.keySelector = t.Value
-		default:
-			panic(ErrUnsupportedOption)
-		}
-	}
-	return op
-}
-
-func (op distinctOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
-	keys := make(map[interface{}]struct{})
-	return op.source.Call(ctx, func(t Notification) {
+func (op distinctOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+	var keys = make(map[interface{}]struct{})
+	return source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			key := op.keySelector(t.Value)
@@ -49,9 +36,6 @@ func (op distinctOperator) Call(ctx context.Context, ob Observer) (context.Conte
 // will use each value from the source Observable directly with an equality
 // check against previous values.
 func (o Observable) Distinct() Observable {
-	op := distinctOperator{
-		source:      o.Op,
-		keySelector: defaultKeySelector,
-	}
-	return Observable{op}
+	op := distinctOperator{defaultKeySelector}
+	return o.Lift(op.Call)
 }

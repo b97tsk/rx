@@ -5,15 +5,16 @@ import (
 )
 
 type repeatOperator struct {
-	source Operator
-	count  int
+	count int
 }
 
-func (op repeatOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
+func (op repeatOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
-	count := op.count
 
-	var observer Observer
+	var (
+		count    = op.count
+		observer Observer
+	)
 
 	observer = func(t Notification) {
 		switch {
@@ -30,12 +31,12 @@ func (op repeatOperator) Call(ctx context.Context, ob Observer) (context.Context
 				if count > 0 {
 					count--
 				}
-				op.source.Call(ctx, observer)
+				source.Subscribe(ctx, observer)
 			}
 		}
 	}
 
-	op.source.Call(ctx, observer)
+	source.Subscribe(ctx, observer)
 
 	return ctx, cancel
 }
@@ -49,9 +50,6 @@ func (o Observable) Repeat(count int) Observable {
 	if count > 0 {
 		count--
 	}
-	op := repeatOperator{
-		source: o.Op,
-		count:  count,
-	}
-	return Observable{op}
+	op := repeatOperator{count}
+	return o.Lift(op.Call)
 }

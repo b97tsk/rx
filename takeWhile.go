@@ -5,15 +5,16 @@ import (
 )
 
 type takeWhileOperator struct {
-	source    Operator
 	predicate func(interface{}, int) bool
 }
 
-func (op takeWhileOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
+func (op takeWhileOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
-	outerIndex := -1
 
-	var mutableObserver Observer
+	var (
+		outerIndex      = -1
+		mutableObserver Observer
+	)
 
 	mutableObserver = func(t Notification) {
 		switch {
@@ -39,7 +40,7 @@ func (op takeWhileOperator) Call(ctx context.Context, ob Observer) (context.Cont
 		}
 	}
 
-	op.source.Call(ctx, func(t Notification) { t.Observe(mutableObserver) })
+	source.Subscribe(ctx, func(t Notification) { t.Observe(mutableObserver) })
 
 	return ctx, cancel
 }
@@ -51,9 +52,6 @@ func (op takeWhileOperator) Call(ctx context.Context, ob Observer) (context.Cont
 // TakeWhile takes values from the source only while they pass the condition
 // given. When the first value does not satisfy, it completes.
 func (o Observable) TakeWhile(predicate func(interface{}, int) bool) Observable {
-	op := takeWhileOperator{
-		source:    o.Op,
-		predicate: predicate,
-	}
-	return Observable{op}
+	op := takeWhileOperator{predicate}
+	return o.Lift(op.Call)
 }

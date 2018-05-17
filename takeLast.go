@@ -6,13 +6,12 @@ import (
 )
 
 type takeLastOperator struct {
-	source Operator
-	count  int
+	count int
 }
 
-func (op takeLastOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
-	buffer := list.List{}
-	return op.source.Call(ctx, func(t Notification) {
+func (op takeLastOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+	var buffer list.List
+	return source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			if buffer.Len() >= op.count {
@@ -39,9 +38,6 @@ func (o Observable) TakeLast(count int) Observable {
 	if count <= 0 {
 		return Empty()
 	}
-	op := takeLastOperator{
-		source: o.Op,
-		count:  count,
-	}
-	return Observable{op}
+	op := takeLastOperator{count}
+	return o.Lift(op.Call)
 }

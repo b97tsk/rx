@@ -5,13 +5,12 @@ import (
 )
 
 type filterOperator struct {
-	source    Operator
 	predicate func(interface{}, int) bool
 }
 
-func (op filterOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
-	outerIndex := -1
-	return op.source.Call(ctx, func(t Notification) {
+func (op filterOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+	var outerIndex = -1
+	return source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			outerIndex++
@@ -32,9 +31,6 @@ func (op filterOperator) Call(ctx context.Context, ob Observer) (context.Context
 // Filter creates an Observable that filter items emitted by the source
 // Observable by only emitting those that satisfy a specified predicate.
 func (o Observable) Filter(predicate func(interface{}, int) bool) Observable {
-	op := filterOperator{
-		source:    o.Op,
-		predicate: predicate,
-	}
-	return Observable{op}
+	op := filterOperator{predicate}
+	return o.Lift(op.Call)
 }

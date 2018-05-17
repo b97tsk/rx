@@ -5,15 +5,16 @@ import (
 )
 
 type takeOperator struct {
-	source Operator
-	count  int
+	count int
 }
 
-func (op takeOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
+func (op takeOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
-	count := op.count
 
-	var mutableObserver Observer
+	var (
+		count           = op.count
+		mutableObserver Observer
+	)
 
 	mutableObserver = func(t Notification) {
 		switch {
@@ -42,7 +43,7 @@ func (op takeOperator) Call(ctx context.Context, ob Observer) (context.Context, 
 		}
 	}
 
-	op.source.Call(ctx, func(t Notification) { t.Observe(mutableObserver) })
+	source.Subscribe(ctx, func(t Notification) { t.Observe(mutableObserver) })
 
 	return ctx, cancel
 }
@@ -52,9 +53,6 @@ func (op takeOperator) Call(ctx context.Context, ob Observer) (context.Context, 
 //
 // Take takes the first count values from the source, then completes.
 func (o Observable) Take(count int) Observable {
-	op := takeOperator{
-		source: o.Op,
-		count:  count,
-	}
-	return Observable{op}
+	op := takeOperator{count}
+	return o.Lift(op.Call)
 }

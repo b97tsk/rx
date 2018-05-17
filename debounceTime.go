@@ -6,28 +6,18 @@ import (
 )
 
 type debounceTimeOperator struct {
-	source    Operator
 	duration  time.Duration
 	scheduler Scheduler
 }
 
-func (op debounceTimeOperator) ApplyOptions(options []Option) Operator {
-	for _, opt := range options {
-		switch t := opt.(type) {
-		case schedulerOption:
-			op.scheduler = t.Value
-		default:
-			panic(ErrUnsupportedOption)
-		}
-	}
-	return op
-}
-
-func (op debounceTimeOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
+func (op debounceTimeOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	scheduleCancel := noopFunc
-	try := cancellableLocker{}
-	latestValue := interface{}(nil)
+
+	var (
+		latestValue interface{}
+		try         cancellableLocker
+	)
 
 	doSchedule := func() {
 		scheduleCancel()
@@ -40,7 +30,7 @@ func (op debounceTimeOperator) Call(ctx context.Context, ob Observer) (context.C
 		})
 	}
 
-	op.source.Call(ctx, func(t Notification) {
+	source.Subscribe(ctx, func(t Notification) {
 		if try.Lock() {
 			switch {
 			case t.HasValue:
@@ -69,10 +59,6 @@ func (op debounceTimeOperator) Call(ctx context.Context, ob Observer) (context.C
 // It's like Delay, but passes only the most recent value from each burst of
 // emissions.
 func (o Observable) DebounceTime(duration time.Duration) Observable {
-	op := debounceTimeOperator{
-		source:    o.Op,
-		duration:  duration,
-		scheduler: DefaultScheduler,
-	}
-	return Observable{op}
+	op := debounceTimeOperator{duration, DefaultScheduler}
+	return o.Lift(op.Call)
 }

@@ -103,6 +103,10 @@ func NewSubject() *Subject {
 			s.Complete()
 		}
 	}
-	s.Op = OperatorFunc(s.Subscribe)
+	s.Observable = s.Observable.Lift(
+		func(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+			return s.Subscribe(ctx, ob)
+		},
+	)
 	return s
 }

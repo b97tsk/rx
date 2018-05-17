@@ -5,15 +5,16 @@ import (
 )
 
 type congestingConcatOperator struct {
-	source  Operator
 	project func(interface{}, int) Observable
 }
 
-func (op congestingConcatOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
+func (op congestingConcatOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
-	outerIndex := -1
 
-	var mutableObserver Observer
+	var (
+		outerIndex      = -1
+		mutableObserver Observer
+	)
 
 	mutableObserver = func(t Notification) {
 		switch {
@@ -48,7 +49,7 @@ func (op congestingConcatOperator) Call(ctx context.Context, ob Observer) (conte
 		}
 	}
 
-	op.source.Call(ctx, func(t Notification) { t.Observe(mutableObserver) })
+	source.Subscribe(ctx, func(t Notification) { t.Observe(mutableObserver) })
 
 	return ctx, cancel
 }
@@ -70,11 +71,8 @@ func CongestingConcat(observables ...interface{}) Observable {
 //
 // It's like ConcatAll, but it congests the source.
 func (o Observable) CongestingConcatAll() Observable {
-	op := congestingConcatOperator{
-		source:  o.Op,
-		project: projectToObservable,
-	}
-	return Observable{op}
+	op := congestingConcatOperator{projectToObservable}
+	return o.Lift(op.Call)
 }
 
 // CongestingConcatMap creates an Observable that projects each source value to
@@ -85,11 +83,8 @@ func (o Observable) CongestingConcatAll() Observable {
 //
 // It's like ConcatMap, but it congests the source.
 func (o Observable) CongestingConcatMap(project func(interface{}, int) Observable) Observable {
-	op := congestingConcatOperator{
-		source:  o.Op,
-		project: project,
-	}
-	return Observable{op}
+	op := congestingConcatOperator{project}
+	return o.Lift(op.Call)
 }
 
 // CongestingConcatMapTo creates an Observable that projects each source value
@@ -101,9 +96,5 @@ func (o Observable) CongestingConcatMap(project func(interface{}, int) Observabl
 //
 // It's like ConcatMapTo, but it congests the source.
 func (o Observable) CongestingConcatMapTo(inner Observable) Observable {
-	op := congestingConcatOperator{
-		source:  o.Op,
-		project: func(interface{}, int) Observable { return inner },
-	}
-	return Observable{op}
+	return o.CongestingConcatMap(func(interface{}, int) Observable { return inner })
 }

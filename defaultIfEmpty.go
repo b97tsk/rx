@@ -5,13 +5,12 @@ import (
 )
 
 type defaultIfEmptyOperator struct {
-	source       Operator
 	defaultValue interface{}
 }
 
-func (op defaultIfEmptyOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
-	hasValue := false
-	return op.source.Call(ctx, func(t Notification) {
+func (op defaultIfEmptyOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+	var hasValue bool
+	return source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			hasValue = true
@@ -34,9 +33,6 @@ func (op defaultIfEmptyOperator) Call(ctx context.Context, ob Observer) (context
 // If the source Observable turns out to be empty, then this operator will emit
 // a default value.
 func (o Observable) DefaultIfEmpty(defaultValue interface{}) Observable {
-	op := defaultIfEmptyOperator{
-		source:       o.Op,
-		defaultValue: defaultValue,
-	}
-	return Observable{op}
+	op := defaultIfEmptyOperator{defaultValue}
+	return o.Lift(op.Call)
 }

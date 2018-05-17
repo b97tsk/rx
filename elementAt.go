@@ -5,17 +5,18 @@ import (
 )
 
 type elementAtOperator struct {
-	source          Operator
 	index           int
 	defaultValue    interface{}
 	hasDefaultValue bool
 }
 
-func (op elementAtOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
+func (op elementAtOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
-	index := op.index
 
-	var mutableObserver Observer
+	var (
+		index           = op.index
+		mutableObserver Observer
+	)
 
 	mutableObserver = func(t Notification) {
 		switch {
@@ -41,7 +42,7 @@ func (op elementAtOperator) Call(ctx context.Context, ob Observer) (context.Cont
 		}
 	}
 
-	op.source.Call(ctx, func(t Notification) { t.Observe(mutableObserver) })
+	source.Subscribe(ctx, func(t Notification) { t.Observe(mutableObserver) })
 
 	return ctx, cancel
 }
@@ -50,11 +51,8 @@ func (op elementAtOperator) Call(ctx context.Context, ob Observer) (context.Cont
 // index in a sequence of emissions from the source Observable, if the
 // specified index is out of range, notifies error ErrOutOfRange.
 func (o Observable) ElementAt(index int) Observable {
-	op := elementAtOperator{
-		source: o.Op,
-		index:  index,
-	}
-	return Observable{op}
+	op := elementAtOperator{index: index}
+	return o.Lift(op.Call)
 }
 
 // ElementAtOrDefault creates an Observable that emits the single value at the
@@ -62,10 +60,9 @@ func (o Observable) ElementAt(index int) Observable {
 // the specified index is out of range, emits the provided default value.
 func (o Observable) ElementAtOrDefault(index int, defaultValue interface{}) Observable {
 	op := elementAtOperator{
-		source:          o.Op,
 		index:           index,
 		defaultValue:    defaultValue,
 		hasDefaultValue: true,
 	}
-	return Observable{op}
+	return o.Lift(op.Call)
 }

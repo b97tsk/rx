@@ -5,16 +5,17 @@ import (
 )
 
 type skipLastOperator struct {
-	source Operator
-	count  int
+	count int
 }
 
-func (op skipLastOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
-	buffer := make([]interface{}, op.count)
-	bufferSize := op.count
-	index := 0
-	count := 0
-	return op.source.Call(ctx, func(t Notification) {
+func (op skipLastOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+	var (
+		buffer     = make([]interface{}, op.count)
+		bufferSize = op.count
+		index      int
+		count      int
+	)
+	return source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			if count < bufferSize {
@@ -38,9 +39,6 @@ func (o Observable) SkipLast(count int) Observable {
 	if count <= 0 {
 		return o
 	}
-	op := skipLastOperator{
-		source: o.Op,
-		count:  count,
-	}
-	return Observable{op}
+	op := skipLastOperator{count}
+	return o.Lift(op.Call)
 }

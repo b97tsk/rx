@@ -5,15 +5,17 @@ import (
 )
 
 type debounceOperator struct {
-	source           Operator
 	durationSelector func(interface{}) Observable
 }
 
-func (op debounceOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
+func (op debounceOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	scheduleCtx, scheduleCancel := canceledCtx, noopFunc
-	try := cancellableLocker{}
-	latestValue := interface{}(nil)
+
+	var (
+		latestValue interface{}
+		try         cancellableLocker
+	)
 
 	doSchedule := func(val interface{}) {
 		scheduleCancel()
@@ -41,7 +43,7 @@ func (op debounceOperator) Call(ctx context.Context, ob Observer) (context.Conte
 		obsv.Subscribe(scheduleCtx, func(t Notification) { t.Observe(mutableObserver) })
 	}
 
-	op.source.Call(ctx, func(t Notification) {
+	source.Subscribe(ctx, func(t Notification) {
 		if try.Lock() {
 			switch {
 			case t.HasValue:
@@ -70,9 +72,6 @@ func (op debounceOperator) Call(ctx context.Context, ob Observer) (context.Conte
 // It's like DebounceTime, but the time span of emission silence is determined
 // by a second Observable.
 func (o Observable) Debounce(durationSelector func(interface{}) Observable) Observable {
-	op := debounceOperator{
-		source:           o.Op,
-		durationSelector: durationSelector,
-	}
-	return Observable{op}
+	op := debounceOperator{durationSelector}
+	return o.Lift(op.Call)
 }

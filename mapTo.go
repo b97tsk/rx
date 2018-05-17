@@ -5,12 +5,11 @@ import (
 )
 
 type mapToOperator struct {
-	source Operator
-	value  interface{}
+	value interface{}
 }
 
-func (op mapToOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
-	return op.source.Call(ctx, func(t Notification) {
+func (op mapToOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+	return source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			ob.Next(op.value)
@@ -28,9 +27,6 @@ func (op mapToOperator) Call(ctx context.Context, ob Observer) (context.Context,
 // It's like Map, but it maps every source value to the same output value
 // every time.
 func (o Observable) MapTo(value interface{}) Observable {
-	op := mapToOperator{
-		source: o.Op,
-		value:  value,
-	}
-	return Observable{op}
+	op := mapToOperator{value}
+	return o.Lift(op.Call)
 }

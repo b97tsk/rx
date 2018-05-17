@@ -6,20 +6,22 @@ import (
 )
 
 type switchMapOperator struct {
-	source  Operator
 	project func(interface{}, int) Observable
 }
 
-func (op switchMapOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
+func (op switchMapOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 	childCtx, childCancel := canceledCtx, noopFunc
-	mu := sync.Mutex{}
-	outerIndex := -1
-	activeIndex := -1
-	completeSignal := make(chan struct{}, 1)
 
-	op.source.Call(ctx, func(t Notification) {
+	var (
+		mu             sync.Mutex
+		outerIndex     = -1
+		activeIndex    = -1
+		completeSignal = make(chan struct{}, 1)
+	)
+
+	source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			mu.Lock()
@@ -101,11 +103,8 @@ func (op switchMapOperator) Call(ctx context.Context, ob Observer) (context.Cont
 // Switch flattens an Observable-of-Observables by dropping the previous inner
 // Observable once a new one appears.
 func (o Observable) Switch() Observable {
-	op := switchMapOperator{
-		source:  o.Op,
-		project: projectToObservable,
-	}
-	return Observable{op}.Mutex()
+	op := switchMapOperator{projectToObservable}
+	return o.Lift(op.Call).Mutex()
 }
 
 // SwitchMap creates an Observable that projects each source value to an
@@ -115,11 +114,8 @@ func (o Observable) Switch() Observable {
 // SwitchMap maps each value to an Observable, then flattens all of these inner
 // Observables using Switch.
 func (o Observable) SwitchMap(project func(interface{}, int) Observable) Observable {
-	op := switchMapOperator{
-		source:  o.Op,
-		project: project,
-	}
-	return Observable{op}.Mutex()
+	op := switchMapOperator{project}
+	return o.Lift(op.Call).Mutex()
 }
 
 // SwitchMapTo creates an Observable that projects each source value to the
@@ -128,9 +124,5 @@ func (o Observable) SwitchMap(project func(interface{}, int) Observable) Observa
 //
 // It's like SwitchMap, but maps each value always to the same inner Observable.
 func (o Observable) SwitchMapTo(inner Observable) Observable {
-	op := switchMapOperator{
-		source:  o.Op,
-		project: func(interface{}, int) Observable { return inner },
-	}
-	return Observable{op}.Mutex()
+	return o.SwitchMap(func(interface{}, int) Observable { return inner })
 }

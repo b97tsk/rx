@@ -5,11 +5,10 @@ import (
 )
 
 type congestOperator struct {
-	source   Operator
 	capacity int
 }
 
-func (op congestOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
+func (op congestOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 	c := make(chan Notification, op.capacity)
@@ -36,7 +35,7 @@ func (op congestOperator) Call(ctx context.Context, ob Observer) (context.Contex
 		}
 	}()
 
-	op.source.Call(ctx, func(t Notification) {
+	source.Subscribe(ctx, func(t Notification) {
 		select {
 		case <-done:
 		case c <- t:
@@ -53,9 +52,6 @@ func (o Observable) Congest(capacity int) Observable {
 	if capacity < 1 {
 		return o
 	}
-	op := congestOperator{
-		source:   o.Op,
-		capacity: capacity,
-	}
-	return Observable{op}
+	op := congestOperator{capacity}
+	return o.Lift(op.Call)
 }

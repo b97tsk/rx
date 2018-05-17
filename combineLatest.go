@@ -13,7 +13,7 @@ type combineLatestValue struct {
 	Notification
 }
 
-func (op combineLatestOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
+func (op combineLatestOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 
@@ -83,11 +83,9 @@ func (op combineLatestOperator) Call(ctx context.Context, ob Observer) (context.
 	return ctx, cancel
 }
 
-type combineAllOperator struct {
-	source Operator
-}
+type combineAllOperator struct{}
 
-func (op combineAllOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
+func (op combineAllOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	toObservablesOperator(op).Call(ctx, func(t Notification) {
@@ -102,7 +100,7 @@ func (op combineAllOperator) Call(ctx context.Context, ob Observer) (context.Con
 			}
 
 			combineLatest := combineLatestOperator{observables}
-			combineLatest.Call(ctx, withFinalizer(ob, cancel))
+			combineLatest.Call(ctx, withFinalizer(ob, cancel), Observable{})
 
 		case t.HasError:
 			ob.Error(t.Value.(error))
@@ -110,7 +108,7 @@ func (op combineAllOperator) Call(ctx context.Context, ob Observer) (context.Con
 
 		default:
 		}
-	})
+	}, source)
 
 	return ctx, cancel
 }
@@ -126,7 +124,7 @@ func CombineLatest(observables ...Observable) Observable {
 		return Empty()
 	}
 	op := combineLatestOperator{observables}
-	return Observable{op}
+	return Observable{}.Lift(op.Call)
 }
 
 // CombineAll converts a higher-order Observable into a first-order Observable
@@ -135,6 +133,6 @@ func CombineLatest(observables ...Observable) Observable {
 // CombineAll flattens an Observable-of-Observables by applying CombineLatest
 // when the Observable-of-Observables completes.
 func (o Observable) CombineAll() Observable {
-	op := combineAllOperator{o.Op}
-	return Observable{op}
+	op := combineAllOperator{}
+	return o.Lift(op.Call)
 }

@@ -14,7 +14,7 @@ type zipValue struct {
 	Notification
 }
 
-func (op zipOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
+func (op zipOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 
@@ -102,11 +102,9 @@ func (op zipOperator) Call(ctx context.Context, ob Observer) (context.Context, c
 	return ctx, cancel
 }
 
-type zipAllOperator struct {
-	source Operator
-}
+type zipAllOperator struct{}
 
-func (op zipAllOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
+func (op zipAllOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	toObservablesOperator(op).Call(ctx, func(t Notification) {
@@ -121,7 +119,7 @@ func (op zipAllOperator) Call(ctx context.Context, ob Observer) (context.Context
 			}
 
 			zip := zipOperator{observables}
-			zip.Call(ctx, withFinalizer(ob, cancel))
+			zip.Call(ctx, withFinalizer(ob, cancel), Observable{})
 
 		case t.HasError:
 			ob.Error(t.Value.(error))
@@ -129,7 +127,7 @@ func (op zipAllOperator) Call(ctx context.Context, ob Observer) (context.Context
 
 		default:
 		}
-	})
+	}, source)
 
 	return ctx, cancel
 }
@@ -141,7 +139,7 @@ func Zip(observables ...Observable) Observable {
 		return Empty()
 	}
 	op := zipOperator{observables}
-	return Observable{op}
+	return Observable{}.Lift(op.Call)
 }
 
 // ZipAll converts a higher-order Observable into a first-order Observable by
@@ -150,6 +148,6 @@ func Zip(observables ...Observable) Observable {
 // ZipAll flattens an Observable-of-Observables by applying Zip when the
 // Observable-of-Observables completes.
 func (o Observable) ZipAll() Observable {
-	op := zipAllOperator{o.Op}
-	return Observable{op}
+	op := zipAllOperator{}
+	return o.Lift(op.Call)
 }

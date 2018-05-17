@@ -6,15 +6,17 @@ import (
 )
 
 type skipUntilOperator struct {
-	source   Operator
 	notifier Observable
 }
 
-func (op skipUntilOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
+func (op skipUntilOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
-	noSkipping := uint32(0)
-	hasCompleted := uint32(0)
+
+	var (
+		noSkipping   uint32
+		hasCompleted uint32
+	)
 
 	op.notifier.Subscribe(ctx, func(t Notification) {
 		switch {
@@ -38,7 +40,7 @@ func (op skipUntilOperator) Call(ctx context.Context, ob Observer) (context.Cont
 	default:
 	}
 
-	op.source.Call(ctx, func(t Notification) {
+	source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			if atomic.LoadUint32(&noSkipping) != 0 {
@@ -62,9 +64,6 @@ func (op skipUntilOperator) Call(ctx context.Context, ob Observer) (context.Cont
 // SkipUntil creates an Observable that skips items emitted by the source
 // Observable until a second Observable emits an item.
 func (o Observable) SkipUntil(notifier Observable) Observable {
-	op := skipUntilOperator{
-		source:   o.Op,
-		notifier: notifier,
-	}
-	return Observable{op}.Mutex()
+	op := skipUntilOperator{notifier}
+	return o.Lift(op.Call).Mutex()
 }

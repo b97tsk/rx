@@ -4,13 +4,11 @@ import (
 	"context"
 )
 
-type mutexOperator struct {
-	source Operator
-}
+type mutexOperator struct{}
 
-func (op mutexOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
-	try := cancellableLocker{}
-	return op.source.Call(ctx, func(t Notification) {
+func (op mutexOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+	var try cancellableLocker
+	return source.Subscribe(ctx, func(t Notification) {
 		if try.Lock() {
 			switch {
 			case t.HasValue:
@@ -30,6 +28,6 @@ func (op mutexOperator) Call(ctx context.Context, ob Observer) (context.Context,
 // Mutex creates an Observable that mirrors the source Observable in a mutually
 // exclusive way.
 func (o Observable) Mutex() Observable {
-	op := mutexOperator{o.Op}
-	return Observable{op}
+	op := mutexOperator{}
+	return o.Lift(op.Call)
 }

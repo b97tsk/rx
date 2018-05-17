@@ -5,15 +5,16 @@ import (
 )
 
 type someOperator struct {
-	source    Operator
 	predicate func(interface{}, int) bool
 }
 
-func (op someOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
+func (op someOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
-	outerIndex := -1
 
-	var mutableObserver Observer
+	var (
+		outerIndex      = -1
+		mutableObserver Observer
+	)
 
 	mutableObserver = func(t Notification) {
 		switch {
@@ -38,7 +39,7 @@ func (op someOperator) Call(ctx context.Context, ob Observer) (context.Context, 
 		}
 	}
 
-	op.source.Call(ctx, func(t Notification) { t.Observe(mutableObserver) })
+	source.Subscribe(ctx, func(t Notification) { t.Observe(mutableObserver) })
 
 	return ctx, cancel
 }
@@ -48,9 +49,6 @@ func (op someOperator) Call(ctx context.Context, ob Observer) (context.Context, 
 //
 // Some emits true or false, then completes.
 func (o Observable) Some(predicate func(interface{}, int) bool) Observable {
-	op := someOperator{
-		source:    o.Op,
-		predicate: predicate,
-	}
-	return Observable{op}
+	op := someOperator{predicate}
+	return o.Lift(op.Call)
 }

@@ -11,7 +11,7 @@ type fromSliceOperator struct {
 	scheduler Scheduler
 }
 
-func (op fromSliceOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
+func (op fromSliceOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
 	if op.scheduler != nil {
 		ctx, cancel := context.WithCancel(ctx)
 		index := 0
@@ -52,7 +52,7 @@ func FromSlice(slice []interface{}) Observable {
 		return Empty()
 	}
 	op := fromSliceOperator{slice: slice}
-	return Observable{op}
+	return Observable{}.Lift(op.Call)
 }
 
 // FromSliceOn creates an Observable that emits values from a slice, one after
@@ -66,15 +66,11 @@ func FromSliceOn(slice []interface{}, s Scheduler, delay time.Duration) Observab
 		delay:     delay,
 		scheduler: s,
 	}
-	return Observable{op}
+	return Observable{}.Lift(op.Call)
 }
 
 // Just creates an Observable that emits some values you specify as arguments,
 // one after the other, and then completes.
 func Just(slice ...interface{}) Observable {
-	if len(slice) == 0 {
-		return Empty()
-	}
-	op := fromSliceOperator{slice: slice}
-	return Observable{op}
+	return FromSlice(slice)
 }

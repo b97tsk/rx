@@ -4,11 +4,9 @@ import (
 	"context"
 )
 
-type firstOperator struct {
-	source Operator
-}
+type firstOperator struct{}
 
-func (op firstOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
+func (op firstOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	var mutableObserver Observer
@@ -29,7 +27,7 @@ func (op firstOperator) Call(ctx context.Context, ob Observer) (context.Context,
 		}
 	}
 
-	op.source.Call(ctx, func(t Notification) { t.Observe(mutableObserver) })
+	source.Subscribe(ctx, func(t Notification) { t.Observe(mutableObserver) })
 
 	return ctx, cancel
 }
@@ -37,6 +35,6 @@ func (op firstOperator) Call(ctx context.Context, ob Observer) (context.Context,
 // First creates an Observable that emits only the first value (or the first
 // value that meets some condition) emitted by the source Observable.
 func (o Observable) First() Observable {
-	op := firstOperator{o.Op}
-	return Observable{op}
+	op := firstOperator{}
+	return o.Lift(op.Call)
 }

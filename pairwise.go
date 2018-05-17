@@ -4,14 +4,14 @@ import (
 	"context"
 )
 
-type pairwiseOperator struct {
-	source Operator
-}
+type pairwiseOperator struct{}
 
-func (op pairwiseOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
-	prev := interface{}(nil)
-	hasPrev := false
-	return op.source.Call(ctx, func(t Notification) {
+func (op pairwiseOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+	var (
+		prev    interface{}
+		hasPrev bool
+	)
+	return source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			if hasPrev {
@@ -32,6 +32,6 @@ func (op pairwiseOperator) Call(ctx context.Context, ob Observer) (context.Conte
 // Pairwise creates an Observable that groups pairs of consecutive emissions
 // together and emits them as a slice of two values.
 func (o Observable) Pairwise() Observable {
-	op := pairwiseOperator{o.Op}
-	return Observable{op}
+	op := pairwiseOperator{}
+	return o.Lift(op.Call)
 }

@@ -5,15 +5,16 @@ import (
 )
 
 type retryOperator struct {
-	source Operator
-	count  int
+	count int
 }
 
-func (op retryOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
+func (op retryOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
-	count := op.count
 
-	var observer Observer
+	var (
+		count    = op.count
+		observer Observer
+	)
 
 	observer = func(t Notification) {
 		switch {
@@ -27,7 +28,7 @@ func (op retryOperator) Call(ctx context.Context, ob Observer) (context.Context,
 				if count > 0 {
 					count--
 				}
-				op.source.Call(ctx, observer)
+				source.Subscribe(ctx, observer)
 			}
 		default:
 			ob.Complete()
@@ -35,7 +36,7 @@ func (op retryOperator) Call(ctx context.Context, ob Observer) (context.Context,
 		}
 	}
 
-	op.source.Call(ctx, observer)
+	source.Subscribe(ctx, observer)
 
 	return ctx, cancel
 }
@@ -48,9 +49,6 @@ func (o Observable) Retry(count int) Observable {
 	if count == 0 {
 		return o
 	}
-	op := retryOperator{
-		source: o.Op,
-		count:  count,
-	}
-	return Observable{op}
+	op := retryOperator{count}
+	return o.Lift(op.Call)
 }

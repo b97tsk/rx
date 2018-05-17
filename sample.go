@@ -5,15 +5,17 @@ import (
 )
 
 type sampleOperator struct {
-	source   Operator
 	notifier Observable
 }
 
-func (op sampleOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
+func (op sampleOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
-	try := cancellableLocker{}
-	latestValue := interface{}(nil)
-	hasLatestValue := false
+
+	var (
+		latestValue    interface{}
+		hasLatestValue bool
+		try            cancellableLocker
+	)
 
 	op.notifier.Subscribe(ctx, func(t Notification) {
 		if t.HasError {
@@ -30,7 +32,7 @@ func (op sampleOperator) Call(ctx context.Context, ob Observer) (context.Context
 		}
 	})
 
-	op.source.Call(ctx, func(t Notification) {
+	source.Subscribe(ctx, func(t Notification) {
 		if try.Lock() {
 			switch {
 			case t.HasValue:
@@ -58,9 +60,6 @@ func (op sampleOperator) Call(ctx context.Context, ob Observer) (context.Context
 // It's like SampleTime, but samples whenever the notifier Observable emits
 // something.
 func (o Observable) Sample(notifier Observable) Observable {
-	op := sampleOperator{
-		source:   o.Op,
-		notifier: notifier,
-	}
-	return Observable{op}
+	op := sampleOperator{notifier}
+	return o.Lift(op.Call)
 }

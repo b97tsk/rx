@@ -6,29 +6,19 @@ import (
 )
 
 type auditTimeOperator struct {
-	source    Operator
 	duration  time.Duration
 	scheduler Scheduler
 }
 
-func (op auditTimeOperator) ApplyOptions(options []Option) Operator {
-	for _, opt := range options {
-		switch t := opt.(type) {
-		case schedulerOption:
-			op.scheduler = t.Value
-		default:
-			panic(ErrUnsupportedOption)
-		}
-	}
-	return op
-}
-
-func (op auditTimeOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
+func (op auditTimeOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	scheduleCtx := canceledCtx
 	scheduleDone := scheduleCtx.Done()
-	try := cancellableLocker{}
-	latestValue := interface{}(nil)
+
+	var (
+		latestValue interface{}
+		try         cancellableLocker
+	)
 
 	doSchedule := func() {
 		select {
@@ -46,7 +36,7 @@ func (op auditTimeOperator) Call(ctx context.Context, ob Observer) (context.Cont
 		scheduleDone = scheduleCtx.Done()
 	}
 
-	op.source.Call(ctx, func(t Notification) {
+	source.Subscribe(ctx, func(t Notification) {
 		if try.Lock() {
 			switch {
 			case t.HasValue:
@@ -74,10 +64,6 @@ func (op auditTimeOperator) Call(ctx context.Context, ob Observer) (context.Cont
 // When it sees a source values, it ignores that plus the next ones for a
 // duration, and then it emits the most recent value from the source.
 func (o Observable) AuditTime(duration time.Duration) Observable {
-	op := auditTimeOperator{
-		source:    o.Op,
-		duration:  duration,
-		scheduler: DefaultScheduler,
-	}
-	return Observable{op}
+	op := auditTimeOperator{duration, DefaultScheduler}
+	return o.Lift(op.Call)
 }

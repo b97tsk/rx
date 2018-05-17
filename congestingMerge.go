@@ -6,37 +6,27 @@ import (
 )
 
 type congestingMergeOperator struct {
-	source     Operator
 	project    func(interface{}, int) Observable
 	concurrent int
 }
 
-func (op congestingMergeOperator) ApplyOptions(options []Option) Operator {
-	for _, opt := range options {
-		switch t := opt.(type) {
-		case concurrentOption:
-			op.concurrent = t.Value
-		default:
-			panic(ErrUnsupportedOption)
-		}
-	}
-	return op
-}
-
-func (op congestingMergeOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
+func (op congestingMergeOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
-	mu := sync.Mutex{}
-	outerIndex := -1
-	activeCount := 0
-	completeSignal := make(chan struct{}, 1)
+
+	var (
+		mu             sync.Mutex
+		outerIndex     = -1
+		activeCount    = 0
+		completeSignal = make(chan struct{}, 1)
+	)
 
 	concurrent := op.concurrent
 	if concurrent == 0 {
 		concurrent = -1
 	}
 
-	op.source.Call(ctx, func(t Notification) {
+	source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			mu.Lock()
@@ -130,12 +120,8 @@ func CongestingMerge(observables ...interface{}) Observable {
 //
 // It's like MergeAll, but it may congest the source due to concurrent limit.
 func (o Observable) CongestingMergeAll() Observable {
-	op := congestingMergeOperator{
-		source:     o.Op,
-		project:    projectToObservable,
-		concurrent: -1,
-	}
-	return Observable{op}.Mutex()
+	op := congestingMergeOperator{projectToObservable, -1}
+	return o.Lift(op.Call).Mutex()
 }
 
 // CongestingMergeMap creates an Observable that projects each source value to
@@ -146,12 +132,8 @@ func (o Observable) CongestingMergeAll() Observable {
 //
 // It's like MergeMap, but it may congest the source due to concurrent limit.
 func (o Observable) CongestingMergeMap(project func(interface{}, int) Observable) Observable {
-	op := congestingMergeOperator{
-		source:     o.Op,
-		project:    project,
-		concurrent: -1,
-	}
-	return Observable{op}.Mutex()
+	op := congestingMergeOperator{project, -1}
+	return o.Lift(op.Call).Mutex()
 }
 
 // CongestingMergeMapTo creates an Observable that projects each source value
@@ -163,10 +145,5 @@ func (o Observable) CongestingMergeMap(project func(interface{}, int) Observable
 //
 // It's like MergeMapTo, but it may congest the source due to concurrent limit.
 func (o Observable) CongestingMergeMapTo(inner Observable) Observable {
-	op := congestingMergeOperator{
-		source:     o.Op,
-		project:    func(interface{}, int) Observable { return inner },
-		concurrent: -1,
-	}
-	return Observable{op}.Mutex()
+	return o.CongestingMergeMap(func(interface{}, int) Observable { return inner })
 }

@@ -7,38 +7,27 @@ import (
 )
 
 type expandOperator struct {
-	source     Operator
 	project    func(interface{}, int) Observable
 	concurrent int
 }
 
-func (op expandOperator) ApplyOptions(options []Option) Operator {
-	for _, opt := range options {
-		switch t := opt.(type) {
-		case concurrentOption:
-			op.concurrent = t.Value
-		default:
-			panic(ErrUnsupportedOption)
-		}
-	}
-	return op
-}
-
-func (op expandOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
+func (op expandOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
-	mu := sync.Mutex{}
-	outerIndex := -1
-	activeCount := 0
-	buffer := list.List{}
-	completeSignal := make(chan struct{}, 1)
+
+	var (
+		mu             sync.Mutex
+		outerIndex     = -1
+		activeCount    = 0
+		buffer         list.List
+		completeSignal = make(chan struct{}, 1)
+		doNextLocked   func()
+	)
 
 	concurrent := op.concurrent
 	if concurrent == 0 {
 		concurrent = -1
 	}
-
-	var doNextLocked func()
 
 	doNextLocked = func() {
 		outerValue := buffer.Remove(buffer.Front())
@@ -87,7 +76,7 @@ func (op expandOperator) Call(ctx context.Context, ob Observer) (context.Context
 		})
 	}
 
-	op.source.Call(ctx, func(t Notification) {
+	source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			mu.Lock()
@@ -138,10 +127,6 @@ func (op expandOperator) Call(ctx context.Context, ob Observer) (context.Context
 // It's similar to MergeMap, but applies the projection function to every
 // source value as well as every output value. It's recursive.
 func (o Observable) Expand(project func(interface{}, int) Observable) Observable {
-	op := expandOperator{
-		source:     o.Op,
-		project:    project,
-		concurrent: -1,
-	}
-	return Observable{op}.Mutex()
+	op := expandOperator{project, -1}
+	return o.Lift(op.Call).Mutex()
 }

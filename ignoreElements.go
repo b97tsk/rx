@@ -4,12 +4,10 @@ import (
 	"context"
 )
 
-type ignoreElementsOperator struct {
-	source Operator
-}
+type ignoreElementsOperator struct{}
 
-func (op ignoreElementsOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
-	return op.source.Call(ctx, func(t Notification) {
+func (op ignoreElementsOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+	return source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 		case t.HasError:
@@ -23,6 +21,6 @@ func (op ignoreElementsOperator) Call(ctx context.Context, ob Observer) (context
 // IgnoreElements creates an Observable that ignores all items emitted by the
 // source Observable and only passes calls of Complete or Error.
 func (o Observable) IgnoreElements() Observable {
-	op := ignoreElementsOperator{o.Op}
-	return Observable{op}
+	op := ignoreElementsOperator{}
+	return o.Lift(op.Call)
 }

@@ -8,7 +8,6 @@ import (
 )
 
 type delayOperator struct {
-	source    Operator
 	timeout   time.Duration
 	scheduler Scheduler
 }
@@ -18,27 +17,18 @@ type delayValue struct {
 	Notification
 }
 
-func (op delayOperator) ApplyOptions(options []Option) Operator {
-	for _, opt := range options {
-		switch t := opt.(type) {
-		case schedulerOption:
-			op.scheduler = t.Value
-		default:
-			panic(ErrUnsupportedOption)
-		}
-	}
-	return op
-}
-
-func (op delayOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
+func (op delayOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
-	mu := sync.Mutex{}
-	queue := list.List{}
+
 	scheduleCtx := canceledCtx
 	scheduleDone := scheduleCtx.Done()
 
-	var doSchedule func(time.Duration)
+	var (
+		mu         sync.Mutex
+		queue      list.List
+		doSchedule func(time.Duration)
+	)
 
 	doSchedule = func(timeout time.Duration) {
 		select {
@@ -78,7 +68,7 @@ func (op delayOperator) Call(ctx context.Context, ob Observer) (context.Context,
 		scheduleDone = scheduleCtx.Done()
 	}
 
-	op.source.Call(ctx, func(t Notification) {
+	source.Subscribe(ctx, func(t Notification) {
 		mu.Lock()
 		defer mu.Unlock()
 		switch {
@@ -107,10 +97,6 @@ func (op delayOperator) Call(ctx context.Context, ob Observer) (context.Context,
 // Delay delays the emission of items from the source Observable by a given
 // timeout.
 func (o Observable) Delay(timeout time.Duration) Observable {
-	op := delayOperator{
-		source:    o.Op,
-		timeout:   timeout,
-		scheduler: DefaultScheduler,
-	}
-	return Observable{op}
+	op := delayOperator{timeout, DefaultScheduler}
+	return o.Lift(op.Call)
 }

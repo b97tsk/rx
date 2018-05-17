@@ -4,15 +4,15 @@ import (
 	"context"
 )
 
-type toObservablesOperator struct {
-	source Operator
-}
+type toObservablesOperator struct{}
 
-func (op toObservablesOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
+func (op toObservablesOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
-	observables := []Observable(nil)
 
-	var mutableObserver Observer
+	var (
+		observables     []Observable
+		mutableObserver Observer
+	)
 
 	mutableObserver = func(t Notification) {
 		switch {
@@ -34,7 +34,7 @@ func (op toObservablesOperator) Call(ctx context.Context, ob Observer) (context.
 		}
 	}
 
-	op.source.Call(ctx, func(t Notification) { t.Observe(mutableObserver) })
+	source.Subscribe(ctx, func(t Notification) { t.Observe(mutableObserver) })
 
 	return ctx, cancel
 }
@@ -43,6 +43,6 @@ func (op toObservablesOperator) Call(ctx context.Context, ob Observer) (context.
 // source emits, then emits them as a slice of Observable when the source
 // completes.
 func (o Observable) ToObservables() Observable {
-	op := toObservablesOperator{o.Op}
-	return Observable{op}
+	op := toObservablesOperator{}
+	return o.Lift(op.Call)
 }

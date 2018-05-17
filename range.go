@@ -11,7 +11,7 @@ type rangeOperator struct {
 	scheduler Scheduler
 }
 
-func (op rangeOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
+func (op rangeOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
 	if op.scheduler != nil {
 		ctx, cancel := context.WithCancel(ctx)
 		index := op.low
@@ -48,17 +48,12 @@ func (op rangeOperator) Call(ctx context.Context, ob Observer) (context.Context,
 // specified range.
 func Range(low, high int) Observable {
 	op := rangeOperator{low: low, high: high}
-	return Observable{op}
+	return Observable{}.Lift(op.Call)
 }
 
 // RangeOn creates an Observable that emits a sequence of integers within a
 // specified range, on the specified Scheduler.
 func RangeOn(low, high int, s Scheduler, delay time.Duration) Observable {
-	op := rangeOperator{
-		low:       low,
-		high:      high,
-		delay:     delay,
-		scheduler: s,
-	}
-	return Observable{op}
+	op := rangeOperator{low, high, delay, s}
+	return Observable{}.Lift(op.Call)
 }

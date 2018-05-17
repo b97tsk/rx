@@ -6,28 +6,18 @@ import (
 )
 
 type sampleTimeOperator struct {
-	source    Operator
 	interval  time.Duration
 	scheduler Scheduler
 }
 
-func (op sampleTimeOperator) ApplyOptions(options []Option) Operator {
-	for _, opt := range options {
-		switch t := opt.(type) {
-		case schedulerOption:
-			op.scheduler = t.Value
-		default:
-			panic(ErrUnsupportedOption)
-		}
-	}
-	return op
-}
-
-func (op sampleTimeOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
+func (op sampleTimeOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
-	try := cancellableLocker{}
-	latestValue := interface{}(nil)
-	hasLatestValue := false
+
+	var (
+		latestValue    interface{}
+		hasLatestValue bool
+		try            cancellableLocker
+	)
 
 	op.scheduler.Schedule(ctx, op.interval, func() {
 		if try.Lock() {
@@ -39,7 +29,7 @@ func (op sampleTimeOperator) Call(ctx context.Context, ob Observer) (context.Con
 		}
 	})
 
-	op.source.Call(ctx, func(t Notification) {
+	source.Subscribe(ctx, func(t Notification) {
 		if try.Lock() {
 			switch {
 			case t.HasValue:
@@ -64,10 +54,6 @@ func (op sampleTimeOperator) Call(ctx context.Context, ob Observer) (context.Con
 // SampleTime creates an Observable that emits the most recently emitted value
 // from the source Observable within periodic time intervals.
 func (o Observable) SampleTime(interval time.Duration) Observable {
-	op := sampleTimeOperator{
-		source:    o.Op,
-		interval:  interval,
-		scheduler: DefaultScheduler,
-	}
-	return Observable{op}
+	op := sampleTimeOperator{interval, DefaultScheduler}
+	return o.Lift(op.Call)
 }

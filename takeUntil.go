@@ -5,11 +5,10 @@ import (
 )
 
 type takeUntilOperator struct {
-	source   Operator
 	notifier Observable
 }
 
-func (op takeUntilOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
+func (op takeUntilOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 
@@ -31,7 +30,7 @@ func (op takeUntilOperator) Call(ctx context.Context, ob Observer) (context.Cont
 	default:
 	}
 
-	op.source.Call(ctx, withFinalizer(ob, cancel))
+	source.Subscribe(ctx, withFinalizer(ob, cancel))
 
 	return ctx, cancel
 }
@@ -42,9 +41,6 @@ func (op takeUntilOperator) Call(ctx context.Context, ob Observer) (context.Cont
 // TakeUntil lets values pass until a second Observable, notifier, emits
 // something. Then, it completes.
 func (o Observable) TakeUntil(notifier Observable) Observable {
-	op := takeUntilOperator{
-		source:   o.Op,
-		notifier: notifier,
-	}
-	return Observable{op}.Mutex()
+	op := takeUntilOperator{notifier}
+	return o.Lift(op.Call).Mutex()
 }

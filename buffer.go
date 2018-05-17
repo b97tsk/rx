@@ -5,15 +5,17 @@ import (
 )
 
 type bufferOperator struct {
-	source   Operator
 	notifier Observable
 }
 
-func (op bufferOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
+func (op bufferOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
-	try := cancellableLocker{}
-	buffer := []interface{}(nil)
+
+	var (
+		buffer []interface{}
+		try    cancellableLocker
+	)
 
 	op.notifier.Subscribe(ctx, func(t Notification) {
 		if try.Lock() {
@@ -41,7 +43,7 @@ func (op bufferOperator) Call(ctx context.Context, ob Observer) (context.Context
 	default:
 	}
 
-	op.source.Call(ctx, func(t Notification) {
+	source.Subscribe(ctx, func(t Notification) {
 		if try.Lock() {
 			switch {
 			case t.HasValue:
@@ -67,9 +69,6 @@ func (op bufferOperator) Call(ctx context.Context, ob Observer) (context.Context
 // Buffer collects values from the past as a slice, and emits that slice
 // only when another Observable emits.
 func (o Observable) Buffer(notifier Observable) Observable {
-	op := bufferOperator{
-		source:   o.Op,
-		notifier: notifier,
-	}
-	return Observable{op}
+	op := bufferOperator{notifier}
+	return o.Lift(op.Call)
 }

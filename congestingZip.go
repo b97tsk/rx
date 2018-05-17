@@ -8,7 +8,7 @@ type congestingZipOperator struct {
 	observables []Observable
 }
 
-func (op congestingZipOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
+func (op congestingZipOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 
@@ -60,11 +60,9 @@ func (op congestingZipOperator) Call(ctx context.Context, ob Observer) (context.
 	return ctx, cancel
 }
 
-type congestingZipAllOperator struct {
-	source Operator
-}
+type congestingZipAllOperator struct{}
 
-func (op congestingZipAllOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
+func (op congestingZipAllOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	toObservablesOperator(op).Call(ctx, func(t Notification) {
@@ -79,7 +77,7 @@ func (op congestingZipAllOperator) Call(ctx context.Context, ob Observer) (conte
 			}
 
 			zip := congestingZipOperator{observables}
-			zip.Call(ctx, withFinalizer(ob, cancel))
+			zip.Call(ctx, withFinalizer(ob, cancel), Observable{})
 
 		case t.HasError:
 			ob.Error(t.Value.(error))
@@ -87,7 +85,7 @@ func (op congestingZipAllOperator) Call(ctx context.Context, ob Observer) (conte
 
 		default:
 		}
-	})
+	}, source)
 
 	return ctx, cancel
 }
@@ -101,7 +99,7 @@ func CongestingZip(observables ...Observable) Observable {
 		return Empty()
 	}
 	op := congestingZipOperator{observables}
-	return Observable{op}
+	return Observable{}.Lift(op.Call)
 }
 
 // CongestingZipAll converts a higher-order Observable into a first-order
@@ -113,6 +111,6 @@ func CongestingZip(observables ...Observable) Observable {
 //
 // It's like ZipAll, but it congests subscribed Observables.
 func (o Observable) CongestingZipAll() Observable {
-	op := congestingZipAllOperator{o.Op}
-	return Observable{op}
+	op := congestingZipAllOperator{}
+	return o.Lift(op.Call)
 }

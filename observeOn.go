@@ -7,17 +7,19 @@ import (
 )
 
 type observeOnOperator struct {
-	source    Operator
 	delay     time.Duration
 	scheduler Scheduler
 }
 
-func (op observeOnOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
+func (op observeOnOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
-	try := cancellableLocker{}
-	queue := list.List{}
 
-	op.source.Call(ctx, func(t Notification) {
+	var (
+		queue list.List
+		try   cancellableLocker
+	)
+
+	source.Subscribe(ctx, func(t Notification) {
 		if try.Lock() {
 			defer try.Unlock()
 			queue.PushBack(t)
@@ -48,10 +50,6 @@ func (op observeOnOperator) Call(ctx context.Context, ob Observer) (context.Cont
 // ObserveOn creates an Observable that re-emits all notifications from source
 // Observable with specified scheduler.
 func (o Observable) ObserveOn(s Scheduler, delay time.Duration) Observable {
-	op := observeOnOperator{
-		source:    o.Op,
-		delay:     delay,
-		scheduler: s,
-	}
-	return Observable{op}
+	op := observeOnOperator{delay, s}
+	return o.Lift(op.Call)
 }

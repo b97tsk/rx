@@ -7,40 +7,29 @@ import (
 )
 
 type mergeScanOperator struct {
-	source      Operator
 	accumulator func(interface{}, interface{}) Observable
 	seed        interface{}
 	concurrent  int
 }
 
-func (op mergeScanOperator) ApplyOptions(options []Option) Operator {
-	for _, opt := range options {
-		switch t := opt.(type) {
-		case concurrentOption:
-			op.concurrent = t.Value
-		default:
-			panic(ErrUnsupportedOption)
-		}
-	}
-	return op
-}
-
-func (op mergeScanOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
+func (op mergeScanOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
-	mu := sync.Mutex{}
-	activeCount := 0
-	seed := op.seed
-	hasValue := false
-	buffer := list.List{}
-	completeSignal := make(chan struct{}, 1)
+
+	var (
+		mu             sync.Mutex
+		activeCount    = 0
+		seed           = op.seed
+		hasValue       bool
+		buffer         list.List
+		completeSignal = make(chan struct{}, 1)
+		doNextLocked   func()
+	)
 
 	concurrent := op.concurrent
 	if concurrent == 0 {
 		concurrent = -1
 	}
-
-	var doNextLocked func()
 
 	doNextLocked = func() {
 		outerValue := buffer.Remove(buffer.Front())
@@ -82,7 +71,7 @@ func (op mergeScanOperator) Call(ctx context.Context, ob Observer) (context.Cont
 		})
 	}
 
-	op.source.Call(ctx, func(t Notification) {
+	source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			mu.Lock()
@@ -140,11 +129,6 @@ func (op mergeScanOperator) Call(ctx context.Context, ob Observer) (context.Cont
 // It's like Scan, but the Observables returned by the accumulator are merged
 // into the outer Observable.
 func (o Observable) MergeScan(accumulator func(interface{}, interface{}) Observable, seed interface{}) Observable {
-	op := mergeScanOperator{
-		source:      o.Op,
-		accumulator: accumulator,
-		seed:        seed,
-		concurrent:  -1,
-	}
-	return Observable{op}.Mutex()
+	op := mergeScanOperator{accumulator, seed, -1}
+	return o.Lift(op.Call).Mutex()
 }

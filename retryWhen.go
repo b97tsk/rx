@@ -5,16 +5,17 @@ import (
 )
 
 type retryWhenOperator struct {
-	source   Operator
 	notifier func(Observable) Observable
 }
 
-func (op retryWhenOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
+func (op retryWhenOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	sourceCtx, sourceCancel := canceledCtx, noopFunc
 
-	var subject *Subject
-	var observer Observer
+	var (
+		subject  *Subject
+		observer Observer
+	)
 
 	observer = func(t Notification) {
 		switch {
@@ -30,7 +31,7 @@ func (op retryWhenOperator) Call(ctx context.Context, ob Observer) (context.Cont
 						sourceCancel()
 
 						sourceCtx, sourceCancel = context.WithCancel(ctx)
-						op.source.Call(sourceCtx, observer)
+						source.Subscribe(sourceCtx, observer)
 
 					case t.HasError:
 						ob.Error(t.Value.(error))
@@ -50,7 +51,7 @@ func (op retryWhenOperator) Call(ctx context.Context, ob Observer) (context.Cont
 	}
 
 	sourceCtx, sourceCancel = context.WithCancel(ctx)
-	op.source.Call(sourceCtx, observer)
+	source.Subscribe(sourceCtx, observer)
 
 	return ctx, cancel
 }
@@ -62,9 +63,6 @@ func (op retryWhenOperator) Call(ctx context.Context, ob Observer) (context.Cont
 // will call Complete or Error on the child subscription. Otherwise this method
 // will resubscribe to the source Observable.
 func (o Observable) RetryWhen(notifier func(Observable) Observable) Observable {
-	op := retryWhenOperator{
-		source:   o.Op,
-		notifier: notifier,
-	}
-	return Observable{op}.Mutex()
+	op := retryWhenOperator{notifier}
+	return o.Lift(op.Call).Mutex()
 }

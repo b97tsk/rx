@@ -7,38 +7,27 @@ import (
 )
 
 type mergeMapOperator struct {
-	source     Operator
 	project    func(interface{}, int) Observable
 	concurrent int
 }
 
-func (op mergeMapOperator) ApplyOptions(options []Option) Operator {
-	for _, opt := range options {
-		switch t := opt.(type) {
-		case concurrentOption:
-			op.concurrent = t.Value
-		default:
-			panic(ErrUnsupportedOption)
-		}
-	}
-	return op
-}
-
-func (op mergeMapOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
+func (op mergeMapOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
-	mu := sync.Mutex{}
-	outerIndex := -1
-	activeCount := 0
-	buffer := list.List{}
-	completeSignal := make(chan struct{}, 1)
+
+	var (
+		mu             sync.Mutex
+		outerIndex     = -1
+		activeCount    = 0
+		buffer         list.List
+		completeSignal = make(chan struct{}, 1)
+		doNextLocked   func()
+	)
 
 	concurrent := op.concurrent
 	if concurrent == 0 {
 		concurrent = -1
 	}
-
-	var doNextLocked func()
 
 	doNextLocked = func() {
 		outerValue := buffer.Remove(buffer.Front())
@@ -77,7 +66,7 @@ func (op mergeMapOperator) Call(ctx context.Context, ob Observer) (context.Conte
 		})
 	}
 
-	op.source.Call(ctx, func(t Notification) {
+	source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			mu.Lock()
@@ -135,12 +124,8 @@ func Merge(observables ...interface{}) Observable {
 // which concurrently delivers all values that are emitted on the inner
 // Observables.
 func (o Observable) MergeAll() Observable {
-	op := mergeMapOperator{
-		source:     o.Op,
-		project:    projectToObservable,
-		concurrent: -1,
-	}
-	return Observable{op}.Mutex()
+	op := mergeMapOperator{projectToObservable, -1}
+	return o.Lift(op.Call).Mutex()
 }
 
 // MergeMap creates an Observable that projects each source value to an
@@ -149,12 +134,8 @@ func (o Observable) MergeAll() Observable {
 // MergeMap maps each value to an Observable, then flattens all of these inner
 // Observables using MergeAll.
 func (o Observable) MergeMap(project func(interface{}, int) Observable) Observable {
-	op := mergeMapOperator{
-		source:     o.Op,
-		project:    project,
-		concurrent: -1,
-	}
-	return Observable{op}.Mutex()
+	op := mergeMapOperator{project, -1}
+	return o.Lift(op.Call).Mutex()
 }
 
 // MergeMapTo creates an Observable that projects each source value to the same
@@ -162,10 +143,5 @@ func (o Observable) MergeMap(project func(interface{}, int) Observable) Observab
 //
 // It's like MergeMap, but maps each value always to the same inner Observable.
 func (o Observable) MergeMapTo(inner Observable) Observable {
-	op := mergeMapOperator{
-		source:     o.Op,
-		project:    func(interface{}, int) Observable { return inner },
-		concurrent: -1,
-	}
-	return Observable{op}.Mutex()
+	return o.MergeMap(func(interface{}, int) Observable { return inner })
 }

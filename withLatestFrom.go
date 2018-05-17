@@ -13,7 +13,7 @@ type withLatestFromValue struct {
 	Notification
 }
 
-func (op withLatestFromOperator) Call(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
+func (op withLatestFromOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 
@@ -94,5 +94,5 @@ func (op withLatestFromOperator) Call(ctx context.Context, ob Observer) (context
 func (o Observable) WithLatestFrom(observables ...Observable) Observable {
 	observables = append([]Observable{o}, observables...)
 	op := withLatestFromOperator{observables}
-	return Observable{op}
+	return Observable{}.Lift(op.Call)
 }
