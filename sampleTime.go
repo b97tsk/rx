@@ -6,8 +6,7 @@ import (
 )
 
 type sampleTimeOperator struct {
-	interval  time.Duration
-	scheduler Scheduler
+	interval time.Duration
 }
 
 func (op sampleTimeOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
@@ -19,7 +18,7 @@ func (op sampleTimeOperator) Call(ctx context.Context, sink Observer, source Obs
 		try            cancellableLocker
 	)
 
-	op.scheduler.Schedule(ctx, op.interval, func() {
+	schedule(ctx, op.interval, func() {
 		if try.Lock() {
 			defer try.Unlock()
 			if hasLatestValue {
@@ -50,6 +49,6 @@ func (op sampleTimeOperator) Call(ctx context.Context, sink Observer, source Obs
 // SampleTime creates an Observable that emits the most recently emitted value
 // from the source Observable within periodic time intervals.
 func (o Observable) SampleTime(interval time.Duration) Observable {
-	op := sampleTimeOperator{interval, DefaultScheduler}
+	op := sampleTimeOperator{interval}
 	return o.Lift(op.Call)
 }

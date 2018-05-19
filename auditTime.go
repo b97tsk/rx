@@ -6,8 +6,7 @@ import (
 )
 
 type auditTimeOperator struct {
-	duration  time.Duration
-	scheduler Scheduler
+	duration time.Duration
 }
 
 func (op auditTimeOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
@@ -27,7 +26,7 @@ func (op auditTimeOperator) Call(ctx context.Context, sink Observer, source Obse
 			return
 		}
 
-		scheduleCtx, _ = op.scheduler.ScheduleOnce(ctx, op.duration, func() {
+		scheduleCtx, _ = scheduleOnce(ctx, op.duration, func() {
 			if try.Lock() {
 				defer try.Unlock()
 				sink.Next(latestValue)
@@ -60,6 +59,6 @@ func (op auditTimeOperator) Call(ctx context.Context, sink Observer, source Obse
 // When it sees a source values, it ignores that plus the next ones for a
 // duration, and then it emits the most recent value from the source.
 func (o Observable) AuditTime(duration time.Duration) Observable {
-	op := auditTimeOperator{duration, DefaultScheduler}
+	op := auditTimeOperator{duration}
 	return o.Lift(op.Call)
 }

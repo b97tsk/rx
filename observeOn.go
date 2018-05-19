@@ -7,8 +7,7 @@ import (
 )
 
 type observeOnOperator struct {
-	delay     time.Duration
-	scheduler Scheduler
+	duration time.Duration
 }
 
 func (op observeOnOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
@@ -23,10 +22,9 @@ func (op observeOnOperator) Call(ctx context.Context, sink Observer, source Obse
 		if try.Lock() {
 			defer try.Unlock()
 			queue.PushBack(t)
-			op.scheduler.ScheduleOnce(ctx, op.delay, func() {
+			scheduleOnce(ctx, op.duration, func() {
 				if try.Lock() {
-					t := queue.Remove(queue.Front()).(Notification)
-					switch {
+					switch t := queue.Remove(queue.Front()).(Notification); {
 					case t.HasValue:
 						defer try.Unlock()
 						sink(t)
@@ -43,9 +41,9 @@ func (op observeOnOperator) Call(ctx context.Context, sink Observer, source Obse
 	return ctx, cancel
 }
 
-// ObserveOn creates an Observable that re-emits all notifications from source
-// Observable with specified scheduler.
-func (o Observable) ObserveOn(s Scheduler, delay time.Duration) Observable {
-	op := observeOnOperator{delay, s}
+// ObserveOn creates an Observable that emits each notification from the source
+// Observable after waits for the duration to elapse.
+func (o Observable) ObserveOn(d time.Duration) Observable {
+	op := observeOnOperator{d}
 	return o.Lift(op.Call)
 }

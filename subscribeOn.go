@@ -6,23 +6,22 @@ import (
 )
 
 type subscribeOnOperator struct {
-	delay     time.Duration
-	scheduler Scheduler
+	duration time.Duration
 }
 
 func (op subscribeOnOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
-	op.scheduler.ScheduleOnce(ctx, op.delay, func() {
+	scheduleOnce(ctx, op.duration, func() {
 		source.Subscribe(ctx, withFinalizer(sink, cancel))
 	})
 
 	return ctx, cancel
 }
 
-// SubscribeOn creates an Observable that asynchronously subscribes Observers
-// to this Observable on the specified Scheduler.
-func (o Observable) SubscribeOn(s Scheduler, delay time.Duration) Observable {
-	op := subscribeOnOperator{delay, s}
+// SubscribeOn creates an Observable that asynchronously subscribes the source
+// Observable after waits for the duration to elapse.
+func (o Observable) SubscribeOn(d time.Duration) Observable {
+	op := subscribeOnOperator{d}
 	return o.Lift(op.Call)
 }

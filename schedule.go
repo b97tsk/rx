@@ -5,13 +5,7 @@ import (
 	"time"
 )
 
-type timeScheduler struct{}
-
-func (timeScheduler) Now() time.Time {
-	return time.Now()
-}
-
-func (timeScheduler) Schedule(ctx context.Context, period time.Duration, work func()) (context.Context, context.CancelFunc) {
+func schedule(ctx context.Context, period time.Duration, work func()) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 
@@ -57,7 +51,7 @@ func (timeScheduler) Schedule(ctx context.Context, period time.Duration, work fu
 	return ctx, cancel
 }
 
-func (timeScheduler) ScheduleOnce(ctx context.Context, delay time.Duration, work func()) (context.Context, context.CancelFunc) {
+func scheduleOnce(ctx context.Context, delay time.Duration, work func()) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 

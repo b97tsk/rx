@@ -6,8 +6,7 @@ import (
 )
 
 type throttleTimeOperator struct {
-	duration  time.Duration
-	scheduler Scheduler
+	duration time.Duration
 }
 
 func (op throttleTimeOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
@@ -26,7 +25,7 @@ func (op throttleTimeOperator) Call(ctx context.Context, sink Observer, source O
 
 			sink(t)
 
-			scheduleCtx, _ = op.scheduler.ScheduleOnce(ctx, op.duration, doNothing)
+			scheduleCtx, _ = scheduleOnce(ctx, op.duration, doNothing)
 			scheduleDone = scheduleCtx.Done()
 
 		default:
@@ -45,6 +44,6 @@ func (op throttleTimeOperator) Call(ctx context.Context, sink Observer, source O
 // ThrottleTime lets a value pass, then ignores source values for the next
 // duration time.
 func (o Observable) ThrottleTime(duration time.Duration) Observable {
-	op := throttleTimeOperator{duration, DefaultScheduler}
+	op := throttleTimeOperator{duration}
 	return o.Lift(op.Call)
 }

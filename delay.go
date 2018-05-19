@@ -8,8 +8,7 @@ import (
 )
 
 type delayOperator struct {
-	timeout   time.Duration
-	scheduler Scheduler
+	timeout time.Duration
 }
 
 type delayValue struct {
@@ -37,7 +36,7 @@ func (op delayOperator) Call(ctx context.Context, sink Observer, source Observab
 			return
 		}
 
-		scheduleCtx, _ = op.scheduler.ScheduleOnce(ctx, timeout, func() {
+		scheduleCtx, _ = scheduleOnce(ctx, timeout, func() {
 			mu.Lock()
 			defer mu.Unlock()
 
@@ -48,7 +47,7 @@ func (op delayOperator) Call(ctx context.Context, sink Observer, source Observab
 				default:
 				}
 				t := e.Value.(delayValue)
-				now := op.scheduler.Now()
+				now := time.Now()
 				if t.Time.After(now) {
 					doSchedule(t.Time.Sub(now))
 					return
@@ -71,7 +70,7 @@ func (op delayOperator) Call(ctx context.Context, sink Observer, source Observab
 		switch {
 		case t.HasValue:
 			queue.PushBack(delayValue{
-				Time:         op.scheduler.Now().Add(op.timeout),
+				Time:         time.Now().Add(op.timeout),
 				Notification: t,
 			})
 			doSchedule(op.timeout)
@@ -82,7 +81,7 @@ func (op delayOperator) Call(ctx context.Context, sink Observer, source Observab
 			cancel()
 		default:
 			queue.PushBack(delayValue{
-				Time: op.scheduler.Now().Add(op.timeout),
+				Time: time.Now().Add(op.timeout),
 			})
 			doSchedule(op.timeout)
 		}
@@ -94,6 +93,6 @@ func (op delayOperator) Call(ctx context.Context, sink Observer, source Observab
 // Delay delays the emission of items from the source Observable by a given
 // timeout.
 func (o Observable) Delay(timeout time.Duration) Observable {
-	op := delayOperator{timeout, DefaultScheduler}
+	op := delayOperator{timeout}
 	return o.Lift(op.Call)
 }
