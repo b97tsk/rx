@@ -10,39 +10,39 @@ type elementAtOperator struct {
 	hasDefaultValue bool
 }
 
-func (op elementAtOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op elementAtOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	var (
-		index           = op.index
-		mutableObserver Observer
+		index    = op.index
+		observer Observer
 	)
 
-	mutableObserver = func(t Notification) {
+	observer = func(t Notification) {
 		switch {
 		case t.HasValue:
 			index--
 			if index == -1 {
-				mutableObserver = NopObserver
-				t.Observe(ob)
-				ob.Complete()
+				observer = NopObserver
+				sink(t)
+				sink.Complete()
 				cancel()
 			}
 		case t.HasError:
-			t.Observe(ob)
+			sink(t)
 			cancel()
 		default:
 			if op.hasDefaultValue {
-				ob.Next(op.defaultValue)
-				ob.Complete()
+				sink.Next(op.defaultValue)
+				sink.Complete()
 			} else {
-				ob.Error(ErrOutOfRange)
+				sink.Error(ErrOutOfRange)
 			}
 			cancel()
 		}
 	}
 
-	source.Subscribe(ctx, func(t Notification) { t.Observe(mutableObserver) })
+	source.Subscribe(ctx, observer.Notify)
 
 	return ctx, cancel
 }

@@ -8,7 +8,7 @@ type mapOperator struct {
 	project func(interface{}, int) interface{}
 }
 
-func (op mapOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op mapOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	var outerIndex = -1
 	return source.Subscribe(ctx, func(t Notification) {
 		switch {
@@ -16,10 +16,10 @@ func (op mapOperator) Call(ctx context.Context, ob Observer, source Observable) 
 			outerIndex++
 
 			val := op.project(t.Value, outerIndex)
-			ob.Next(val)
+			sink.Next(val)
 
 		default:
-			t.Observe(ob)
+			sink(t)
 		}
 	})
 }

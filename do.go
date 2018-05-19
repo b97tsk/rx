@@ -5,19 +5,19 @@ import (
 )
 
 type doOperator struct {
-	target Observer
+	sink Observer
 }
 
-func (op doOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op doOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	return source.Subscribe(ctx, func(t Notification) {
-		t.Observe(op.target)
-		t.Observe(ob)
+		op.sink(t)
+		sink(t)
 	})
 }
 
 // Do creates an Observable that mirrors the source Observable, but perform
 // a side effect before each emission.
-func (o Observable) Do(target Observer) Observable {
-	op := doOperator{target}
+func (o Observable) Do(sink Observer) Observable {
+	op := doOperator{sink}
 	return o.Lift(op.Call)
 }

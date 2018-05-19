@@ -8,7 +8,7 @@ type congestingZipOperator struct {
 	observables []Observable
 }
 
-func (op congestingZipOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op congestingZipOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 
@@ -32,14 +32,14 @@ func (op congestingZipOperator) Call(ctx context.Context, ob Observer, source Ob
 					case t.HasValue:
 						nextValues[i] = t.Value
 					default:
-						t.Observe(ob)
+						sink(t)
 						cancel()
 						return
 					}
 				}
 			}
 
-			ob.Next(nextValues)
+			sink.Next(nextValues)
 		}
 	}()
 
@@ -58,7 +58,7 @@ func (op congestingZipOperator) Call(ctx context.Context, ob Observer, source Ob
 
 type congestingZipAllOperator struct{}
 
-func (op congestingZipAllOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op congestingZipAllOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	toObservablesOperator(op).Call(ctx, func(t Notification) {
@@ -67,16 +67,16 @@ func (op congestingZipAllOperator) Call(ctx context.Context, ob Observer, source
 			observables := t.Value.([]Observable)
 
 			if len(observables) == 0 {
-				ob.Complete()
+				sink.Complete()
 				cancel()
 				break
 			}
 
 			zip := congestingZipOperator{observables}
-			zip.Call(ctx, withFinalizer(ob, cancel), Observable{})
+			zip.Call(ctx, withFinalizer(sink, cancel), Observable{})
 
 		case t.HasError:
-			t.Observe(ob)
+			sink(t)
 			cancel()
 
 		default:

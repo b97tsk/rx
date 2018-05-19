@@ -6,7 +6,7 @@ import (
 
 var (
 	canceledCtx context.Context
-	noopFunc    = func() {}
+	doNothing   = func() {}
 )
 
 func init() {

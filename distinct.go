@@ -8,7 +8,7 @@ type distinctOperator struct {
 	keySelector func(interface{}) interface{}
 }
 
-func (op distinctOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op distinctOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	var keys = make(map[interface{}]struct{})
 	return source.Subscribe(ctx, func(t Notification) {
 		switch {
@@ -18,9 +18,9 @@ func (op distinctOperator) Call(ctx context.Context, ob Observer, source Observa
 				break
 			}
 			keys[key] = struct{}{}
-			t.Observe(ob)
+			sink(t)
 		default:
-			t.Observe(ob)
+			sink(t)
 		}
 	})
 }

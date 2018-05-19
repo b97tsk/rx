@@ -8,7 +8,7 @@ type sampleOperator struct {
 	notifier Observable
 }
 
-func (op sampleOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op sampleOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	var (
@@ -19,14 +19,14 @@ func (op sampleOperator) Call(ctx context.Context, ob Observer, source Observabl
 
 	op.notifier.Subscribe(ctx, func(t Notification) {
 		if t.HasError {
-			t.Observe(ob)
+			sink(t)
 			cancel()
 			return
 		}
 		if try.Lock() {
 			defer try.Unlock()
 			if hasLatestValue {
-				ob.Next(latestValue)
+				sink.Next(latestValue)
 				hasLatestValue = false
 			}
 		}
@@ -41,7 +41,7 @@ func (op sampleOperator) Call(ctx context.Context, ob Observer, source Observabl
 				try.Unlock()
 			default:
 				try.CancelAndUnlock()
-				t.Observe(ob)
+				sink(t)
 				cancel()
 			}
 		}

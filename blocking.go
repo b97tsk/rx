@@ -10,12 +10,12 @@ import (
 func (o Observable) BlockingFirst(ctx context.Context) (value interface{}, err error) {
 	ctx, cancel := context.WithCancel(ctx)
 
-	var mutableObserver Observer
+	var observer Observer
 
-	mutableObserver = func(t Notification) {
+	observer = func(t Notification) {
 		switch {
 		case t.HasValue:
-			mutableObserver = NopObserver
+			observer = NopObserver
 			value = t.Value
 			cancel()
 		case t.HasError:
@@ -27,7 +27,7 @@ func (o Observable) BlockingFirst(ctx context.Context) (value interface{}, err e
 		}
 	}
 
-	o.Subscribe(ctx, func(t Notification) { t.Observe(mutableObserver) })
+	o.Subscribe(ctx, observer.Notify)
 	<-ctx.Done()
 	return
 }
@@ -62,15 +62,15 @@ func (o Observable) BlockingSingle(ctx context.Context) (value interface{}, err 
 	ctx, cancel := context.WithCancel(ctx)
 
 	var (
-		hasValue        bool
-		mutableObserver Observer
+		hasValue bool
+		observer Observer
 	)
 
-	mutableObserver = func(t Notification) {
+	observer = func(t Notification) {
 		switch {
 		case t.HasValue:
 			if hasValue {
-				mutableObserver = NopObserver
+				observer = NopObserver
 				err = ErrNotSingle
 				cancel()
 			} else {
@@ -88,7 +88,7 @@ func (o Observable) BlockingSingle(ctx context.Context) (value interface{}, err 
 		}
 	}
 
-	o.Subscribe(ctx, func(t Notification) { t.Observe(mutableObserver) })
+	o.Subscribe(ctx, observer.Notify)
 	<-ctx.Done()
 	return
 }
@@ -96,12 +96,12 @@ func (o Observable) BlockingSingle(ctx context.Context) (value interface{}, err 
 // BlockingSubscribe subscribes the source Observable, returns only when the
 // source completes or emits an error; if the source completes, it returns nil;
 // if the source emits an error, it returns that error.
-func (o Observable) BlockingSubscribe(ctx context.Context, ob Observer) (err error) {
+func (o Observable) BlockingSubscribe(ctx context.Context, sink Observer) (err error) {
 	ctx, _ = o.Subscribe(ctx, func(t Notification) {
 		if t.HasError {
 			err = t.Value.(error)
 		}
-		t.Observe(ob)
+		sink(t)
 	})
 	<-ctx.Done()
 	return

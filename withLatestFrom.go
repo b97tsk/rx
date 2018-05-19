@@ -13,7 +13,7 @@ type withLatestFromValue struct {
 	Notification
 }
 
-func (op withLatestFromOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op withLatestFromOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 
@@ -51,10 +51,10 @@ func (op withLatestFromOperator) Call(ctx context.Context, ob Observer, source O
 						break
 					}
 
-					ob.Next(append([]interface{}(nil), values...))
+					sink.Next(append([]interface{}(nil), values...))
 
 				case t.HasError:
-					t.Observe(ob)
+					sink(t.Notification)
 					cancel()
 					return
 
@@ -63,7 +63,7 @@ func (op withLatestFromOperator) Call(ctx context.Context, ob Observer, source O
 						break
 					}
 
-					t.Observe(ob)
+					sink(t.Notification)
 					cancel()
 					return
 				}

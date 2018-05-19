@@ -8,18 +8,18 @@ type catchOperator struct {
 	selector func(error) Observable
 }
 
-func (op catchOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op catchOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
-			t.Observe(ob)
+			sink(t)
 		case t.HasError:
 			obsv := op.selector(t.Value.(error))
-			obsv.Subscribe(ctx, withFinalizer(ob, cancel))
+			obsv.Subscribe(ctx, withFinalizer(sink, cancel))
 		default:
-			t.Observe(ob)
+			sink(t)
 			cancel()
 		}
 	})

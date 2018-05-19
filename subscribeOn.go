@@ -10,11 +10,11 @@ type subscribeOnOperator struct {
 	scheduler Scheduler
 }
 
-func (op subscribeOnOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op subscribeOnOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	op.scheduler.ScheduleOnce(ctx, op.delay, func() {
-		source.Subscribe(ctx, withFinalizer(ob, cancel))
+		source.Subscribe(ctx, withFinalizer(sink, cancel))
 	})
 
 	return ctx, cancel

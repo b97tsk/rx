@@ -23,6 +23,6 @@ func (o Observable) Lift(op Operator) Observable {
 }
 
 // Subscribe invokes an execution of an Observable.
-func (o Observable) Subscribe(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
-	return o.op(ctx, ob, o.source)
+func (o Observable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
+	return o.op(ctx, sink, o.source)
 }

@@ -8,9 +8,9 @@ type throttleOperator struct {
 	durationSelector func(interface{}) Observable
 }
 
-func (op throttleOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op throttleOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
-	scheduleCtx, scheduleCancel := canceledCtx, noopFunc
+	scheduleCtx, scheduleCancel := canceledCtx, doNothing
 	scheduleDone := scheduleCtx.Done()
 
 	source.Subscribe(ctx, func(t Notification) {
@@ -22,28 +22,28 @@ func (op throttleOperator) Call(ctx context.Context, ob Observer, source Observa
 				return
 			}
 
-			t.Observe(ob)
+			sink(t)
 
 			scheduleCtx, scheduleCancel = context.WithCancel(ctx)
 			scheduleDone = scheduleCtx.Done()
 
-			var mutableObserver Observer
+			var observer Observer
 
-			mutableObserver = func(t Notification) {
+			observer = func(t Notification) {
 				if t.HasError {
-					t.Observe(ob)
+					sink(t)
 					cancel()
 					return
 				}
-				mutableObserver = NopObserver
+				observer = NopObserver
 				scheduleCancel()
 			}
 
 			obsv := op.durationSelector(t.Value)
-			obsv.Subscribe(scheduleCtx, func(t Notification) { t.Observe(mutableObserver) })
+			obsv.Subscribe(scheduleCtx, observer.Notify)
 
 		default:
-			t.Observe(ob)
+			sink(t)
 			cancel()
 		}
 	})

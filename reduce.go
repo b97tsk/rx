@@ -10,7 +10,7 @@ type reduceOperator struct {
 	hasSeed     bool
 }
 
-func (op reduceOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op reduceOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	var (
 		seed       = op.seed
 		hasSeed    = op.hasSeed
@@ -29,13 +29,13 @@ func (op reduceOperator) Call(ctx context.Context, ob Observer, source Observabl
 			}
 
 		case t.HasError:
-			t.Observe(ob)
+			sink(t)
 
 		default:
 			if hasSeed {
-				ob.Next(seed)
+				sink.Next(seed)
 			}
-			ob.Complete()
+			sink(t)
 		}
 	})
 }

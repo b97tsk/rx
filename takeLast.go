@@ -9,7 +9,7 @@ type takeLastOperator struct {
 	count int
 }
 
-func (op takeLastOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op takeLastOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	var buffer list.List
 	return source.Subscribe(ctx, func(t Notification) {
 		switch {
@@ -19,12 +19,12 @@ func (op takeLastOperator) Call(ctx context.Context, ob Observer, source Observa
 			}
 			buffer.PushBack(t.Value)
 		case t.HasError:
-			t.Observe(ob)
+			sink(t)
 		default:
 			for e := buffer.Front(); e != nil; e = e.Next() {
-				ob.Next(e.Value)
+				sink.Next(e.Value)
 			}
-			ob.Complete()
+			sink(t)
 		}
 	})
 }

@@ -8,7 +8,7 @@ type repeatOperator struct {
 	count int
 }
 
-func (op repeatOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op repeatOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	var (
@@ -19,13 +19,13 @@ func (op repeatOperator) Call(ctx context.Context, ob Observer, source Observabl
 	observer = func(t Notification) {
 		switch {
 		case t.HasValue:
-			t.Observe(ob)
+			sink(t)
 		case t.HasError:
-			t.Observe(ob)
+			sink(t)
 			cancel()
 		default:
 			if count == 0 {
-				t.Observe(ob)
+				sink(t)
 				cancel()
 			} else {
 				if count > 0 {

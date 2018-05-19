@@ -10,13 +10,13 @@ type emptyOperator struct {
 	scheduler Scheduler
 }
 
-func (op emptyOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op emptyOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	if op.scheduler != nil {
-		return op.scheduler.ScheduleOnce(ctx, op.delay, ob.Complete)
+		return op.scheduler.ScheduleOnce(ctx, op.delay, sink.Complete)
 	}
 
-	ob.Complete()
-	return canceledCtx, noopFunc
+	sink.Complete()
+	return canceledCtx, doNothing
 }
 
 // Empty creates an Observable that emits no items to the Observer and

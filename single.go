@@ -6,41 +6,41 @@ import (
 
 type singleOperator struct{}
 
-func (op singleOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op singleOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	var (
-		value           interface{}
-		hasValue        bool
-		mutableObserver Observer
+		value    interface{}
+		hasValue bool
+		observer Observer
 	)
 
-	mutableObserver = func(t Notification) {
+	observer = func(t Notification) {
 		switch {
 		case t.HasValue:
 			if hasValue {
-				mutableObserver = NopObserver
-				ob.Error(ErrNotSingle)
+				observer = NopObserver
+				sink.Error(ErrNotSingle)
 				cancel()
 			} else {
 				value = t.Value
 				hasValue = true
 			}
 		case t.HasError:
-			t.Observe(ob)
+			sink(t)
 			cancel()
 		default:
 			if hasValue {
-				ob.Next(value)
-				ob.Complete()
+				sink.Next(value)
+				sink.Complete()
 			} else {
-				ob.Error(ErrEmpty)
+				sink.Error(ErrEmpty)
 			}
 			cancel()
 		}
 	}
 
-	source.Subscribe(ctx, func(t Notification) { t.Observe(mutableObserver) })
+	source.Subscribe(ctx, observer.Notify)
 
 	return ctx, cancel
 }

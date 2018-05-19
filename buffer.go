@@ -8,7 +8,7 @@ type bufferOperator struct {
 	notifier Observable
 }
 
-func (op bufferOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op bufferOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 
@@ -24,10 +24,10 @@ func (op bufferOperator) Call(ctx context.Context, ob Observer, source Observabl
 				defer try.Unlock()
 				value := buffer
 				buffer = nil
-				ob.Next(value)
+				sink.Next(value)
 			default:
 				try.CancelAndUnlock()
-				t.Observe(ob)
+				sink(t)
 				cancel()
 			}
 		}
@@ -47,7 +47,7 @@ func (op bufferOperator) Call(ctx context.Context, ob Observer, source Observabl
 				buffer = append(buffer, t.Value)
 			default:
 				try.CancelAndUnlock()
-				t.Observe(ob)
+				sink(t)
 				cancel()
 			}
 		}

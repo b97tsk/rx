@@ -8,26 +8,26 @@ type skipOperator struct {
 	count int
 }
 
-func (op skipOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op skipOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	var (
-		count           = op.count
-		mutableObserver Observer
+		count    = op.count
+		observer Observer
 	)
 
-	mutableObserver = func(t Notification) {
+	observer = func(t Notification) {
 		switch {
 		case t.HasValue:
 			if count > 1 {
 				count--
 			} else {
-				mutableObserver = ob
+				observer = sink
 			}
 		default:
-			t.Observe(ob)
+			sink(t)
 		}
 	}
 
-	return source.Subscribe(ctx, func(t Notification) { t.Observe(mutableObserver) })
+	return source.Subscribe(ctx, observer.Notify)
 }
 
 // Skip creates an Observable that skips the first count items emitted by the

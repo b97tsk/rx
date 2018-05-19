@@ -8,7 +8,7 @@ type retryOperator struct {
 	count int
 }
 
-func (op retryOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op retryOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	var (
@@ -19,10 +19,10 @@ func (op retryOperator) Call(ctx context.Context, ob Observer, source Observable
 	observer = func(t Notification) {
 		switch {
 		case t.HasValue:
-			t.Observe(ob)
+			sink(t)
 		case t.HasError:
 			if count == 0 {
-				t.Observe(ob)
+				sink(t)
 				cancel()
 			} else {
 				if count > 0 {
@@ -31,7 +31,7 @@ func (op retryOperator) Call(ctx context.Context, ob Observer, source Observable
 				source.Subscribe(ctx, observer)
 			}
 		default:
-			t.Observe(ob)
+			sink(t)
 			cancel()
 		}
 	}

@@ -10,7 +10,7 @@ type auditTimeOperator struct {
 	scheduler Scheduler
 }
 
-func (op auditTimeOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op auditTimeOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	scheduleCtx := canceledCtx
 	scheduleDone := scheduleCtx.Done()
@@ -30,7 +30,7 @@ func (op auditTimeOperator) Call(ctx context.Context, ob Observer, source Observ
 		scheduleCtx, _ = op.scheduler.ScheduleOnce(ctx, op.duration, func() {
 			if try.Lock() {
 				defer try.Unlock()
-				ob.Next(latestValue)
+				sink.Next(latestValue)
 			}
 		})
 		scheduleDone = scheduleCtx.Done()
@@ -45,7 +45,7 @@ func (op auditTimeOperator) Call(ctx context.Context, ob Observer, source Observ
 				doSchedule()
 			default:
 				try.CancelAndUnlock()
-				t.Observe(ob)
+				sink(t)
 				cancel()
 			}
 		}

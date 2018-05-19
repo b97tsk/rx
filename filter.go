@@ -8,7 +8,7 @@ type filterOperator struct {
 	predicate func(interface{}, int) bool
 }
 
-func (op filterOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op filterOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	var outerIndex = -1
 	return source.Subscribe(ctx, func(t Notification) {
 		switch {
@@ -16,11 +16,11 @@ func (op filterOperator) Call(ctx context.Context, ob Observer, source Observabl
 			outerIndex++
 
 			if op.predicate(t.Value, outerIndex) {
-				t.Observe(ob)
+				sink(t)
 			}
 
 		default:
-			t.Observe(ob)
+			sink(t)
 		}
 	})
 }

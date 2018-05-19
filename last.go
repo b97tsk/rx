@@ -6,7 +6,7 @@ import (
 
 type lastOperator struct{}
 
-func (op lastOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op lastOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	var (
 		lastValue    interface{}
 		hasLastValue bool
@@ -17,13 +17,13 @@ func (op lastOperator) Call(ctx context.Context, ob Observer, source Observable)
 			lastValue = t.Value
 			hasLastValue = true
 		case t.HasError:
-			t.Observe(ob)
+			sink(t)
 		default:
 			if hasLastValue {
-				ob.Next(lastValue)
-				ob.Complete()
+				sink.Next(lastValue)
+				sink.Complete()
 			} else {
-				ob.Error(ErrEmpty)
+				sink.Error(ErrEmpty)
 			}
 		}
 	})

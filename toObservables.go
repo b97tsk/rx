@@ -6,35 +6,35 @@ import (
 
 type toObservablesOperator struct{}
 
-func (op toObservablesOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op toObservablesOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	var (
-		observables     []Observable
-		mutableObserver Observer
+		observables []Observable
+		observer    Observer
 	)
 
-	mutableObserver = func(t Notification) {
+	observer = func(t Notification) {
 		switch {
 		case t.HasValue:
 			if obsv, ok := t.Value.(Observable); ok {
 				observables = append(observables, obsv)
 			} else {
-				mutableObserver = NopObserver
-				ob.Error(ErrNotObservable)
+				observer = NopObserver
+				sink.Error(ErrNotObservable)
 				cancel()
 			}
 		case t.HasError:
-			t.Observe(ob)
+			sink(t)
 			cancel()
 		default:
-			ob.Next(observables)
-			ob.Complete()
+			sink.Next(observables)
+			sink.Complete()
 			cancel()
 		}
 	}
 
-	source.Subscribe(ctx, func(t Notification) { t.Observe(mutableObserver) })
+	source.Subscribe(ctx, observer.Notify)
 
 	return ctx, cancel
 }

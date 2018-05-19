@@ -11,7 +11,7 @@ type intervalOperator struct {
 	scheduler    Scheduler
 }
 
-func (op intervalOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op intervalOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	if op.initialDelay != op.period {
@@ -20,17 +20,17 @@ func (op intervalOperator) Call(ctx context.Context, ob Observer, source Observa
 			wait := make(chan struct{})
 			op.scheduler.Schedule(ctx, op.period, func() {
 				<-wait
-				ob.Next(index)
+				sink.Next(index)
 				index++
 			})
-			ob.Next(index)
+			sink.Next(index)
 			index++
 			close(wait)
 		})
 	} else {
 		index := 0
 		op.scheduler.Schedule(ctx, op.period, func() {
-			ob.Next(index)
+			sink.Next(index)
 			index++
 		})
 	}

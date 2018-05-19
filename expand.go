@@ -11,7 +11,7 @@ type expandOperator struct {
 	concurrent int
 }
 
-func (op expandOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op expandOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 
@@ -34,7 +34,7 @@ func (op expandOperator) Call(ctx context.Context, ob Observer, source Observabl
 		outerIndex++
 		outerIndex := outerIndex
 
-		ob.Next(outerValue)
+		sink.Next(outerValue)
 
 		// calls project synchronously
 		obsv := op.project(outerValue, outerIndex)
@@ -53,7 +53,7 @@ func (op expandOperator) Call(ctx context.Context, ob Observer, source Observabl
 				}
 
 			case t.HasError:
-				t.Observe(ob)
+				sink(t)
 				cancel()
 
 			default:
@@ -90,7 +90,7 @@ func (op expandOperator) Call(ctx context.Context, ob Observer, source Observabl
 			}
 
 		case t.HasError:
-			t.Observe(ob)
+			sink(t)
 			cancel()
 
 		default:
@@ -107,13 +107,13 @@ func (op expandOperator) Call(ctx context.Context, ob Observer, source Observabl
 						mu.Lock()
 					}
 					mu.Unlock()
-					ob.Complete()
+					sink.Complete()
 					cancel()
 				}()
 				return
 			}
 			mu.Unlock()
-			ob.Complete()
+			sink(t)
 			cancel()
 		}
 	})

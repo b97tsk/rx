@@ -11,18 +11,18 @@ type rangeOperator struct {
 	scheduler Scheduler
 }
 
-func (op rangeOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op rangeOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	if op.scheduler != nil {
 		ctx, cancel := context.WithCancel(ctx)
 		index := op.low
 
 		op.scheduler.Schedule(ctx, op.delay, func() {
 			if index < op.high {
-				ob.Next(index)
+				sink.Next(index)
 				index++
 				return
 			}
-			ob.Complete()
+			sink.Complete()
 			cancel()
 		})
 
@@ -34,14 +34,14 @@ func (op rangeOperator) Call(ctx context.Context, ob Observer, source Observable
 	for index := op.low; index < op.high; index++ {
 		select {
 		case <-done:
-			return canceledCtx, noopFunc
+			return canceledCtx, doNothing
 		default:
 		}
-		ob.Next(index)
+		sink.Next(index)
 	}
 
-	ob.Complete()
-	return canceledCtx, noopFunc
+	sink.Complete()
+	return canceledCtx, doNothing
 }
 
 // Range creates an Observable that emits a sequence of integers within a

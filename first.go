@@ -6,28 +6,28 @@ import (
 
 type firstOperator struct{}
 
-func (op firstOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op firstOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
-	var mutableObserver Observer
+	var observer Observer
 
-	mutableObserver = func(t Notification) {
+	observer = func(t Notification) {
 		switch {
 		case t.HasValue:
-			mutableObserver = NopObserver
-			t.Observe(ob)
-			ob.Complete()
+			observer = NopObserver
+			sink(t)
+			sink.Complete()
 			cancel()
 		case t.HasError:
-			t.Observe(ob)
+			sink(t)
 			cancel()
 		default:
-			ob.Error(ErrEmpty)
+			sink.Error(ErrEmpty)
 			cancel()
 		}
 	}
 
-	source.Subscribe(ctx, func(t Notification) { t.Observe(mutableObserver) })
+	source.Subscribe(ctx, observer.Notify)
 
 	return ctx, cancel
 }

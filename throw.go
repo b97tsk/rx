@@ -11,15 +11,15 @@ type throwOperator struct {
 	scheduler Scheduler
 }
 
-func (op throwOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op throwOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	if op.scheduler != nil {
 		return op.scheduler.ScheduleOnce(ctx, op.delay, func() {
-			ob.Error(op.err)
+			sink.Error(op.err)
 		})
 	}
 
-	ob.Error(op.err)
-	return canceledCtx, noopFunc
+	sink.Error(op.err)
+	return canceledCtx, doNothing
 }
 
 // Throw creates an Observable that emits no items to the Observer and

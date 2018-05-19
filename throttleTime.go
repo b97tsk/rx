@@ -10,7 +10,7 @@ type throttleTimeOperator struct {
 	scheduler Scheduler
 }
 
-func (op throttleTimeOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op throttleTimeOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	scheduleCtx := canceledCtx
 	scheduleDone := scheduleCtx.Done()
@@ -24,13 +24,13 @@ func (op throttleTimeOperator) Call(ctx context.Context, ob Observer, source Obs
 				return
 			}
 
-			t.Observe(ob)
+			sink(t)
 
-			scheduleCtx, _ = op.scheduler.ScheduleOnce(ctx, op.duration, noopFunc)
+			scheduleCtx, _ = op.scheduler.ScheduleOnce(ctx, op.duration, doNothing)
 			scheduleDone = scheduleCtx.Done()
 
 		default:
-			t.Observe(ob)
+			sink(t)
 			cancel()
 		}
 	})

@@ -17,7 +17,7 @@ type delayValue struct {
 	Notification
 }
 
-func (op delayOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op delayOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 
@@ -55,9 +55,9 @@ func (op delayOperator) Call(ctx context.Context, ob Observer, source Observable
 				}
 				switch {
 				case t.HasValue:
-					t.Observe(ob)
+					sink(t.Notification)
 				default:
-					t.Observe(ob)
+					sink(t.Notification)
 					cancel()
 				}
 			}
@@ -78,7 +78,7 @@ func (op delayOperator) Call(ctx context.Context, ob Observer, source Observable
 		case t.HasError:
 			// Error notification will not be delayed.
 			queue.Init()
-			t.Observe(ob)
+			sink(t)
 			cancel()
 		default:
 			queue.PushBack(delayValue{

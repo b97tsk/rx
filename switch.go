@@ -9,10 +9,10 @@ type switchMapOperator struct {
 	project func(interface{}, int) Observable
 }
 
-func (op switchMapOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op switchMapOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
-	childCtx, childCancel := canceledCtx, noopFunc
+	childCtx, childCancel := canceledCtx, doNothing
 
 	var (
 		mu             sync.Mutex
@@ -41,10 +41,10 @@ func (op switchMapOperator) Call(ctx context.Context, ob Observer, source Observ
 			go obsv.Subscribe(childCtx, func(t Notification) {
 				switch {
 				case t.HasValue:
-					t.Observe(ob)
+					sink(t)
 
 				case t.HasError:
-					t.Observe(ob)
+					sink(t)
 					cancel()
 
 				default:
@@ -66,7 +66,7 @@ func (op switchMapOperator) Call(ctx context.Context, ob Observer, source Observ
 			})
 
 		case t.HasError:
-			t.Observe(ob)
+			sink(t)
 			cancel()
 
 		default:
@@ -83,13 +83,13 @@ func (op switchMapOperator) Call(ctx context.Context, ob Observer, source Observ
 						mu.Lock()
 					}
 					mu.Unlock()
-					ob.Complete()
+					sink.Complete()
 					cancel()
 				}()
 				return
 			}
 			mu.Unlock()
-			ob.Complete()
+			sink(t)
 			cancel()
 		}
 	})

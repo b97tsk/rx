@@ -13,7 +13,7 @@ type forkJoinValue struct {
 	Notification
 }
 
-func (op forkJoinOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op forkJoinOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 
@@ -41,7 +41,7 @@ func (op forkJoinOperator) Call(ctx context.Context, ob Observer, source Observa
 					}
 
 				case t.HasError:
-					t.Observe(ob)
+					sink(t.Notification)
 					cancel()
 					return
 
@@ -49,7 +49,7 @@ func (op forkJoinOperator) Call(ctx context.Context, ob Observer, source Observa
 					completeCount++
 
 					if !hasValues[index] {
-						t.Observe(ob)
+						sink(t.Notification)
 						cancel()
 						return
 					}
@@ -58,8 +58,8 @@ func (op forkJoinOperator) Call(ctx context.Context, ob Observer, source Observa
 						break
 					}
 
-					ob.Next(values)
-					ob.Complete()
+					sink.Next(values)
+					sink.Complete()
 					cancel()
 					return
 				}

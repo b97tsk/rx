@@ -9,7 +9,7 @@ type exhaustMapOperator struct {
 	project func(interface{}, int) Observable
 }
 
-func (op exhaustMapOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op exhaustMapOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 
@@ -41,10 +41,10 @@ func (op exhaustMapOperator) Call(ctx context.Context, ob Observer, source Obser
 			go obsv.Subscribe(ctx, func(t Notification) {
 				switch {
 				case t.HasValue:
-					t.Observe(ob)
+					sink(t)
 
 				case t.HasError:
-					t.Observe(ob)
+					sink(t)
 					cancel()
 
 				default:
@@ -59,7 +59,7 @@ func (op exhaustMapOperator) Call(ctx context.Context, ob Observer, source Obser
 			})
 
 		case t.HasError:
-			t.Observe(ob)
+			sink(t)
 			cancel()
 
 		default:
@@ -76,13 +76,13 @@ func (op exhaustMapOperator) Call(ctx context.Context, ob Observer, source Obser
 						mu.Lock()
 					}
 					mu.Unlock()
-					ob.Complete()
+					sink.Complete()
 					cancel()
 				}()
 				return
 			}
 			mu.Unlock()
-			ob.Complete()
+			sink(t)
 			cancel()
 		}
 	})

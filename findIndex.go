@@ -8,33 +8,33 @@ type findIndexOperator struct {
 	predicate func(interface{}, int) bool
 }
 
-func (op findIndexOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op findIndexOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	var (
-		outerIndex      = -1
-		mutableObserver Observer
+		outerIndex = -1
+		observer   Observer
 	)
 
-	mutableObserver = func(t Notification) {
+	observer = func(t Notification) {
 		switch {
 		case t.HasValue:
 			outerIndex++
 
 			if op.predicate(t.Value, outerIndex) {
-				mutableObserver = NopObserver
-				ob.Next(outerIndex)
-				ob.Complete()
+				observer = NopObserver
+				sink.Next(outerIndex)
+				sink.Complete()
 				cancel()
 			}
 
 		default:
-			t.Observe(ob)
+			sink(t)
 			cancel()
 		}
 	}
 
-	source.Subscribe(ctx, func(t Notification) { t.Observe(mutableObserver) })
+	source.Subscribe(ctx, observer.Notify)
 
 	return ctx, cancel
 }

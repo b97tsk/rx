@@ -81,7 +81,7 @@ func (o *connectableObservable) doConnect(addRef bool) (context.Context, context
 				o.mu.Unlock()
 			}
 
-			t.Observe(subject.Observer)
+			subject.Notify(t)
 		})
 
 		select {
@@ -146,16 +146,16 @@ func (o ConnectableObservable) Connect() (context.Context, context.CancelFunc) {
 }
 
 // Subscribe subscribes a local Subject, which is used to multicast to many Observers.
-func (o ConnectableObservable) Subscribe(ctx context.Context, ob Observer) (context.Context, context.CancelFunc) {
-	return o.getSubject().Subscribe(ctx, ob)
+func (o ConnectableObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
+	return o.getSubject().Subscribe(ctx, sink)
 }
 
 type refCountOperator struct {
 	connectable ConnectableObservable
 }
 
-func (op refCountOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
-	ctx, cancel := op.connectable.Subscribe(ctx, ob)
+func (op refCountOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+	ctx, cancel := op.connectable.Subscribe(ctx, sink)
 	_, releaseRef := op.connectable.connectAddRef()
 
 	go func() {

@@ -10,7 +10,7 @@ type congestingMergeOperator struct {
 	concurrent int
 }
 
-func (op congestingMergeOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op congestingMergeOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 
@@ -53,10 +53,10 @@ func (op congestingMergeOperator) Call(ctx context.Context, ob Observer, source 
 			go obsv.Subscribe(ctx, func(t Notification) {
 				switch {
 				case t.HasValue:
-					t.Observe(ob)
+					sink(t)
 
 				case t.HasError:
-					t.Observe(ob)
+					sink(t)
 					cancel()
 
 				default:
@@ -72,7 +72,7 @@ func (op congestingMergeOperator) Call(ctx context.Context, ob Observer, source 
 			})
 
 		case t.HasError:
-			t.Observe(ob)
+			sink(t)
 			cancel()
 
 		default:
@@ -89,13 +89,13 @@ func (op congestingMergeOperator) Call(ctx context.Context, ob Observer, source 
 						mu.Lock()
 					}
 					mu.Unlock()
-					ob.Complete()
+					sink.Complete()
 					cancel()
 				}()
 				return
 			}
 			mu.Unlock()
-			ob.Complete()
+			sink(t)
 			cancel()
 		}
 	})

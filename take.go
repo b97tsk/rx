@@ -8,39 +8,39 @@ type takeOperator struct {
 	count int
 }
 
-func (op takeOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op takeOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	var (
-		count           = op.count
-		mutableObserver Observer
+		count    = op.count
+		observer Observer
 	)
 
-	mutableObserver = func(t Notification) {
+	observer = func(t Notification) {
 		switch {
 		case t.HasValue:
 			if count > 0 {
 				count--
 				if count > 0 {
-					t.Observe(ob)
+					sink(t)
 				} else {
-					mutableObserver = NopObserver
-					t.Observe(ob)
-					ob.Complete()
+					observer = NopObserver
+					sink(t)
+					sink.Complete()
 					cancel()
 				}
 			} else {
-				mutableObserver = NopObserver
-				ob.Complete()
+				observer = NopObserver
+				sink.Complete()
 				cancel()
 			}
 		default:
-			t.Observe(ob)
+			sink(t)
 			cancel()
 		}
 	}
 
-	source.Subscribe(ctx, func(t Notification) { t.Observe(mutableObserver) })
+	source.Subscribe(ctx, observer.Notify)
 
 	return ctx, cancel
 }

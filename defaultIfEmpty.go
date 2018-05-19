@@ -8,20 +8,20 @@ type defaultIfEmptyOperator struct {
 	defaultValue interface{}
 }
 
-func (op defaultIfEmptyOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op defaultIfEmptyOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	var hasValue bool
 	return source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			hasValue = true
-			t.Observe(ob)
+			sink(t)
 		case t.HasError:
-			t.Observe(ob)
+			sink(t)
 		default:
 			if !hasValue {
-				ob.Next(op.defaultValue)
+				sink.Next(op.defaultValue)
 			}
-			t.Observe(ob)
+			sink(t)
 		}
 	})
 }

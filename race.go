@@ -8,7 +8,7 @@ type raceOperator struct {
 	observables []Observable
 }
 
-func (op raceOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op raceOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	length := len(op.observables)
@@ -19,9 +19,9 @@ func (op raceOperator) Call(ctx context.Context, ob Observer, source Observable)
 	for index, obsv := range op.observables {
 		index := index
 
-		var mutableObserver Observer
+		var observer Observer
 
-		mutableObserver = func(t Notification) {
+		observer = func(t Notification) {
 			if try.Lock() {
 				for i, cancel := range subscriptions {
 					if i != index {
@@ -29,12 +29,12 @@ func (op raceOperator) Call(ctx context.Context, ob Observer, source Observable)
 					}
 				}
 				try.CancelAndUnlock()
-				mutableObserver = withFinalizer(ob, cancel)
-				t.Observe(mutableObserver)
+				observer = withFinalizer(sink, cancel)
+				observer.Notify(t)
 			}
 		}
 
-		_, cancel := obsv.Subscribe(ctx, func(t Notification) { t.Observe(mutableObserver) })
+		_, cancel := obsv.Subscribe(ctx, observer.Notify)
 
 		if try.Lock() {
 			subscriptions = append(subscriptions, cancel)

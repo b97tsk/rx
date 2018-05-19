@@ -6,8 +6,8 @@ import (
 
 type neverOperator struct{}
 
-func (op neverOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
-	return ctx, noopFunc
+func (op neverOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+	return context.WithCancel(ctx)
 }
 
 // Never creates an Observable that never emits anything.

@@ -6,7 +6,7 @@ import (
 
 type pairwiseOperator struct{}
 
-func (op pairwiseOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op pairwiseOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	var (
 		prev    interface{}
 		hasPrev bool
@@ -15,14 +15,14 @@ func (op pairwiseOperator) Call(ctx context.Context, ob Observer, source Observa
 		switch {
 		case t.HasValue:
 			if hasPrev {
-				ob.Next([]interface{}{prev, t.Value})
+				sink.Next([]interface{}{prev, t.Value})
 				prev = t.Value
 			} else {
 				prev = t.Value
 				hasPrev = true
 			}
 		default:
-			t.Observe(ob)
+			sink(t)
 		}
 	})
 }

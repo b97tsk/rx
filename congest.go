@@ -8,7 +8,7 @@ type congestOperator struct {
 	capacity int
 }
 
-func (op congestOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op congestOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 	c := make(chan Notification, op.capacity)
@@ -21,9 +21,9 @@ func (op congestOperator) Call(ctx context.Context, ob Observer, source Observab
 			case t := <-c:
 				switch {
 				case t.HasValue:
-					t.Observe(ob)
+					sink(t)
 				default:
-					t.Observe(ob)
+					sink(t)
 					cancel()
 					return
 				}

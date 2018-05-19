@@ -11,7 +11,7 @@ type observeOnOperator struct {
 	scheduler Scheduler
 }
 
-func (op observeOnOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op observeOnOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	var (
@@ -29,10 +29,10 @@ func (op observeOnOperator) Call(ctx context.Context, ob Observer, source Observ
 					switch {
 					case t.HasValue:
 						defer try.Unlock()
-						t.Observe(ob)
+						sink(t)
 					default:
 						try.CancelAndUnlock()
-						t.Observe(ob)
+						sink(t)
 						cancel()
 					}
 				}

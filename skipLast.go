@@ -8,7 +8,7 @@ type skipLastOperator struct {
 	count int
 }
 
-func (op skipLastOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op skipLastOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	var (
 		buffer     = make([]interface{}, op.count)
 		bufferSize = op.count
@@ -21,12 +21,12 @@ func (op skipLastOperator) Call(ctx context.Context, ob Observer, source Observa
 			if count < bufferSize {
 				count++
 			} else {
-				ob.Next(buffer[index])
+				sink.Next(buffer[index])
 			}
 			buffer[index] = t.Value
 			index = (index + 1) % bufferSize
 		default:
-			t.Observe(ob)
+			sink(t)
 		}
 	})
 }

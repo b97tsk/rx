@@ -6,17 +6,17 @@ import (
 
 type mutexOperator struct{}
 
-func (op mutexOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op mutexOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	var try cancellableLocker
 	return source.Subscribe(ctx, func(t Notification) {
 		if try.Lock() {
 			switch {
 			case t.HasValue:
 				defer try.Unlock()
-				t.Observe(ob)
+				sink(t)
 			default:
 				try.CancelAndUnlock()
-				t.Observe(ob)
+				sink(t)
 			}
 		}
 	})

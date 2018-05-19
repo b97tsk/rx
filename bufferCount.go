@@ -9,7 +9,7 @@ type bufferCountOperator struct {
 	startBufferEvery int
 }
 
-func (op bufferCountOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op bufferCountOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	var (
 		buffer    = make([]interface{}, 0, op.bufferSize)
 		skipCount int
@@ -31,20 +31,20 @@ func (op bufferCountOperator) Call(ctx context.Context, ob Observer, source Obse
 			} else {
 				skipCount = op.startBufferEvery - op.bufferSize
 			}
-			ob.Next(buffer)
+			sink.Next(buffer)
 			buffer = newBuffer
 		case t.HasError:
-			t.Observe(ob)
+			sink(t)
 		default:
 			if len(buffer) > 0 {
 				for op.startBufferEvery < len(buffer) {
 					newBuffer := append([]interface{}(nil), buffer[op.startBufferEvery:]...)
-					ob.Next(buffer)
+					sink.Next(buffer)
 					buffer = newBuffer
 				}
-				ob.Next(buffer)
+				sink.Next(buffer)
 			}
-			t.Observe(ob)
+			sink(t)
 		}
 	})
 }

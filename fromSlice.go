@@ -11,7 +11,7 @@ type fromSliceOperator struct {
 	scheduler Scheduler
 }
 
-func (op fromSliceOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op fromSliceOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	if op.scheduler != nil {
 		ctx, cancel := context.WithCancel(ctx)
 		index := 0
@@ -19,11 +19,11 @@ func (op fromSliceOperator) Call(ctx context.Context, ob Observer, source Observ
 		op.scheduler.Schedule(ctx, op.delay, func() {
 			if index < len(op.slice) {
 				val := op.slice[index]
-				ob.Next(val)
+				sink.Next(val)
 				index++
 				return
 			}
-			ob.Complete()
+			sink.Complete()
 			cancel()
 		})
 
@@ -35,14 +35,14 @@ func (op fromSliceOperator) Call(ctx context.Context, ob Observer, source Observ
 	for _, val := range op.slice {
 		select {
 		case <-done:
-			return canceledCtx, noopFunc
+			return canceledCtx, doNothing
 		default:
 		}
-		ob.Next(val)
+		sink.Next(val)
 	}
-	ob.Complete()
+	sink.Complete()
 
-	return canceledCtx, noopFunc
+	return canceledCtx, doNothing
 }
 
 // FromSlice creates an Observable that emits values from a slice, one after

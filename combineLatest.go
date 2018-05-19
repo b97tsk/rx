@@ -13,7 +13,7 @@ type combineLatestValue struct {
 	Notification
 }
 
-func (op combineLatestOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op combineLatestOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 
@@ -48,10 +48,10 @@ func (op combineLatestOperator) Call(ctx context.Context, ob Observer, source Ob
 						}
 					}
 
-					ob.Next(append([]interface{}(nil), values...))
+					sink.Next(append([]interface{}(nil), values...))
 
 				case t.HasError:
-					t.Observe(ob)
+					sink(t.Notification)
 					cancel()
 					return
 
@@ -62,7 +62,7 @@ func (op combineLatestOperator) Call(ctx context.Context, ob Observer, source Ob
 							break
 						}
 					}
-					t.Observe(ob)
+					sink(t.Notification)
 					cancel()
 					return
 				}
@@ -85,7 +85,7 @@ func (op combineLatestOperator) Call(ctx context.Context, ob Observer, source Ob
 
 type combineAllOperator struct{}
 
-func (op combineAllOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op combineAllOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	toObservablesOperator(op).Call(ctx, func(t Notification) {
@@ -94,16 +94,16 @@ func (op combineAllOperator) Call(ctx context.Context, ob Observer, source Obser
 			observables := t.Value.([]Observable)
 
 			if len(observables) == 0 {
-				ob.Complete()
+				sink.Complete()
 				cancel()
 				break
 			}
 
 			combineLatest := combineLatestOperator{observables}
-			combineLatest.Call(ctx, withFinalizer(ob, cancel), Observable{})
+			combineLatest.Call(ctx, withFinalizer(sink, cancel), Observable{})
 
 		case t.HasError:
-			t.Observe(ob)
+			sink(t)
 			cancel()
 
 		default:

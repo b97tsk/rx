@@ -6,17 +6,17 @@ import (
 
 type countOperator struct{}
 
-func (op countOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op countOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	var count int
 	return source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			count++
 		case t.HasError:
-			t.Observe(ob)
+			sink(t)
 		default:
-			ob.Next(count)
-			ob.Complete()
+			sink.Next(count)
+			sink.Complete()
 		}
 	})
 }

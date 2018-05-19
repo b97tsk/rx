@@ -11,7 +11,7 @@ type mergeMapOperator struct {
 	concurrent int
 }
 
-func (op mergeMapOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op mergeMapOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 
@@ -40,10 +40,10 @@ func (op mergeMapOperator) Call(ctx context.Context, ob Observer, source Observa
 		go obsv.Subscribe(ctx, func(t Notification) {
 			switch {
 			case t.HasValue:
-				t.Observe(ob)
+				sink(t)
 
 			case t.HasError:
-				t.Observe(ob)
+				sink(t)
 				cancel()
 
 			default:
@@ -80,7 +80,7 @@ func (op mergeMapOperator) Call(ctx context.Context, ob Observer, source Observa
 			}
 
 		case t.HasError:
-			t.Observe(ob)
+			sink(t)
 			cancel()
 
 		default:
@@ -97,13 +97,13 @@ func (op mergeMapOperator) Call(ctx context.Context, ob Observer, source Observa
 						mu.Lock()
 					}
 					mu.Unlock()
-					ob.Complete()
+					sink.Complete()
 					cancel()
 				}()
 				return
 			}
 			mu.Unlock()
-			ob.Complete()
+			sink(t)
 			cancel()
 		}
 	})

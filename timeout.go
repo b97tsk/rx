@@ -10,15 +10,15 @@ type timeoutOperator struct {
 	scheduler Scheduler
 }
 
-func (op timeoutOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op timeoutOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
-	scheduleCancel := noopFunc
+	scheduleCancel := doNothing
 
 	doSchedule := func() {
 		scheduleCancel()
 
 		_, scheduleCancel = op.scheduler.ScheduleOnce(ctx, op.timeout, func() {
-			ob.Error(ErrTimeout)
+			sink.Error(ErrTimeout)
 			cancel()
 		})
 	}
@@ -28,10 +28,10 @@ func (op timeoutOperator) Call(ctx context.Context, ob Observer, source Observab
 	source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
-			t.Observe(ob)
+			sink(t)
 			doSchedule()
 		default:
-			t.Observe(ob)
+			sink(t)
 			cancel()
 		}
 	})

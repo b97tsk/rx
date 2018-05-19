@@ -6,35 +6,35 @@ import (
 
 type dematerializeOperator struct{}
 
-func (op dematerializeOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op dematerializeOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
-	var mutableObserver Observer
+	var observer Observer
 
-	mutableObserver = func(t Notification) {
+	observer = func(t Notification) {
 		switch {
 		case t.HasValue:
 			if t, ok := t.Value.(Notification); ok {
 				switch {
 				case t.HasValue:
-					t.Observe(ob)
+					sink(t)
 				default:
-					mutableObserver = NopObserver
-					t.Observe(ob)
+					observer = NopObserver
+					sink(t)
 					cancel()
 				}
 			} else {
-				mutableObserver = NopObserver
-				ob.Error(ErrNotNotification)
+				observer = NopObserver
+				sink.Error(ErrNotNotification)
 				cancel()
 			}
 		default:
-			t.Observe(ob)
+			sink(t)
 			cancel()
 		}
 	}
 
-	source.Subscribe(ctx, func(t Notification) { t.Observe(mutableObserver) })
+	source.Subscribe(ctx, observer.Notify)
 
 	return ctx, cancel
 }

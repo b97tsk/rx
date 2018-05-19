@@ -9,11 +9,11 @@ type multicastOperator struct {
 	selector       func(context.Context, *Subject) Observable
 }
 
-func (op multicastOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op multicastOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	subject := op.subjectFactory()
 	obsv := op.selector(ctx, subject)
-	obsv.Subscribe(ctx, withFinalizer(ob, cancel))
+	obsv.Subscribe(ctx, withFinalizer(sink, cancel))
 	select {
 	case <-ctx.Done():
 	default:

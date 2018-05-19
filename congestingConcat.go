@@ -8,15 +8,15 @@ type congestingConcatOperator struct {
 	project func(interface{}, int) Observable
 }
 
-func (op congestingConcatOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op congestingConcatOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	var (
-		outerIndex      = -1
-		mutableObserver Observer
+		outerIndex = -1
+		observer   Observer
 	)
 
-	mutableObserver = func(t Notification) {
+	observer = func(t Notification) {
 		switch {
 		case t.HasValue:
 			outerValue := t.Value
@@ -28,10 +28,10 @@ func (op congestingConcatOperator) Call(ctx context.Context, ob Observer, source
 			childCtx, _ := obsv.Subscribe(ctx, func(t Notification) {
 				switch {
 				case t.HasValue:
-					t.Observe(ob)
+					sink(t)
 				case t.HasError:
-					mutableObserver = NopObserver
-					t.Observe(ob)
+					observer = NopObserver
+					sink(t)
 					cancel()
 				default:
 				}
@@ -40,12 +40,12 @@ func (op congestingConcatOperator) Call(ctx context.Context, ob Observer, source
 			<-childCtx.Done()
 
 		default:
-			t.Observe(ob)
+			sink(t)
 			cancel()
 		}
 	}
 
-	source.Subscribe(ctx, func(t Notification) { t.Observe(mutableObserver) })
+	source.Subscribe(ctx, observer.Notify)
 
 	return ctx, cancel
 }

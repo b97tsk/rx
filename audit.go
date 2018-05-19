@@ -8,9 +8,9 @@ type auditOperator struct {
 	durationSelector func(interface{}) Observable
 }
 
-func (op auditOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op auditOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
-	scheduleCtx, scheduleCancel := canceledCtx, noopFunc
+	scheduleCtx, scheduleCancel := canceledCtx, doNothing
 	scheduleDone := scheduleCtx.Done()
 
 	var (
@@ -28,25 +28,25 @@ func (op auditOperator) Call(ctx context.Context, ob Observer, source Observable
 		scheduleCtx, scheduleCancel = context.WithCancel(ctx)
 		scheduleDone = scheduleCtx.Done()
 
-		var mutableObserver Observer
+		var observer Observer
 
-		mutableObserver = func(t Notification) {
+		observer = func(t Notification) {
 			if try.Lock() {
 				if t.HasError {
 					try.CancelAndUnlock()
-					t.Observe(ob)
+					sink(t)
 					cancel()
 					return
 				}
 				defer try.Unlock()
 				defer scheduleCancel()
-				mutableObserver = NopObserver
-				ob.Next(latestValue)
+				observer = NopObserver
+				sink.Next(latestValue)
 			}
 		}
 
 		obsv := op.durationSelector(val)
-		obsv.Subscribe(scheduleCtx, func(t Notification) { t.Observe(mutableObserver) })
+		obsv.Subscribe(scheduleCtx, observer.Notify)
 	}
 
 	source.Subscribe(ctx, func(t Notification) {
@@ -58,7 +58,7 @@ func (op auditOperator) Call(ctx context.Context, ob Observer, source Observable
 				doSchedule(t.Value)
 			default:
 				try.CancelAndUnlock()
-				t.Observe(ob)
+				sink(t)
 				cancel()
 			}
 		}

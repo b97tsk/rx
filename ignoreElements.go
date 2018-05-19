@@ -6,12 +6,12 @@ import (
 
 type ignoreElementsOperator struct{}
 
-func (op ignoreElementsOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op ignoreElementsOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	return source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 		default:
-			t.Observe(ob)
+			sink(t)
 		}
 	})
 }

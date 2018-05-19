@@ -9,7 +9,7 @@ type skipUntilOperator struct {
 	notifier Observable
 }
 
-func (op skipUntilOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op skipUntilOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 
@@ -23,13 +23,13 @@ func (op skipUntilOperator) Call(ctx context.Context, ob Observer, source Observ
 		case t.HasValue:
 			atomic.StoreUint32(&noSkipping, 1)
 		case t.HasError:
-			t.Observe(ob)
+			sink(t)
 			cancel()
 		default:
 			if atomic.CompareAndSwapUint32(&hasCompleted, 0, 1) {
 				break
 			}
-			t.Observe(ob)
+			sink(t)
 			cancel()
 		}
 	})
@@ -44,16 +44,16 @@ func (op skipUntilOperator) Call(ctx context.Context, ob Observer, source Observ
 		switch {
 		case t.HasValue:
 			if atomic.LoadUint32(&noSkipping) != 0 {
-				t.Observe(ob)
+				sink(t)
 			}
 		case t.HasError:
-			t.Observe(ob)
+			sink(t)
 			cancel()
 		default:
 			if atomic.CompareAndSwapUint32(&hasCompleted, 0, 1) {
 				break
 			}
-			t.Observe(ob)
+			sink(t)
 			cancel()
 		}
 	})

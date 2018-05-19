@@ -10,7 +10,7 @@ type scanOperator struct {
 	hasSeed     bool
 }
 
-func (op scanOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op scanOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	var (
 		seed       = op.seed
 		hasSeed    = op.hasSeed
@@ -28,10 +28,10 @@ func (op scanOperator) Call(ctx context.Context, ob Observer, source Observable)
 				hasSeed = true
 			}
 
-			ob.Next(seed)
+			sink.Next(seed)
 
 		default:
-			t.Observe(ob)
+			sink(t)
 		}
 	})
 }

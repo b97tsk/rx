@@ -6,17 +6,17 @@ import (
 
 type toSliceOperator struct{}
 
-func (op toSliceOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op toSliceOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	var values []interface{}
 	return source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			values = append(values, t.Value)
 		case t.HasError:
-			t.Observe(ob)
+			sink(t)
 		default:
-			ob.Next(values)
-			ob.Complete()
+			sink.Next(values)
+			sink.Complete()
 		}
 	})
 }

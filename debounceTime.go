@@ -10,9 +10,9 @@ type debounceTimeOperator struct {
 	scheduler Scheduler
 }
 
-func (op debounceTimeOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op debounceTimeOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
-	scheduleCancel := noopFunc
+	scheduleCancel := doNothing
 
 	var (
 		latestValue interface{}
@@ -25,7 +25,7 @@ func (op debounceTimeOperator) Call(ctx context.Context, ob Observer, source Obs
 		_, scheduleCancel = op.scheduler.ScheduleOnce(ctx, op.duration, func() {
 			if try.Lock() {
 				defer try.Unlock()
-				ob.Next(latestValue)
+				sink.Next(latestValue)
 			}
 		})
 	}
@@ -39,7 +39,7 @@ func (op debounceTimeOperator) Call(ctx context.Context, ob Observer, source Obs
 				doSchedule()
 			default:
 				try.CancelAndUnlock()
-				t.Observe(ob)
+				sink(t)
 				cancel()
 			}
 		}

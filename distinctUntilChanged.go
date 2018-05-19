@@ -9,7 +9,7 @@ type distinctUntilChangedOperator struct {
 	keySelector func(interface{}) interface{}
 }
 
-func (op distinctUntilChangedOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op distinctUntilChangedOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	var (
 		key    interface{}
 		hasKey bool
@@ -23,9 +23,9 @@ func (op distinctUntilChangedOperator) Call(ctx context.Context, ob Observer, so
 			}
 			key = newKey
 			hasKey = true
-			t.Observe(ob)
+			sink(t)
 		default:
-			t.Observe(ob)
+			sink(t)
 		}
 	})
 }

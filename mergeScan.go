@@ -12,7 +12,7 @@ type mergeScanOperator struct {
 	concurrent  int
 }
 
-func (op mergeScanOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op mergeScanOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 
@@ -45,10 +45,10 @@ func (op mergeScanOperator) Call(ctx context.Context, ob Observer, source Observ
 				hasValue = true
 				mu.Unlock()
 
-				t.Observe(ob)
+				sink(t)
 
 			case t.HasError:
-				t.Observe(ob)
+				sink(t)
 				cancel()
 
 			default:
@@ -85,7 +85,7 @@ func (op mergeScanOperator) Call(ctx context.Context, ob Observer, source Observ
 			}
 
 		case t.HasError:
-			t.Observe(ob)
+			sink(t)
 			cancel()
 
 		default:
@@ -103,18 +103,18 @@ func (op mergeScanOperator) Call(ctx context.Context, ob Observer, source Observ
 					}
 					mu.Unlock()
 					if !hasValue {
-						ob.Next(seed)
+						sink.Next(seed)
 					}
-					ob.Complete()
+					sink.Complete()
 					cancel()
 				}()
 				return
 			}
 			mu.Unlock()
 			if !hasValue {
-				ob.Next(seed)
+				sink.Next(seed)
 			}
-			ob.Complete()
+			sink(t)
 			cancel()
 		}
 	})

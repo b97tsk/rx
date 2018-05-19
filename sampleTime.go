@@ -10,7 +10,7 @@ type sampleTimeOperator struct {
 	scheduler Scheduler
 }
 
-func (op sampleTimeOperator) Call(ctx context.Context, ob Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op sampleTimeOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	var (
@@ -23,7 +23,7 @@ func (op sampleTimeOperator) Call(ctx context.Context, ob Observer, source Obser
 		if try.Lock() {
 			defer try.Unlock()
 			if hasLatestValue {
-				ob.Next(latestValue)
+				sink.Next(latestValue)
 				hasLatestValue = false
 			}
 		}
@@ -38,7 +38,7 @@ func (op sampleTimeOperator) Call(ctx context.Context, ob Observer, source Obser
 				try.Unlock()
 			default:
 				try.CancelAndUnlock()
-				t.Observe(ob)
+				sink(t)
 				cancel()
 			}
 		}
