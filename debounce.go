@@ -61,7 +61,7 @@ func (op debounceOperator) Call(ctx context.Context, sink Observer, source Obser
 }
 
 // Debounce creates an Observable that emits a value from the source Observable
-// only after a particular time span determined by another Observable has
+// only after a particular time span, determined by another Observable, has
 // passed without another source emission.
 //
 // It's like DebounceTime, but the time span of emission silence is determined
