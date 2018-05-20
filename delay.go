@@ -39,7 +39,6 @@ func (op delayOperator) Call(ctx context.Context, sink Observer, source Observab
 		scheduleCtx, _ = scheduleOnce(ctx, timeout, func() {
 			mu.Lock()
 			defer mu.Unlock()
-
 			for e := queue.Front(); e != nil; e, _ = e.Next(), queue.Remove(e) {
 				select {
 				case <-done:

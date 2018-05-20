@@ -23,8 +23,9 @@ func (op debounceOperator) Call(ctx context.Context, sink Observer, source Obser
 		scheduleCtx, scheduleCancel = context.WithCancel(ctx)
 
 		var observer Observer
-
 		observer = func(t Notification) {
+			observer = NopObserver
+			scheduleCancel()
 			if try.Lock() {
 				if t.HasError {
 					try.CancelAndUnlock()
@@ -33,8 +34,6 @@ func (op debounceOperator) Call(ctx context.Context, sink Observer, source Obser
 					return
 				}
 				defer try.Unlock()
-				defer scheduleCancel()
-				observer = NopObserver
 				sink.Next(latestValue)
 			}
 		}

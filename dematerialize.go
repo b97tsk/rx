@@ -10,7 +10,6 @@ func (op dematerializeOperator) Call(ctx context.Context, sink Observer, source 
 	ctx, cancel := context.WithCancel(ctx)
 
 	var observer Observer
-
 	observer = func(t Notification) {
 		switch {
 		case t.HasValue:
@@ -33,7 +32,6 @@ func (op dematerializeOperator) Call(ctx context.Context, sink Observer, source 
 			cancel()
 		}
 	}
-
 	source.Subscribe(ctx, observer.Notify)
 
 	return ctx, cancel

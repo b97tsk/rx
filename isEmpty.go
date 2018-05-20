@@ -10,7 +10,6 @@ func (op isEmptyOperator) Call(ctx context.Context, sink Observer, source Observ
 	ctx, cancel := context.WithCancel(ctx)
 
 	var observer Observer
-
 	observer = func(t Notification) {
 		switch {
 		case t.HasValue:
@@ -27,7 +26,6 @@ func (op isEmptyOperator) Call(ctx context.Context, sink Observer, source Observ
 			cancel()
 		}
 	}
-
 	source.Subscribe(ctx, observer.Notify)
 
 	return ctx, cancel

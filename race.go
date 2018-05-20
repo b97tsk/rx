@@ -20,7 +20,6 @@ func (op raceOperator) Call(ctx context.Context, sink Observer, source Observabl
 		index := index
 
 		var observer Observer
-
 		observer = func(t Notification) {
 			if try.Lock() {
 				for i, cancel := range subscriptions {
@@ -33,7 +32,6 @@ func (op raceOperator) Call(ctx context.Context, sink Observer, source Observabl
 				observer.Notify(t)
 			}
 		}
-
 		_, cancel := obsv.Subscribe(ctx, observer.Notify)
 
 		if try.Lock() {

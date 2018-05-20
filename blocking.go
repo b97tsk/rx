@@ -11,7 +11,6 @@ func (o Observable) BlockingFirst(ctx context.Context) (value interface{}, err e
 	ctx, cancel := context.WithCancel(ctx)
 
 	var observer Observer
-
 	observer = func(t Notification) {
 		switch {
 		case t.HasValue:
@@ -26,8 +25,8 @@ func (o Observable) BlockingFirst(ctx context.Context) (value interface{}, err e
 			cancel()
 		}
 	}
-
 	o.Subscribe(ctx, observer.Notify)
+
 	<-ctx.Done()
 	return
 }

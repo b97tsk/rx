@@ -10,7 +10,6 @@ func (op firstOperator) Call(ctx context.Context, sink Observer, source Observab
 	ctx, cancel := context.WithCancel(ctx)
 
 	var observer Observer
-
 	observer = func(t Notification) {
 		switch {
 		case t.HasValue:
@@ -26,7 +25,6 @@ func (op firstOperator) Call(ctx context.Context, sink Observer, source Observab
 			cancel()
 		}
 	}
-
 	source.Subscribe(ctx, observer.Notify)
 
 	return ctx, cancel

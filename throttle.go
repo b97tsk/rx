@@ -28,15 +28,14 @@ func (op throttleOperator) Call(ctx context.Context, sink Observer, source Obser
 			scheduleDone = scheduleCtx.Done()
 
 			var observer Observer
-
 			observer = func(t Notification) {
+				observer = NopObserver
+				scheduleCancel()
 				if t.HasError {
 					sink(t)
 					cancel()
 					return
 				}
-				observer = NopObserver
-				scheduleCancel()
 			}
 
 			obsv := op.durationSelector(t.Value)
