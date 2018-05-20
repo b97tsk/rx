@@ -100,7 +100,7 @@ func (op combineAllOperator) Call(ctx context.Context, sink Observer, source Obs
 			}
 
 			combineLatest := combineLatestOperator{observables}
-			combineLatest.Call(ctx, withFinalizer(sink, cancel), Observable{})
+			combineLatest.Call(ctx, Finally(sink, cancel), Observable{})
 
 		case t.HasError:
 			sink(t)

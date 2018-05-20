@@ -13,7 +13,7 @@ func (op subscribeOnOperator) Call(ctx context.Context, sink Observer, source Ob
 	ctx, cancel := context.WithCancel(ctx)
 
 	scheduleOnce(ctx, op.duration, func() {
-		source.Subscribe(ctx, withFinalizer(sink, cancel))
+		source.Subscribe(ctx, Finally(sink, cancel))
 	})
 
 	return ctx, cancel

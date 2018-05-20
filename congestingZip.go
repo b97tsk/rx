@@ -73,7 +73,7 @@ func (op congestingZipAllOperator) Call(ctx context.Context, sink Observer, sour
 			}
 
 			zip := congestingZipOperator{observables}
-			zip.Call(ctx, withFinalizer(sink, cancel), Observable{})
+			zip.Call(ctx, Finally(sink, cancel), Observable{})
 
 		case t.HasError:
 			sink(t)

@@ -54,7 +54,7 @@ func (s *Subject) call(ctx context.Context, sink Observer, source Observable) (c
 
 		ctx, cancel := context.WithCancel(ctx)
 
-		observer := withFinalizer(sink, cancel)
+		observer := Finally(sink, cancel)
 		s.observers = append(s.observers, &observer)
 
 		go func() {

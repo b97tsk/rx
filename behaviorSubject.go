@@ -64,7 +64,7 @@ func (s *BehaviorSubject) call(ctx context.Context, sink Observer, source Observ
 
 		ctx, cancel := context.WithCancel(ctx)
 
-		observer := withFinalizer(sink, cancel)
+		observer := Finally(sink, cancel)
 		s.observers = append(s.observers, &observer)
 
 		go func() {

@@ -28,7 +28,7 @@ func (op raceOperator) Call(ctx context.Context, sink Observer, source Observabl
 					}
 				}
 				try.CancelAndUnlock()
-				observer = withFinalizer(sink, cancel)
+				observer = Finally(sink, cancel)
 				observer.Notify(t)
 			}
 		}

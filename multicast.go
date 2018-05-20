@@ -13,7 +13,7 @@ func (op multicastOperator) Call(ctx context.Context, sink Observer, source Obse
 	ctx, cancel := context.WithCancel(ctx)
 	subject := op.subjectFactory()
 	obsv := op.selector(ctx, subject)
-	obsv.Subscribe(ctx, withFinalizer(sink, cancel))
+	obsv.Subscribe(ctx, Finally(sink, cancel))
 	select {
 	case <-ctx.Done():
 	default:

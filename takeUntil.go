@@ -28,7 +28,7 @@ func (op takeUntilOperator) Call(ctx context.Context, sink Observer, source Obse
 	default:
 	}
 
-	source.Subscribe(ctx, withFinalizer(sink, cancel))
+	source.Subscribe(ctx, Finally(sink, cancel))
 
 	return ctx, cancel
 }

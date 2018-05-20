@@ -17,7 +17,7 @@ func (op catchOperator) Call(ctx context.Context, sink Observer, source Observab
 			sink(t)
 		case t.HasError:
 			obsv := op.selector(t.Value.(error))
-			obsv.Subscribe(ctx, withFinalizer(sink, cancel))
+			obsv.Subscribe(ctx, Finally(sink, cancel))
 		default:
 			sink(t)
 			cancel()

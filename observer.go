@@ -25,13 +25,3 @@ func (sink *Observer) Notify(t Notification) {
 
 // NopObserver is an Observer that does nothing.
 var NopObserver Observer = func(Notification) {}
-
-func withFinalizer(sink Observer, finalize func()) Observer {
-	return func(t Notification) {
-		sink(t)
-		if t.HasValue {
-			return
-		}
-		finalize()
-	}
-}
