@@ -10,46 +10,6 @@ type congestOperator struct {
 }
 
 func (op congestOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
-	if op.capacity < 65 {
-		return op.forSmallCapacity(ctx, sink, source)
-	}
-	return op.forLargeCapacity(ctx, sink, source)
-}
-
-func (op congestOperator) forSmallCapacity(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
-	ctx, cancel := context.WithCancel(ctx)
-	done := ctx.Done()
-
-	c := make(chan Notification, op.capacity)
-	go func() {
-		for {
-			select {
-			case <-done:
-				return
-			case t := <-c:
-				switch {
-				case t.HasValue:
-					sink(t)
-				default:
-					sink(t)
-					cancel()
-					return
-				}
-			}
-		}
-	}()
-
-	source.Subscribe(ctx, func(t Notification) {
-		select {
-		case <-done:
-		case c <- t:
-		}
-	})
-
-	return ctx, cancel
-}
-
-func (op congestOperator) forLargeCapacity(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 
