@@ -5,7 +5,7 @@ import (
 )
 
 type withLatestFromOperator struct {
-	observables []Observable
+	Observables []Observable
 }
 
 type withLatestFromValue struct {
@@ -17,7 +17,7 @@ func (op withLatestFromOperator) Call(ctx context.Context, sink Observer, source
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 
-	length := len(op.observables)
+	length := len(op.Observables)
 	q := make(chan withLatestFromValue, length)
 
 	go func() {
@@ -71,7 +71,7 @@ func (op withLatestFromOperator) Call(ctx context.Context, sink Observer, source
 		}
 	}()
 
-	for index, obsv := range op.observables {
+	for index, obsv := range op.Observables {
 		index := index
 		obsv.Subscribe(ctx, func(t Notification) {
 			select {

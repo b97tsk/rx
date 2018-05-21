@@ -6,7 +6,7 @@ import (
 )
 
 type debounceTimeOperator struct {
-	duration time.Duration
+	Duration time.Duration
 }
 
 func (op debounceTimeOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
@@ -21,7 +21,7 @@ func (op debounceTimeOperator) Call(ctx context.Context, sink Observer, source O
 	doSchedule := func() {
 		scheduleCancel()
 
-		_, scheduleCancel = scheduleOnce(ctx, op.duration, func() {
+		_, scheduleCancel = scheduleOnce(ctx, op.Duration, func() {
 			if try.Lock() {
 				defer try.Unlock()
 				sink.Next(latestValue)

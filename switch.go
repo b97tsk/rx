@@ -6,7 +6,7 @@ import (
 )
 
 type switchMapOperator struct {
-	project func(interface{}, int) Observable
+	Project func(interface{}, int) Observable
 }
 
 func (op switchMapOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
@@ -34,7 +34,7 @@ func (op switchMapOperator) Call(ctx context.Context, sink Observer, source Obse
 			activeIndex = outerIndex
 			childCancel()
 
-			obsv := op.project(outerValue, outerIndex)
+			obsv := op.Project(outerValue, outerIndex)
 
 			childCtx, childCancel = context.WithCancel(ctx)
 

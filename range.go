@@ -5,12 +5,12 @@ import (
 )
 
 type rangeOperator struct {
-	low, high int
+	Low, High int
 }
 
 func (op rangeOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	done := ctx.Done()
-	for index := op.low; index < op.high; index++ {
+	for index := op.Low; index < op.High; index++ {
 		select {
 		case <-done:
 			return canceledCtx, doNothing

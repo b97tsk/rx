@@ -6,7 +6,7 @@ import (
 )
 
 type takeLastOperator struct {
-	count int
+	Count int
 }
 
 func (op takeLastOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
@@ -14,7 +14,7 @@ func (op takeLastOperator) Call(ctx context.Context, sink Observer, source Obser
 	return source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
-			if buffer.Len() >= op.count {
+			if buffer.Len() >= op.Count {
 				buffer.Remove(buffer.Front())
 			}
 			buffer.PushBack(t.Value)

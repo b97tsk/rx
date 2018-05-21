@@ -5,15 +5,15 @@ import (
 )
 
 type scanOperator struct {
-	accumulator func(interface{}, interface{}, int) interface{}
-	seed        interface{}
-	hasSeed     bool
+	Accumulator func(interface{}, interface{}, int) interface{}
+	Seed        interface{}
+	HasSeed     bool
 }
 
 func (op scanOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	var (
-		seed       = op.seed
-		hasSeed    = op.hasSeed
+		seed       = op.Seed
+		hasSeed    = op.HasSeed
 		outerIndex = -1
 	)
 	return source.Subscribe(ctx, func(t Notification) {
@@ -22,7 +22,7 @@ func (op scanOperator) Call(ctx context.Context, sink Observer, source Observabl
 			outerIndex++
 
 			if hasSeed {
-				seed = op.accumulator(seed, t.Value, outerIndex)
+				seed = op.Accumulator(seed, t.Value, outerIndex)
 			} else {
 				seed = t.Value
 				hasSeed = true
@@ -43,6 +43,6 @@ func (op scanOperator) Call(ctx context.Context, sink Observer, source Observabl
 // It's like Reduce, but emits the current accumulation whenever the source
 // emits a value.
 func (o Observable) Scan(accumulator func(interface{}, interface{}, int) interface{}) Observable {
-	op := scanOperator{accumulator: accumulator}
+	op := scanOperator{Accumulator: accumulator}
 	return o.Lift(op.Call)
 }

@@ -5,7 +5,7 @@ import (
 )
 
 type distinctOperator struct {
-	keySelector func(interface{}) interface{}
+	KeySelector func(interface{}) interface{}
 }
 
 func (op distinctOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
@@ -13,7 +13,7 @@ func (op distinctOperator) Call(ctx context.Context, sink Observer, source Obser
 	return source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
-			key := op.keySelector(t.Value)
+			key := op.KeySelector(t.Value)
 			if _, exists := keys[key]; exists {
 				break
 			}

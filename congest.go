@@ -6,7 +6,7 @@ import (
 )
 
 type congestOperator struct {
-	capacity int
+	Capacity int
 }
 
 func (op congestOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
@@ -41,7 +41,7 @@ func (op congestOperator) Call(ctx context.Context, sink Observer, source Observ
 				out chan<- *list.Element
 			)
 			length := queue.Len()
-			if length < op.capacity {
+			if length < op.Capacity {
 				in = q
 			}
 			if length > 0 {

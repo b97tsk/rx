@@ -5,7 +5,7 @@ import (
 )
 
 type defaultIfEmptyOperator struct {
-	defaultValue interface{}
+	Default interface{}
 }
 
 func (op defaultIfEmptyOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
@@ -19,7 +19,7 @@ func (op defaultIfEmptyOperator) Call(ctx context.Context, sink Observer, source
 			sink(t)
 		default:
 			if !hasValue {
-				sink.Next(op.defaultValue)
+				sink.Next(op.Default)
 			}
 			sink(t)
 		}

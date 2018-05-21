@@ -5,7 +5,7 @@ import (
 )
 
 type throttleOperator struct {
-	durationSelector func(interface{}) Observable
+	DurationSelector func(interface{}) Observable
 }
 
 func (op throttleOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
@@ -38,7 +38,7 @@ func (op throttleOperator) Call(ctx context.Context, sink Observer, source Obser
 				}
 			}
 
-			obsv := op.durationSelector(t.Value)
+			obsv := op.DurationSelector(t.Value)
 			obsv.Subscribe(scheduleCtx, observer.Notify)
 
 		default:

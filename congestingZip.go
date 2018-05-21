@@ -5,14 +5,14 @@ import (
 )
 
 type congestingZipOperator struct {
-	observables []Observable
+	Observables []Observable
 }
 
 func (op congestingZipOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 
-	length := len(op.observables)
+	length := len(op.Observables)
 	channels := make([]chan Notification, length)
 
 	for i := 0; i < length; i++ {
@@ -43,7 +43,7 @@ func (op congestingZipOperator) Call(ctx context.Context, sink Observer, source 
 		}
 	}()
 
-	for index, obsv := range op.observables {
+	for index, obsv := range op.Observables {
 		c := channels[index]
 		go obsv.Subscribe(ctx, func(t Notification) {
 			select {

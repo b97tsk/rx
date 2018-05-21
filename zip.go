@@ -6,7 +6,7 @@ import (
 )
 
 type zipOperator struct {
-	observables []Observable
+	Observables []Observable
 }
 
 type zipValue struct {
@@ -18,7 +18,7 @@ func (op zipOperator) Call(ctx context.Context, sink Observer, source Observable
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 
-	length := len(op.observables)
+	length := len(op.Observables)
 	q := make(chan zipValue, length)
 
 	go func() {
@@ -89,7 +89,7 @@ func (op zipOperator) Call(ctx context.Context, sink Observer, source Observable
 		}
 	}()
 
-	for index, obsv := range op.observables {
+	for index, obsv := range op.Observables {
 		index := index
 		obsv.Subscribe(ctx, func(t Notification) {
 			select {

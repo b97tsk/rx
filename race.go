@@ -5,18 +5,18 @@ import (
 )
 
 type raceOperator struct {
-	observables []Observable
+	Observables []Observable
 }
 
 func (op raceOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
-	length := len(op.observables)
+	length := len(op.Observables)
 	subscriptions := make([]context.CancelFunc, 0, length)
 
 	var try cancellableLocker
 
-	for index, obsv := range op.observables {
+	for index, obsv := range op.Observables {
 		index := index
 
 		var observer Observer

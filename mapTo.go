@@ -5,14 +5,14 @@ import (
 )
 
 type mapToOperator struct {
-	value interface{}
+	Value interface{}
 }
 
 func (op mapToOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	return source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
-			sink.Next(op.value)
+			sink.Next(op.Value)
 		default:
 			sink(t)
 		}

@@ -5,11 +5,11 @@ import (
 )
 
 type throwOperator struct {
-	err error
+	Err error
 }
 
 func (op throwOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
-	sink.Error(op.err)
+	sink.Error(op.Err)
 	return canceledCtx, doNothing
 }
 

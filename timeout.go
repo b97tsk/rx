@@ -6,7 +6,7 @@ import (
 )
 
 type timeoutOperator struct {
-	timeout time.Duration
+	Duration time.Duration
 }
 
 func (op timeoutOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
@@ -16,7 +16,7 @@ func (op timeoutOperator) Call(ctx context.Context, sink Observer, source Observ
 	doSchedule := func() {
 		scheduleCancel()
 
-		_, scheduleCancel = scheduleOnce(ctx, op.timeout, func() {
+		_, scheduleCancel = scheduleOnce(ctx, op.Duration, func() {
 			sink.Error(ErrTimeout)
 			cancel()
 		})

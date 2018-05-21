@@ -6,7 +6,7 @@ import (
 )
 
 type exhaustMapOperator struct {
-	project func(interface{}, int) Observable
+	Project func(interface{}, int) Observable
 }
 
 func (op exhaustMapOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
@@ -36,7 +36,7 @@ func (op exhaustMapOperator) Call(ctx context.Context, sink Observer, source Obs
 			outerIndex++
 			outerIndex := outerIndex
 
-			obsv := op.project(outerValue, outerIndex)
+			obsv := op.Project(outerValue, outerIndex)
 
 			go obsv.Subscribe(ctx, func(t Notification) {
 				switch {

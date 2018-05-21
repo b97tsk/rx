@@ -5,7 +5,7 @@ import (
 )
 
 type forkJoinOperator struct {
-	observables []Observable
+	Observables []Observable
 }
 
 type forkJoinValue struct {
@@ -17,7 +17,7 @@ func (op forkJoinOperator) Call(ctx context.Context, sink Observer, source Obser
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 
-	length := len(op.observables)
+	length := len(op.Observables)
 	q := make(chan forkJoinValue, length)
 
 	go func() {
@@ -67,7 +67,7 @@ func (op forkJoinOperator) Call(ctx context.Context, sink Observer, source Obser
 		}
 	}()
 
-	for index, obsv := range op.observables {
+	for index, obsv := range op.Observables {
 		index := index
 		obsv.Subscribe(ctx, func(t Notification) {
 			select {

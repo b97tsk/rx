@@ -5,7 +5,7 @@ import (
 )
 
 type mapOperator struct {
-	project func(interface{}, int) interface{}
+	Project func(interface{}, int) interface{}
 }
 
 func (op mapOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
@@ -15,7 +15,7 @@ func (op mapOperator) Call(ctx context.Context, sink Observer, source Observable
 		case t.HasValue:
 			outerIndex++
 
-			val := op.project(t.Value, outerIndex)
+			val := op.Project(t.Value, outerIndex)
 			sink.Next(val)
 
 		default:

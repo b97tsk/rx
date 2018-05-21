@@ -5,7 +5,7 @@ import (
 )
 
 type sampleOperator struct {
-	notifier Observable
+	Notifier Observable
 }
 
 func (op sampleOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
@@ -17,7 +17,7 @@ func (op sampleOperator) Call(ctx context.Context, sink Observer, source Observa
 		try            cancellableLocker
 	)
 
-	op.notifier.Subscribe(ctx, func(t Notification) {
+	op.Notifier.Subscribe(ctx, func(t Notification) {
 		if t.HasError {
 			sink(t)
 			cancel()

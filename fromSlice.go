@@ -5,12 +5,12 @@ import (
 )
 
 type fromSliceOperator struct {
-	slice []interface{}
+	Slice []interface{}
 }
 
 func (op fromSliceOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	done := ctx.Done()
-	for _, val := range op.slice {
+	for _, val := range op.Slice {
 		select {
 		case <-done:
 			return canceledCtx, doNothing

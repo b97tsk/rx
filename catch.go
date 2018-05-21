@@ -5,7 +5,7 @@ import (
 )
 
 type catchOperator struct {
-	selector func(error) Observable
+	Selector func(error) Observable
 }
 
 func (op catchOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
@@ -16,7 +16,7 @@ func (op catchOperator) Call(ctx context.Context, sink Observer, source Observab
 		case t.HasValue:
 			sink(t)
 		case t.HasError:
-			obsv := op.selector(t.Value.(error))
+			obsv := op.Selector(t.Value.(error))
 			obsv.Subscribe(ctx, Finally(sink, cancel))
 		default:
 			sink(t)

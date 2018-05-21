@@ -6,13 +6,13 @@ import (
 )
 
 type subscribeOnOperator struct {
-	duration time.Duration
+	Duration time.Duration
 }
 
 func (op subscribeOnOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
-	scheduleOnce(ctx, op.duration, func() {
+	scheduleOnce(ctx, op.Duration, func() {
 		source.Subscribe(ctx, Finally(sink, cancel))
 	})
 

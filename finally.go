@@ -5,11 +5,11 @@ import (
 )
 
 type finallyOperator struct {
-	finally func()
+	Func func()
 }
 
 func (op finallyOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
-	return source.Subscribe(ctx, Finally(sink, op.finally))
+	return source.Subscribe(ctx, Finally(sink, op.Func))
 }
 
 // Finally creates an Observer that passes all emissions to the specified

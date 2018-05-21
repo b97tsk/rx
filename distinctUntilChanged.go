@@ -5,8 +5,8 @@ import (
 )
 
 type distinctUntilChangedOperator struct {
-	compare     func(interface{}, interface{}) bool
-	keySelector func(interface{}) interface{}
+	Compare     func(interface{}, interface{}) bool
+	KeySelector func(interface{}) interface{}
 }
 
 func (op distinctUntilChangedOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
@@ -17,8 +17,8 @@ func (op distinctUntilChangedOperator) Call(ctx context.Context, sink Observer, 
 	return source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
-			newKey := op.keySelector(t.Value)
-			if hasKey && op.compare(key, newKey) {
+			newKey := op.KeySelector(t.Value)
+			if hasKey && op.Compare(key, newKey) {
 				break
 			}
 			key = newKey

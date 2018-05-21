@@ -5,7 +5,7 @@ import (
 )
 
 type retryWhenOperator struct {
-	notifier func(Observable) Observable
+	Notifier func(Observable) Observable
 }
 
 func (op retryWhenOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
@@ -24,7 +24,7 @@ func (op retryWhenOperator) Call(ctx context.Context, sink Observer, source Obse
 		case t.HasError:
 			if subject == nil {
 				subject = NewSubject()
-				obsv := op.notifier(subject.Observable)
+				obsv := op.Notifier(subject.Observable)
 				obsv.Subscribe(ctx, func(t Notification) {
 					switch {
 					case t.HasValue:

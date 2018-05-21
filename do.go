@@ -5,12 +5,12 @@ import (
 )
 
 type doOperator struct {
-	sink Observer
+	Sink Observer
 }
 
 func (op doOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	return source.Subscribe(ctx, func(t Notification) {
-		op.sink(t)
+		op.Sink(t)
 		sink(t)
 	})
 }

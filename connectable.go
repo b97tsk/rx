@@ -151,12 +151,12 @@ func (o ConnectableObservable) Subscribe(ctx context.Context, sink Observer) (co
 }
 
 type refCountOperator struct {
-	connectable ConnectableObservable
+	Connectable ConnectableObservable
 }
 
 func (op refCountOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
-	ctx, cancel := op.connectable.Subscribe(ctx, sink)
-	_, releaseRef := op.connectable.connectAddRef()
+	ctx, cancel := op.Connectable.Subscribe(ctx, sink)
+	_, releaseRef := op.Connectable.connectAddRef()
 
 	go func() {
 		<-ctx.Done()

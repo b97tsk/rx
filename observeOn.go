@@ -7,7 +7,7 @@ import (
 )
 
 type observeOnOperator struct {
-	duration time.Duration
+	Duration time.Duration
 }
 
 func (op observeOnOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
@@ -22,7 +22,7 @@ func (op observeOnOperator) Call(ctx context.Context, sink Observer, source Obse
 		if try.Lock() {
 			defer try.Unlock()
 			queue.PushBack(t)
-			scheduleOnce(ctx, op.duration, func() {
+			scheduleOnce(ctx, op.Duration, func() {
 				if try.Lock() {
 					switch t := queue.Remove(queue.Front()).(Notification); {
 					case t.HasValue:

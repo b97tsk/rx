@@ -5,7 +5,7 @@ import (
 )
 
 type someOperator struct {
-	predicate func(interface{}, int) bool
+	Predicate func(interface{}, int) bool
 }
 
 func (op someOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
@@ -21,7 +21,7 @@ func (op someOperator) Call(ctx context.Context, sink Observer, source Observabl
 		case t.HasValue:
 			outerIndex++
 
-			if op.predicate(t.Value, outerIndex) {
+			if op.Predicate(t.Value, outerIndex) {
 				observer = NopObserver
 				sink.Next(true)
 				sink.Complete()

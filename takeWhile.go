@@ -5,7 +5,7 @@ import (
 )
 
 type takeWhileOperator struct {
-	predicate func(interface{}, int) bool
+	Predicate func(interface{}, int) bool
 }
 
 func (op takeWhileOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
@@ -21,7 +21,7 @@ func (op takeWhileOperator) Call(ctx context.Context, sink Observer, source Obse
 		case t.HasValue:
 			outerIndex++
 
-			if op.predicate(t.Value, outerIndex) {
+			if op.Predicate(t.Value, outerIndex) {
 				sink(t)
 				break
 			}

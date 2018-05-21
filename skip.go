@@ -5,12 +5,12 @@ import (
 )
 
 type skipOperator struct {
-	count int
+	Count int
 }
 
 func (op skipOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	var (
-		count    = op.count
+		count    = op.Count
 		observer Observer
 	)
 

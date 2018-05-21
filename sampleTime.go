@@ -6,7 +6,7 @@ import (
 )
 
 type sampleTimeOperator struct {
-	interval time.Duration
+	Duration time.Duration
 }
 
 func (op sampleTimeOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
@@ -18,7 +18,7 @@ func (op sampleTimeOperator) Call(ctx context.Context, sink Observer, source Obs
 		try            cancellableLocker
 	)
 
-	schedule(ctx, op.interval, func() {
+	schedule(ctx, op.Duration, func() {
 		if try.Lock() {
 			defer try.Unlock()
 			if hasLatestValue {

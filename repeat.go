@@ -5,14 +5,14 @@ import (
 )
 
 type repeatOperator struct {
-	count int
+	Count int
 }
 
 func (op repeatOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	var (
-		count    = op.count
+		count    = op.Count
 		observer Observer
 	)
 

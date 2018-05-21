@@ -5,11 +5,11 @@ import (
 )
 
 type deferOperator struct {
-	factory func() Observable
+	Func func() Observable
 }
 
 func (op deferOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
-	return op.factory().Subscribe(ctx, sink)
+	return op.Func().Subscribe(ctx, sink)
 }
 
 // Defer creates an Observable that, on subscribe, calls an Observable

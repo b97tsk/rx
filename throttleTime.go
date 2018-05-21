@@ -6,7 +6,7 @@ import (
 )
 
 type throttleTimeOperator struct {
-	duration time.Duration
+	Duration time.Duration
 }
 
 func (op throttleTimeOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
@@ -25,7 +25,7 @@ func (op throttleTimeOperator) Call(ctx context.Context, sink Observer, source O
 
 			sink(t)
 
-			scheduleCtx, _ = scheduleOnce(ctx, op.duration, doNothing)
+			scheduleCtx, _ = scheduleOnce(ctx, op.Duration, doNothing)
 			scheduleDone = scheduleCtx.Done()
 
 		default:

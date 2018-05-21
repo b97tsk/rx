@@ -5,7 +5,7 @@ import (
 )
 
 type repeatWhenOperator struct {
-	notifier func(Observable) Observable
+	Notifier func(Observable) Observable
 }
 
 func (op repeatWhenOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
@@ -27,7 +27,7 @@ func (op repeatWhenOperator) Call(ctx context.Context, sink Observer, source Obs
 		default:
 			if subject == nil {
 				subject = NewSubject()
-				obsv := op.notifier(subject.Observable)
+				obsv := op.Notifier(subject.Observable)
 				obsv.Subscribe(ctx, func(t Notification) {
 					switch {
 					case t.HasValue:

@@ -5,14 +5,14 @@ import (
 )
 
 type retryOperator struct {
-	count int
+	Count int
 }
 
 func (op retryOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	var (
-		count    = op.count
+		count    = op.Count
 		observer Observer
 	)
 

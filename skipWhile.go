@@ -5,7 +5,7 @@ import (
 )
 
 type skipWhileOperator struct {
-	predicate func(interface{}, int) bool
+	Predicate func(interface{}, int) bool
 }
 
 func (op skipWhileOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
@@ -19,7 +19,7 @@ func (op skipWhileOperator) Call(ctx context.Context, sink Observer, source Obse
 		case t.HasValue:
 			outerIndex++
 
-			if !op.predicate(t.Value, outerIndex) {
+			if !op.Predicate(t.Value, outerIndex) {
 				observer = sink
 				sink(t)
 			}

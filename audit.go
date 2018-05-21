@@ -5,7 +5,7 @@ import (
 )
 
 type auditOperator struct {
-	durationSelector func(interface{}) Observable
+	DurationSelector func(interface{}) Observable
 }
 
 func (op auditOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
@@ -44,7 +44,7 @@ func (op auditOperator) Call(ctx context.Context, sink Observer, source Observab
 			}
 		}
 
-		obsv := op.durationSelector(val)
+		obsv := op.DurationSelector(val)
 		obsv.Subscribe(scheduleCtx, observer.Notify)
 	}
 

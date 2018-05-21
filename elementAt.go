@@ -5,16 +5,16 @@ import (
 )
 
 type elementAtOperator struct {
-	index           int
-	defaultValue    interface{}
-	hasDefaultValue bool
+	Index      int
+	Default    interface{}
+	HasDefault bool
 }
 
 func (op elementAtOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	var (
-		index    = op.index
+		index    = op.Index
 		observer Observer
 	)
 
@@ -32,8 +32,8 @@ func (op elementAtOperator) Call(ctx context.Context, sink Observer, source Obse
 			sink(t)
 			cancel()
 		default:
-			if op.hasDefaultValue {
-				sink.Next(op.defaultValue)
+			if op.HasDefault {
+				sink.Next(op.Default)
 				sink.Complete()
 			} else {
 				sink.Error(ErrOutOfRange)
@@ -51,7 +51,7 @@ func (op elementAtOperator) Call(ctx context.Context, sink Observer, source Obse
 // index in a sequence of emissions from the source Observable, if the
 // specified index is out of range, notifies error ErrOutOfRange.
 func (o Observable) ElementAt(index int) Observable {
-	op := elementAtOperator{index: index}
+	op := elementAtOperator{Index: index}
 	return o.Lift(op.Call)
 }
 
@@ -60,9 +60,9 @@ func (o Observable) ElementAt(index int) Observable {
 // the specified index is out of range, emits the provided default value.
 func (o Observable) ElementAtOrDefault(index int, defaultValue interface{}) Observable {
 	op := elementAtOperator{
-		index:           index,
-		defaultValue:    defaultValue,
-		hasDefaultValue: true,
+		Index:      index,
+		Default:    defaultValue,
+		HasDefault: true,
 	}
 	return o.Lift(op.Call)
 }

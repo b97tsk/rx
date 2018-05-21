@@ -6,7 +6,7 @@ import (
 )
 
 type auditTimeOperator struct {
-	duration time.Duration
+	Duration time.Duration
 }
 
 func (op auditTimeOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
@@ -26,7 +26,7 @@ func (op auditTimeOperator) Call(ctx context.Context, sink Observer, source Obse
 			return
 		}
 
-		scheduleCtx, _ = scheduleOnce(ctx, op.duration, func() {
+		scheduleCtx, _ = scheduleOnce(ctx, op.Duration, func() {
 			if try.Lock() {
 				defer try.Unlock()
 				sink.Next(latestValue)

@@ -6,7 +6,7 @@ import (
 )
 
 type skipUntilOperator struct {
-	notifier Observable
+	Notifier Observable
 }
 
 func (op skipUntilOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
@@ -18,7 +18,7 @@ func (op skipUntilOperator) Call(ctx context.Context, sink Observer, source Obse
 		hasCompleted uint32
 	)
 
-	op.notifier.Subscribe(ctx, func(t Notification) {
+	op.Notifier.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			atomic.StoreUint32(&noSkipping, 1)

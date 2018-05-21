@@ -5,14 +5,14 @@ import (
 )
 
 type takeUntilOperator struct {
-	notifier Observable
+	Notifier Observable
 }
 
 func (op takeUntilOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 
-	op.notifier.Subscribe(ctx, func(t Notification) {
+	op.Notifier.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			sink.Complete()

@@ -5,7 +5,7 @@ import (
 )
 
 type debounceOperator struct {
-	durationSelector func(interface{}) Observable
+	DurationSelector func(interface{}) Observable
 }
 
 func (op debounceOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
@@ -38,7 +38,7 @@ func (op debounceOperator) Call(ctx context.Context, sink Observer, source Obser
 			}
 		}
 
-		obsv := op.durationSelector(val)
+		obsv := op.DurationSelector(val)
 		obsv.Subscribe(scheduleCtx, observer.Notify)
 	}
 

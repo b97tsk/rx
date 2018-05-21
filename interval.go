@@ -6,18 +6,18 @@ import (
 )
 
 type intervalOperator struct {
-	initialDelay time.Duration
-	period       time.Duration
+	InitialDelay time.Duration
+	Period       time.Duration
 }
 
 func (op intervalOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
-	if op.initialDelay != op.period {
-		scheduleOnce(ctx, op.initialDelay, func() {
+	if op.InitialDelay != op.Period {
+		scheduleOnce(ctx, op.InitialDelay, func() {
 			index := 0
 			wait := make(chan struct{})
-			schedule(ctx, op.period, func() {
+			schedule(ctx, op.Period, func() {
 				<-wait
 				sink.Next(index)
 				index++
@@ -28,7 +28,7 @@ func (op intervalOperator) Call(ctx context.Context, sink Observer, source Obser
 		})
 	} else {
 		index := 0
-		schedule(ctx, op.period, func() {
+		schedule(ctx, op.Period, func() {
 			sink.Next(index)
 			index++
 		})

@@ -8,7 +8,7 @@ import (
 )
 
 type delayOperator struct {
-	timeout time.Duration
+	Duration time.Duration
 }
 
 type delayValue struct {
@@ -69,10 +69,10 @@ func (op delayOperator) Call(ctx context.Context, sink Observer, source Observab
 		switch {
 		case t.HasValue:
 			queue.PushBack(delayValue{
-				Time:         time.Now().Add(op.timeout),
+				Time:         time.Now().Add(op.Duration),
 				Notification: t,
 			})
-			doSchedule(op.timeout)
+			doSchedule(op.Duration)
 		case t.HasError:
 			// Error notification will not be delayed.
 			queue.Init()
@@ -80,9 +80,9 @@ func (op delayOperator) Call(ctx context.Context, sink Observer, source Observab
 			cancel()
 		default:
 			queue.PushBack(delayValue{
-				Time: time.Now().Add(op.timeout),
+				Time: time.Now().Add(op.Duration),
 			})
-			doSchedule(op.timeout)
+			doSchedule(op.Duration)
 		}
 	})
 

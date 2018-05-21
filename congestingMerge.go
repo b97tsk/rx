@@ -6,8 +6,8 @@ import (
 )
 
 type congestingMergeOperator struct {
-	project    func(interface{}, int) Observable
-	concurrent int
+	Project    func(interface{}, int) Observable
+	Concurrent int
 }
 
 func (op congestingMergeOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
@@ -21,7 +21,7 @@ func (op congestingMergeOperator) Call(ctx context.Context, sink Observer, sourc
 		completeSignal = make(chan struct{}, 1)
 	)
 
-	concurrent := op.concurrent
+	concurrent := op.Concurrent
 	if concurrent == 0 {
 		concurrent = -1
 	}
@@ -47,8 +47,8 @@ func (op congestingMergeOperator) Call(ctx context.Context, sink Observer, sourc
 			outerIndex++
 			outerIndex := outerIndex
 
-			// calls project synchronously
-			obsv := op.project(outerValue, outerIndex)
+			// calls op.Project synchronously
+			obsv := op.Project(outerValue, outerIndex)
 
 			go obsv.Subscribe(ctx, func(t Notification) {
 				switch {

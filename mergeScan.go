@@ -7,9 +7,9 @@ import (
 )
 
 type mergeScanOperator struct {
-	accumulator func(interface{}, interface{}) Observable
-	seed        interface{}
-	concurrent  int
+	Accumulator func(interface{}, interface{}) Observable
+	Seed        interface{}
+	Concurrent  int
 }
 
 func (op mergeScanOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
@@ -19,14 +19,14 @@ func (op mergeScanOperator) Call(ctx context.Context, sink Observer, source Obse
 	var (
 		mu             sync.Mutex
 		activeCount    = 0
-		seed           = op.seed
+		seed           = op.Seed
 		hasValue       bool
 		buffer         list.List
 		completeSignal = make(chan struct{}, 1)
 		doNextLocked   func()
 	)
 
-	concurrent := op.concurrent
+	concurrent := op.Concurrent
 	if concurrent == 0 {
 		concurrent = -1
 	}
@@ -34,8 +34,8 @@ func (op mergeScanOperator) Call(ctx context.Context, sink Observer, source Obse
 	doNextLocked = func() {
 		outerValue := buffer.Remove(buffer.Front())
 
-		// calls accumulator synchronously
-		obsv := op.accumulator(seed, outerValue)
+		// calls op.Accumulator synchronously
+		obsv := op.Accumulator(seed, outerValue)
 
 		go obsv.Subscribe(ctx, func(t Notification) {
 			switch {

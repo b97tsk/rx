@@ -5,13 +5,13 @@ import (
 )
 
 type skipLastOperator struct {
-	count int
+	Count int
 }
 
 func (op skipLastOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	var (
-		buffer     = make([]interface{}, op.count)
-		bufferSize = op.count
+		buffer     = make([]interface{}, op.Count)
+		bufferSize = op.Count
 		index      int
 		count      int
 	)

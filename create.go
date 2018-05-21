@@ -5,11 +5,11 @@ import (
 )
 
 type createOperator struct {
-	f func(context.Context, Observer) (context.Context, context.CancelFunc)
+	Func func(context.Context, Observer) (context.Context, context.CancelFunc)
 }
 
 func (op createOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
-	return op.f(ctx, sink)
+	return op.Func(ctx, sink)
 }
 
 // Create creates a new Observable, that will execute the specified function

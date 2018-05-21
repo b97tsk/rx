@@ -5,13 +5,13 @@ import (
 )
 
 type bufferCountOperator struct {
-	bufferSize       int
-	startBufferEvery int
+	BufferSize       int
+	StartBufferEvery int
 }
 
 func (op bufferCountOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	var (
-		buffer    = make([]interface{}, 0, op.bufferSize)
+		buffer    = make([]interface{}, 0, op.BufferSize)
 		skipCount int
 	)
 	return source.Subscribe(ctx, func(t Notification) {
@@ -22,14 +22,14 @@ func (op bufferCountOperator) Call(ctx context.Context, sink Observer, source Ob
 				break
 			}
 			buffer = append(buffer, t.Value)
-			if len(buffer) < op.bufferSize {
+			if len(buffer) < op.BufferSize {
 				break
 			}
-			newBuffer := make([]interface{}, 0, op.bufferSize)
-			if op.startBufferEvery < op.bufferSize {
-				newBuffer = append(newBuffer, buffer[op.startBufferEvery:]...)
+			newBuffer := make([]interface{}, 0, op.BufferSize)
+			if op.StartBufferEvery < op.BufferSize {
+				newBuffer = append(newBuffer, buffer[op.StartBufferEvery:]...)
 			} else {
-				skipCount = op.startBufferEvery - op.bufferSize
+				skipCount = op.StartBufferEvery - op.BufferSize
 			}
 			sink.Next(buffer)
 			buffer = newBuffer
@@ -37,8 +37,8 @@ func (op bufferCountOperator) Call(ctx context.Context, sink Observer, source Ob
 			sink(t)
 		default:
 			if len(buffer) > 0 {
-				for op.startBufferEvery < len(buffer) {
-					newBuffer := append([]interface{}(nil), buffer[op.startBufferEvery:]...)
+				for op.StartBufferEvery < len(buffer) {
+					newBuffer := append([]interface{}(nil), buffer[op.StartBufferEvery:]...)
 					sink.Next(buffer)
 					buffer = newBuffer
 				}
@@ -54,7 +54,7 @@ func (op bufferCountOperator) Call(ctx context.Context, sink Observer, source Ob
 //
 // BufferCount collects values from the past as a slice, and emits that slice
 // only when its size reaches bufferSize.
-func (o Observable) BufferCount(bufferSize, startBufferEvery int) Observable {
-	op := bufferCountOperator{bufferSize, startBufferEvery}
+func (o Observable) BufferCount(bufferSize int) Observable {
+	op := bufferCountOperator{bufferSize, bufferSize}
 	return o.Lift(op.Call)
 }

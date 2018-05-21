@@ -5,7 +5,7 @@ import (
 )
 
 type congestingConcatOperator struct {
-	project func(interface{}, int) Observable
+	Project func(interface{}, int) Observable
 }
 
 func (op congestingConcatOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
@@ -23,7 +23,7 @@ func (op congestingConcatOperator) Call(ctx context.Context, sink Observer, sour
 			outerIndex++
 			outerIndex := outerIndex
 
-			obsv := op.project(outerValue, outerIndex)
+			obsv := op.Project(outerValue, outerIndex)
 
 			childCtx, _ := obsv.Subscribe(ctx, func(t Notification) {
 				switch {
