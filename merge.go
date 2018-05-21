@@ -116,8 +116,8 @@ func (op mergeMapOperator) Call(ctx context.Context, sink Observer, source Obser
 //
 // Merge flattens multiple Observables together by blending their values into
 // one Observable.
-func Merge(observables ...interface{}) Observable {
-	return FromSlice(observables).MergeAll()
+func Merge(observables ...Observable) Observable {
+	return FromObservables(observables).MergeAll()
 }
 
 // MergeAll converts a higher-order Observable into a first-order Observable

@@ -5,8 +5,8 @@ package rx
 //
 // Concat concatenates multiple Observables together by sequentially emitting
 // their values, one Observable after the other.
-func Concat(observables ...interface{}) Observable {
-	return FromSlice(observables).ConcatAll()
+func Concat(observables ...Observable) Observable {
+	return FromObservables(observables).ConcatAll()
 }
 
 // ConcatAll converts a higher-order Observable into a first-order Observable

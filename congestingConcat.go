@@ -57,8 +57,8 @@ func (op congestingConcatOperator) Call(ctx context.Context, sink Observer, sour
 // values into one Observable.
 //
 // It's like Concat, but it congests the source.
-func CongestingConcat(observables ...interface{}) Observable {
-	return FromSlice(observables).CongestingConcatAll()
+func CongestingConcat(observables ...Observable) Observable {
+	return FromObservables(observables).CongestingConcatAll()
 }
 
 // CongestingConcatAll converts a higher-order Observable into a first-order

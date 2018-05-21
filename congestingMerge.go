@@ -110,8 +110,8 @@ func (op congestingMergeOperator) Call(ctx context.Context, sink Observer, sourc
 // values into one Observable.
 //
 // It's like Merge, but it may congest the source due to concurrent limit.
-func CongestingMerge(observables ...interface{}) Observable {
-	return FromSlice(observables).CongestingMergeAll()
+func CongestingMerge(observables ...Observable) Observable {
+	return FromObservables(observables).CongestingMergeAll()
 }
 
 // CongestingMergeAll converts a higher-order Observable into a first-order
