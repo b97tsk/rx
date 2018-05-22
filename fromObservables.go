@@ -13,13 +13,13 @@ func (op fromObservablesOperator) Call(ctx context.Context, sink Observer, sourc
 	for _, obsv := range op.Observables {
 		select {
 		case <-done:
-			return canceledCtx, doNothing
+			return canceledCtx, nothingToDo
 		default:
 		}
 		sink.Next(obsv)
 	}
 	sink.Complete()
-	return canceledCtx, doNothing
+	return canceledCtx, nothingToDo
 }
 
 // FromObservables creates an Observable that emits Observables from a slice,

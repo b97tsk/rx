@@ -10,7 +10,7 @@ type auditOperator struct {
 
 func (op auditOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
-	scheduleCtx, scheduleCancel := canceledCtx, doNothing
+	scheduleCtx, scheduleCancel := canceledCtx, nothingToDo
 	scheduleDone := scheduleCtx.Done()
 
 	var (

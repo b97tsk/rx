@@ -6,7 +6,7 @@ import (
 
 var (
 	canceledCtx context.Context
-	doNothing   = func() {}
+	nothingToDo = func() {}
 )
 
 func init() {
@@ -23,7 +23,9 @@ func defaultKeySelector(val interface{}) interface{} {
 	return val
 }
 
-func projectToObservable(val interface{}, index int) Observable {
+// ProjectToObservable type-casts each value to an Observable and returns it,
+// if failed, returns Throw(ErrNotObservable).
+func ProjectToObservable(val interface{}, index int) Observable {
 	if obsv, ok := val.(Observable); ok {
 		return obsv
 	}

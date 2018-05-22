@@ -12,7 +12,7 @@ type switchMapOperator struct {
 func (op switchMapOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
-	childCtx, childCancel := canceledCtx, doNothing
+	childCtx, childCancel := canceledCtx, nothingToDo
 
 	var (
 		mu             sync.Mutex
@@ -103,7 +103,7 @@ func (op switchMapOperator) Call(ctx context.Context, sink Observer, source Obse
 // Switch flattens an Observable-of-Observables by dropping the previous inner
 // Observable once a new one appears.
 func (o Observable) Switch() Observable {
-	op := switchMapOperator{projectToObservable}
+	op := switchMapOperator{ProjectToObservable}
 	return o.Lift(op.Call).Mutex()
 }
 

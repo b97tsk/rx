@@ -11,7 +11,6 @@ type skipUntilOperator struct {
 
 func (op skipUntilOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
-	done := ctx.Done()
 
 	var (
 		noSkipping   uint32
@@ -35,7 +34,7 @@ func (op skipUntilOperator) Call(ctx context.Context, sink Observer, source Obse
 	})
 
 	select {
-	case <-done:
+	case <-ctx.Done():
 		return ctx, cancel
 	default:
 	}

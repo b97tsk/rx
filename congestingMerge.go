@@ -120,7 +120,7 @@ func CongestingMerge(observables ...Observable) Observable {
 //
 // It's like MergeAll, but it may congest the source due to concurrent limit.
 func (o Observable) CongestingMergeAll() Observable {
-	op := congestingMergeOperator{projectToObservable, -1}
+	op := congestingMergeOperator{ProjectToObservable, -1}
 	return o.Lift(op.Call).Mutex()
 }
 

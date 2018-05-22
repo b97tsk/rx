@@ -10,7 +10,7 @@ type repeatWhenOperator struct {
 
 func (op repeatWhenOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
-	sourceCtx, sourceCancel := canceledCtx, doNothing
+	sourceCtx, sourceCancel := canceledCtx, nothingToDo
 
 	var (
 		subject  *Subject

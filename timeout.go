@@ -11,7 +11,7 @@ type timeoutOperator struct {
 
 func (op timeoutOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
-	scheduleCancel := doNothing
+	scheduleCancel := nothingToDo
 
 	doSchedule := func() {
 		scheduleCancel()

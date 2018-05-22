@@ -10,7 +10,6 @@ type bufferOperator struct {
 
 func (op bufferOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
-	done := ctx.Done()
 
 	var (
 		buffer []interface{}
@@ -34,7 +33,7 @@ func (op bufferOperator) Call(ctx context.Context, sink Observer, source Observa
 	})
 
 	select {
-	case <-done:
+	case <-ctx.Done():
 		return ctx, cancel
 	default:
 	}

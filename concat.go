@@ -15,7 +15,7 @@ func Concat(observables ...Observable) Observable {
 // ConcatAll flattens an Observable-of-Observables by putting one inner
 // Observable after the other.
 func (o Observable) ConcatAll() Observable {
-	op := mergeMapOperator{projectToObservable, 1}
+	op := mergeMapOperator{ProjectToObservable, 1}
 	return o.Lift(op.Call)
 }
 

@@ -93,7 +93,7 @@ func (s *BehaviorSubject) call(ctx context.Context, sink Observer, source Observ
 		sink.Complete()
 	}
 
-	return canceledCtx, doNothing
+	return canceledCtx, nothingToDo
 }
 
 // NewBehaviorSubject returns a new BehaviorSubject.

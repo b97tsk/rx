@@ -25,7 +25,7 @@ func (op throttleTimeOperator) Call(ctx context.Context, sink Observer, source O
 
 			sink(t)
 
-			scheduleCtx, _ = scheduleOnce(ctx, op.Duration, doNothing)
+			scheduleCtx, _ = scheduleOnce(ctx, op.Duration, nothingToDo)
 			scheduleDone = scheduleCtx.Done()
 
 		default:

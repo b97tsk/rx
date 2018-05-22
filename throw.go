@@ -10,7 +10,7 @@ type throwOperator struct {
 
 func (op throwOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	sink.Error(op.Err)
-	return canceledCtx, doNothing
+	return canceledCtx, nothingToDo
 }
 
 // Throw creates an Observable that emits no items to the Observer and

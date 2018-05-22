@@ -13,13 +13,13 @@ func (op rangeOperator) Call(ctx context.Context, sink Observer, source Observab
 	for index := op.Low; index < op.High; index++ {
 		select {
 		case <-done:
-			return canceledCtx, doNothing
+			return canceledCtx, nothingToDo
 		default:
 		}
 		sink.Next(index)
 	}
 	sink.Complete()
-	return canceledCtx, doNothing
+	return canceledCtx, nothingToDo
 }
 
 // Range creates an Observable that emits a sequence of integers within a

@@ -124,7 +124,7 @@ func Merge(observables ...Observable) Observable {
 // which concurrently delivers all values that are emitted on the inner
 // Observables.
 func (o Observable) MergeAll() Observable {
-	op := mergeMapOperator{projectToObservable, -1}
+	op := mergeMapOperator{ProjectToObservable, -1}
 	return o.Lift(op.Call).Mutex()
 }
 

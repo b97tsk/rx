@@ -97,7 +97,7 @@ func (op exhaustMapOperator) Call(ctx context.Context, sink Observer, source Obs
 // Exhaust flattens an Observable-of-Observables by dropping the next inner
 // Observables while the current inner is still executing.
 func (o Observable) Exhaust() Observable {
-	op := exhaustMapOperator{projectToObservable}
+	op := exhaustMapOperator{ProjectToObservable}
 	return o.Lift(op.Call).Mutex()
 }
 

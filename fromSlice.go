@@ -13,13 +13,13 @@ func (op fromSliceOperator) Call(ctx context.Context, sink Observer, source Obse
 	for _, val := range op.Slice {
 		select {
 		case <-done:
-			return canceledCtx, doNothing
+			return canceledCtx, nothingToDo
 		default:
 		}
 		sink.Next(val)
 	}
 	sink.Complete()
-	return canceledCtx, doNothing
+	return canceledCtx, nothingToDo
 }
 
 // FromSlice creates an Observable that emits values from a slice, one after

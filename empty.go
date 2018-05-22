@@ -8,7 +8,7 @@ type emptyOperator struct{}
 
 func (op emptyOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	sink.Complete()
-	return canceledCtx, doNothing
+	return canceledCtx, nothingToDo
 }
 
 // Empty creates an Observable that emits no items to the Observer and
