@@ -41,7 +41,9 @@ func (op findIndexOperator) Call(ctx context.Context, sink Observer, source Obse
 
 // FindIndex creates an Observable that emits only the index of the first value
 // emitted by the source Observable that meets some condition.
-func (o Observable) FindIndex(predicate func(interface{}, int) bool) Observable {
-	op := findIndexOperator{predicate}
-	return o.Lift(op.Call)
+func (Operators) FindIndex(predicate func(interface{}, int) bool) OperatorFunc {
+	return func(source Observable) Observable {
+		op := findIndexOperator{predicate}
+		return source.Lift(op.Call)
+	}
 }

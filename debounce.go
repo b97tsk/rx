@@ -66,7 +66,9 @@ func (op debounceOperator) Call(ctx context.Context, sink Observer, source Obser
 //
 // It's like DebounceTime, but the time span of emission silence is determined
 // by a second Observable.
-func (o Observable) Debounce(durationSelector func(interface{}) Observable) Observable {
-	op := debounceOperator{durationSelector}
-	return o.Lift(op.Call)
+func (Operators) Debounce(durationSelector func(interface{}) Observable) OperatorFunc {
+	return func(source Observable) Observable {
+		op := debounceOperator{durationSelector}
+		return source.Lift(op.Call)
+	}
 }

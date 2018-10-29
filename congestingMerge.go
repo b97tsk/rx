@@ -111,7 +111,7 @@ func (op congestingMergeOperator) Call(ctx context.Context, sink Observer, sourc
 //
 // It's like Merge, but it may congest the source due to concurrent limit.
 func CongestingMerge(observables ...Observable) Observable {
-	return FromObservables(observables).CongestingMergeAll()
+	return FromObservables(observables).Pipe(operators.CongestingMergeAll())
 }
 
 // CongestingMergeAll converts a higher-order Observable into a first-order
@@ -119,9 +119,11 @@ func CongestingMerge(observables ...Observable) Observable {
 // inner Observables.
 //
 // It's like MergeAll, but it may congest the source due to concurrent limit.
-func (o Observable) CongestingMergeAll() Observable {
-	op := congestingMergeOperator{ProjectToObservable, -1}
-	return o.Lift(op.Call).Mutex()
+func (Operators) CongestingMergeAll() OperatorFunc {
+	return func(source Observable) Observable {
+		op := congestingMergeOperator{ProjectToObservable, -1}
+		return source.Pipe(MakeFunc(op.Call), operators.Mutex())
+	}
 }
 
 // CongestingMergeMap creates an Observable that projects each source value to
@@ -131,9 +133,11 @@ func (o Observable) CongestingMergeAll() Observable {
 // these inner Observables using CongestingMergeAll.
 //
 // It's like MergeMap, but it may congest the source due to concurrent limit.
-func (o Observable) CongestingMergeMap(project func(interface{}, int) Observable) Observable {
-	op := congestingMergeOperator{project, -1}
-	return o.Lift(op.Call).Mutex()
+func (Operators) CongestingMergeMap(project func(interface{}, int) Observable) OperatorFunc {
+	return func(source Observable) Observable {
+		op := congestingMergeOperator{project, -1}
+		return source.Pipe(MakeFunc(op.Call), operators.Mutex())
+	}
 }
 
 // CongestingMergeMapTo creates an Observable that projects each source value
@@ -144,6 +148,6 @@ func (o Observable) CongestingMergeMap(project func(interface{}, int) Observable
 // Observable.
 //
 // It's like MergeMapTo, but it may congest the source due to concurrent limit.
-func (o Observable) CongestingMergeMapTo(inner Observable) Observable {
-	return o.CongestingMergeMap(func(interface{}, int) Observable { return inner })
+func (Operators) CongestingMergeMapTo(inner Observable) OperatorFunc {
+	return operators.CongestingMergeMap(func(interface{}, int) Observable { return inner })
 }

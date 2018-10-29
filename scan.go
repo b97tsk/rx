@@ -42,7 +42,9 @@ func (op scanOperator) Call(ctx context.Context, sink Observer, source Observabl
 //
 // It's like Reduce, but emits the current accumulation whenever the source
 // emits a value.
-func (o Observable) Scan(accumulator func(interface{}, interface{}, int) interface{}) Observable {
-	op := scanOperator{Accumulator: accumulator}
-	return o.Lift(op.Call)
+func (Operators) Scan(accumulator func(interface{}, interface{}, int) interface{}) OperatorFunc {
+	return func(source Observable) Observable {
+		op := scanOperator{Accumulator: accumulator}
+		return source.Lift(op.Call)
+	}
 }

@@ -59,7 +59,9 @@ func (op bufferOperator) Call(ctx context.Context, sink Observer, source Observa
 //
 // Buffer collects values from the past as a slice, and emits that slice
 // only when another Observable emits.
-func (o Observable) Buffer(notifier Observable) Observable {
-	op := bufferOperator{notifier}
-	return o.Lift(op.Call)
+func (Operators) Buffer(notifier Observable) OperatorFunc {
+	return func(source Observable) Observable {
+		op := bufferOperator{notifier}
+		return source.Lift(op.Call)
+	}
 }

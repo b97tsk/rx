@@ -31,7 +31,9 @@ func (op lastOperator) Call(ctx context.Context, sink Observer, source Observabl
 
 // Last creates an Observable that emits only the last item emitted by the
 // source Observable.
-func (o Observable) Last() Observable {
-	op := lastOperator{}
-	return o.Lift(op.Call)
+func (Operators) Last() OperatorFunc {
+	return func(source Observable) Observable {
+		op := lastOperator{}
+		return source.Lift(op.Call)
+	}
 }

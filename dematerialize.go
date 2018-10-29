@@ -42,7 +42,9 @@ func (op dematerializeOperator) Call(ctx context.Context, sink Observer, source 
 //
 // Unwraps Notification objects as actual Next, Error and Complete emissions.
 // The opposite of Materialize.
-func (o Observable) Dematerialize() Observable {
-	op := dematerializeOperator{}
-	return o.Lift(op.Call)
+func (Operators) Dematerialize() OperatorFunc {
+	return func(source Observable) Observable {
+		op := dematerializeOperator{}
+		return source.Lift(op.Call)
+	}
 }

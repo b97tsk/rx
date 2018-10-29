@@ -58,7 +58,7 @@ func (op congestingConcatOperator) Call(ctx context.Context, sink Observer, sour
 //
 // It's like Concat, but it congests the source.
 func CongestingConcat(observables ...Observable) Observable {
-	return FromObservables(observables).CongestingConcatAll()
+	return FromObservables(observables).Pipe(operators.CongestingConcatAll())
 }
 
 // CongestingConcatAll converts a higher-order Observable into a first-order
@@ -66,9 +66,11 @@ func CongestingConcat(observables ...Observable) Observable {
 // inner Observables.
 //
 // It's like ConcatAll, but it congests the source.
-func (o Observable) CongestingConcatAll() Observable {
-	op := congestingConcatOperator{ProjectToObservable}
-	return o.Lift(op.Call)
+func (Operators) CongestingConcatAll() OperatorFunc {
+	return func(source Observable) Observable {
+		op := congestingConcatOperator{ProjectToObservable}
+		return source.Lift(op.Call)
+	}
 }
 
 // CongestingConcatMap creates an Observable that projects each source value to
@@ -78,9 +80,11 @@ func (o Observable) CongestingConcatAll() Observable {
 // these inner Observables using CongestingConcatAll.
 //
 // It's like ConcatMap, but it congests the source.
-func (o Observable) CongestingConcatMap(project func(interface{}, int) Observable) Observable {
-	op := congestingConcatOperator{project}
-	return o.Lift(op.Call)
+func (Operators) CongestingConcatMap(project func(interface{}, int) Observable) OperatorFunc {
+	return func(source Observable) Observable {
+		op := congestingConcatOperator{project}
+		return source.Lift(op.Call)
+	}
 }
 
 // CongestingConcatMapTo creates an Observable that projects each source value
@@ -91,6 +95,6 @@ func (o Observable) CongestingConcatMap(project func(interface{}, int) Observabl
 // Observable.
 //
 // It's like ConcatMapTo, but it congests the source.
-func (o Observable) CongestingConcatMapTo(inner Observable) Observable {
-	return o.CongestingConcatMap(func(interface{}, int) Observable { return inner })
+func (Operators) CongestingConcatMapTo(inner Observable) OperatorFunc {
+	return operators.CongestingConcatMap(func(interface{}, int) Observable { return inner })
 }

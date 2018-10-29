@@ -40,7 +40,9 @@ func (op timeoutOperator) Call(ctx context.Context, sink Observer, source Observ
 
 // Timeout creates an Observable that mirrors the source Observable or notify
 // of an ErrTimeout if the source does not emit a value in given time span.
-func (o Observable) Timeout(timeout time.Duration) Observable {
-	op := timeoutOperator{timeout}
-	return o.Lift(op.Call).Mutex()
+func (Operators) Timeout(timeout time.Duration) OperatorFunc {
+	return func(source Observable) Observable {
+		op := timeoutOperator{timeout}
+		return source.Pipe(MakeFunc(op.Call), operators.Mutex())
+	}
 }

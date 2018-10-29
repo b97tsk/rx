@@ -42,7 +42,9 @@ func (op toObservablesOperator) Call(ctx context.Context, sink Observer, source 
 // ToObservables creates an Observable that collects all the Observables the
 // source emits, then emits them as a slice of Observable when the source
 // completes.
-func (o Observable) ToObservables() Observable {
-	op := toObservablesOperator{}
-	return o.Lift(op.Call)
+func (Operators) ToObservables() OperatorFunc {
+	return func(source Observable) Observable {
+		op := toObservablesOperator{}
+		return source.Lift(op.Call)
+	}
 }

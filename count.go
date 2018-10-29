@@ -23,7 +23,9 @@ func (op countOperator) Call(ctx context.Context, sink Observer, source Observab
 
 // Count creates an Observable that counts the number of emissions on the
 // source and emits that number when the source completes.
-func (o Observable) Count() Observable {
-	op := countOperator{}
-	return o.Lift(op.Call)
+func (Operators) Count() OperatorFunc {
+	return func(source Observable) Observable {
+		op := countOperator{}
+		return source.Lift(op.Call)
+	}
 }

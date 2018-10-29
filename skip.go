@@ -32,10 +32,12 @@ func (op skipOperator) Call(ctx context.Context, sink Observer, source Observabl
 
 // Skip creates an Observable that skips the first count items emitted by the
 // source Observable.
-func (o Observable) Skip(count int) Observable {
-	if count <= 0 {
-		return o
+func (Operators) Skip(count int) OperatorFunc {
+	return func(source Observable) Observable {
+		if count <= 0 {
+			return source
+		}
+		op := skipOperator{count}
+		return source.Lift(op.Call)
 	}
-	op := skipOperator{count}
-	return o.Lift(op.Call)
 }

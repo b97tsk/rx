@@ -56,7 +56,9 @@ func (op throttleOperator) Call(ctx context.Context, sink Observer, source Obser
 //
 // It's like ThrottleTime, but the silencing duration is determined by a second
 // Observable.
-func (o Observable) Throttle(durationSelector func(interface{}) Observable) Observable {
-	op := throttleOperator{durationSelector}
-	return o.Lift(op.Call)
+func (Operators) Throttle(durationSelector func(interface{}) Observable) OperatorFunc {
+	return func(source Observable) Observable {
+		op := throttleOperator{durationSelector}
+		return source.Lift(op.Call)
+	}
 }

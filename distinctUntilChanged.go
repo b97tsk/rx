@@ -37,7 +37,9 @@ func (op distinctUntilChangedOperator) Call(ctx context.Context, sink Observer, 
 // to test for whether or not that value should be emitted.
 //
 // If a comparator function is not provided, an equality check is used by default.
-func (o Observable) DistinctUntilChanged() Observable {
-	op := distinctUntilChangedOperator{defaultCompare, defaultKeySelector}
-	return o.Lift(op.Call)
+func (Operators) DistinctUntilChanged() OperatorFunc {
+	return func(source Observable) Observable {
+		op := distinctUntilChangedOperator{defaultCompare, defaultKeySelector}
+		return source.Lift(op.Call)
+	}
 }

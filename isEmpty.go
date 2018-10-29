@@ -33,7 +33,9 @@ func (op isEmptyOperator) Call(ctx context.Context, sink Observer, source Observ
 
 // IsEmpty creates an Observable that emits true if the source Observable
 // emits no items, otherwise, it emits false.
-func (o Observable) IsEmpty() Observable {
-	op := isEmptyOperator{}
-	return o.Lift(op.Call)
+func (Operators) IsEmpty() OperatorFunc {
+	return func(source Observable) Observable {
+		op := isEmptyOperator{}
+		return source.Lift(op.Call)
+	}
 }

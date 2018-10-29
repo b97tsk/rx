@@ -47,7 +47,9 @@ func (op takeWhileOperator) Call(ctx context.Context, sink Observer, source Obse
 //
 // TakeWhile takes values from the source only while they pass the condition
 // given. When the first value does not satisfy, it completes.
-func (o Observable) TakeWhile(predicate func(interface{}, int) bool) Observable {
-	op := takeWhileOperator{predicate}
-	return o.Lift(op.Call)
+func (Operators) TakeWhile(predicate func(interface{}, int) bool) OperatorFunc {
+	return func(source Observable) Observable {
+		op := takeWhileOperator{predicate}
+		return source.Lift(op.Call)
+	}
 }

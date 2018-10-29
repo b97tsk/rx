@@ -58,7 +58,9 @@ func (op repeatWhenOperator) Call(ctx context.Context, sink Observer, source Obs
 // Observable calls Complete or Error, then this method will call Complete or
 // Error on the child subscription. Otherwise this method will resubscribe to
 // the source Observable.
-func (o Observable) RepeatWhen(notifier func(Observable) Observable) Observable {
-	op := repeatWhenOperator{notifier}
-	return o.Lift(op.Call).Mutex()
+func (Operators) RepeatWhen(notifier func(Observable) Observable) OperatorFunc {
+	return func(source Observable) Observable {
+		op := repeatWhenOperator{notifier}
+		return source.Pipe(MakeFunc(op.Call), operators.Mutex())
+	}
 }

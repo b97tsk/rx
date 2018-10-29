@@ -54,7 +54,9 @@ func (op bufferCountOperator) Call(ctx context.Context, sink Observer, source Ob
 //
 // BufferCount collects values from the past as a slice, and emits that slice
 // only when its size reaches bufferSize.
-func (o Observable) BufferCount(bufferSize int) Observable {
-	op := bufferCountOperator{bufferSize, bufferSize}
-	return o.Lift(op.Call)
+func (Operators) BufferCount(bufferSize int) OperatorFunc {
+	return func(source Observable) Observable {
+		op := bufferCountOperator{bufferSize, bufferSize}
+		return source.Lift(op.Call)
+	}
 }

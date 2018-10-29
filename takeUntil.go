@@ -37,7 +37,9 @@ func (op takeUntilOperator) Call(ctx context.Context, sink Observer, source Obse
 //
 // TakeUntil lets values pass until a second Observable, notifier, emits
 // something. Then, it completes.
-func (o Observable) TakeUntil(notifier Observable) Observable {
-	op := takeUntilOperator{notifier}
-	return o.Lift(op.Call).Mutex()
+func (Operators) TakeUntil(notifier Observable) OperatorFunc {
+	return func(source Observable) Observable {
+		op := takeUntilOperator{notifier}
+		return source.Pipe(MakeFunc(op.Call), operators.Mutex())
+	}
 }

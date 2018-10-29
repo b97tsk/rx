@@ -33,10 +33,12 @@ func (op skipLastOperator) Call(ctx context.Context, sink Observer, source Obser
 
 // SkipLast creates an Observable that skip the last count values emitted by
 // the source Observable.
-func (o Observable) SkipLast(count int) Observable {
-	if count <= 0 {
-		return o
+func (Operators) SkipLast(count int) OperatorFunc {
+	return func(source Observable) Observable {
+		if count <= 0 {
+			return source
+		}
+		op := skipLastOperator{count}
+		return source.Lift(op.Call)
 	}
-	op := skipLastOperator{count}
-	return o.Lift(op.Call)
 }

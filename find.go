@@ -41,7 +41,9 @@ func (op findOperator) Call(ctx context.Context, sink Observer, source Observabl
 
 // Find creates an Observable that emits only the first value emitted by the
 // source Observable that meets some condition.
-func (o Observable) Find(predicate func(interface{}, int) bool) Observable {
-	op := findOperator{predicate}
-	return o.Lift(op.Call)
+func (Operators) Find(predicate func(interface{}, int) bool) OperatorFunc {
+	return func(source Observable) Observable {
+		op := findOperator{predicate}
+		return source.Lift(op.Call)
+	}
 }

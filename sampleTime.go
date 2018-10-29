@@ -48,7 +48,9 @@ func (op sampleTimeOperator) Call(ctx context.Context, sink Observer, source Obs
 
 // SampleTime creates an Observable that emits the most recently emitted value
 // from the source Observable within periodic time intervals.
-func (o Observable) SampleTime(interval time.Duration) Observable {
-	op := sampleTimeOperator{interval}
-	return o.Lift(op.Call)
+func (Operators) SampleTime(interval time.Duration) OperatorFunc {
+	return func(source Observable) Observable {
+		op := sampleTimeOperator{interval}
+		return source.Lift(op.Call)
+	}
 }

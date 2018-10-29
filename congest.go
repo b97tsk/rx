@@ -71,10 +71,12 @@ func (op congestOperator) Call(ctx context.Context, sink Observer, source Observ
 // Congest creates an Observable that mirrors the source Observable, caches
 // emissions if the source emits too fast, and congests the source if the cache
 // is full.
-func (o Observable) Congest(capacity int) Observable {
-	if capacity < 1 {
-		return o
+func (Operators) Congest(capacity int) OperatorFunc {
+	return func(source Observable) Observable {
+		if capacity < 1 {
+			return source
+		}
+		op := congestOperator{capacity}
+		return source.Lift(op.Call)
 	}
-	op := congestOperator{capacity}
-	return o.Lift(op.Call)
 }

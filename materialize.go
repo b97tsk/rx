@@ -23,7 +23,9 @@ func (op materializeOperator) Call(ctx context.Context, sink Observer, source Ob
 //
 // Materialize wraps Next, Error and Complete emissions in Notification objects,
 // emitted as Next on the output Observable.
-func (o Observable) Materialize() Observable {
-	op := materializeOperator{}
-	return o.Lift(op.Call)
+func (Operators) Materialize() OperatorFunc {
+	return func(source Observable) Observable {
+		op := materializeOperator{}
+		return source.Lift(op.Call)
+	}
 }

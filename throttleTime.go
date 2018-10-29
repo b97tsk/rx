@@ -43,7 +43,9 @@ func (op throttleTimeOperator) Call(ctx context.Context, sink Observer, source O
 //
 // ThrottleTime lets a value pass, then ignores source values for the next
 // duration time.
-func (o Observable) ThrottleTime(duration time.Duration) Observable {
-	op := throttleTimeOperator{duration}
-	return o.Lift(op.Call)
+func (Operators) ThrottleTime(duration time.Duration) OperatorFunc {
+	return func(source Observable) Observable {
+		op := throttleTimeOperator{duration}
+		return source.Lift(op.Call)
+	}
 }

@@ -27,7 +27,9 @@ func (op excludeOperator) Call(ctx context.Context, sink Observer, source Observ
 
 // Exclude creates an Observable that filter items emitted by the source
 // Observable by only emitting those that do not satisfy a specified predicate.
-func (o Observable) Exclude(predicate func(interface{}, int) bool) Observable {
-	op := excludeOperator{predicate}
-	return o.Lift(op.Call)
+func (Operators) Exclude(predicate func(interface{}, int) bool) OperatorFunc {
+	return func(source Observable) Observable {
+		op := excludeOperator{predicate}
+		return source.Lift(op.Call)
+	}
 }

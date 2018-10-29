@@ -126,7 +126,9 @@ func (op expandOperator) Call(ctx context.Context, sink Observer, source Observa
 //
 // It's similar to MergeMap, but applies the projection function to every
 // source value as well as every output value. It's recursive.
-func (o Observable) Expand(project func(interface{}, int) Observable) Observable {
-	op := expandOperator{project, -1}
-	return o.Lift(op.Call).Mutex()
+func (Operators) Expand(project func(interface{}, int) Observable) OperatorFunc {
+	return func(source Observable) Observable {
+		op := expandOperator{project, -1}
+		return source.Pipe(MakeFunc(op.Call), operators.Mutex())
+	}
 }

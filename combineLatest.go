@@ -132,7 +132,9 @@ func CombineLatest(observables ...Observable) Observable {
 //
 // CombineAll flattens an Observable-of-Observables by applying CombineLatest
 // when the Observable-of-Observables completes.
-func (o Observable) CombineAll() Observable {
-	op := combineAllOperator{}
-	return o.Lift(op.Call)
+func (Operators) CombineAll() OperatorFunc {
+	return func(source Observable) Observable {
+		op := combineAllOperator{}
+		return source.Lift(op.Call)
+	}
 }

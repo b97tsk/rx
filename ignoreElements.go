@@ -24,7 +24,9 @@ func IgnoreElements(sink Observer) Observer {
 
 // IgnoreElements creates an Observable that ignores all values emitted by the
 // source Observable and only passes Complete or Error emission.
-func (o Observable) IgnoreElements() Observable {
-	op := ignoreElementsOperator{}
-	return o.Lift(op.Call)
+func (Operators) IgnoreElements() OperatorFunc {
+	return func(source Observable) Observable {
+		op := ignoreElementsOperator{}
+		return source.Lift(op.Call)
+	}
 }

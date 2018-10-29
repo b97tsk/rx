@@ -24,7 +24,9 @@ func (op mapToOperator) Call(ctx context.Context, sink Observer, source Observab
 //
 // It's like Map, but it maps every source value to the same output value
 // every time.
-func (o Observable) MapTo(value interface{}) Observable {
-	op := mapToOperator{value}
-	return o.Lift(op.Call)
+func (Operators) MapTo(value interface{}) OperatorFunc {
+	return func(source Observable) Observable {
+		op := mapToOperator{value}
+		return source.Lift(op.Call)
+	}
 }

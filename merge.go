@@ -117,15 +117,17 @@ func (op mergeMapOperator) Call(ctx context.Context, sink Observer, source Obser
 // Merge flattens multiple Observables together by blending their values into
 // one Observable.
 func Merge(observables ...Observable) Observable {
-	return FromObservables(observables).MergeAll()
+	return FromObservables(observables).Pipe(operators.MergeAll())
 }
 
 // MergeAll converts a higher-order Observable into a first-order Observable
 // which concurrently delivers all values that are emitted on the inner
 // Observables.
-func (o Observable) MergeAll() Observable {
-	op := mergeMapOperator{ProjectToObservable, -1}
-	return o.Lift(op.Call).Mutex()
+func (Operators) MergeAll() OperatorFunc {
+	return func(source Observable) Observable {
+		op := mergeMapOperator{ProjectToObservable, -1}
+		return source.Pipe(MakeFunc(op.Call), operators.Mutex())
+	}
 }
 
 // MergeMap creates an Observable that projects each source value to an
@@ -133,15 +135,17 @@ func (o Observable) MergeAll() Observable {
 //
 // MergeMap maps each value to an Observable, then flattens all of these inner
 // Observables using MergeAll.
-func (o Observable) MergeMap(project func(interface{}, int) Observable) Observable {
-	op := mergeMapOperator{project, -1}
-	return o.Lift(op.Call).Mutex()
+func (Operators) MergeMap(project func(interface{}, int) Observable) OperatorFunc {
+	return func(source Observable) Observable {
+		op := mergeMapOperator{project, -1}
+		return source.Pipe(MakeFunc(op.Call), operators.Mutex())
+	}
 }
 
 // MergeMapTo creates an Observable that projects each source value to the same
 // Observable which is merged multiple times in the output Observable.
 //
 // It's like MergeMap, but maps each value always to the same inner Observable.
-func (o Observable) MergeMapTo(inner Observable) Observable {
-	return o.MergeMap(func(interface{}, int) Observable { return inner })
+func (Operators) MergeMapTo(inner Observable) OperatorFunc {
+	return operators.MergeMap(func(interface{}, int) Observable { return inner })
 }

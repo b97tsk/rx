@@ -43,7 +43,9 @@ func (op observeOnOperator) Call(ctx context.Context, sink Observer, source Obse
 
 // ObserveOn creates an Observable that emits each notification from the source
 // Observable after waits for the duration to elapse.
-func (o Observable) ObserveOn(d time.Duration) Observable {
-	op := observeOnOperator{d}
-	return o.Lift(op.Call)
+func (Operators) ObserveOn(d time.Duration) OperatorFunc {
+	return func(source Observable) Observable {
+		op := observeOnOperator{d}
+		return source.Lift(op.Call)
+	}
 }

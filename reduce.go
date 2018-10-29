@@ -47,7 +47,9 @@ func (op reduceOperator) Call(ctx context.Context, sink Observer, source Observa
 // Reduce combines together all values emitted on the source, using an
 // accumulator function that knows how to join a new source value into the
 // accumulation from the past.
-func (o Observable) Reduce(accumulator func(interface{}, interface{}, int) interface{}) Observable {
-	op := reduceOperator{Accumulator: accumulator}
-	return o.Lift(op.Call)
+func (Operators) Reduce(accumulator func(interface{}, interface{}, int) interface{}) OperatorFunc {
+	return func(source Observable) Observable {
+		op := reduceOperator{Accumulator: accumulator}
+		return source.Lift(op.Call)
+	}
 }

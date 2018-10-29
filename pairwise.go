@@ -29,7 +29,9 @@ func (op pairwiseOperator) Call(ctx context.Context, sink Observer, source Obser
 
 // Pairwise creates an Observable that groups pairs of consecutive emissions
 // together and emits them as a slice of two values.
-func (o Observable) Pairwise() Observable {
-	op := pairwiseOperator{}
-	return o.Lift(op.Call)
+func (Operators) Pairwise() OperatorFunc {
+	return func(source Observable) Observable {
+		op := pairwiseOperator{}
+		return source.Lift(op.Call)
+	}
 }

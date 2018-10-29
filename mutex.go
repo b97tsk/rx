@@ -30,7 +30,9 @@ func Mutex(sink Observer) Observer {
 
 // Mutex creates an Observable that mirrors the source Observable in a mutually
 // exclusive way.
-func (o Observable) Mutex() Observable {
-	op := mutexOperator{}
-	return o.Lift(op.Call)
+func (Operators) Mutex() OperatorFunc {
+	return func(source Observable) Observable {
+		op := mutexOperator{}
+		return source.Lift(op.Call)
+	}
 }

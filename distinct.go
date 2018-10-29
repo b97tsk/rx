@@ -33,7 +33,9 @@ func (op distinctOperator) Call(ctx context.Context, sink Observer, source Obser
 // previously projected values. If a keySelector function is not provided, it
 // will use each value from the source Observable directly with an equality
 // check against previous values.
-func (o Observable) Distinct() Observable {
-	op := distinctOperator{defaultKeySelector}
-	return o.Lift(op.Call)
+func (Operators) Distinct() OperatorFunc {
+	return func(source Observable) Observable {
+		op := distinctOperator{defaultKeySelector}
+		return source.Lift(op.Call)
+	}
 }

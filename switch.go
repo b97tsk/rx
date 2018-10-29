@@ -102,9 +102,11 @@ func (op switchMapOperator) Call(ctx context.Context, sink Observer, source Obse
 //
 // Switch flattens an Observable-of-Observables by dropping the previous inner
 // Observable once a new one appears.
-func (o Observable) Switch() Observable {
-	op := switchMapOperator{ProjectToObservable}
-	return o.Lift(op.Call).Mutex()
+func (Operators) Switch() OperatorFunc {
+	return func(source Observable) Observable {
+		op := switchMapOperator{ProjectToObservable}
+		return source.Pipe(MakeFunc(op.Call), operators.Mutex())
+	}
 }
 
 // SwitchMap creates an Observable that projects each source value to an
@@ -113,9 +115,11 @@ func (o Observable) Switch() Observable {
 //
 // SwitchMap maps each value to an Observable, then flattens all of these inner
 // Observables using Switch.
-func (o Observable) SwitchMap(project func(interface{}, int) Observable) Observable {
-	op := switchMapOperator{project}
-	return o.Lift(op.Call).Mutex()
+func (Operators) SwitchMap(project func(interface{}, int) Observable) OperatorFunc {
+	return func(source Observable) Observable {
+		op := switchMapOperator{project}
+		return source.Pipe(MakeFunc(op.Call), operators.Mutex())
+	}
 }
 
 // SwitchMapTo creates an Observable that projects each source value to the
@@ -123,6 +127,6 @@ func (o Observable) SwitchMap(project func(interface{}, int) Observable) Observa
 // Observable.
 //
 // It's like SwitchMap, but maps each value always to the same inner Observable.
-func (o Observable) SwitchMapTo(inner Observable) Observable {
-	return o.SwitchMap(func(interface{}, int) Observable { return inner })
+func (Operators) SwitchMapTo(inner Observable) OperatorFunc {
+	return operators.SwitchMap(func(interface{}, int) Observable { return inner })
 }

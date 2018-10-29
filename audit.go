@@ -72,7 +72,9 @@ func (op auditOperator) Call(ctx context.Context, sink Observer, source Observab
 //
 // It's like AuditTime, but the silencing duration is determined by a second
 // Observable.
-func (o Observable) Audit(durationSelector func(interface{}) Observable) Observable {
-	op := auditOperator{durationSelector}
-	return o.Lift(op.Call)
+func (Operators) Audit(durationSelector func(interface{}) Observable) OperatorFunc {
+	return func(source Observable) Observable {
+		op := auditOperator{durationSelector}
+		return source.Lift(op.Call)
+	}
 }

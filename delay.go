@@ -91,7 +91,9 @@ func (op delayOperator) Call(ctx context.Context, sink Observer, source Observab
 
 // Delay delays the emission of items from the source Observable by a given
 // timeout.
-func (o Observable) Delay(timeout time.Duration) Observable {
-	op := delayOperator{timeout}
-	return o.Lift(op.Call)
+func (Operators) Delay(timeout time.Duration) OperatorFunc {
+	return func(source Observable) Observable {
+		op := delayOperator{timeout}
+		return source.Lift(op.Call)
+	}
 }

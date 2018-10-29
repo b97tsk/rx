@@ -55,7 +55,9 @@ func (op sampleOperator) Call(ctx context.Context, sink Observer, source Observa
 //
 // It's like SampleTime, but samples whenever the notifier Observable emits
 // something.
-func (o Observable) Sample(notifier Observable) Observable {
-	op := sampleOperator{notifier}
-	return o.Lift(op.Call)
+func (Operators) Sample(notifier Observable) OperatorFunc {
+	return func(source Observable) Observable {
+		op := sampleOperator{notifier}
+		return source.Lift(op.Call)
+	}
 }

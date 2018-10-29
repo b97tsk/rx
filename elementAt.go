@@ -50,19 +50,23 @@ func (op elementAtOperator) Call(ctx context.Context, sink Observer, source Obse
 // ElementAt creates an Observable that emits the single value at the specified
 // index in a sequence of emissions from the source Observable, if the
 // specified index is out of range, notifies error ErrOutOfRange.
-func (o Observable) ElementAt(index int) Observable {
-	op := elementAtOperator{Index: index}
-	return o.Lift(op.Call)
+func (Operators) ElementAt(index int) OperatorFunc {
+	return func(source Observable) Observable {
+		op := elementAtOperator{Index: index}
+		return source.Lift(op.Call)
+	}
 }
 
 // ElementAtOrDefault creates an Observable that emits the single value at the
 // specified index in a sequence of emissions from the source Observable, if
 // the specified index is out of range, emits the provided default value.
-func (o Observable) ElementAtOrDefault(index int, defaultValue interface{}) Observable {
-	op := elementAtOperator{
-		Index:      index,
-		Default:    defaultValue,
-		HasDefault: true,
+func (Operators) ElementAtOrDefault(index int, defaultValue interface{}) OperatorFunc {
+	return func(source Observable) Observable {
+		op := elementAtOperator{
+			Index:      index,
+			Default:    defaultValue,
+			HasDefault: true,
+		}
+		return source.Lift(op.Call)
 	}
-	return o.Lift(op.Call)
 }

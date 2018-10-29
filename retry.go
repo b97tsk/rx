@@ -45,10 +45,12 @@ func (op retryOperator) Call(ctx context.Context, sink Observer, source Observab
 // exception of an Error. If the source Observable calls Error, this method
 // will resubscribe to the source Observable for a maximum of count
 // resubscriptions rather than propagating the Error call.
-func (o Observable) Retry(count int) Observable {
-	if count == 0 {
-		return o
+func (Operators) Retry(count int) OperatorFunc {
+	return func(source Observable) Observable {
+		if count == 0 {
+			return source
+		}
+		op := retryOperator{count}
+		return source.Lift(op.Call)
 	}
-	op := retryOperator{count}
-	return o.Lift(op.Call)
 }

@@ -62,7 +62,9 @@ func (op skipUntilOperator) Call(ctx context.Context, sink Observer, source Obse
 
 // SkipUntil creates an Observable that skips items emitted by the source
 // Observable until a second Observable emits an item.
-func (o Observable) SkipUntil(notifier Observable) Observable {
-	op := skipUntilOperator{notifier}
-	return o.Lift(op.Call).Mutex()
+func (Operators) SkipUntil(notifier Observable) OperatorFunc {
+	return func(source Observable) Observable {
+		op := skipUntilOperator{notifier}
+		return source.Pipe(MakeFunc(op.Call), operators.Mutex())
+	}
 }

@@ -48,7 +48,9 @@ func (op singleOperator) Call(ctx context.Context, sink Observer, source Observa
 // Single creates an Observable that emits the single item emitted by the
 // source Observable. If the source emits more than one item or no items,
 // notify of an ErrNotSingle or ErrEmpty respectively.
-func (o Observable) Single() Observable {
-	op := singleOperator{}
-	return o.Lift(op.Call)
+func (Operators) Single() OperatorFunc {
+	return func(source Observable) Observable {
+		op := singleOperator{}
+		return source.Lift(op.Call)
+	}
 }

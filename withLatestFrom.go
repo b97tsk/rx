@@ -91,8 +91,10 @@ func (op withLatestFromOperator) Call(ctx context.Context, sink Observer, source
 // To ensure output slice has always the same length, WithLatestFrom will
 // actually wait for all input Observables to emit at least once, before it
 // starts emitting results.
-func (o Observable) WithLatestFrom(observables ...Observable) Observable {
-	observables = append([]Observable{o}, observables...)
-	op := withLatestFromOperator{observables}
-	return Observable{}.Lift(op.Call)
+func (Operators) WithLatestFrom(observables ...Observable) OperatorFunc {
+	return func(source Observable) Observable {
+		observables = append([]Observable{source}, observables...)
+		op := withLatestFromOperator{observables}
+		return Observable{}.Lift(op.Call)
+	}
 }

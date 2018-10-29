@@ -28,7 +28,9 @@ func (op multicastOperator) Call(ctx context.Context, sink Observer, source Obse
 // Observable to emit values to that Subject. Moreover, the selector function
 // returns an Observable which is subscribed to the Observer, if it completes
 // or emits an error, all subscriptions shall be canceled.
-func (o Observable) Multicast(subjectFactory func() *Subject, selector func(context.Context, *Subject) Observable) Observable {
-	op := multicastOperator{subjectFactory, selector}
-	return o.Lift(op.Call)
+func (Operators) Multicast(subjectFactory func() *Subject, selector func(context.Context, *Subject) Observable) OperatorFunc {
+	return func(source Observable) Observable {
+		op := multicastOperator{subjectFactory, selector}
+		return source.Lift(op.Call)
+	}
 }

@@ -128,7 +128,9 @@ func (op mergeScanOperator) Call(ctx context.Context, sink Observer, source Obse
 //
 // It's like Scan, but the Observables returned by the accumulator are merged
 // into the outer Observable.
-func (o Observable) MergeScan(accumulator func(interface{}, interface{}) Observable, seed interface{}) Observable {
-	op := mergeScanOperator{accumulator, seed, -1}
-	return o.Lift(op.Call).Mutex()
+func (Operators) MergeScan(accumulator func(interface{}, interface{}) Observable, seed interface{}) OperatorFunc {
+	return func(source Observable) Observable {
+		op := mergeScanOperator{accumulator, seed, -1}
+		return source.Pipe(MakeFunc(op.Call), operators.Mutex())
+	}
 }

@@ -48,7 +48,9 @@ func (op someOperator) Call(ctx context.Context, sink Observer, source Observabl
 // satisfies the condition specified.
 //
 // Some emits true or false, then completes.
-func (o Observable) Some(predicate func(interface{}, int) bool) Observable {
-	op := someOperator{predicate}
-	return o.Lift(op.Call)
+func (Operators) Some(predicate func(interface{}, int) bool) OperatorFunc {
+	return func(source Observable) Observable {
+		op := someOperator{predicate}
+		return source.Lift(op.Call)
+	}
 }

@@ -17,7 +17,9 @@ func (op doOperator) Call(ctx context.Context, sink Observer, source Observable)
 
 // Do creates an Observable that mirrors the source Observable, but perform
 // a side effect before each emission.
-func (o Observable) Do(sink Observer) Observable {
-	op := doOperator{sink}
-	return o.Lift(op.Call)
+func (Operators) Do(sink Observer) OperatorFunc {
+	return func(source Observable) Observable {
+		op := doOperator{sink}
+		return source.Lift(op.Call)
+	}
 }

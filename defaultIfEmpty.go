@@ -32,7 +32,9 @@ func (op defaultIfEmptyOperator) Call(ctx context.Context, sink Observer, source
 //
 // If the source Observable turns out to be empty, then this operator will emit
 // a default value.
-func (o Observable) DefaultIfEmpty(defaultValue interface{}) Observable {
-	op := defaultIfEmptyOperator{defaultValue}
-	return o.Lift(op.Call)
+func (Operators) DefaultIfEmpty(defaultValue interface{}) OperatorFunc {
+	return func(source Observable) Observable {
+		op := defaultIfEmptyOperator{defaultValue}
+		return source.Lift(op.Call)
+	}
 }

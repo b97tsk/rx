@@ -106,7 +106,9 @@ func CongestingZip(observables ...Observable) Observable {
 // CongestingZip when the Observable-of-Observables completes.
 //
 // It's like ZipAll, but it congests subscribed Observables.
-func (o Observable) CongestingZipAll() Observable {
-	op := congestingZipAllOperator{}
-	return o.Lift(op.Call)
+func (Operators) CongestingZipAll() OperatorFunc {
+	return func(source Observable) Observable {
+		op := congestingZipAllOperator{}
+		return source.Lift(op.Call)
+	}
 }

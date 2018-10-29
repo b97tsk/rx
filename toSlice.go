@@ -23,7 +23,9 @@ func (op toSliceOperator) Call(ctx context.Context, sink Observer, source Observ
 
 // ToSlice creates an Observable that collects all the values the source emits,
 // then emits them as a slice when the source completes.
-func (o Observable) ToSlice() Observable {
-	op := toSliceOperator{}
-	return o.Lift(op.Call)
+func (Operators) ToSlice() OperatorFunc {
+	return func(source Observable) Observable {
+		op := toSliceOperator{}
+		return source.Lift(op.Call)
+	}
 }

@@ -199,10 +199,12 @@ func (o Observable) PublishBehavior(val interface{}) ConnectableObservable {
 // Share returns a shared Observable that, when subscribed multiple times, it
 // won't subscribe the source Observable twice before the previous subscription
 // finishes.
-func (o Observable) Share() Observable {
-	connectable := ConnectableObservable{&connectableObservable{
-		source:         o,
-		subjectFactory: NewSubject,
-	}}
-	return connectable.RefCount()
+func (Operators) Share() OperatorFunc {
+	return func(source Observable) Observable {
+		connectable := ConnectableObservable{&connectableObservable{
+			source:         source,
+			subjectFactory: NewSubject,
+		}}
+		return connectable.RefCount()
+	}
 }

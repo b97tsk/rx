@@ -53,7 +53,9 @@ func (op debounceTimeOperator) Call(ctx context.Context, sink Observer, source O
 //
 // It's like Delay, but passes only the most recent value from each burst of
 // emissions.
-func (o Observable) DebounceTime(duration time.Duration) Observable {
-	op := debounceTimeOperator{duration}
-	return o.Lift(op.Call)
+func (Operators) DebounceTime(duration time.Duration) OperatorFunc {
+	return func(source Observable) Observable {
+		op := debounceTimeOperator{duration}
+		return source.Lift(op.Call)
+	}
 }

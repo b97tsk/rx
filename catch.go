@@ -29,7 +29,9 @@ func (op catchOperator) Call(ctx context.Context, sink Observer, source Observab
 
 // Catch catches errors on the Observable to be handled by returning a new
 // Observable.
-func (o Observable) Catch(selector func(error) Observable) Observable {
-	op := catchOperator{selector}
-	return o.Lift(op.Call)
+func (Operators) Catch(selector func(error) Observable) OperatorFunc {
+	return func(source Observable) Observable {
+		op := catchOperator{selector}
+		return source.Lift(op.Call)
+	}
 }

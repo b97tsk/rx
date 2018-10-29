@@ -21,7 +21,9 @@ func (op subscribeOnOperator) Call(ctx context.Context, sink Observer, source Ob
 
 // SubscribeOn creates an Observable that asynchronously subscribes the source
 // Observable after waits for the duration to elapse.
-func (o Observable) SubscribeOn(d time.Duration) Observable {
-	op := subscribeOnOperator{d}
-	return o.Lift(op.Call)
+func (Operators) SubscribeOn(d time.Duration) OperatorFunc {
+	return func(source Observable) Observable {
+		op := subscribeOnOperator{d}
+		return source.Lift(op.Call)
+	}
 }

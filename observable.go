@@ -24,9 +24,9 @@ func (o Observable) Lift(op Operator) Observable {
 
 // Pipe stitches Operators together into a chain, returns the Observable result
 // of all of the Operators having been called in the order they were passed in.
-func (o Observable) Pipe(operations ...Operator) Observable {
-	for _, op := range operations {
-		o = o.Lift(op)
+func (o Observable) Pipe(operations ...OperatorFunc) Observable {
+	for _, call := range operations {
+		o = call(o)
 	}
 	return o
 }

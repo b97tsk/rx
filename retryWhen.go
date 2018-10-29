@@ -58,7 +58,9 @@ func (op retryWhenOperator) Call(ctx context.Context, sink Observer, source Obse
 // from notifier. If that Observable calls Complete or Error then this method
 // will call Complete or Error on the child subscription. Otherwise this method
 // will resubscribe to the source Observable.
-func (o Observable) RetryWhen(notifier func(Observable) Observable) Observable {
-	op := retryWhenOperator{notifier}
-	return o.Lift(op.Call).Mutex()
+func (Operators) RetryWhen(notifier func(Observable) Observable) OperatorFunc {
+	return func(source Observable) Observable {
+		op := retryWhenOperator{notifier}
+		return source.Pipe(MakeFunc(op.Call), operators.Mutex())
+	}
 }

@@ -48,7 +48,9 @@ func (op everyOperator) Call(ctx context.Context, sink Observer, source Observab
 // satisfies the condition specified.
 //
 // Every emits true or false, then completes.
-func (o Observable) Every(predicate func(interface{}, int) bool) Observable {
-	op := everyOperator{predicate}
-	return o.Lift(op.Call)
+func (Operators) Every(predicate func(interface{}, int) bool) OperatorFunc {
+	return func(source Observable) Observable {
+		op := everyOperator{predicate}
+		return source.Lift(op.Call)
+	}
 }

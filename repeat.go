@@ -43,13 +43,15 @@ func (op repeatOperator) Call(ctx context.Context, sink Observer, source Observa
 
 // Repeat creates an Observable that repeats the stream of items emitted by the
 // source Observable at most count times.
-func (o Observable) Repeat(count int) Observable {
-	if count == 0 {
-		return Empty()
+func (Operators) Repeat(count int) OperatorFunc {
+	return func(source Observable) Observable {
+		if count == 0 {
+			return Empty()
+		}
+		if count > 0 {
+			count--
+		}
+		op := repeatOperator{count}
+		return source.Lift(op.Call)
 	}
-	if count > 0 {
-		count--
-	}
-	op := repeatOperator{count}
-	return o.Lift(op.Call)
 }

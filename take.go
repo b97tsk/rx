@@ -49,7 +49,9 @@ func (op takeOperator) Call(ctx context.Context, sink Observer, source Observabl
 // by the source Observable.
 //
 // Take takes the first count values from the source, then completes.
-func (o Observable) Take(count int) Observable {
-	op := takeOperator{count}
-	return o.Lift(op.Call)
+func (Operators) Take(count int) OperatorFunc {
+	return func(source Observable) Observable {
+		op := takeOperator{count}
+		return source.Lift(op.Call)
+	}
 }

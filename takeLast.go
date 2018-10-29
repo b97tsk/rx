@@ -34,10 +34,12 @@ func (op takeLastOperator) Call(ctx context.Context, sink Observer, source Obser
 //
 // TakeLast remembers the latest count values, then emits those only when the
 // source completes.
-func (o Observable) TakeLast(count int) Observable {
-	if count <= 0 {
-		return Empty()
+func (Operators) TakeLast(count int) OperatorFunc {
+	return func(source Observable) Observable {
+		if count <= 0 {
+			return Empty()
+		}
+		op := takeLastOperator{count}
+		return source.Lift(op.Call)
 	}
-	op := takeLastOperator{count}
-	return o.Lift(op.Call)
 }

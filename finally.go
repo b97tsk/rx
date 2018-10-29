@@ -28,7 +28,9 @@ func Finally(sink Observer, finally func()) Observer {
 // Finally creates an Observable that mirrors the source Observable, in the
 // case that an Error or Complete emission is mirrored, makes a call to the
 // specified function.
-func (o Observable) Finally(finally func()) Observable {
-	op := finallyOperator{finally}
-	return o.Lift(op.Call)
+func (Operators) Finally(finally func()) OperatorFunc {
+	return func(source Observable) Observable {
+		op := finallyOperator{finally}
+		return source.Lift(op.Call)
+	}
 }
