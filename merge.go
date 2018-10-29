@@ -124,10 +124,7 @@ func Merge(observables ...Observable) Observable {
 // which concurrently delivers all values that are emitted on the inner
 // Observables.
 func (Operators) MergeAll() OperatorFunc {
-	return func(source Observable) Observable {
-		op := mergeMapOperator{ProjectToObservable, -1}
-		return source.Pipe(MakeFunc(op.Call), operators.Mutex())
-	}
+	return operators.MergeMap(ProjectToObservable)
 }
 
 // MergeMap creates an Observable that projects each source value to an

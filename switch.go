@@ -103,10 +103,7 @@ func (op switchMapOperator) Call(ctx context.Context, sink Observer, source Obse
 // Switch flattens an Observable-of-Observables by dropping the previous inner
 // Observable once a new one appears.
 func (Operators) Switch() OperatorFunc {
-	return func(source Observable) Observable {
-		op := switchMapOperator{ProjectToObservable}
-		return source.Pipe(MakeFunc(op.Call), operators.Mutex())
-	}
+	return operators.SwitchMap(ProjectToObservable)
 }
 
 // SwitchMap creates an Observable that projects each source value to an

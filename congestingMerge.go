@@ -120,10 +120,7 @@ func CongestingMerge(observables ...Observable) Observable {
 //
 // It's like MergeAll, but it may congest the source due to concurrent limit.
 func (Operators) CongestingMergeAll() OperatorFunc {
-	return func(source Observable) Observable {
-		op := congestingMergeOperator{ProjectToObservable, -1}
-		return source.Pipe(MakeFunc(op.Call), operators.Mutex())
-	}
+	return operators.CongestingMergeMap(ProjectToObservable)
 }
 
 // CongestingMergeMap creates an Observable that projects each source value to

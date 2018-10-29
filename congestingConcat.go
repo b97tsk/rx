@@ -67,10 +67,7 @@ func CongestingConcat(observables ...Observable) Observable {
 //
 // It's like ConcatAll, but it congests the source.
 func (Operators) CongestingConcatAll() OperatorFunc {
-	return func(source Observable) Observable {
-		op := congestingConcatOperator{ProjectToObservable}
-		return source.Lift(op.Call)
-	}
+	return operators.CongestingConcatMap(ProjectToObservable)
 }
 
 // CongestingConcatMap creates an Observable that projects each source value to

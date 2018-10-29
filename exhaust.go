@@ -97,10 +97,7 @@ func (op exhaustMapOperator) Call(ctx context.Context, sink Observer, source Obs
 // Exhaust flattens an Observable-of-Observables by dropping the next inner
 // Observables while the current inner is still executing.
 func (Operators) Exhaust() OperatorFunc {
-	return func(source Observable) Observable {
-		op := exhaustMapOperator{ProjectToObservable}
-		return source.Pipe(MakeFunc(op.Call), operators.Mutex())
-	}
+	return operators.ExhaustMap(ProjectToObservable)
 }
 
 // ExhaustMap creates an Observable that projects each source value to an
