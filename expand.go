@@ -6,12 +6,19 @@ import (
 	"sync"
 )
 
-type expandOperator struct {
+// ExpandOperator is an operator type.
+type ExpandOperator struct {
 	Project    func(interface{}, int) Observable
 	Concurrent int
 }
 
-func (op expandOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+// MakeFunc creates an OperatorFunc from this operator.
+func (op ExpandOperator) MakeFunc() OperatorFunc {
+	return MakeFunc(op.Call)
+}
+
+// Call invokes an execution of this operator.
+func (op ExpandOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 	sink = Mutex(sink)
@@ -129,7 +136,7 @@ func (op expandOperator) Call(ctx context.Context, sink Observer, source Observa
 // source value as well as every output value. It's recursive.
 func (Operators) Expand(project func(interface{}, int) Observable) OperatorFunc {
 	return func(source Observable) Observable {
-		op := expandOperator{project, -1}
+		op := ExpandOperator{project, -1}
 		return source.Lift(op.Call)
 	}
 }

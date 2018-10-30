@@ -6,13 +6,20 @@ import (
 	"sync"
 )
 
-type mergeScanOperator struct {
+// MergeScanOperator is an operator type.
+type MergeScanOperator struct {
 	Accumulator func(interface{}, interface{}) Observable
 	Seed        interface{}
 	Concurrent  int
 }
 
-func (op mergeScanOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+// MakeFunc creates an OperatorFunc from this operator.
+func (op MergeScanOperator) MakeFunc() OperatorFunc {
+	return MakeFunc(op.Call)
+}
+
+// Call invokes an execution of this operator.
+func (op MergeScanOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 	sink = Mutex(sink)
@@ -131,7 +138,7 @@ func (op mergeScanOperator) Call(ctx context.Context, sink Observer, source Obse
 // into the outer Observable.
 func (Operators) MergeScan(accumulator func(interface{}, interface{}) Observable, seed interface{}) OperatorFunc {
 	return func(source Observable) Observable {
-		op := mergeScanOperator{accumulator, seed, -1}
+		op := MergeScanOperator{accumulator, seed, -1}
 		return source.Lift(op.Call)
 	}
 }

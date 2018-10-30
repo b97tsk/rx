@@ -4,12 +4,19 @@ import (
 	"context"
 )
 
-type bufferCountOperator struct {
+// BufferCountOperator is an operator type.
+type BufferCountOperator struct {
 	BufferSize       int
 	StartBufferEvery int
 }
 
-func (op bufferCountOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+// MakeFunc creates an OperatorFunc from this operator.
+func (op BufferCountOperator) MakeFunc() OperatorFunc {
+	return MakeFunc(op.Call)
+}
+
+// Call invokes an execution of this operator.
+func (op BufferCountOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	var (
 		buffer    = make([]interface{}, 0, op.BufferSize)
 		skipCount int
@@ -56,7 +63,7 @@ func (op bufferCountOperator) Call(ctx context.Context, sink Observer, source Ob
 // only when its size reaches bufferSize.
 func (Operators) BufferCount(bufferSize int) OperatorFunc {
 	return func(source Observable) Observable {
-		op := bufferCountOperator{bufferSize, bufferSize}
+		op := BufferCountOperator{bufferSize, bufferSize}
 		return source.Lift(op.Call)
 	}
 }

@@ -4,11 +4,18 @@ import (
 	"context"
 )
 
-type distinctOperator struct {
+// DistinctOperator is an operator type.
+type DistinctOperator struct {
 	KeySelector func(interface{}) interface{}
 }
 
-func (op distinctOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+// MakeFunc creates an OperatorFunc from this operator.
+func (op DistinctOperator) MakeFunc() OperatorFunc {
+	return MakeFunc(op.Call)
+}
+
+// Call invokes an execution of this operator.
+func (op DistinctOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	var keys = make(map[interface{}]struct{})
 	return source.Subscribe(ctx, func(t Notification) {
 		switch {
@@ -35,7 +42,7 @@ func (op distinctOperator) Call(ctx context.Context, sink Observer, source Obser
 // check against previous values.
 func (Operators) Distinct() OperatorFunc {
 	return func(source Observable) Observable {
-		op := distinctOperator{defaultKeySelector}
+		op := DistinctOperator{defaultKeySelector}
 		return source.Lift(op.Call)
 	}
 }

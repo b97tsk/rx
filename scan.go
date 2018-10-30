@@ -4,13 +4,20 @@ import (
 	"context"
 )
 
-type scanOperator struct {
+// ScanOperator is an operator type.
+type ScanOperator struct {
 	Accumulator func(interface{}, interface{}, int) interface{}
 	Seed        interface{}
 	HasSeed     bool
 }
 
-func (op scanOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+// MakeFunc creates an OperatorFunc from this operator.
+func (op ScanOperator) MakeFunc() OperatorFunc {
+	return MakeFunc(op.Call)
+}
+
+// Call invokes an execution of this operator.
+func (op ScanOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	var (
 		seed       = op.Seed
 		hasSeed    = op.HasSeed
@@ -44,7 +51,7 @@ func (op scanOperator) Call(ctx context.Context, sink Observer, source Observabl
 // emits a value.
 func (Operators) Scan(accumulator func(interface{}, interface{}, int) interface{}) OperatorFunc {
 	return func(source Observable) Observable {
-		op := scanOperator{Accumulator: accumulator}
+		op := ScanOperator{Accumulator: accumulator}
 		return source.Lift(op.Call)
 	}
 }

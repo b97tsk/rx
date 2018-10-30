@@ -4,12 +4,19 @@ import (
 	"context"
 )
 
-type distinctUntilChangedOperator struct {
+// DistinctUntilChangedOperator is an operator type.
+type DistinctUntilChangedOperator struct {
 	Compare     func(interface{}, interface{}) bool
 	KeySelector func(interface{}) interface{}
 }
 
-func (op distinctUntilChangedOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+// MakeFunc creates an OperatorFunc from this operator.
+func (op DistinctUntilChangedOperator) MakeFunc() OperatorFunc {
+	return MakeFunc(op.Call)
+}
+
+// Call invokes an execution of this operator.
+func (op DistinctUntilChangedOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	var (
 		key    interface{}
 		hasKey bool
@@ -39,7 +46,7 @@ func (op distinctUntilChangedOperator) Call(ctx context.Context, sink Observer, 
 // If a comparator function is not provided, an equality check is used by default.
 func (Operators) DistinctUntilChanged() OperatorFunc {
 	return func(source Observable) Observable {
-		op := distinctUntilChangedOperator{defaultCompare, defaultKeySelector}
+		op := DistinctUntilChangedOperator{defaultCompare, defaultKeySelector}
 		return source.Lift(op.Call)
 	}
 }

@@ -4,13 +4,20 @@ import (
 	"context"
 )
 
-type reduceOperator struct {
+// ReduceOperator is an operator type.
+type ReduceOperator struct {
 	Accumulator func(interface{}, interface{}, int) interface{}
 	Seed        interface{}
 	HasSeed     bool
 }
 
-func (op reduceOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+// MakeFunc creates an OperatorFunc from this operator.
+func (op ReduceOperator) MakeFunc() OperatorFunc {
+	return MakeFunc(op.Call)
+}
+
+// Call invokes an execution of this operator.
+func (op ReduceOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	var (
 		seed       = op.Seed
 		hasSeed    = op.HasSeed
@@ -49,7 +56,7 @@ func (op reduceOperator) Call(ctx context.Context, sink Observer, source Observa
 // accumulation from the past.
 func (Operators) Reduce(accumulator func(interface{}, interface{}, int) interface{}) OperatorFunc {
 	return func(source Observable) Observable {
-		op := reduceOperator{Accumulator: accumulator}
+		op := ReduceOperator{Accumulator: accumulator}
 		return source.Lift(op.Call)
 	}
 }

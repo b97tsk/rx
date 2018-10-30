@@ -26,7 +26,7 @@ func (Operators) ConcatAll() OperatorFunc {
 // Observables using ConcatAll.
 func (Operators) ConcatMap(project func(interface{}, int) Observable) OperatorFunc {
 	return func(source Observable) Observable {
-		op := mergeMapOperator{project, 1}
+		op := MergeOperator{project, 1}
 		return source.Lift(op.Call)
 	}
 }

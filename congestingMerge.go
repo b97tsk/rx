@@ -5,12 +5,19 @@ import (
 	"sync"
 )
 
-type congestingMergeOperator struct {
+// CongestingMergeOperator is an operator type.
+type CongestingMergeOperator struct {
 	Project    func(interface{}, int) Observable
 	Concurrent int
 }
 
-func (op congestingMergeOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+// MakeFunc creates an OperatorFunc from this operator.
+func (op CongestingMergeOperator) MakeFunc() OperatorFunc {
+	return MakeFunc(op.Call)
+}
+
+// Call invokes an execution of this operator.
+func (op CongestingMergeOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 	sink = Mutex(sink)
@@ -133,7 +140,7 @@ func (Operators) CongestingMergeAll() OperatorFunc {
 // It's like MergeMap, but it may congest the source due to concurrent limit.
 func (Operators) CongestingMergeMap(project func(interface{}, int) Observable) OperatorFunc {
 	return func(source Observable) Observable {
-		op := congestingMergeOperator{project, -1}
+		op := CongestingMergeOperator{project, -1}
 		return source.Lift(op.Call)
 	}
 }
