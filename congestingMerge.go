@@ -13,6 +13,7 @@ type congestingMergeOperator struct {
 func (op congestingMergeOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
+	sink = Mutex(sink)
 
 	var (
 		mu             sync.Mutex
@@ -133,7 +134,7 @@ func (Operators) CongestingMergeAll() OperatorFunc {
 func (Operators) CongestingMergeMap(project func(interface{}, int) Observable) OperatorFunc {
 	return func(source Observable) Observable {
 		op := congestingMergeOperator{project, -1}
-		return source.Pipe(MakeFunc(op.Call), operators.Mutex())
+		return source.Lift(op.Call)
 	}
 }
 

@@ -12,6 +12,7 @@ type exhaustMapOperator struct {
 func (op exhaustMapOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
+	sink = Mutex(sink)
 
 	var (
 		mu             sync.Mutex
@@ -109,6 +110,6 @@ func (Operators) Exhaust() OperatorFunc {
 func (Operators) ExhaustMap(project func(interface{}, int) Observable) OperatorFunc {
 	return func(source Observable) Observable {
 		op := exhaustMapOperator{project}
-		return source.Pipe(MakeFunc(op.Call), operators.Mutex())
+		return source.Lift(op.Call)
 	}
 }

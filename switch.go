@@ -13,6 +13,7 @@ func (op switchMapOperator) Call(ctx context.Context, sink Observer, source Obse
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 	childCtx, childCancel := canceledCtx, nothingToDo
+	sink = Mutex(sink)
 
 	var (
 		mu             sync.Mutex
@@ -115,7 +116,7 @@ func (Operators) Switch() OperatorFunc {
 func (Operators) SwitchMap(project func(interface{}, int) Observable) OperatorFunc {
 	return func(source Observable) Observable {
 		op := switchMapOperator{project}
-		return source.Pipe(MakeFunc(op.Call), operators.Mutex())
+		return source.Lift(op.Call)
 	}
 }
 

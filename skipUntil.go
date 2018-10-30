@@ -11,6 +11,7 @@ type skipUntilOperator struct {
 
 func (op skipUntilOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
+	sink = Mutex(sink)
 
 	var (
 		noSkipping   uint32
@@ -65,6 +66,6 @@ func (op skipUntilOperator) Call(ctx context.Context, sink Observer, source Obse
 func (Operators) SkipUntil(notifier Observable) OperatorFunc {
 	return func(source Observable) Observable {
 		op := skipUntilOperator{notifier}
-		return source.Pipe(MakeFunc(op.Call), operators.Mutex())
+		return source.Lift(op.Call)
 	}
 }

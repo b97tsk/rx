@@ -14,6 +14,7 @@ type mergeMapOperator struct {
 func (op mergeMapOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
+	sink = Mutex(sink)
 
 	var (
 		mu             sync.Mutex
@@ -135,7 +136,7 @@ func (Operators) MergeAll() OperatorFunc {
 func (Operators) MergeMap(project func(interface{}, int) Observable) OperatorFunc {
 	return func(source Observable) Observable {
 		op := mergeMapOperator{project, -1}
-		return source.Pipe(MakeFunc(op.Call), operators.Mutex())
+		return source.Lift(op.Call)
 	}
 }
 

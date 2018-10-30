@@ -15,6 +15,7 @@ type mergeScanOperator struct {
 func (op mergeScanOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
+	sink = Mutex(sink)
 
 	var (
 		mu             sync.Mutex
@@ -131,6 +132,6 @@ func (op mergeScanOperator) Call(ctx context.Context, sink Observer, source Obse
 func (Operators) MergeScan(accumulator func(interface{}, interface{}) Observable, seed interface{}) OperatorFunc {
 	return func(source Observable) Observable {
 		op := mergeScanOperator{accumulator, seed, -1}
-		return source.Pipe(MakeFunc(op.Call), operators.Mutex())
+		return source.Lift(op.Call)
 	}
 }
