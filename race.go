@@ -47,10 +47,10 @@ func (op raceOperator) Call(ctx context.Context, sink Observer, source Observabl
 
 // Race creates an Observable that mirrors the first source Observable to emit
 // an item from the combination of this Observable and supplied Observables.
-func (Operators) Race(observables ...Observable) OperatorFunc {
-	return func(source Observable) Observable {
-		observables = append([]Observable{source}, observables...)
-		op := raceOperator{observables}
-		return Observable{}.Lift(op.Call)
+func Race(observables ...Observable) Observable {
+	if len(observables) == 0 {
+		return Empty()
 	}
+	op := raceOperator{observables}
+	return Observable{}.Lift(op.Call)
 }
