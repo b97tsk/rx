@@ -36,7 +36,7 @@ func (o *connectableObservable) getSubject() *Subject {
 	return o.getSubjectLocked()
 }
 
-func (o *connectableObservable) doConnect(addRef bool) (context.Context, context.CancelFunc) {
+func (o *connectableObservable) connect(addRef bool) (context.Context, context.CancelFunc) {
 	var try *cancellableLocker
 
 	o.mu.Lock()
@@ -137,12 +137,12 @@ func (o *connectableObservable) doConnect(addRef bool) (context.Context, context
 }
 
 func (o *connectableObservable) connectAddRef() (context.Context, context.CancelFunc) {
-	return o.doConnect(true)
+	return o.connect(true)
 }
 
 // Connect invokes an execution of an ConnectableObservable.
 func (o ConnectableObservable) Connect() (context.Context, context.CancelFunc) {
-	return o.doConnect(false)
+	return o.connect(false)
 }
 
 // Subscribe subscribes a local Subject, which is used to multicast to many Observers.
