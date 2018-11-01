@@ -176,35 +176,34 @@ func (o ConnectableObservable) RefCount() Observable {
 	return Observable{}.Lift(op.Call)
 }
 
-// Publish returns a ConnectableObservable, which is a variety of Observable
+// Multicast returns a ConnectableObservable, which is a variety of Observable
 // that waits until its Connect method is called before it begins emitting
 // items to those Observers that have subscribed to it.
-func (o Observable) Publish() ConnectableObservable {
-	subject := NewSubject()
+func (o Observable) Multicast(subjectFactory func() *Subject) ConnectableObservable {
 	return ConnectableObservable{&connectableObservable{
 		source:         o,
-		subjectFactory: func() *Subject { return subject },
+		subjectFactory: subjectFactory,
 	}}
+}
+
+// Publish is like Multicast, but it uses only one subject.
+func (o Observable) Publish() ConnectableObservable {
+	subject := NewSubject()
+	return o.Multicast(func() *Subject { return subject })
 }
 
 // PublishBehavior is like Publish, but it uses a BehaviorSubject instead.
 func (o Observable) PublishBehavior(val interface{}) ConnectableObservable {
 	bs := NewBehaviorSubject(val)
-	return ConnectableObservable{&connectableObservable{
-		source:         o,
-		subjectFactory: func() *Subject { return &bs.Subject },
-	}}
+	return o.Multicast(func() *Subject { return &bs.Subject })
 }
 
-// Share returns a shared Observable that, when subscribed multiple times, it
-// won't subscribe the source Observable twice before the previous subscription
-// finishes.
+// Share returns a new Observable that multicasts (shares) the original
+// Observable. When subscribed multiple times, it guarantees that only one
+// subscription is made to the source Observable at the same time. When all
+// subscribers have unsubscribed it will unsubscribe from the source Observable.
 func (Operators) Share() OperatorFunc {
 	return func(source Observable) Observable {
-		connectable := ConnectableObservable{&connectableObservable{
-			source:         source,
-			subjectFactory: NewSubject,
-		}}
-		return connectable.RefCount()
+		return source.Multicast(NewSubject).RefCount()
 	}
 }
