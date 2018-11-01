@@ -17,6 +17,8 @@ func (op withLatestFromOperator) Call(ctx context.Context, sink Observer, source
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 
+	sink = Finally(sink, cancel)
+
 	length := len(op.Observables)
 	q := make(chan withLatestFromValue, length)
 
@@ -55,7 +57,6 @@ func (op withLatestFromOperator) Call(ctx context.Context, sink Observer, source
 
 				case t.HasError:
 					sink(t.Notification)
-					cancel()
 					return
 
 				default:
@@ -64,7 +65,6 @@ func (op withLatestFromOperator) Call(ctx context.Context, sink Observer, source
 					}
 
 					sink(t.Notification)
-					cancel()
 					return
 				}
 			}

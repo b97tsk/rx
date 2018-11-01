@@ -13,6 +13,8 @@ type elementAtOperator struct {
 func (op elementAtOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
+	sink = Finally(sink, cancel)
+
 	var (
 		index    = op.Index
 		observer Observer
@@ -26,11 +28,9 @@ func (op elementAtOperator) Call(ctx context.Context, sink Observer, source Obse
 				observer = NopObserver
 				sink(t)
 				sink.Complete()
-				cancel()
 			}
 		case t.HasError:
 			sink(t)
-			cancel()
 		default:
 			if op.HasDefault {
 				sink.Next(op.Default)
@@ -38,7 +38,6 @@ func (op elementAtOperator) Call(ctx context.Context, sink Observer, source Obse
 			} else {
 				sink.Error(ErrOutOfRange)
 			}
-			cancel()
 		}
 	}
 

@@ -13,7 +13,8 @@ func (op switchMapOperator) Call(ctx context.Context, sink Observer, source Obse
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 	childCtx, childCancel := canceledCtx, nothingToDo
-	sink = Mutex(sink)
+
+	sink = Mutex(Finally(sink, cancel))
 
 	var (
 		mu             sync.Mutex
@@ -46,7 +47,6 @@ func (op switchMapOperator) Call(ctx context.Context, sink Observer, source Obse
 
 				case t.HasError:
 					sink(t)
-					cancel()
 
 				default:
 					mu.Lock()
@@ -68,7 +68,6 @@ func (op switchMapOperator) Call(ctx context.Context, sink Observer, source Obse
 
 		case t.HasError:
 			sink(t)
-			cancel()
 
 		default:
 			mu.Lock()
@@ -85,13 +84,11 @@ func (op switchMapOperator) Call(ctx context.Context, sink Observer, source Obse
 					}
 					mu.Unlock()
 					sink.Complete()
-					cancel()
 				}()
 				return
 			}
 			mu.Unlock()
 			sink(t)
-			cancel()
 		}
 	})
 

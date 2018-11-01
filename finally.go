@@ -17,11 +17,12 @@ func (op finallyOperator) Call(ctx context.Context, sink Observer, source Observ
 // a call to the specified function.
 func Finally(sink Observer, finally func()) Observer {
 	return func(t Notification) {
-		sink(t)
 		if t.HasValue {
+			sink(t)
 			return
 		}
-		finally()
+		defer finally()
+		sink(t)
 	}
 }
 

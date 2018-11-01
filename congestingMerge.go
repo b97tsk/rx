@@ -20,7 +20,8 @@ func (op CongestingMergeOperator) MakeFunc() OperatorFunc {
 func (op CongestingMergeOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
-	sink = Mutex(sink)
+
+	sink = Mutex(Finally(sink, cancel))
 
 	var (
 		mu             sync.Mutex
@@ -65,7 +66,6 @@ func (op CongestingMergeOperator) Call(ctx context.Context, sink Observer, sourc
 
 				case t.HasError:
 					sink(t)
-					cancel()
 
 				default:
 					mu.Lock()
@@ -81,7 +81,6 @@ func (op CongestingMergeOperator) Call(ctx context.Context, sink Observer, sourc
 
 		case t.HasError:
 			sink(t)
-			cancel()
 
 		default:
 			mu.Lock()
@@ -98,13 +97,11 @@ func (op CongestingMergeOperator) Call(ctx context.Context, sink Observer, sourc
 					}
 					mu.Unlock()
 					sink.Complete()
-					cancel()
 				}()
 				return
 			}
 			mu.Unlock()
 			sink(t)
-			cancel()
 		}
 	})
 

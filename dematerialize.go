@@ -9,6 +9,8 @@ type dematerializeOperator struct{}
 func (op dematerializeOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
+	sink = Finally(sink, cancel)
+
 	var observer Observer
 	observer = func(t Notification) {
 		switch {
@@ -20,16 +22,13 @@ func (op dematerializeOperator) Call(ctx context.Context, sink Observer, source 
 				default:
 					observer = NopObserver
 					sink(t)
-					cancel()
 				}
 			} else {
 				observer = NopObserver
 				sink.Error(ErrNotNotification)
-				cancel()
 			}
 		default:
 			sink(t)
-			cancel()
 		}
 	}
 	source.Subscribe(ctx, observer.Notify)

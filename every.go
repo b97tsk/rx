@@ -11,6 +11,8 @@ type everyOperator struct {
 func (op everyOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
+	sink = Finally(sink, cancel)
+
 	var (
 		outerIndex = -1
 		observer   Observer
@@ -25,17 +27,14 @@ func (op everyOperator) Call(ctx context.Context, sink Observer, source Observab
 				observer = NopObserver
 				sink.Next(false)
 				sink.Complete()
-				cancel()
 			}
 
 		case t.HasError:
 			sink(t)
-			cancel()
 
 		default:
 			sink.Next(true)
 			sink.Complete()
-			cancel()
 		}
 	}
 

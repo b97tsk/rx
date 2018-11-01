@@ -11,6 +11,8 @@ type takeWhileOperator struct {
 func (op takeWhileOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
+	sink = Finally(sink, cancel)
+
 	var (
 		outerIndex = -1
 		observer   Observer
@@ -28,11 +30,9 @@ func (op takeWhileOperator) Call(ctx context.Context, sink Observer, source Obse
 
 			observer = NopObserver
 			sink.Complete()
-			cancel()
 
 		default:
 			sink(t)
-			cancel()
 		}
 	}
 

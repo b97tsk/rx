@@ -11,6 +11,8 @@ type retryOperator struct {
 func (op retryOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
+	sink = Finally(sink, cancel)
+
 	var (
 		count    = op.Count
 		observer Observer
@@ -23,7 +25,6 @@ func (op retryOperator) Call(ctx context.Context, sink Observer, source Observab
 		case t.HasError:
 			if count == 0 {
 				sink(t)
-				cancel()
 			} else {
 				if count > 0 {
 					count--
@@ -32,7 +33,6 @@ func (op retryOperator) Call(ctx context.Context, sink Observer, source Observab
 			}
 		default:
 			sink(t)
-			cancel()
 		}
 	}
 

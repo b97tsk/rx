@@ -11,6 +11,8 @@ type bufferOperator struct {
 func (op bufferOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
+	sink = Finally(sink, cancel)
+
 	var (
 		buffer []interface{}
 		try    cancellableLocker
@@ -27,7 +29,6 @@ func (op bufferOperator) Call(ctx context.Context, sink Observer, source Observa
 			default:
 				try.CancelAndUnlock()
 				sink(t)
-				cancel()
 			}
 		}
 	})
@@ -47,7 +48,6 @@ func (op bufferOperator) Call(ctx context.Context, sink Observer, source Observa
 			default:
 				try.CancelAndUnlock()
 				sink(t)
-				cancel()
 			}
 		}
 	})

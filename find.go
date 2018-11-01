@@ -11,6 +11,8 @@ type findOperator struct {
 func (op findOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
+	sink = Finally(sink, cancel)
+
 	var (
 		outerIndex = -1
 		observer   Observer
@@ -25,12 +27,10 @@ func (op findOperator) Call(ctx context.Context, sink Observer, source Observabl
 				observer = NopObserver
 				sink(t)
 				sink.Complete()
-				cancel()
 			}
 
 		default:
 			sink(t)
-			cancel()
 		}
 	}
 

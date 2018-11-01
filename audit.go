@@ -13,6 +13,8 @@ func (op auditOperator) Call(ctx context.Context, sink Observer, source Observab
 	scheduleCtx, scheduleCancel := canceledCtx, nothingToDo
 	scheduleDone := scheduleCtx.Done()
 
+	sink = Finally(sink, cancel)
+
 	var (
 		latestValue interface{}
 		try         cancellableLocker
@@ -36,7 +38,6 @@ func (op auditOperator) Call(ctx context.Context, sink Observer, source Observab
 				if t.HasError {
 					try.CancelAndUnlock()
 					sink(t)
-					cancel()
 					return
 				}
 				defer try.Unlock()
@@ -58,7 +59,6 @@ func (op auditOperator) Call(ctx context.Context, sink Observer, source Observab
 			default:
 				try.CancelAndUnlock()
 				sink(t)
-				cancel()
 			}
 		}
 	})

@@ -10,7 +10,8 @@ type takeUntilOperator struct {
 
 func (op takeUntilOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
-	sink = Mutex(sink)
+
+	sink = Mutex(Finally(sink, cancel))
 
 	op.Notifier.Subscribe(ctx, func(t Notification) {
 		switch {
@@ -19,7 +20,6 @@ func (op takeUntilOperator) Call(ctx context.Context, sink Observer, source Obse
 		default:
 			sink(t)
 		}
-		cancel()
 	})
 
 	select {
@@ -28,7 +28,7 @@ func (op takeUntilOperator) Call(ctx context.Context, sink Observer, source Obse
 	default:
 	}
 
-	source.Subscribe(ctx, Finally(sink, cancel))
+	source.Subscribe(ctx, sink)
 
 	return ctx, cancel
 }

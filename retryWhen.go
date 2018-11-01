@@ -11,7 +11,8 @@ type retryWhenOperator struct {
 func (op retryWhenOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	sourceCtx, sourceCancel := canceledCtx, nothingToDo
-	sink = Mutex(sink)
+
+	sink = Mutex(Finally(sink, cancel))
 
 	var (
 		subject  *Subject
@@ -36,14 +37,12 @@ func (op retryWhenOperator) Call(ctx context.Context, sink Observer, source Obse
 
 					default:
 						sink(t)
-						cancel()
 					}
 				})
 			}
 			subject.Next(t.Value.(error))
 		default:
 			sink(t)
-			cancel()
 		}
 	}
 

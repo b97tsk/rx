@@ -12,14 +12,14 @@ type timeoutOperator struct {
 func (op timeoutOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	scheduleCancel := nothingToDo
-	sink = Mutex(sink)
+
+	sink = Mutex(Finally(sink, cancel))
 
 	doSchedule := func() {
 		scheduleCancel()
 
 		_, scheduleCancel = scheduleOnce(ctx, op.Duration, func() {
 			sink.Error(ErrTimeout)
-			cancel()
 		})
 	}
 
@@ -32,7 +32,6 @@ func (op timeoutOperator) Call(ctx context.Context, sink Observer, source Observ
 			doSchedule()
 		default:
 			sink(t)
-			cancel()
 		}
 	})
 

@@ -11,6 +11,8 @@ type repeatOperator struct {
 func (op repeatOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
+	sink = Finally(sink, cancel)
+
 	var (
 		count    = op.Count
 		observer Observer
@@ -22,11 +24,9 @@ func (op repeatOperator) Call(ctx context.Context, sink Observer, source Observa
 			sink(t)
 		case t.HasError:
 			sink(t)
-			cancel()
 		default:
 			if count == 0 {
 				sink(t)
-				cancel()
 			} else {
 				if count > 0 {
 					count--

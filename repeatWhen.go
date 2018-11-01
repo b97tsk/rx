@@ -11,7 +11,8 @@ type repeatWhenOperator struct {
 func (op repeatWhenOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	sourceCtx, sourceCancel := canceledCtx, nothingToDo
-	sink = Mutex(sink)
+
+	sink = Mutex(Finally(sink, cancel))
 
 	var (
 		subject  *Subject
@@ -24,7 +25,6 @@ func (op repeatWhenOperator) Call(ctx context.Context, sink Observer, source Obs
 			sink(t)
 		case t.HasError:
 			sink(t)
-			cancel()
 		default:
 			if subject == nil {
 				subject = NewSubject()
@@ -39,7 +39,6 @@ func (op repeatWhenOperator) Call(ctx context.Context, sink Observer, source Obs
 
 					default:
 						sink(t)
-						cancel()
 					}
 				})
 			}

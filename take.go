@@ -11,6 +11,8 @@ type takeOperator struct {
 func (op takeOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
+	sink = Finally(sink, cancel)
+
 	var (
 		count    = op.Count
 		observer Observer
@@ -27,16 +29,13 @@ func (op takeOperator) Call(ctx context.Context, sink Observer, source Observabl
 					observer = NopObserver
 					sink(t)
 					sink.Complete()
-					cancel()
 				}
 			} else {
 				observer = NopObserver
 				sink.Complete()
-				cancel()
 			}
 		default:
 			sink(t)
-			cancel()
 		}
 	}
 

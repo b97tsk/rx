@@ -65,8 +65,8 @@ func scheduleOnce(ctx context.Context, delay time.Duration, work func()) (contex
 			select {
 			case <-done:
 			default:
+				defer cancel()
 				work()
-				cancel()
 			}
 		}
 	}()

@@ -11,7 +11,8 @@ type skipUntilOperator struct {
 
 func (op skipUntilOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
-	sink = Mutex(sink)
+
+	sink = Mutex(Finally(sink, cancel))
 
 	var (
 		noSkipping   uint32
@@ -24,13 +25,11 @@ func (op skipUntilOperator) Call(ctx context.Context, sink Observer, source Obse
 			atomic.StoreUint32(&noSkipping, 1)
 		case t.HasError:
 			sink(t)
-			cancel()
 		default:
 			if atomic.CompareAndSwapUint32(&hasCompleted, 0, 1) {
 				break
 			}
 			sink(t)
-			cancel()
 		}
 	})
 
@@ -48,13 +47,11 @@ func (op skipUntilOperator) Call(ctx context.Context, sink Observer, source Obse
 			}
 		case t.HasError:
 			sink(t)
-			cancel()
 		default:
 			if atomic.CompareAndSwapUint32(&hasCompleted, 0, 1) {
 				break
 			}
 			sink(t)
-			cancel()
 		}
 	})
 

@@ -12,8 +12,10 @@ type subscribeOnOperator struct {
 func (op subscribeOnOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
+	sink = Finally(sink, cancel)
+
 	scheduleOnce(ctx, op.Duration, func() {
-		source.Subscribe(ctx, Finally(sink, cancel))
+		source.Subscribe(ctx, sink)
 	})
 
 	return ctx, cancel

@@ -12,6 +12,8 @@ type sampleTimeOperator struct {
 func (op sampleTimeOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
+	sink = Finally(sink, cancel)
+
 	var (
 		latestValue    interface{}
 		hasLatestValue bool
@@ -38,7 +40,6 @@ func (op sampleTimeOperator) Call(ctx context.Context, sink Observer, source Obs
 			default:
 				try.CancelAndUnlock()
 				sink(t)
-				cancel()
 			}
 		}
 	})

@@ -19,9 +19,10 @@ type delayValue struct {
 func (op delayOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
-
 	scheduleCtx := canceledCtx
 	scheduleDone := scheduleCtx.Done()
+
+	sink = Finally(sink, cancel)
 
 	var (
 		mu         sync.Mutex
@@ -56,7 +57,6 @@ func (op delayOperator) Call(ctx context.Context, sink Observer, source Observab
 					sink(t.Notification)
 				default:
 					sink(t.Notification)
-					cancel()
 				}
 			}
 		})
@@ -77,7 +77,6 @@ func (op delayOperator) Call(ctx context.Context, sink Observer, source Observab
 			// Error notification will not be delayed.
 			queue.Init()
 			sink(t)
-			cancel()
 		default:
 			queue.PushBack(delayValue{
 				Time: time.Now().Add(op.Duration),

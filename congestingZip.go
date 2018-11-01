@@ -12,6 +12,8 @@ func (op congestingZipOperator) Call(ctx context.Context, sink Observer, source 
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 
+	sink = Finally(sink, cancel)
+
 	length := len(op.Observables)
 	channels := make([]chan Notification, length)
 
@@ -33,7 +35,6 @@ func (op congestingZipOperator) Call(ctx context.Context, sink Observer, source 
 						nextValues[i] = t.Value
 					default:
 						sink(t)
-						cancel()
 						return
 					}
 				}
@@ -61,6 +62,8 @@ type congestingZipAllOperator struct{}
 func (op congestingZipAllOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
+	sink = Finally(sink, cancel)
+
 	toObservablesOperator(op).Call(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
@@ -68,16 +71,14 @@ func (op congestingZipAllOperator) Call(ctx context.Context, sink Observer, sour
 
 			if len(observables) == 0 {
 				sink.Complete()
-				cancel()
 				break
 			}
 
 			zip := congestingZipOperator{observables}
-			zip.Call(ctx, Finally(sink, cancel), Observable{})
+			zip.Call(ctx, sink, Observable{})
 
 		case t.HasError:
 			sink(t)
-			cancel()
 
 		default:
 		}

@@ -9,6 +9,8 @@ type toObservablesOperator struct{}
 func (op toObservablesOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
+	sink = Finally(sink, cancel)
+
 	var (
 		observables []Observable
 		observer    Observer
@@ -22,15 +24,12 @@ func (op toObservablesOperator) Call(ctx context.Context, sink Observer, source 
 			} else {
 				observer = NopObserver
 				sink.Error(ErrNotObservable)
-				cancel()
 			}
 		case t.HasError:
 			sink(t)
-			cancel()
 		default:
 			sink.Next(observables)
 			sink.Complete()
-			cancel()
 		}
 	}
 

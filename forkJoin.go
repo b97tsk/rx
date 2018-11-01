@@ -17,6 +17,8 @@ func (op forkJoinOperator) Call(ctx context.Context, sink Observer, source Obser
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 
+	sink = Finally(sink, cancel)
+
 	length := len(op.Observables)
 	q := make(chan forkJoinValue, length)
 
@@ -42,7 +44,6 @@ func (op forkJoinOperator) Call(ctx context.Context, sink Observer, source Obser
 
 				case t.HasError:
 					sink(t.Notification)
-					cancel()
 					return
 
 				default:
@@ -50,7 +51,6 @@ func (op forkJoinOperator) Call(ctx context.Context, sink Observer, source Obser
 
 					if !hasValues[index] {
 						sink(t.Notification)
-						cancel()
 						return
 					}
 
@@ -60,7 +60,6 @@ func (op forkJoinOperator) Call(ctx context.Context, sink Observer, source Obser
 
 					sink.Next(values)
 					sink.Complete()
-					cancel()
 					return
 				}
 			}

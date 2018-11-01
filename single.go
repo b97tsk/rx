@@ -9,6 +9,8 @@ type singleOperator struct{}
 func (op singleOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
+	sink = Finally(sink, cancel)
+
 	var (
 		value    interface{}
 		hasValue bool
@@ -21,14 +23,12 @@ func (op singleOperator) Call(ctx context.Context, sink Observer, source Observa
 			if hasValue {
 				observer = NopObserver
 				sink.Error(ErrNotSingle)
-				cancel()
 			} else {
 				value = t.Value
 				hasValue = true
 			}
 		case t.HasError:
 			sink(t)
-			cancel()
 		default:
 			if hasValue {
 				sink.Next(value)
@@ -36,7 +36,6 @@ func (op singleOperator) Call(ctx context.Context, sink Observer, source Observa
 			} else {
 				sink.Error(ErrEmpty)
 			}
-			cancel()
 		}
 	}
 

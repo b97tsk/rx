@@ -11,6 +11,8 @@ type congestingConcatOperator struct {
 func (op congestingConcatOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
+	sink = Finally(sink, cancel)
+
 	var (
 		outerIndex = -1
 		observer   Observer
@@ -32,7 +34,6 @@ func (op congestingConcatOperator) Call(ctx context.Context, sink Observer, sour
 				case t.HasError:
 					observer = NopObserver
 					sink(t)
-					cancel()
 				default:
 				}
 			})
@@ -41,7 +42,6 @@ func (op congestingConcatOperator) Call(ctx context.Context, sink Observer, sour
 
 		default:
 			sink(t)
-			cancel()
 		}
 	}
 

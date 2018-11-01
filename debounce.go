@@ -12,6 +12,8 @@ func (op debounceOperator) Call(ctx context.Context, sink Observer, source Obser
 	ctx, cancel := context.WithCancel(ctx)
 	scheduleCtx, scheduleCancel := canceledCtx, nothingToDo
 
+	sink = Finally(sink, cancel)
+
 	var (
 		latestValue interface{}
 		try         cancellableLocker
@@ -30,7 +32,6 @@ func (op debounceOperator) Call(ctx context.Context, sink Observer, source Obser
 				if t.HasError {
 					try.CancelAndUnlock()
 					sink(t)
-					cancel()
 					return
 				}
 				defer try.Unlock()
@@ -52,7 +53,6 @@ func (op debounceOperator) Call(ctx context.Context, sink Observer, source Obser
 			default:
 				try.CancelAndUnlock()
 				sink(t)
-				cancel()
 			}
 		}
 	})

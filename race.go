@@ -11,6 +11,8 @@ type raceOperator struct {
 func (op raceOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
+	sink = Finally(sink, cancel)
+
 	length := len(op.Observables)
 	subscriptions := make([]context.CancelFunc, 0, length)
 
@@ -28,7 +30,7 @@ func (op raceOperator) Call(ctx context.Context, sink Observer, source Observabl
 					}
 				}
 				try.CancelAndUnlock()
-				observer = Finally(sink, cancel)
+				observer = sink
 				observer.Notify(t)
 			}
 		}

@@ -18,6 +18,8 @@ func (op zipOperator) Call(ctx context.Context, sink Observer, source Observable
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 
+	sink = Finally(sink, cancel)
+
 	length := len(op.Observables)
 	q := make(chan zipValue, length)
 
@@ -68,20 +70,17 @@ func (op zipOperator) Call(ctx context.Context, sink Observer, source Observable
 
 					if shouldComplete {
 						sink.Complete()
-						cancel()
 						return
 					}
 
 				case t.HasError:
 					sink(t.Notification)
-					cancel()
 					return
 
 				default:
 					hasCompleted[index] = true
 					if !hasValues[index] {
 						sink(t.Notification)
-						cancel()
 						return
 					}
 				}
@@ -107,6 +106,8 @@ type zipAllOperator struct{}
 func (op zipAllOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
+	sink = Finally(sink, cancel)
+
 	toObservablesOperator(op).Call(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
@@ -114,16 +115,14 @@ func (op zipAllOperator) Call(ctx context.Context, sink Observer, source Observa
 
 			if len(observables) == 0 {
 				sink.Complete()
-				cancel()
 				break
 			}
 
 			zip := zipOperator{observables}
-			zip.Call(ctx, Finally(sink, cancel), Observable{})
+			zip.Call(ctx, sink, Observable{})
 
 		case t.HasError:
 			sink(t)
-			cancel()
 
 		default:
 		}

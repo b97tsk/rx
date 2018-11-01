@@ -13,6 +13,8 @@ func (op throttleOperator) Call(ctx context.Context, sink Observer, source Obser
 	scheduleCtx, scheduleCancel := canceledCtx, nothingToDo
 	scheduleDone := scheduleCtx.Done()
 
+	sink = Finally(sink, cancel)
+
 	source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
@@ -33,7 +35,6 @@ func (op throttleOperator) Call(ctx context.Context, sink Observer, source Obser
 				scheduleCancel()
 				if t.HasError {
 					sink(t)
-					cancel()
 					return
 				}
 			}
@@ -43,7 +44,6 @@ func (op throttleOperator) Call(ctx context.Context, sink Observer, source Obser
 
 		default:
 			sink(t)
-			cancel()
 		}
 	})
 

@@ -13,6 +13,8 @@ func (op congestOperator) Call(ctx context.Context, sink Observer, source Observ
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 
+	sink = Finally(sink, cancel)
+
 	c := make(chan *list.Element)
 	go func() {
 		for {
@@ -25,7 +27,6 @@ func (op congestOperator) Call(ctx context.Context, sink Observer, source Observ
 					sink(t)
 				default:
 					sink(t)
-					cancel()
 					return
 				}
 			}

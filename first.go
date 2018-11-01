@@ -9,6 +9,8 @@ type firstOperator struct{}
 func (op firstOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
+	sink = Finally(sink, cancel)
+
 	var observer Observer
 	observer = func(t Notification) {
 		switch {
@@ -16,13 +18,10 @@ func (op firstOperator) Call(ctx context.Context, sink Observer, source Observab
 			observer = NopObserver
 			sink(t)
 			sink.Complete()
-			cancel()
 		case t.HasError:
 			sink(t)
-			cancel()
 		default:
 			sink.Error(ErrEmpty)
-			cancel()
 		}
 	}
 	source.Subscribe(ctx, observer.Notify)

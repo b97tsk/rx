@@ -13,6 +13,8 @@ type observeOnOperator struct {
 func (op observeOnOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
+	sink = Finally(sink, cancel)
+
 	var (
 		queue list.List
 		try   cancellableLocker
@@ -31,7 +33,6 @@ func (op observeOnOperator) Call(ctx context.Context, sink Observer, source Obse
 					default:
 						try.CancelAndUnlock()
 						sink(t)
-						cancel()
 					}
 				}
 			})

@@ -11,6 +11,8 @@ type sampleOperator struct {
 func (op sampleOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
+	sink = Finally(sink, cancel)
+
 	var (
 		latestValue    interface{}
 		hasLatestValue bool
@@ -20,7 +22,6 @@ func (op sampleOperator) Call(ctx context.Context, sink Observer, source Observa
 	op.Notifier.Subscribe(ctx, func(t Notification) {
 		if t.HasError {
 			sink(t)
-			cancel()
 			return
 		}
 		if try.Lock() {
@@ -42,7 +43,6 @@ func (op sampleOperator) Call(ctx context.Context, sink Observer, source Observa
 			default:
 				try.CancelAndUnlock()
 				sink(t)
-				cancel()
 			}
 		}
 	})
