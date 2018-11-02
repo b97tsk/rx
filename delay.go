@@ -52,12 +52,7 @@ func (op delayOperator) Call(ctx context.Context, sink Observer, source Observab
 					doSchedule(t.Time.Sub(now))
 					return
 				}
-				switch {
-				case t.HasValue:
-					sink(t.Notification)
-				default:
-					sink(t.Notification)
-				}
+				sink(t.Notification)
 			}
 		})
 		scheduleDone = scheduleCtx.Done()

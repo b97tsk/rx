@@ -18,17 +18,14 @@ func (op DistinctOperator) MakeFunc() OperatorFunc {
 func (op DistinctOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	var keys = make(map[interface{}]struct{})
 	return source.Subscribe(ctx, func(t Notification) {
-		switch {
-		case t.HasValue:
+		if t.HasValue {
 			key := op.KeySelector(t.Value)
 			if _, exists := keys[key]; exists {
-				break
+				return
 			}
 			keys[key] = struct{}{}
-			sink(t)
-		default:
-			sink(t)
 		}
+		sink(t)
 	})
 }
 

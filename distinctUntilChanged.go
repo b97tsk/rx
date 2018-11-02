@@ -22,18 +22,15 @@ func (op DistinctUntilChangedOperator) Call(ctx context.Context, sink Observer, 
 		hasKey bool
 	)
 	return source.Subscribe(ctx, func(t Notification) {
-		switch {
-		case t.HasValue:
+		if t.HasValue {
 			newKey := op.KeySelector(t.Value)
 			if hasKey && op.Compare(key, newKey) {
-				break
+				return
 			}
 			key = newKey
 			hasKey = true
-			sink(t)
-		default:
-			sink(t)
 		}
+		sink(t)
 	})
 }
 

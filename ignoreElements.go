@@ -14,11 +14,10 @@ func (op ignoreElementsOperator) Call(ctx context.Context, sink Observer, source
 // Complete or Error emission to the specified Observer.
 func IgnoreElements(sink Observer) Observer {
 	return func(t Notification) {
-		switch {
-		case t.HasValue:
-		default:
-			sink(t)
+		if t.HasValue {
+			return
 		}
+		sink(t)
 	}
 }
 
