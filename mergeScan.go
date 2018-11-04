@@ -21,7 +21,6 @@ func (op MergeScanOperator) MakeFunc() OperatorFunc {
 // Call invokes an execution of this operator.
 func (op MergeScanOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
-	done := ctx.Done()
 
 	sink = Mutex(Finally(sink, cancel))
 
@@ -99,6 +98,7 @@ func (op MergeScanOperator) Call(ctx context.Context, sink Observer, source Obse
 			mu.Lock()
 			if activeCount > 0 {
 				go func() {
+					done := ctx.Done()
 					for activeCount > 0 {
 						mu.Unlock()
 						select {

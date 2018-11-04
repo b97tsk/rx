@@ -11,7 +11,6 @@ type exhaustMapOperator struct {
 
 func (op exhaustMapOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
-	done := ctx.Done()
 
 	sink = Mutex(Finally(sink, cancel))
 
@@ -66,6 +65,7 @@ func (op exhaustMapOperator) Call(ctx context.Context, sink Observer, source Obs
 			mu.Lock()
 			if isActive {
 				go func() {
+					done := ctx.Done()
 					for isActive {
 						mu.Unlock()
 						select {

@@ -11,7 +11,6 @@ type switchMapOperator struct {
 
 func (op switchMapOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
-	done := ctx.Done()
 	childCtx, childCancel := canceledCtx, nothingToDo
 
 	sink = Mutex(Finally(sink, cancel))
@@ -73,6 +72,7 @@ func (op switchMapOperator) Call(ctx context.Context, sink Observer, source Obse
 			mu.Lock()
 			if activeIndex != -1 {
 				go func() {
+					done := ctx.Done()
 					for activeIndex != -1 {
 						mu.Unlock()
 						select {
