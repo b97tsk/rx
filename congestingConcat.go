@@ -35,6 +35,7 @@ func (op congestingConcatOperator) Call(ctx context.Context, sink Observer, sour
 					observer = NopObserver
 					sink(t)
 				default:
+					// do nothing
 				}
 			})
 

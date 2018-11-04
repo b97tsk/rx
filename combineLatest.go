@@ -107,6 +107,7 @@ func (op combineAllOperator) Call(ctx context.Context, sink Observer, source Obs
 			sink(t)
 
 		default:
+			// do nothing
 		}
 	}, source)
 

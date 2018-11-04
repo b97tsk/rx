@@ -81,6 +81,7 @@ func (op congestingZipAllOperator) Call(ctx context.Context, sink Observer, sour
 			sink(t)
 
 		default:
+			// do nothing
 		}
 	}, source)
 

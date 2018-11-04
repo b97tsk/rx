@@ -125,6 +125,7 @@ func (op zipAllOperator) Call(ctx context.Context, sink Observer, source Observa
 			sink(t)
 
 		default:
+			// do nothing
 		}
 	}, source)
 
