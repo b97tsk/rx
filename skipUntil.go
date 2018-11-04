@@ -12,26 +12,31 @@ type skipUntilOperator struct {
 func (op skipUntilOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
-	sink = Mutex(Finally(sink, cancel))
+	sinkNoMutex := Finally(sink, cancel)
+	sink = Mutex(sinkNoMutex)
 
-	var (
-		noSkipping   uint32
-		hasCompleted uint32
-	)
+	var noSkipping uint32
 
-	op.Notifier.Subscribe(ctx, func(t Notification) {
-		switch {
-		case t.HasValue:
-			atomic.StoreUint32(&noSkipping, 1)
-		case t.HasError:
-			sink(t)
-		default:
-			if atomic.CompareAndSwapUint32(&hasCompleted, 0, 1) {
-				break
+	{
+		ctx, cancel := context.WithCancel(ctx)
+
+		var observer Observer
+
+		observer = func(t Notification) {
+			switch {
+			case t.HasValue:
+				atomic.StoreUint32(&noSkipping, 1)
+				observer = NopObserver
+				cancel()
+			case t.HasError:
+				sink(t)
+			default:
+				// do nothing
 			}
-			sink(t)
 		}
-	})
+
+		op.Notifier.Subscribe(ctx, observer.Notify)
+	}
 
 	select {
 	case <-ctx.Done():
@@ -39,21 +44,23 @@ func (op skipUntilOperator) Call(ctx context.Context, sink Observer, source Obse
 	default:
 	}
 
-	source.Subscribe(ctx, func(t Notification) {
-		switch {
-		case t.HasValue:
-			if atomic.LoadUint32(&noSkipping) != 0 {
+	{
+		var observer Observer
+
+		observer = func(t Notification) {
+			switch {
+			case t.HasValue:
+				if atomic.LoadUint32(&noSkipping) != 0 {
+					observer = sinkNoMutex
+					sinkNoMutex(t)
+				}
+			default:
 				sink(t)
 			}
-		case t.HasError:
-			sink(t)
-		default:
-			if atomic.CompareAndSwapUint32(&hasCompleted, 0, 1) {
-				break
-			}
-			sink(t)
 		}
-	})
+
+		source.Subscribe(ctx, observer.Notify)
+	}
 
 	return ctx, cancel
 }
