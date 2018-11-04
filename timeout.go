@@ -13,25 +13,38 @@ func (op timeoutOperator) Call(ctx context.Context, sink Observer, source Observ
 	ctx, cancel := context.WithCancel(ctx)
 	scheduleCancel := nothingToDo
 
-	sink = Mutex(Finally(sink, cancel))
+	sink = Finally(sink, cancel)
+
+	var try cancellableLocker
+
+	doNextAndUnlock := func(t Notification) {
+		defer try.Unlock()
+		sink(t)
+	}
 
 	doSchedule := func() {
 		scheduleCancel()
 
 		_, scheduleCancel = scheduleOnce(ctx, op.Duration, func() {
-			sink.Error(ErrTimeout)
+			if try.Lock() {
+				try.CancelAndUnlock()
+				sink.Error(ErrTimeout)
+			}
 		})
 	}
 
 	doSchedule()
 
 	source.Subscribe(ctx, func(t Notification) {
-		switch {
-		case t.HasValue:
-			sink(t)
-			doSchedule()
-		default:
-			sink(t)
+		if try.Lock() {
+			switch {
+			case t.HasValue:
+				doNextAndUnlock(t)
+				doSchedule()
+			default:
+				try.CancelAndUnlock()
+				sink(t)
+			}
 		}
 	})
 
