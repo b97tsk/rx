@@ -21,17 +21,12 @@ func (op takeOperator) Call(ctx context.Context, sink Observer, source Observabl
 	observer = func(t Notification) {
 		switch {
 		case t.HasValue:
-			if count > 0 {
+			if count > 1 {
 				count--
-				if count > 0 {
-					sink(t)
-				} else {
-					observer = NopObserver
-					sink(t)
-					sink.Complete()
-				}
+				sink(t)
 			} else {
 				observer = NopObserver
+				sink(t)
 				sink.Complete()
 			}
 		default:
@@ -50,6 +45,9 @@ func (op takeOperator) Call(ctx context.Context, sink Observer, source Observabl
 // Take takes the first count values from the source, then completes.
 func (Operators) Take(count int) OperatorFunc {
 	return func(source Observable) Observable {
+		if count <= 0 {
+			return Empty()
+		}
 		op := takeOperator{count}
 		return source.Lift(op.Call)
 	}
