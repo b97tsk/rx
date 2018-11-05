@@ -1,7 +1,7 @@
 package rx
 
 import (
-	"container/list"
+	"container/ring"
 	"context"
 )
 
@@ -10,19 +10,39 @@ type takeLastOperator struct {
 }
 
 func (op takeLastOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
-	var buffer list.List
+	var (
+		head   *ring.Ring
+		length int
+	)
 	return source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
-			if buffer.Len() >= op.Count {
-				buffer.Remove(buffer.Front())
+			if length < op.Count {
+				tail := &ring.Ring{Value: t.Value}
+				if head == nil {
+					head = tail
+				} else {
+					tail.Link(head)
+				}
+				length++
+			} else {
+				head.Value = t.Value
+				head = head.Next()
 			}
-			buffer.PushBack(t.Value)
 		case t.HasError:
 			sink(t)
 		default:
-			for e := buffer.Front(); e != nil; e = e.Next() {
-				sink.Next(e.Value)
+			if length > 0 {
+				done := ctx.Done()
+				for i := 0; i < length; i++ {
+					select {
+					case <-done:
+						return
+					default:
+					}
+					sink.Next(head.Value)
+					head = head.Next()
+				}
 			}
 			sink(t)
 		}
