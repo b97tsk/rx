@@ -14,9 +14,14 @@ func (op retryOperator) Call(ctx context.Context, sink Observer, source Observab
 	sink = Finally(sink, cancel)
 
 	var (
-		count    = op.Count
-		observer Observer
+		count          = op.Count
+		observer       Observer
+		avoidRecursive avoidRecursiveCalls
 	)
+
+	subscribe := func() {
+		source.Subscribe(ctx, observer)
+	}
 
 	observer = func(t Notification) {
 		switch {
@@ -29,14 +34,14 @@ func (op retryOperator) Call(ctx context.Context, sink Observer, source Observab
 				if count > 0 {
 					count--
 				}
-				source.Subscribe(ctx, observer)
+				avoidRecursive.Do(subscribe)
 			}
 		default:
 			sink(t)
 		}
 	}
 
-	source.Subscribe(ctx, observer)
+	avoidRecursive.Do(subscribe)
 
 	return ctx, cancel
 }

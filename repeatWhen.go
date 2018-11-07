@@ -15,9 +15,15 @@ func (op repeatWhenOperator) Call(ctx context.Context, sink Observer, source Obs
 	sink = Mutex(Finally(sink, cancel))
 
 	var (
-		subject  *Subject
-		observer Observer
+		subject        *Subject
+		observer       Observer
+		avoidRecursive avoidRecursiveCalls
 	)
+
+	subscribe := func() {
+		sourceCtx, sourceCancel = context.WithCancel(ctx)
+		source.Subscribe(sourceCtx, observer)
+	}
 
 	observer = func(t Notification) {
 		switch {
@@ -33,9 +39,7 @@ func (op repeatWhenOperator) Call(ctx context.Context, sink Observer, source Obs
 					switch {
 					case t.HasValue:
 						sourceCancel()
-
-						sourceCtx, sourceCancel = context.WithCancel(ctx)
-						source.Subscribe(sourceCtx, observer)
+						avoidRecursive.Do(subscribe)
 
 					default:
 						sink(t)
@@ -46,8 +50,7 @@ func (op repeatWhenOperator) Call(ctx context.Context, sink Observer, source Obs
 		}
 	}
 
-	sourceCtx, sourceCancel = context.WithCancel(ctx)
-	source.Subscribe(sourceCtx, observer)
+	avoidRecursive.Do(subscribe)
 
 	return ctx, cancel
 }

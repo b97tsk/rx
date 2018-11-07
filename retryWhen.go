@@ -15,9 +15,15 @@ func (op retryWhenOperator) Call(ctx context.Context, sink Observer, source Obse
 	sink = Mutex(Finally(sink, cancel))
 
 	var (
-		subject  *Subject
-		observer Observer
+		subject        *Subject
+		observer       Observer
+		avoidRecursive avoidRecursiveCalls
 	)
+
+	subscribe := func() {
+		sourceCtx, sourceCancel = context.WithCancel(ctx)
+		source.Subscribe(sourceCtx, observer)
+	}
 
 	observer = func(t Notification) {
 		switch {
@@ -31,9 +37,7 @@ func (op retryWhenOperator) Call(ctx context.Context, sink Observer, source Obse
 					switch {
 					case t.HasValue:
 						sourceCancel()
-
-						sourceCtx, sourceCancel = context.WithCancel(ctx)
-						source.Subscribe(sourceCtx, observer)
+						avoidRecursive.Do(subscribe)
 
 					default:
 						sink(t)
@@ -46,8 +50,7 @@ func (op retryWhenOperator) Call(ctx context.Context, sink Observer, source Obse
 		}
 	}
 
-	sourceCtx, sourceCancel = context.WithCancel(ctx)
-	source.Subscribe(sourceCtx, observer)
+	avoidRecursive.Do(subscribe)
 
 	return ctx, cancel
 }
