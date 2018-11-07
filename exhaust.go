@@ -2,7 +2,7 @@ package rx
 
 import (
 	"context"
-	"sync"
+	"sync/atomic"
 )
 
 type exhaustMapOperator struct {
@@ -15,23 +15,17 @@ func (op exhaustMapOperator) Call(ctx context.Context, sink Observer, source Obs
 	sink = Mutex(Finally(sink, cancel))
 
 	var (
-		mu             sync.Mutex
 		outerIndex     = -1
-		isActive       bool
+		isActive       uint32
 		completeSignal = make(chan struct{}, 1)
 	)
 
 	source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
-			mu.Lock()
-			defer mu.Unlock()
-
-			if isActive {
+			if !atomic.CompareAndSwapUint32(&isActive, 0, 1) {
 				break
 			}
-
-			isActive = true
 
 			outerValue := t.Value
 			outerIndex++
@@ -39,7 +33,7 @@ func (op exhaustMapOperator) Call(ctx context.Context, sink Observer, source Obs
 
 			obsv := op.Project(outerValue, outerIndex)
 
-			go obsv.Subscribe(ctx, func(t Notification) {
+			obsv.Subscribe(ctx, func(t Notification) {
 				switch {
 				case t.HasValue:
 					sink(t)
@@ -48,9 +42,7 @@ func (op exhaustMapOperator) Call(ctx context.Context, sink Observer, source Obs
 					sink(t)
 
 				default:
-					mu.Lock()
-					isActive = false
-					mu.Unlock()
+					atomic.StoreUint32(&isActive, 0)
 					select {
 					case completeSignal <- struct{}{}:
 					default:
@@ -62,25 +54,20 @@ func (op exhaustMapOperator) Call(ctx context.Context, sink Observer, source Obs
 			sink(t)
 
 		default:
-			mu.Lock()
-			if isActive {
+			if atomic.LoadUint32(&isActive) != 0 {
 				go func() {
 					done := ctx.Done()
-					for isActive {
-						mu.Unlock()
+					for atomic.LoadUint32(&isActive) != 0 {
 						select {
 						case <-done:
 							return
 						case <-completeSignal:
 						}
-						mu.Lock()
 					}
-					mu.Unlock()
 					sink.Complete()
 				}()
 				return
 			}
-			mu.Unlock()
 			sink(t)
 		}
 	})
