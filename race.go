@@ -31,7 +31,7 @@ func (op raceOperator) Call(ctx context.Context, sink Observer, source Observabl
 				}
 				try.CancelAndUnlock()
 				observer = sink
-				observer.Notify(t)
+				t.Observe(observer)
 			}
 		}
 		_, cancel := obsv.Subscribe(ctx, observer.Notify)

@@ -81,7 +81,7 @@ func (o *connectableObservable) connect(addRef bool) (context.Context, context.C
 				o.mu.Unlock()
 			}
 
-			subject.Notify(t)
+			t.Observe(subject.Observer)
 		})
 
 		select {
