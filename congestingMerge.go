@@ -48,7 +48,13 @@ func (op CongestingMergeOperator) Call(ctx context.Context, sink Observer, sourc
 				}
 				mu.Lock()
 			}
-			defer mu.Unlock()
+
+			var try cancellableLocker
+			defer func() {
+				try.Lock()
+				mu.Unlock()
+				try.CancelAndUnlock()
+			}()
 
 			activeCount++
 
@@ -59,7 +65,7 @@ func (op CongestingMergeOperator) Call(ctx context.Context, sink Observer, sourc
 			// calls op.Project synchronously
 			obsv := op.Project(outerValue, outerIndex)
 
-			go obsv.Subscribe(ctx, func(t Notification) {
+			obsv.Subscribe(ctx, func(t Notification) {
 				switch {
 				case t.HasValue:
 					sink(t)
@@ -68,10 +74,14 @@ func (op CongestingMergeOperator) Call(ctx context.Context, sink Observer, sourc
 					sink(t)
 
 				default:
-					mu.Lock()
-					activeCount--
-					mu.Unlock()
-
+					if try.Lock() {
+						activeCount--
+						try.Unlock()
+					} else {
+						mu.Lock()
+						activeCount--
+						mu.Unlock()
+					}
 					select {
 					case completeSignal <- struct{}{}:
 					default:
