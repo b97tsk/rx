@@ -20,11 +20,12 @@ func (op sampleOperator) Call(ctx context.Context, sink Observer, source Observa
 	)
 
 	op.Notifier.Subscribe(ctx, func(t Notification) {
-		if t.HasError {
-			sink(t)
-			return
-		}
 		if try.Lock() {
+			if t.HasError {
+				try.CancelAndUnlock()
+				sink(t)
+				return
+			}
 			defer try.Unlock()
 			if hasLatestValue {
 				sink.Next(latestValue)
