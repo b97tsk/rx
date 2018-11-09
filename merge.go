@@ -24,12 +24,12 @@ func (op MergeOperator) Call(ctx context.Context, sink Observer, source Observab
 	sink = Mutex(Finally(sink, cancel))
 
 	var (
-		mu             sync.Mutex
-		outerIndex     = -1
-		activeCount    = 0
-		buffer         list.List
-		completeSignal = make(chan struct{}, 1)
-		doNextLocked   func()
+		mutex           sync.Mutex
+		outerIndex      = -1
+		activeCount     int
+		sourceCompleted bool
+		buffer          list.List
+		doNextLocked    func()
 	)
 
 	concurrent := op.Concurrent
@@ -38,9 +38,9 @@ func (op MergeOperator) Call(ctx context.Context, sink Observer, source Observab
 	}
 
 	doNextLocked = func() {
-		outerValue := buffer.Remove(buffer.Front())
 		outerIndex++
 		outerIndex := outerIndex
+		outerValue := buffer.Remove(buffer.Front())
 
 		// calls op.Project synchronously
 		obsv := op.Project(outerValue, outerIndex)
@@ -54,20 +54,18 @@ func (op MergeOperator) Call(ctx context.Context, sink Observer, source Observab
 				sink(t)
 
 			default:
-				mu.Lock()
+				mutex.Lock()
+				defer mutex.Unlock()
 
 				if buffer.Len() > 0 {
-					defer mu.Unlock()
 					doNextLocked()
 					break
 				}
 
 				activeCount--
-				mu.Unlock()
 
-				select {
-				case completeSignal <- struct{}{}:
-				default:
+				if activeCount == 0 && sourceCompleted {
+					sink(t)
 				}
 			}
 		})
@@ -76,8 +74,8 @@ func (op MergeOperator) Call(ctx context.Context, sink Observer, source Observab
 	source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
-			mu.Lock()
-			defer mu.Unlock()
+			mutex.Lock()
+			defer mutex.Unlock()
 
 			buffer.PushBack(t.Value)
 
@@ -90,26 +88,12 @@ func (op MergeOperator) Call(ctx context.Context, sink Observer, source Observab
 			sink(t)
 
 		default:
-			mu.Lock()
-			if activeCount > 0 {
-				go func() {
-					done := ctx.Done()
-					for activeCount > 0 {
-						mu.Unlock()
-						select {
-						case <-done:
-							return
-						case <-completeSignal:
-						}
-						mu.Lock()
-					}
-					mu.Unlock()
-					sink.Complete()
-				}()
-				return
+			mutex.Lock()
+			defer mutex.Unlock()
+			sourceCompleted = true
+			if activeCount == 0 {
+				sink(t)
 			}
-			mu.Unlock()
-			sink(t)
 		}
 	})
 
