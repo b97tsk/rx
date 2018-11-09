@@ -2,6 +2,7 @@ package rx
 
 import (
 	"context"
+	"math"
 	"sync/atomic"
 )
 
@@ -15,24 +16,22 @@ func (op exhaustMapOperator) Call(ctx context.Context, sink Observer, source Obs
 	sink = Mutex(Finally(sink, cancel))
 
 	var (
-		outerIndex     = -1
-		isActive       uint32
-		completeSignal = make(chan struct{}, 1)
+		outerIndex  = -1
+		activeCount = uint32(1)
 	)
 
 	source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
-			if !atomic.CompareAndSwapUint32(&isActive, 0, 1) {
+			if !atomic.CompareAndSwapUint32(&activeCount, 1, 2) {
 				break
 			}
 
-			outerValue := t.Value
 			outerIndex++
 			outerIndex := outerIndex
+			outerValue := t.Value
 
 			obsv := op.Project(outerValue, outerIndex)
-
 			obsv.Subscribe(ctx, func(t Notification) {
 				switch {
 				case t.HasValue:
@@ -42,11 +41,10 @@ func (op exhaustMapOperator) Call(ctx context.Context, sink Observer, source Obs
 					sink(t)
 
 				default:
-					atomic.StoreUint32(&isActive, 0)
-					select {
-					case completeSignal <- struct{}{}:
-					default:
+					if atomic.AddUint32(&activeCount, math.MaxUint32) > 0 {
+						break
 					}
+					sink(t)
 				}
 			})
 
@@ -54,19 +52,8 @@ func (op exhaustMapOperator) Call(ctx context.Context, sink Observer, source Obs
 			sink(t)
 
 		default:
-			if atomic.LoadUint32(&isActive) != 0 {
-				go func() {
-					done := ctx.Done()
-					for atomic.LoadUint32(&isActive) != 0 {
-						select {
-						case <-done:
-							return
-						case <-completeSignal:
-						}
-					}
-					sink.Complete()
-				}()
-				return
+			if atomic.AddUint32(&activeCount, math.MaxUint32) > 0 {
+				break
 			}
 			sink(t)
 		}
