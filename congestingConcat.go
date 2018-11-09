@@ -21,9 +21,9 @@ func (op congestingConcatOperator) Call(ctx context.Context, sink Observer, sour
 	observer = func(t Notification) {
 		switch {
 		case t.HasValue:
-			outerValue := t.Value
 			outerIndex++
 			outerIndex := outerIndex
+			outerValue := t.Value
 
 			obsv := op.Project(outerValue, outerIndex)
 

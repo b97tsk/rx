@@ -25,7 +25,7 @@ func (op delayOperator) Call(ctx context.Context, sink Observer, source Observab
 	sink = Finally(sink, cancel)
 
 	var (
-		mu         sync.Mutex
+		mutex      sync.Mutex
 		queue      list.List
 		doSchedule func(time.Duration)
 	)
@@ -38,8 +38,8 @@ func (op delayOperator) Call(ctx context.Context, sink Observer, source Observab
 		}
 
 		scheduleCtx, _ = scheduleOnce(ctx, timeout, func() {
-			mu.Lock()
-			defer mu.Unlock()
+			mutex.Lock()
+			defer mutex.Unlock()
 			for e := queue.Front(); e != nil; e, _ = e.Next(), queue.Remove(e) {
 				select {
 				case <-done:
@@ -59,8 +59,8 @@ func (op delayOperator) Call(ctx context.Context, sink Observer, source Observab
 	}
 
 	source.Subscribe(ctx, func(t Notification) {
-		mu.Lock()
-		defer mu.Unlock()
+		mutex.Lock()
+		defer mutex.Unlock()
 		switch {
 		case t.HasValue:
 			queue.PushBack(delayValue{

@@ -14,7 +14,7 @@ type ConnectableObservable struct {
 }
 
 type connectableObservable struct {
-	mu             sync.Mutex
+	mutex          sync.Mutex
 	source         Observable
 	subjectFactory func() *Subject
 	connection     context.Context
@@ -31,22 +31,22 @@ func (o *connectableObservable) getSubjectLocked() *Subject {
 }
 
 func (o *connectableObservable) getSubject() *Subject {
-	o.mu.Lock()
-	defer o.mu.Unlock()
+	o.mutex.Lock()
+	defer o.mutex.Unlock()
 	return o.getSubjectLocked()
 }
 
 func (o *connectableObservable) connect(addRef bool) (context.Context, context.CancelFunc) {
 	var try *cancellableLocker
 
-	o.mu.Lock()
+	o.mutex.Lock()
 
 	defer func() {
 		if try != nil {
 			try.Lock()
 			defer try.CancelAndUnlock()
 		}
-		o.mu.Unlock()
+		o.mutex.Unlock()
 	}()
 
 	connection := o.connection
@@ -65,7 +65,7 @@ func (o *connectableObservable) connect(addRef bool) (context.Context, context.C
 			tryLocked := try.Lock()
 
 			if !tryLocked {
-				o.mu.Lock()
+				o.mutex.Lock()
 			}
 
 			if connection == o.connection {
@@ -78,7 +78,7 @@ func (o *connectableObservable) connect(addRef bool) (context.Context, context.C
 			if tryLocked {
 				try.Unlock()
 			} else {
-				o.mu.Unlock()
+				o.mutex.Unlock()
 			}
 
 			t.Observe(subject.Observer)
@@ -99,8 +99,8 @@ func (o *connectableObservable) connect(addRef bool) (context.Context, context.C
 		o.refCount++
 
 		return connection, func() {
-			o.mu.Lock()
-			defer o.mu.Unlock()
+			o.mutex.Lock()
+			defer o.mutex.Unlock()
 
 			if connection != o.connection {
 				return
@@ -121,8 +121,8 @@ func (o *connectableObservable) connect(addRef bool) (context.Context, context.C
 	}
 
 	return connection, func() {
-		o.mu.Lock()
-		defer o.mu.Unlock()
+		o.mutex.Lock()
+		defer o.mutex.Unlock()
 
 		if connection != o.connection {
 			return

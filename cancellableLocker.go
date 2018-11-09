@@ -6,7 +6,7 @@ import (
 )
 
 type cancellableLocker struct {
-	mu       sync.Mutex
+	mutex    sync.Mutex
 	canceled uint32
 }
 
@@ -15,10 +15,10 @@ func (l *cancellableLocker) Lock() bool {
 		return false
 	}
 
-	l.mu.Lock()
+	l.mutex.Lock()
 
 	if atomic.LoadUint32(&l.canceled) != 0 {
-		l.mu.Unlock()
+		l.mutex.Unlock()
 		return false
 	}
 
@@ -26,10 +26,10 @@ func (l *cancellableLocker) Lock() bool {
 }
 
 func (l *cancellableLocker) Unlock() {
-	l.mu.Unlock()
+	l.mutex.Unlock()
 }
 
 func (l *cancellableLocker) CancelAndUnlock() {
 	atomic.StoreUint32(&l.canceled, 1)
-	l.mu.Unlock()
+	l.mutex.Unlock()
 }

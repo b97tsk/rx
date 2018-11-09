@@ -24,7 +24,7 @@ func (op CongestingMergeOperator) Call(ctx context.Context, sink Observer, sourc
 	sink = Mutex(Finally(sink, cancel))
 
 	var (
-		mu             sync.Mutex
+		mutex          sync.Mutex
 		outerIndex     = -1
 		activeCount    = 0
 		completeSignal = make(chan struct{}, 1)
@@ -38,29 +38,29 @@ func (op CongestingMergeOperator) Call(ctx context.Context, sink Observer, sourc
 	source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
-			mu.Lock()
+			mutex.Lock()
 			for activeCount == concurrent {
-				mu.Unlock()
+				mutex.Unlock()
 				select {
 				case <-done:
 					return
 				case <-completeSignal:
 				}
-				mu.Lock()
+				mutex.Lock()
 			}
 
 			var try cancellableLocker
 			defer func() {
 				try.Lock()
-				mu.Unlock()
+				mutex.Unlock()
 				try.CancelAndUnlock()
 			}()
 
 			activeCount++
 
-			outerValue := t.Value
 			outerIndex++
 			outerIndex := outerIndex
+			outerValue := t.Value
 
 			// calls op.Project synchronously
 			obsv := op.Project(outerValue, outerIndex)
@@ -78,9 +78,9 @@ func (op CongestingMergeOperator) Call(ctx context.Context, sink Observer, sourc
 						activeCount--
 						try.Unlock()
 					} else {
-						mu.Lock()
+						mutex.Lock()
 						activeCount--
-						mu.Unlock()
+						mutex.Unlock()
 					}
 					select {
 					case completeSignal <- struct{}{}:
@@ -93,24 +93,24 @@ func (op CongestingMergeOperator) Call(ctx context.Context, sink Observer, sourc
 			sink(t)
 
 		default:
-			mu.Lock()
+			mutex.Lock()
 			if activeCount > 0 {
 				go func() {
 					for activeCount > 0 {
-						mu.Unlock()
+						mutex.Unlock()
 						select {
 						case <-done:
 							return
 						case <-completeSignal:
 						}
-						mu.Lock()
+						mutex.Lock()
 					}
-					mu.Unlock()
+					mutex.Unlock()
 					sink.Complete()
 				}()
 				return
 			}
-			mu.Unlock()
+			mutex.Unlock()
 			sink(t)
 		}
 	})
