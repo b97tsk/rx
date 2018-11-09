@@ -25,13 +25,13 @@ func (op MergeScanOperator) Call(ctx context.Context, sink Observer, source Obse
 	sink = Mutex(Finally(sink, cancel))
 
 	var (
-		mu             sync.Mutex
-		activeCount    = 0
-		seed           = op.Seed
-		hasValue       bool
-		buffer         list.List
-		completeSignal = make(chan struct{}, 1)
-		doNextLocked   func()
+		mutex           sync.Mutex
+		activeCount     int
+		sourceCompleted bool
+		seed            = op.Seed
+		hasValue        bool
+		buffer          list.List
+		doNextLocked    func()
 	)
 
 	concurrent := op.Concurrent
@@ -48,10 +48,10 @@ func (op MergeScanOperator) Call(ctx context.Context, sink Observer, source Obse
 		go obsv.Subscribe(ctx, func(t Notification) {
 			switch {
 			case t.HasValue:
-				mu.Lock()
+				mutex.Lock()
 				seed = t.Value
 				hasValue = true
-				mu.Unlock()
+				mutex.Unlock()
 
 				sink(t)
 
@@ -59,20 +59,21 @@ func (op MergeScanOperator) Call(ctx context.Context, sink Observer, source Obse
 				sink(t)
 
 			default:
-				mu.Lock()
+				mutex.Lock()
+				defer mutex.Unlock()
 
 				if buffer.Len() > 0 {
-					defer mu.Unlock()
 					doNextLocked()
 					break
 				}
 
 				activeCount--
-				mu.Unlock()
 
-				select {
-				case completeSignal <- struct{}{}:
-				default:
+				if activeCount == 0 && sourceCompleted {
+					if !hasValue {
+						sink.Next(seed)
+					}
+					sink(t)
 				}
 			}
 		})
@@ -81,8 +82,8 @@ func (op MergeScanOperator) Call(ctx context.Context, sink Observer, source Obse
 	source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
-			mu.Lock()
-			defer mu.Unlock()
+			mutex.Lock()
+			defer mutex.Unlock()
 
 			buffer.PushBack(t.Value)
 
@@ -95,32 +96,15 @@ func (op MergeScanOperator) Call(ctx context.Context, sink Observer, source Obse
 			sink(t)
 
 		default:
-			mu.Lock()
-			if activeCount > 0 {
-				go func() {
-					done := ctx.Done()
-					for activeCount > 0 {
-						mu.Unlock()
-						select {
-						case <-done:
-							return
-						case <-completeSignal:
-						}
-						mu.Lock()
-					}
-					mu.Unlock()
-					if !hasValue {
-						sink.Next(seed)
-					}
-					sink.Complete()
-				}()
-				return
+			mutex.Lock()
+			defer mutex.Unlock()
+			sourceCompleted = true
+			if activeCount == 0 {
+				if !hasValue {
+					sink.Next(seed)
+				}
+				sink(t)
 			}
-			mu.Unlock()
-			if !hasValue {
-				sink.Next(seed)
-			}
-			sink(t)
 		}
 	})
 
