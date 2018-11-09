@@ -21,7 +21,17 @@ func (op raceOperator) Call(ctx context.Context, sink Observer, source Observabl
 	for index, obsv := range op.Observables {
 		index := index
 
+		if !try.Lock() {
+			break
+		}
+
+		ctx, cancel := context.WithCancel(ctx)
+		subscriptions = append(subscriptions, cancel)
+
+		try.Unlock()
+
 		var observer Observer
+
 		observer = func(t Notification) {
 			if try.Lock() {
 				for i, cancel := range subscriptions {
@@ -31,17 +41,13 @@ func (op raceOperator) Call(ctx context.Context, sink Observer, source Observabl
 				}
 				try.CancelAndUnlock()
 				observer = sink
-				t.Observe(observer)
+				sink(t)
+				return
 			}
+			cancel()
 		}
-		_, cancel := obsv.Subscribe(ctx, observer.Notify)
 
-		if try.Lock() {
-			subscriptions = append(subscriptions, cancel)
-			try.Unlock()
-		} else {
-			break
-		}
+		obsv.Subscribe(ctx, observer.Notify)
 	}
 
 	return ctx, cancel
