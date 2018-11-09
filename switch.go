@@ -16,21 +16,21 @@ func (op switchMapOperator) Call(ctx context.Context, sink Observer, source Obse
 	sink = Mutex(Finally(sink, cancel))
 
 	var (
-		mu             sync.Mutex
-		outerIndex     = -1
-		activeIndex    = -1
-		completeSignal = make(chan struct{}, 1)
+		mutex           sync.Mutex
+		outerIndex      = -1
+		activeIndex     = -1
+		sourceCompleted bool
 	)
 
 	source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
-			mu.Lock()
-			defer mu.Unlock()
+			mutex.Lock()
+			defer mutex.Unlock()
 
-			outerValue := t.Value
 			outerIndex++
 			outerIndex := outerIndex
+			outerValue := t.Value
 
 			activeIndex = outerIndex
 			childCancel()
@@ -48,19 +48,17 @@ func (op switchMapOperator) Call(ctx context.Context, sink Observer, source Obse
 					sink(t)
 
 				default:
-					mu.Lock()
+					mutex.Lock()
+					defer mutex.Unlock()
 
 					if activeIndex != outerIndex {
-						mu.Unlock()
 						break
 					}
 
 					activeIndex = -1
-					mu.Unlock()
 
-					select {
-					case completeSignal <- struct{}{}:
-					default:
+					if sourceCompleted {
+						sink(t)
 					}
 				}
 			})
@@ -69,26 +67,12 @@ func (op switchMapOperator) Call(ctx context.Context, sink Observer, source Obse
 			sink(t)
 
 		default:
-			mu.Lock()
-			if activeIndex != -1 {
-				go func() {
-					done := ctx.Done()
-					for activeIndex != -1 {
-						mu.Unlock()
-						select {
-						case <-done:
-							return
-						case <-completeSignal:
-						}
-						mu.Lock()
-					}
-					mu.Unlock()
-					sink.Complete()
-				}()
-				return
+			mutex.Lock()
+			defer mutex.Unlock()
+			sourceCompleted = true
+			if activeIndex == -1 {
+				sink(t)
 			}
-			mu.Unlock()
-			sink(t)
 		}
 	})
 
