@@ -1,5 +1,92 @@
 package rx
 
+import (
+	"container/list"
+	"context"
+	"sync"
+)
+
+type concatOperator struct {
+	Project func(interface{}, int) Observable
+}
+
+func (op concatOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+	ctx, cancel := context.WithCancel(ctx)
+
+	sink = Mutex(Finally(sink, cancel))
+
+	var (
+		mutex        sync.Mutex
+		outerIndex   = -1
+		activeCount  = 1
+		buffer       list.List
+		doNextLocked func()
+	)
+
+	doNextLocked = func() {
+		var avoidRecursive avoidRecursiveCalls
+		avoidRecursive.Do(func() {
+			if buffer.Len() == 0 {
+				activeCount--
+				if activeCount == 0 {
+					sink.Complete()
+				}
+				return
+			}
+
+			outerIndex++
+			outerIndex := outerIndex
+			outerValue := buffer.Remove(buffer.Front())
+
+			obsv := op.Project(outerValue, outerIndex)
+			obsv.Subscribe(ctx, func(t Notification) {
+				switch {
+				case t.HasValue:
+					sink(t)
+
+				case t.HasError:
+					sink(t)
+
+				default:
+					avoidRecursive.Do(func() {
+						mutex.Lock()
+						defer mutex.Unlock()
+						doNextLocked()
+					})
+				}
+			})
+		})
+	}
+
+	source.Subscribe(ctx, func(t Notification) {
+		switch {
+		case t.HasValue:
+			mutex.Lock()
+			defer mutex.Unlock()
+
+			buffer.PushBack(t.Value)
+
+			if activeCount == 1 {
+				activeCount++
+				doNextLocked()
+			}
+
+		case t.HasError:
+			sink(t)
+
+		default:
+			mutex.Lock()
+			defer mutex.Unlock()
+			activeCount--
+			if activeCount == 0 {
+				sink(t)
+			}
+		}
+	})
+
+	return ctx, cancel
+}
+
 // Concat creates an output Observable which sequentially emits all values
 // from given Observable and then moves on to the next.
 //
@@ -26,7 +113,7 @@ func (Operators) ConcatAll() OperatorFunc {
 // Observables using ConcatAll.
 func (Operators) ConcatMap(project func(interface{}, int) Observable) OperatorFunc {
 	return func(source Observable) Observable {
-		op := MergeOperator{project, 1}
+		op := concatOperator{project}
 		return source.Lift(op.Call)
 	}
 }
