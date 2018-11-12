@@ -2,6 +2,7 @@ package rx
 
 import (
 	"context"
+	"sync/atomic"
 )
 
 // A BehaviorSubject stores the latest value emitted to its consumers, and
@@ -9,14 +10,27 @@ import (
 // "current value" from the BehaviorSubject.
 type BehaviorSubject struct {
 	Subject
-	val interface{}
+	val atomic.Value
+}
+
+type behaviorSubjectValue struct {
+	Value interface{}
+}
+
+// Value returns the latest value stored in this BehaviorSubject.
+func (s *BehaviorSubject) Value() interface{} {
+	val := s.val.Load()
+	if val == nil {
+		return nil
+	}
+	return val.(behaviorSubjectValue).Value
 }
 
 func (s *BehaviorSubject) notify(t Notification) {
 	if s.try.Lock() {
 		switch {
 		case t.HasValue:
-			s.val = t.Value
+			s.val.Store(behaviorSubjectValue{t.Value})
 
 			defer s.try.Unlock()
 
@@ -48,16 +62,6 @@ func (s *BehaviorSubject) notify(t Notification) {
 	}
 }
 
-// Value returns the latest value stored in this BehaviorSubject.
-func (s *BehaviorSubject) Value() interface{} {
-	if s.try.Lock() {
-		val := s.val
-		s.try.Unlock()
-		return val
-	}
-	return s.val
-}
-
 func (s *BehaviorSubject) call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	if s.try.Lock() {
 		defer s.try.Unlock()
@@ -82,14 +86,14 @@ func (s *BehaviorSubject) call(ctx context.Context, sink Observer, source Observ
 			}
 		}()
 
-		sink.Next(s.val)
+		sink.Next(s.Value())
 		return ctx, cancel
 	}
 
 	if s.err != nil {
 		sink.Error(s.err)
 	} else {
-		sink.Next(s.val)
+		sink.Next(s.Value())
 		sink.Complete()
 	}
 
@@ -98,8 +102,9 @@ func (s *BehaviorSubject) call(ctx context.Context, sink Observer, source Observ
 
 // NewBehaviorSubject returns a new BehaviorSubject.
 func NewBehaviorSubject(val interface{}) *BehaviorSubject {
-	s := &BehaviorSubject{val: val}
+	s := new(BehaviorSubject)
 	s.Observer = s.notify
 	s.Observable = s.Observable.Lift(s.call)
+	s.val.Store(behaviorSubjectValue{val})
 	return s
 }
