@@ -2,6 +2,8 @@ package rx
 
 import (
 	"context"
+	"math"
+	"sync/atomic"
 )
 
 type retryWhenOperator struct {
@@ -10,44 +12,74 @@ type retryWhenOperator struct {
 
 func (op retryWhenOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
-	sourceCtx, sourceCancel := canceledCtx, nothingToDo
 
 	sink = Mutex(Finally(sink, cancel))
 
 	var (
+		sourceLocker   *cancellableLocker
+		sourceCtx      = canceledCtx
+		sourceCancel   = nothingToDo
+		activeCount    = uint32(2)
+		lastError      error
 		subject        *Subject
-		observer       Observer
+		createSubject  func() *Subject
 		avoidRecursive avoidRecursiveCalls
 	)
 
 	subscribe := func() {
+		var try cancellableLocker
+		sourceLocker = &try
 		sourceCtx, sourceCancel = context.WithCancel(ctx)
-		source.Subscribe(sourceCtx, observer)
+		source.Subscribe(sourceCtx, func(t Notification) {
+			if try.Lock() {
+				switch {
+				case t.HasValue:
+					defer try.Unlock()
+					sink(t)
+				case t.HasError:
+					lastError = t.Value.(error)
+					activeCount := atomic.AddUint32(&activeCount, math.MaxUint32)
+					try.CancelAndUnlock()
+					if activeCount == 0 {
+						sink(t)
+						break
+					}
+					if subject == nil {
+						subject = createSubject()
+					}
+					subject.Next(t.Value)
+				default:
+					defer try.Unlock()
+					sink(t)
+				}
+			}
+		})
 	}
 
-	observer = func(t Notification) {
-		switch {
-		case t.HasValue:
-			sink(t)
-		case t.HasError:
-			if subject == nil {
-				subject = NewSubject()
-				obsv := op.Notifier(subject.Observable)
-				obsv.Subscribe(ctx, func(t Notification) {
-					switch {
-					case t.HasValue:
-						sourceCancel()
-						avoidRecursive.Do(subscribe)
+	createSubject = func() *Subject {
+		subject := NewSubject()
+		obsv := op.Notifier(subject.Observable)
+		obsv.Subscribe(ctx, func(t Notification) {
+			switch {
+			case t.HasValue:
+				sourceCancel()
+				if sourceLocker.Lock() {
+					sourceLocker.CancelAndUnlock()
+				} else {
+					atomic.AddUint32(&activeCount, 1)
+				}
+				avoidRecursive.Do(subscribe)
 
-					default:
-						sink(t)
-					}
-				})
+			case t.HasError:
+				sink(t)
+
+			default:
+				if atomic.AddUint32(&activeCount, math.MaxUint32) == 0 {
+					sink.Error(lastError)
+				}
 			}
-			subject.Next(t.Value.(error))
-		default:
-			sink(t)
-		}
+		})
+		return subject
 	}
 
 	avoidRecursive.Do(subscribe)
