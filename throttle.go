@@ -10,10 +10,14 @@ type throttleOperator struct {
 
 func (op throttleOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
-	scheduleCtx, scheduleCancel := canceledCtx, nothingToDo
-	scheduleDone := scheduleCtx.Done()
 
 	sink = Finally(sink, cancel)
+
+	var (
+		scheduleCtx    = canceledCtx
+		scheduleCancel = nothingToDo
+		scheduleDone   = scheduleCtx.Done()
+	)
 
 	source.Subscribe(ctx, func(t Notification) {
 		switch {
