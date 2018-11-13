@@ -83,37 +83,6 @@ func (op combineLatestOperator) Call(ctx context.Context, sink Observer, source 
 	return ctx, cancel
 }
 
-type combineAllOperator struct{}
-
-func (op combineAllOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
-	ctx, cancel := context.WithCancel(ctx)
-
-	sink = Finally(sink, cancel)
-
-	toObservablesOperator(op).Call(ctx, func(t Notification) {
-		switch {
-		case t.HasValue:
-			observables := t.Value.([]Observable)
-
-			if len(observables) == 0 {
-				sink.Complete()
-				break
-			}
-
-			combineLatest := combineLatestOperator{observables}
-			combineLatest.Call(ctx, sink, Observable{})
-
-		case t.HasError:
-			sink(t)
-
-		default:
-			// do nothing
-		}
-	}, source)
-
-	return ctx, cancel
-}
-
 // CombineLatest combines multiple Observables to create an Observable that
 // emits the latest values of each of its input Observables as a slice.
 //
@@ -135,7 +104,7 @@ func CombineLatest(observables ...Observable) Observable {
 // when the Observable-of-Observables completes.
 func (Operators) CombineAll() OperatorFunc {
 	return func(source Observable) Observable {
-		op := combineAllOperator{}
+		op := toObservablesOperator{CombineLatest}
 		return source.Lift(op.Call)
 	}
 }

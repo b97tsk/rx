@@ -4,7 +4,9 @@ import (
 	"context"
 )
 
-type toObservablesOperator struct{}
+type toObservablesOperator struct {
+	Flat func(observables ...Observable) Observable
+}
 
 func (op toObservablesOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
@@ -28,8 +30,13 @@ func (op toObservablesOperator) Call(ctx context.Context, sink Observer, source 
 		case t.HasError:
 			sink(t)
 		default:
-			sink.Next(observables)
-			sink.Complete()
+			if op.Flat != nil {
+				obsv := op.Flat(observables...)
+				obsv.Subscribe(ctx, sink)
+			} else {
+				sink.Next(observables)
+				sink.Complete()
+			}
 		}
 	}
 
@@ -41,9 +48,9 @@ func (op toObservablesOperator) Call(ctx context.Context, sink Observer, source 
 // ToObservables creates an Observable that collects all the Observables the
 // source emits, then emits them as a slice of Observable when the source
 // completes.
-func (Operators) ToObservables() OperatorFunc {
+func (Operators) ToObservables(flat func(observables ...Observable) Observable) OperatorFunc {
 	return func(source Observable) Observable {
-		op := toObservablesOperator{}
+		op := toObservablesOperator{flat}
 		return source.Lift(op.Call)
 	}
 }

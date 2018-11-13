@@ -57,37 +57,6 @@ func (op congestingZipOperator) Call(ctx context.Context, sink Observer, source 
 	return ctx, cancel
 }
 
-type congestingZipAllOperator struct{}
-
-func (op congestingZipAllOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
-	ctx, cancel := context.WithCancel(ctx)
-
-	sink = Finally(sink, cancel)
-
-	toObservablesOperator(op).Call(ctx, func(t Notification) {
-		switch {
-		case t.HasValue:
-			observables := t.Value.([]Observable)
-
-			if len(observables) == 0 {
-				sink.Complete()
-				break
-			}
-
-			zip := congestingZipOperator{observables}
-			zip.Call(ctx, sink, Observable{})
-
-		case t.HasError:
-			sink(t)
-
-		default:
-			// do nothing
-		}
-	}, source)
-
-	return ctx, cancel
-}
-
 // CongestingZip combines multiple Observables to create an Observable that
 // emits the values of each of its input Observables as a slice.
 //
@@ -110,7 +79,7 @@ func CongestingZip(observables ...Observable) Observable {
 // It's like ZipAll, but it congests subscribed Observables.
 func (Operators) CongestingZipAll() OperatorFunc {
 	return func(source Observable) Observable {
-		op := congestingZipAllOperator{}
+		op := toObservablesOperator{CongestingZip}
 		return source.Lift(op.Call)
 	}
 }
