@@ -18,3 +18,13 @@ func MakeFunc(op Operator) OperatorFunc {
 		return source.Lift(op)
 	}
 }
+
+// Pipe stitches Operators together into a chain.
+func (f OperatorFunc) Pipe(operations ...OperatorFunc) OperatorFunc {
+	if len(operations) == 0 {
+		return f
+	}
+	return func(source Observable) Observable {
+		return f(source).Pipe(operations...)
+	}
+}
