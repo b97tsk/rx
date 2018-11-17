@@ -4,50 +4,99 @@ import (
 	"context"
 )
 
-type throttleOperator struct {
+// ThrottleOperator is an operator type.
+type ThrottleOperator struct {
 	DurationSelector func(interface{}) Observable
+	Leading          bool
+	Trailing         bool
 }
 
-func (op throttleOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+// MakeFunc creates an OperatorFunc from this operator.
+func (op ThrottleOperator) MakeFunc() OperatorFunc {
+	return MakeFunc(op.Call)
+}
+
+// Call invokes an execution of this operator.
+func (op ThrottleOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = Finally(sink, cancel)
 
 	var (
-		scheduleCtx    = canceledCtx
-		scheduleCancel = nothingToDo
-		scheduleDone   = scheduleCtx.Done()
+		throttleCtx    = canceledCtx
+		throttleCancel = nothingToDo
+		throttleDone   = throttleCtx.Done()
+
+		trailingValue    interface{}
+		hasTrailingValue bool
+
+		try cancellableLocker
 	)
 
-	source.Subscribe(ctx, func(t Notification) {
-		switch {
-		case t.HasValue:
-			select {
-			case <-scheduleDone:
-			default:
-				return
-			}
+	leading, trailing := op.Leading, op.Trailing
+	if !leading && !trailing {
+		leading = true
+	}
 
-			sink(t)
+	var doThrottle func(interface{})
 
-			scheduleCtx, scheduleCancel = context.WithCancel(ctx)
-			scheduleDone = scheduleCtx.Done()
+	doThrottle = func(val interface{}) {
+		throttleCtx, throttleCancel = context.WithCancel(ctx)
+		throttleDone = throttleCtx.Done()
 
-			var observer Observer
-			observer = func(t Notification) {
-				observer = NopObserver
-				scheduleCancel()
-				if t.HasError {
-					sink(t)
-					return
+		var observer Observer
+		observer = func(t Notification) {
+			observer = NopObserver
+			defer throttleCancel()
+			if trailing || t.HasError {
+				if try.Lock() {
+					switch {
+					case t.HasError:
+						try.CancelAndUnlock()
+						sink(t)
+					case hasTrailingValue:
+						defer try.Unlock()
+						sink.Next(trailingValue)
+						hasTrailingValue = false
+						doThrottle(trailingValue)
+					}
 				}
 			}
+		}
 
-			obsv := op.DurationSelector(t.Value)
-			obsv.Subscribe(scheduleCtx, observer.Notify)
+		obsv := op.DurationSelector(val)
+		go obsv.Subscribe(throttleCtx, observer.Notify)
+	}
 
-		default:
-			sink(t)
+	source.Subscribe(ctx, func(t Notification) {
+		if try.Lock() {
+			switch {
+			case t.HasValue:
+				defer try.Unlock()
+
+				trailingValue = t.Value
+				hasTrailingValue = true
+
+				select {
+				case <-throttleDone:
+				default:
+					return
+				}
+
+				doThrottle(t.Value)
+
+				if leading {
+					sink(t)
+					hasTrailingValue = false
+				}
+
+			default:
+				try.CancelAndUnlock()
+				if hasTrailingValue {
+					sink.Next(trailingValue)
+				}
+				sink(t)
+			}
 		}
 	})
 
@@ -62,7 +111,11 @@ func (op throttleOperator) Call(ctx context.Context, sink Observer, source Obser
 // Observable.
 func (Operators) Throttle(durationSelector func(interface{}) Observable) OperatorFunc {
 	return func(source Observable) Observable {
-		op := throttleOperator{durationSelector}
+		op := ThrottleOperator{
+			DurationSelector: durationSelector,
+			Leading:          true,
+			Trailing:         false,
+		}
 		return source.Lift(op.Call)
 	}
 }
