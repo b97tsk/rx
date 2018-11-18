@@ -34,6 +34,12 @@ func (op sampleOperator) Call(ctx context.Context, sink Observer, source Observa
 		}
 	})
 
+	select {
+	case <-ctx.Done():
+		return ctx, cancel
+	default:
+	}
+
 	source.Subscribe(ctx, func(t Notification) {
 		if try.Lock() {
 			switch {
