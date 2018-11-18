@@ -35,7 +35,7 @@ func (op auditOperator) Call(ctx context.Context, sink Observer, source Observab
 		var observer Observer
 		observer = func(t Notification) {
 			observer = NopObserver
-			scheduleCancel()
+			defer scheduleCancel()
 			if try.Lock() {
 				if t.HasError {
 					try.CancelAndUnlock()
