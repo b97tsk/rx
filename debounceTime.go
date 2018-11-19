@@ -17,8 +17,10 @@ func (op debounceTimeOperator) Call(ctx context.Context, sink Observer, source O
 	var (
 		scheduleCancel = nothingToDo
 
-		latestValue interface{}
-		try         cancellableLocker
+		latestValue    interface{}
+		hasLatestValue bool
+
+		try cancellableLocker
 	)
 
 	doSchedule := func() {
@@ -27,7 +29,10 @@ func (op debounceTimeOperator) Call(ctx context.Context, sink Observer, source O
 		_, scheduleCancel = scheduleOnce(ctx, op.Duration, func() {
 			if try.Lock() {
 				defer try.Unlock()
-				sink.Next(latestValue)
+				if hasLatestValue {
+					sink.Next(latestValue)
+					hasLatestValue = false
+				}
 			}
 		})
 	}
@@ -37,10 +42,19 @@ func (op debounceTimeOperator) Call(ctx context.Context, sink Observer, source O
 			switch {
 			case t.HasValue:
 				latestValue = t.Value
+				hasLatestValue = true
 				try.Unlock()
 				doSchedule()
+
+			case t.HasError:
+				try.CancelAndUnlock()
+				sink(t)
+
 			default:
 				try.CancelAndUnlock()
+				if hasLatestValue {
+					sink.Next(latestValue)
+				}
 				sink(t)
 			}
 		}
