@@ -26,8 +26,8 @@ func defaultKeySelector(val interface{}) interface{} {
 // ProjectToObservable type-casts each value to an Observable and returns it,
 // if failed, returns Throw(ErrNotObservable).
 func ProjectToObservable(val interface{}, index int) Observable {
-	if obsv, ok := val.(Observable); ok {
-		return obsv
+	if obs, ok := val.(Observable); ok {
+		return obs
 	}
 	return Throw(ErrNotObservable)
 }

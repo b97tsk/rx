@@ -43,9 +43,9 @@ func (op MergeScanOperator) Call(ctx context.Context, sink Observer, source Obse
 		outerValue := buffer.Remove(buffer.Front())
 
 		// calls op.Accumulator synchronously
-		obsv := op.Accumulator(seed, outerValue)
+		obs := op.Accumulator(seed, outerValue)
 
-		go obsv.Subscribe(ctx, func(t Notification) {
+		go obs.Subscribe(ctx, func(t Notification) {
 			switch {
 			case t.HasValue:
 				mutex.Lock()

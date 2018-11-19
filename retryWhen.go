@@ -58,8 +58,8 @@ func (op retryWhenOperator) Call(ctx context.Context, sink Observer, source Obse
 
 	createSubject = func() *Subject {
 		subject := NewSubject()
-		obsv := op.Notifier(subject.Observable)
-		obsv.Subscribe(ctx, func(t Notification) {
+		obs := op.Notifier(subject.Observable)
+		obs.Subscribe(ctx, func(t Notification) {
 			switch {
 			case t.HasValue:
 				sourceCancel()

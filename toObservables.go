@@ -21,8 +21,8 @@ func (op toObservablesOperator) Call(ctx context.Context, sink Observer, source 
 	observer = func(t Notification) {
 		switch {
 		case t.HasValue:
-			if obsv, ok := t.Value.(Observable); ok {
-				observables = append(observables, obsv)
+			if obs, ok := t.Value.(Observable); ok {
+				observables = append(observables, obs)
 			} else {
 				observer = NopObserver
 				sink.Error(ErrNotObservable)
@@ -31,8 +31,8 @@ func (op toObservablesOperator) Call(ctx context.Context, sink Observer, source 
 			sink(t)
 		default:
 			if op.Flat != nil {
-				obsv := op.Flat(observables...)
-				obsv.Subscribe(ctx, sink)
+				obs := op.Flat(observables...)
+				obs.Subscribe(ctx, sink)
 			} else {
 				sink.Next(observables)
 				sink.Complete()

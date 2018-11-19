@@ -47,8 +47,8 @@ func (op auditOperator) Call(ctx context.Context, sink Observer, source Observab
 			}
 		}
 
-		obsv := op.DurationSelector(val)
-		obsv.Subscribe(scheduleCtx, observer.Notify)
+		obs := op.DurationSelector(val)
+		obs.Subscribe(scheduleCtx, observer.Notify)
 	}
 
 	source.Subscribe(ctx, func(t Notification) {

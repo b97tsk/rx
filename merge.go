@@ -43,9 +43,9 @@ func (op MergeOperator) Call(ctx context.Context, sink Observer, source Observab
 		outerValue := buffer.Remove(buffer.Front())
 
 		// calls op.Project synchronously
-		obsv := op.Project(outerValue, outerIndex)
+		obs := op.Project(outerValue, outerIndex)
 
-		go obsv.Subscribe(ctx, func(t Notification) {
+		go obs.Subscribe(ctx, func(t Notification) {
 			switch {
 			case t.HasValue:
 				sink(t)

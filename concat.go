@@ -38,8 +38,8 @@ func (op concatOperator) Call(ctx context.Context, sink Observer, source Observa
 			outerIndex := outerIndex
 			outerValue := buffer.Remove(buffer.Front())
 
-			obsv := op.Project(outerValue, outerIndex)
-			obsv.Subscribe(ctx, func(t Notification) {
+			obs := op.Project(outerValue, outerIndex)
+			obs.Subscribe(ctx, func(t Notification) {
 				switch {
 				case t.HasValue:
 					sink(t)

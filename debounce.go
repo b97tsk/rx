@@ -46,8 +46,8 @@ func (op debounceOperator) Call(ctx context.Context, sink Observer, source Obser
 			}
 		}
 
-		obsv := op.DurationSelector(val)
-		obsv.Subscribe(scheduleCtx, observer.Notify)
+		obs := op.DurationSelector(val)
+		obs.Subscribe(scheduleCtx, observer.Notify)
 	}
 
 	source.Subscribe(ctx, func(t Notification) {

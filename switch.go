@@ -37,11 +37,11 @@ func (op switchMapOperator) Call(ctx context.Context, sink Observer, source Obse
 			activeIndex = outerIndex
 			childCancel()
 
-			obsv := op.Project(outerValue, outerIndex)
+			obs := op.Project(outerValue, outerIndex)
 
 			childCtx, childCancel = context.WithCancel(ctx)
 
-			go obsv.Subscribe(childCtx, func(t Notification) {
+			go obs.Subscribe(childCtx, func(t Notification) {
 				switch {
 				case t.HasValue:
 					sink(t)

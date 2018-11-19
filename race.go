@@ -18,7 +18,7 @@ func (op raceOperator) Call(ctx context.Context, sink Observer, source Observabl
 
 	var try cancellableLocker
 
-	for index, obsv := range op.Observables {
+	for index, obs := range op.Observables {
 		index := index
 
 		if !try.Lock() {
@@ -47,7 +47,7 @@ func (op raceOperator) Call(ctx context.Context, sink Observer, source Observabl
 			cancel()
 		}
 
-		obsv.Subscribe(ctx, observer.Notify)
+		obs.Subscribe(ctx, observer.Notify)
 	}
 
 	return ctx, cancel

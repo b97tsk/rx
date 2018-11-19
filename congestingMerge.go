@@ -63,9 +63,9 @@ func (op CongestingMergeOperator) Call(ctx context.Context, sink Observer, sourc
 			outerValue := t.Value
 
 			// calls op.Project synchronously
-			obsv := op.Project(outerValue, outerIndex)
+			obs := op.Project(outerValue, outerIndex)
 
-			obsv.Subscribe(ctx, func(t Notification) {
+			obs.Subscribe(ctx, func(t Notification) {
 				switch {
 				case t.HasValue:
 					sink(t)

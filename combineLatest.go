@@ -70,9 +70,9 @@ func (op combineLatestOperator) Call(ctx context.Context, sink Observer, source 
 		}
 	}()
 
-	for index, obsv := range op.Observables {
+	for index, obs := range op.Observables {
 		index := index
-		go obsv.Subscribe(ctx, func(t Notification) {
+		go obs.Subscribe(ctx, func(t Notification) {
 			select {
 			case <-done:
 			case q <- combineLatestValue{index, t}:

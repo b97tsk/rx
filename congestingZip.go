@@ -44,9 +44,9 @@ func (op congestingZipOperator) Call(ctx context.Context, sink Observer, source 
 		}
 	}()
 
-	for index, obsv := range op.Observables {
+	for index, obs := range op.Observables {
 		c := channels[index]
-		go obsv.Subscribe(ctx, func(t Notification) {
+		go obs.Subscribe(ctx, func(t Notification) {
 			select {
 			case <-done:
 			case c <- t:

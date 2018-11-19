@@ -64,8 +64,8 @@ func (op ThrottleOperator) Call(ctx context.Context, sink Observer, source Obser
 			}
 		}
 
-		obsv := op.DurationSelector(val)
-		go obsv.Subscribe(throttleCtx, observer.Notify)
+		obs := op.DurationSelector(val)
+		go obs.Subscribe(throttleCtx, observer.Notify)
 	}
 
 	source.Subscribe(ctx, func(t Notification) {

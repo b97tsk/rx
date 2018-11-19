@@ -39,8 +39,8 @@ func (op delayWhenOperator) Call(ctx context.Context, sink Observer, source Obse
 			}
 		}
 
-		obsv := op.DurationSelector(val, index)
-		obsv.Subscribe(scheduleCtx, observer.Notify)
+		obs := op.DurationSelector(val, index)
+		obs.Subscribe(scheduleCtx, observer.Notify)
 	}
 
 	source.Subscribe(ctx, func(t Notification) {

@@ -45,9 +45,9 @@ func (op ExpandOperator) Call(ctx context.Context, sink Observer, source Observa
 		sink.Next(outerValue)
 
 		// calls op.Project synchronously
-		obsv := op.Project(outerValue, outerIndex)
+		obs := op.Project(outerValue, outerIndex)
 
-		go obsv.Subscribe(ctx, func(t Notification) {
+		go obs.Subscribe(ctx, func(t Notification) {
 			switch {
 			case t.HasValue:
 				mutex.Lock()
