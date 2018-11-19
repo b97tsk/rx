@@ -30,8 +30,14 @@ func (op delayWhenOperator) Call(ctx context.Context, sink Observer, source Obse
 			switch {
 			case t.HasValue:
 				sink.Next(val)
+
+				if atomic.AddUint32(&activeCount, math.MaxUint32) == 0 {
+					sink.Complete()
+				}
+
 			case t.HasError:
 				sink(t)
+
 			default:
 				if atomic.AddUint32(&activeCount, math.MaxUint32) == 0 {
 					sink(t)
