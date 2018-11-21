@@ -1,0 +1,9 @@
+language: go
+sudo: false
+go:
+  - tip
+install:
+  - go get github.com/mattn/goveralls
+script:
+  - go test -covermode=count -coverprofile=profile.cov -coverpkg=./... ./...
+  - $GOPATH/bin/goveralls -coverprofile=profile.cov -service=travis-ci
