@@ -145,6 +145,20 @@ func (o ConnectableObservable) Connect() (context.Context, context.CancelFunc) {
 	return o.connect(false)
 }
 
+// Pipe stitches Operators together into a chain, returns the Observable result
+// of all of the Operators having been called in the order they were passed in.
+func (o ConnectableObservable) Pipe(operations ...OperatorFunc) Observable {
+	source := Observable{}.Lift(
+		func(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+			return o.getSubject().Subscribe(ctx, sink)
+		},
+	)
+	for _, op := range operations {
+		source = op(source)
+	}
+	return source
+}
+
 // Subscribe subscribes a local Subject, which is used to multicast to many Observers.
 func (o ConnectableObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	return o.getSubject().Subscribe(ctx, sink)
