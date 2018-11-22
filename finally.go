@@ -4,14 +4,6 @@ import (
 	"context"
 )
 
-type finallyOperator struct {
-	Func func()
-}
-
-func (op finallyOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
-	return source.Subscribe(ctx, Finally(sink, op.Func))
-}
-
 // Finally creates an Observer that passes all emissions to the specified
 // Observer, in the case that an Error or Complete emission is passed, makes
 // a call to the specified function.
@@ -31,7 +23,10 @@ func Finally(sink Observer, finally func()) Observer {
 // specified function.
 func (Operators) Finally(finally func()) OperatorFunc {
 	return func(source Observable) Observable {
-		op := finallyOperator{finally}
-		return source.Lift(op.Call)
+		return source.Lift(
+			func(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+				return source.Subscribe(ctx, Finally(sink, finally))
+			},
+		)
 	}
 }
