@@ -34,9 +34,6 @@ func (op fromChannelOperator) Call(ctx context.Context, sink Observer, source Ob
 // FromChannel creates an Observable that emits values from a channel, and
 // completes when the channel closes.
 func FromChannel(c <-chan interface{}) Observable {
-	if c == nil {
-		return Empty()
-	}
 	op := fromChannelOperator{c}
 	return Observable{}.Lift(op.Call)
 }
