@@ -20,11 +20,8 @@ func MakeFunc(op Operator) OperatorFunc {
 }
 
 // Pipe stitches Operators together into a chain.
-func (f OperatorFunc) Pipe(operations ...OperatorFunc) OperatorFunc {
-	if len(operations) == 0 {
-		return f
-	}
+func Pipe(operations ...OperatorFunc) OperatorFunc {
 	return func(source Observable) Observable {
-		return f(source).Pipe(operations...)
+		return source.Pipe(operations...)
 	}
 }

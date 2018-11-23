@@ -8,7 +8,8 @@ import (
 )
 
 func TestOperators_Pairwise(t *testing.T) {
-	op := operators.Pairwise().Pipe(
+	op := Pipe(
+		operators.Pairwise(),
 		operators.Map(
 			func(val interface{}, idx int) interface{} {
 				return fmt.Sprint(val)
