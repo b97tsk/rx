@@ -15,7 +15,7 @@ func TestOperators_ToObservables(t *testing.T) {
 	}
 	for i, obs := range observables {
 		observables[i] = obs.Pipe(
-			operators.ToObservables(nil),
+			operators.ToObservables(),
 			operators.Single(),
 			operators.ConcatMap(
 				func(val interface{}, idx int) Observable {
