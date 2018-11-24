@@ -44,6 +44,7 @@ func (op raceOperator) Call(ctx context.Context, sink Observer, source Observabl
 				sink(t)
 				return
 			}
+			observer = NopObserver
 			cancel()
 		}
 
