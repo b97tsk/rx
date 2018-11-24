@@ -19,11 +19,7 @@ type behaviorSubjectValue struct {
 
 // Value returns the latest value stored in this BehaviorSubject.
 func (s *BehaviorSubject) Value() interface{} {
-	val := s.val.Load()
-	if val == nil {
-		return nil
-	}
-	return val.(behaviorSubjectValue).Value
+	return s.val.Load().(behaviorSubjectValue).Value
 }
 
 func (s *BehaviorSubject) notify(t Notification) {
