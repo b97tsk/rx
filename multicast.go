@@ -20,9 +20,10 @@ func (Operators) Multicast(subjectFactory func() *Subject, selector func(context
 				obs.Subscribe(ctx, Finally(sink, cancel))
 				select {
 				case <-ctx.Done():
+					return canceledCtx, nothingToDo
 				default:
-					source.Subscribe(ctx, subject.Observer)
 				}
+				source.Subscribe(ctx, subject.Observer)
 				return ctx, cancel
 			},
 		)
