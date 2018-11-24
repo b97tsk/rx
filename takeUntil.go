@@ -24,7 +24,7 @@ func (op takeUntilOperator) Call(ctx context.Context, sink Observer, source Obse
 
 	select {
 	case <-ctx.Done():
-		return ctx, cancel
+		return canceledCtx, nothingToDo
 	default:
 	}
 

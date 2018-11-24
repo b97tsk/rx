@@ -35,7 +35,7 @@ func (op bufferOperator) Call(ctx context.Context, sink Observer, source Observa
 
 	select {
 	case <-ctx.Done():
-		return ctx, cancel
+		return canceledCtx, nothingToDo
 	default:
 	}
 

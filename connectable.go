@@ -37,13 +37,11 @@ func (o *connectableObservable) getSubject() *Subject {
 }
 
 func (o *connectableObservable) connect(addRef bool) (context.Context, context.CancelFunc) {
-	var try *cancellableLocker
-
 	o.mutex.Lock()
 
+	var try *cancellableLocker
 	defer func() {
-		if try != nil {
-			try.Lock()
+		if try != nil && try.Lock() {
 			defer try.CancelAndUnlock()
 		}
 		o.mutex.Unlock()
@@ -86,7 +84,7 @@ func (o *connectableObservable) connect(addRef bool) (context.Context, context.C
 
 		select {
 		case <-ctx.Done():
-			return ctx, cancel
+			return canceledCtx, nothingToDo
 		default:
 		}
 
