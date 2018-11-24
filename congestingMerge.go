@@ -126,7 +126,7 @@ func (op CongestingMergeOperator) Call(ctx context.Context, sink Observer, sourc
 //
 // It's like Merge, but it may congest the source due to concurrent limit.
 func CongestingMerge(observables ...Observable) Observable {
-	return FromObservables(observables).Pipe(operators.CongestingMergeAll())
+	return FromObservables(observables...).Pipe(operators.CongestingMergeAll())
 }
 
 // CongestingMergeAll converts a higher-order Observable into a first-order

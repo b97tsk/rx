@@ -93,7 +93,7 @@ func (op concatOperator) Call(ctx context.Context, sink Observer, source Observa
 // Concat concatenates multiple Observables together by sequentially emitting
 // their values, one Observable after the other.
 func Concat(observables ...Observable) Observable {
-	return FromObservables(observables).Pipe(operators.ConcatAll())
+	return FromObservables(observables...).Pipe(operators.ConcatAll())
 }
 
 // ConcatAll converts a higher-order Observable into a first-order Observable

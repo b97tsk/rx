@@ -22,9 +22,9 @@ func (op fromObservablesOperator) Call(ctx context.Context, sink Observer, sourc
 	return canceledCtx, nothingToDo
 }
 
-// FromObservables creates an Observable that emits Observables from a slice,
-// one after the other, and then completes.
-func FromObservables(observables []Observable) Observable {
+// FromObservables creates an Observable that emits some Observables
+// you specify as arguments, one after the other, and then completes.
+func FromObservables(observables ...Observable) Observable {
 	if len(observables) == 0 {
 		return Empty()
 	}

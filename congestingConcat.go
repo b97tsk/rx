@@ -59,7 +59,7 @@ func (op congestingConcatOperator) Call(ctx context.Context, sink Observer, sour
 //
 // It's like Concat, but it congests the source.
 func CongestingConcat(observables ...Observable) Observable {
-	return FromObservables(observables).Pipe(operators.CongestingConcatAll())
+	return FromObservables(observables...).Pipe(operators.CongestingConcatAll())
 }
 
 // CongestingConcatAll converts a higher-order Observable into a first-order
