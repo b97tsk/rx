@@ -28,6 +28,9 @@ func FromObservables(observables ...Observable) Observable {
 	if len(observables) == 0 {
 		return Empty()
 	}
+	if len(observables) == 1 {
+		return just(observables[0])
+	}
 	op := fromObservablesOperator{observables}
 	return Observable{}.Lift(op.Call)
 }

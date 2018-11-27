@@ -22,11 +22,24 @@ func (op fromSliceOperator) Call(ctx context.Context, sink Observer, source Obse
 	return canceledCtx, nothingToDo
 }
 
+func just(one interface{}) Observable {
+	return Observable{}.Lift(
+		func(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+			sink.Next(one)
+			sink.Complete()
+			return canceledCtx, nothingToDo
+		},
+	)
+}
+
 // FromSlice creates an Observable that emits values from a slice, one after
 // the other, and then completes.
 func FromSlice(slice []interface{}) Observable {
 	if len(slice) == 0 {
 		return Empty()
+	}
+	if len(slice) == 1 {
+		return just(slice[0])
 	}
 	op := fromSliceOperator{slice}
 	return Observable{}.Lift(op.Call)
@@ -34,6 +47,6 @@ func FromSlice(slice []interface{}) Observable {
 
 // Just creates an Observable that emits some values you specify as arguments,
 // one after the other, and then completes.
-func Just(slice ...interface{}) Observable {
-	return FromSlice(slice)
+func Just(values ...interface{}) Observable {
+	return FromSlice(values)
 }
