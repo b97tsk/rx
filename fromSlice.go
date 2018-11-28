@@ -35,14 +35,15 @@ func just(one interface{}) Observable {
 // FromSlice creates an Observable that emits values from a slice, one after
 // the other, and then completes.
 func FromSlice(slice []interface{}) Observable {
-	if len(slice) == 0 {
+	switch {
+	case len(slice) > 1:
+		op := fromSliceOperator{slice}
+		return Observable{}.Lift(op.Call)
+	case len(slice) == 1:
+		return just(slice[0])
+	default:
 		return Empty()
 	}
-	if len(slice) == 1 {
-		return just(slice[0])
-	}
-	op := fromSliceOperator{slice}
-	return Observable{}.Lift(op.Call)
 }
 
 // Just creates an Observable that emits some values you specify as arguments,

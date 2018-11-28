@@ -25,12 +25,13 @@ func (op fromObservablesOperator) Call(ctx context.Context, sink Observer, sourc
 // FromObservables creates an Observable that emits some Observables
 // you specify as arguments, one after the other, and then completes.
 func FromObservables(observables ...Observable) Observable {
-	if len(observables) == 0 {
+	switch {
+	case len(observables) > 1:
+		op := fromObservablesOperator{observables}
+		return Observable{}.Lift(op.Call)
+	case len(observables) == 1:
+		return just(observables[0])
+	default:
 		return Empty()
 	}
-	if len(observables) == 1 {
-		return just(observables[0])
-	}
-	op := fromObservablesOperator{observables}
-	return Observable{}.Lift(op.Call)
 }
