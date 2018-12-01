@@ -16,7 +16,6 @@ func (op auditOperator) Call(ctx context.Context, sink Observer, source Observab
 	var (
 		scheduleCtx    = canceledCtx
 		scheduleCancel = nothingToDo
-		scheduleDone   = scheduleCtx.Done()
 
 		latestValue interface{}
 		try         cancellableLocker
@@ -24,13 +23,12 @@ func (op auditOperator) Call(ctx context.Context, sink Observer, source Observab
 
 	doSchedule := func(val interface{}) {
 		select {
-		case <-scheduleDone:
+		case <-scheduleCtx.Done():
 		default:
 			return
 		}
 
 		scheduleCtx, scheduleCancel = context.WithCancel(ctx)
-		scheduleDone = scheduleCtx.Done()
 
 		var observer Observer
 		observer = func(t Notification) {

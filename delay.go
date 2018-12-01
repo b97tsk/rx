@@ -18,13 +18,11 @@ type delayValue struct {
 
 func (op delayOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
-	done := ctx.Done()
 
 	sink = Finally(sink, cancel)
 
 	var (
 		scheduleCtx  = canceledCtx
-		scheduleDone = scheduleCtx.Done()
 
 		mutex      sync.Mutex
 		queue      list.List
@@ -33,7 +31,7 @@ func (op delayOperator) Call(ctx context.Context, sink Observer, source Observab
 
 	doSchedule = func(timeout time.Duration) {
 		select {
-		case <-scheduleDone:
+		case <-scheduleCtx.Done():
 		default:
 			return
 		}
@@ -43,7 +41,7 @@ func (op delayOperator) Call(ctx context.Context, sink Observer, source Observab
 			defer mutex.Unlock()
 			for e := queue.Front(); e != nil; e, _ = e.Next(), queue.Remove(e) {
 				select {
-				case <-done:
+				case <-ctx.Done():
 					return
 				default:
 				}
@@ -56,7 +54,6 @@ func (op delayOperator) Call(ctx context.Context, sink Observer, source Observab
 				sink(t.Notification)
 			}
 		})
-		scheduleDone = scheduleCtx.Done()
 	}
 
 	source.Subscribe(ctx, func(t Notification) {

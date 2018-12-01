@@ -16,7 +16,6 @@ func (op auditTimeOperator) Call(ctx context.Context, sink Observer, source Obse
 
 	var (
 		scheduleCtx  = canceledCtx
-		scheduleDone = scheduleCtx.Done()
 
 		latestValue interface{}
 		try         cancellableLocker
@@ -24,7 +23,7 @@ func (op auditTimeOperator) Call(ctx context.Context, sink Observer, source Obse
 
 	doSchedule := func() {
 		select {
-		case <-scheduleDone:
+		case <-scheduleCtx.Done():
 		default:
 			return
 		}
@@ -35,7 +34,6 @@ func (op auditTimeOperator) Call(ctx context.Context, sink Observer, source Obse
 				sink.Next(latestValue)
 			}
 		})
-		scheduleDone = scheduleCtx.Done()
 	}
 
 	source.Subscribe(ctx, func(t Notification) {

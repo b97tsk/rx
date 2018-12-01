@@ -25,7 +25,6 @@ func (op ThrottleTimeOperator) Call(ctx context.Context, sink Observer, source O
 
 	var (
 		throttleCtx  = canceledCtx
-		throttleDone = throttleCtx.Done()
 
 		trailingValue    interface{}
 		hasTrailingValue bool
@@ -53,7 +52,6 @@ func (op ThrottleTimeOperator) Call(ctx context.Context, sink Observer, source O
 				}
 			}
 		})
-		throttleDone = throttleCtx.Done()
 	}
 
 	source.Subscribe(ctx, func(t Notification) {
@@ -66,7 +64,7 @@ func (op ThrottleTimeOperator) Call(ctx context.Context, sink Observer, source O
 				hasTrailingValue = true
 
 				select {
-				case <-throttleDone:
+				case <-throttleCtx.Done():
 				default:
 					return
 				}

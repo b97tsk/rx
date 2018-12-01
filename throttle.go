@@ -25,7 +25,6 @@ func (op ThrottleOperator) Call(ctx context.Context, sink Observer, source Obser
 	var (
 		throttleCtx    = canceledCtx
 		throttleCancel = nothingToDo
-		throttleDone   = throttleCtx.Done()
 
 		trailingValue    interface{}
 		hasTrailingValue bool
@@ -42,7 +41,6 @@ func (op ThrottleOperator) Call(ctx context.Context, sink Observer, source Obser
 
 	doThrottle = func(val interface{}) {
 		throttleCtx, throttleCancel = context.WithCancel(ctx)
-		throttleDone = throttleCtx.Done()
 
 		var observer Observer
 		observer = func(t Notification) {
@@ -78,7 +76,7 @@ func (op ThrottleOperator) Call(ctx context.Context, sink Observer, source Obser
 				hasTrailingValue = true
 
 				select {
-				case <-throttleDone:
+				case <-throttleCtx.Done():
 				default:
 					return
 				}
