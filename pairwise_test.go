@@ -1,21 +1,13 @@
 package rx_test
 
 import (
-	"fmt"
 	"testing"
 
 	. "github.com/b97tsk/rx"
 )
 
 func TestOperators_Pairwise(t *testing.T) {
-	op := Pipe(
-		operators.Pairwise(),
-		operators.Map(
-			func(val interface{}, idx int) interface{} {
-				return fmt.Sprint(val)
-			},
-		),
-	)
+	op := Pipe(operators.Pairwise(), toString)
 	subscribe(
 		t,
 		[]Observable{

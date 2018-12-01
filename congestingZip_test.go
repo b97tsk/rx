@@ -1,7 +1,6 @@
 package rx_test
 
 import (
-	"fmt"
 	"testing"
 
 	. "github.com/b97tsk/rx"
@@ -18,23 +17,16 @@ func TestOperators_CongestingZipAll(t *testing.T) {
 		Just(Just("A", "B", "C", "D"), Concat(Range(1, 4), Throw(xErrTest)).Pipe(delay)),
 	}
 	for i, obs := range observables {
-		observables[i] = obs.Pipe(
-			operators.CongestingZipAll(),
-			operators.Map(
-				func(val interface{}, idx int) interface{} {
-					return fmt.Sprintf("%v%v", val.([]interface{})...)
-				},
-			),
-		)
+		observables[i] = obs.Pipe(operators.CongestingZipAll(), toString)
 	}
 	subscribe(
 		t, observables[:],
-		"A1", "B2", xComplete,
-		"A1", "B2", "C3", xComplete,
-		"A1", "B2", "C3", xComplete,
-		"A1", "B2", xComplete,
-		"A1", "B2", "C3", xComplete,
-		"A1", "B2", "C3", xErrTest,
+		"[A 1]", "[B 2]", xComplete,
+		"[A 1]", "[B 2]", "[C 3]", xComplete,
+		"[A 1]", "[B 2]", "[C 3]", xComplete,
+		"[A 1]", "[B 2]", xComplete,
+		"[A 1]", "[B 2]", "[C 3]", xComplete,
+		"[A 1]", "[B 2]", "[C 3]", xErrTest,
 	)
 	subscribe(t, []Observable{CongestingZip()}, xComplete)
 }
