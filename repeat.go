@@ -53,6 +53,9 @@ func (Operators) Repeat(count int) OperatorFunc {
 		if count == 0 {
 			return Empty()
 		}
+		if count == 1 {
+			return source
+		}
 		if count > 0 {
 			count--
 		}
