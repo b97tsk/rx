@@ -14,7 +14,7 @@ func TestOperators_Multicast(t *testing.T) {
 			Interval(step(1)).Pipe(
 				operators.Multicast(
 					NewSubject,
-					func(ctx context.Context, subject *Subject) Observable {
+					func(ctx context.Context, subject Subject) Observable {
 						return Zip(
 							subject.Pipe(operators.Take(4)),
 							subject.Pipe(operators.Skip(4), operators.Take(4)),

@@ -20,8 +20,8 @@ func (op repeatWhenOperator) Call(ctx context.Context, sink Observer, source Obs
 		sourceCtx      = canceledCtx
 		sourceCancel   = nothingToDo
 		activeCount    = uint32(2)
-		subject        *Subject
-		createSubject  func() *Subject
+		subject        Subject
+		createSubject  func() Subject
 		avoidRecursive avoidRecursiveCalls
 	)
 
@@ -45,7 +45,7 @@ func (op repeatWhenOperator) Call(ctx context.Context, sink Observer, source Obs
 						sink(t)
 						break
 					}
-					if subject == nil {
+					if subject.Observer == nil {
 						subject = createSubject()
 					}
 					subject.Next(nil)
@@ -54,7 +54,7 @@ func (op repeatWhenOperator) Call(ctx context.Context, sink Observer, source Obs
 		})
 	}
 
-	createSubject = func() *Subject {
+	createSubject = func() Subject {
 		subject := NewSubject()
 		obs := op.Notifier(subject.Observable)
 		obs.Subscribe(ctx, func(t Notification) {

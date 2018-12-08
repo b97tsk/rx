@@ -10,7 +10,7 @@ import (
 // Observable to emit values to that Subject. Moreover, the selector function
 // returns an Observable which is subscribed to the sink Observer; if it
 // completes or emits an error, all subscriptions must be canceled.
-func (Operators) Multicast(subjectFactory func() *Subject, selector func(context.Context, *Subject) Observable) OperatorFunc {
+func (Operators) Multicast(subjectFactory func() Subject, selector func(context.Context, Subject) Observable) OperatorFunc {
 	return func(source Observable) Observable {
 		return source.Lift(
 			func(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {

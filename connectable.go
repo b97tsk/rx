@@ -16,21 +16,21 @@ type ConnectableObservable struct {
 type connectableObservable struct {
 	mutex          sync.Mutex
 	source         Observable
-	subjectFactory func() *Subject
+	subjectFactory func() Subject
 	connection     context.Context
 	disconnect     context.CancelFunc
-	subject        *Subject
+	subject        Subject
 	refCount       int
 }
 
-func (o *connectableObservable) getSubjectLocked() *Subject {
-	if o.subject == nil {
+func (o *connectableObservable) getSubjectLocked() Subject {
+	if o.subject.Observer == nil {
 		o.subject = o.subjectFactory()
 	}
 	return o.subject
 }
 
-func (o *connectableObservable) getSubject() *Subject {
+func (o *connectableObservable) getSubject() Subject {
 	o.mutex.Lock()
 	defer o.mutex.Unlock()
 	return o.getSubjectLocked()
@@ -69,7 +69,7 @@ func (o *connectableObservable) connect(addRef bool) (context.Context, context.C
 			if connection == o.connection {
 				o.connection = nil
 				o.disconnect = nil
-				o.subject = nil
+				o.subject = Subject{}
 				o.refCount = 0
 			}
 
@@ -113,7 +113,7 @@ func (o *connectableObservable) connect(addRef bool) (context.Context, context.C
 				o.disconnect()
 				o.connection = nil
 				o.disconnect = nil
-				o.subject = nil
+				o.subject = Subject{}
 			}
 		}
 	}
@@ -129,7 +129,7 @@ func (o *connectableObservable) connect(addRef bool) (context.Context, context.C
 		o.disconnect()
 		o.connection = nil
 		o.disconnect = nil
-		o.subject = nil
+		o.subject = Subject{}
 		o.refCount = 0
 	}
 }
@@ -191,7 +191,7 @@ func (o ConnectableObservable) RefCount() Observable {
 // Multicast returns a ConnectableObservable, which is a variety of Observable
 // that waits until its Connect method is called before it begins emitting
 // items to those Observers that have subscribed to it.
-func (o Observable) Multicast(subjectFactory func() *Subject) ConnectableObservable {
+func (o Observable) Multicast(subjectFactory func() Subject) ConnectableObservable {
 	return ConnectableObservable{&connectableObservable{
 		source:         o,
 		subjectFactory: subjectFactory,
@@ -201,13 +201,13 @@ func (o Observable) Multicast(subjectFactory func() *Subject) ConnectableObserva
 // Publish is like Multicast, but it uses only one subject.
 func (o Observable) Publish() ConnectableObservable {
 	subject := NewSubject()
-	return o.Multicast(func() *Subject { return subject })
+	return o.Multicast(func() Subject { return subject })
 }
 
 // PublishBehavior is like Publish, but it uses a BehaviorSubject instead.
 func (o Observable) PublishBehavior(val interface{}) ConnectableObservable {
 	bs := NewBehaviorSubject(val)
-	return o.Multicast(func() *Subject { return &bs.Subject })
+	return o.Multicast(func() Subject { return bs.Subject })
 }
 
 // Share returns a new Observable that multicasts (shares) the original

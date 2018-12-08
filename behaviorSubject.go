@@ -10,7 +10,10 @@ import (
 // "current value" from the BehaviorSubject.
 type BehaviorSubject struct {
 	Subject
-	val atomic.Value
+	try       cancellableLocker
+	observers []*Observer
+	val       atomic.Value
+	err       error
 }
 
 type behaviorSubjectValue struct {

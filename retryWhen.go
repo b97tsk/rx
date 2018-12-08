@@ -21,8 +21,8 @@ func (op retryWhenOperator) Call(ctx context.Context, sink Observer, source Obse
 		sourceCancel   = nothingToDo
 		activeCount    = uint32(2)
 		lastError      error
-		subject        *Subject
-		createSubject  func() *Subject
+		subject        Subject
+		createSubject  func() Subject
 		avoidRecursive avoidRecursiveCalls
 	)
 
@@ -44,7 +44,7 @@ func (op retryWhenOperator) Call(ctx context.Context, sink Observer, source Obse
 						sink(t)
 						break
 					}
-					if subject == nil {
+					if subject.Observer == nil {
 						subject = createSubject()
 					}
 					subject.Next(t.Value)
@@ -56,7 +56,7 @@ func (op retryWhenOperator) Call(ctx context.Context, sink Observer, source Obse
 		})
 	}
 
-	createSubject = func() *Subject {
+	createSubject = func() Subject {
 		subject := NewSubject()
 		obs := op.Notifier(subject.Observable)
 		obs.Subscribe(ctx, func(t Notification) {

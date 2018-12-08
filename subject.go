@@ -7,14 +7,17 @@ import (
 // Subject is a special type of Observable that allows values to be multicasted
 // to many Observers.
 type Subject struct {
-	Observer
 	Observable
+	Observer
+}
+
+type subject struct {
 	try       cancellableLocker
 	observers []*Observer
 	err       error
 }
 
-func (s *Subject) notify(t Notification) {
+func (s *subject) notify(t Notification) {
 	if s.try.Lock() {
 		switch {
 		case t.HasValue:
@@ -48,7 +51,7 @@ func (s *Subject) notify(t Notification) {
 	}
 }
 
-func (s *Subject) call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (s *subject) call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	if s.try.Lock() {
 		defer s.try.Unlock()
 
@@ -85,9 +88,10 @@ func (s *Subject) call(ctx context.Context, sink Observer, source Observable) (c
 }
 
 // NewSubject returns a new Subject.
-func NewSubject() *Subject {
-	s := new(Subject)
-	s.Observer = s.notify
-	s.Observable = s.Observable.Lift(s.call)
-	return s
+func NewSubject() Subject {
+	s := new(subject)
+	return Subject{
+		Observable: Observable{}.Lift(s.call),
+		Observer:   s.notify,
+	}
 }
