@@ -36,12 +36,7 @@ func schedule(ctx context.Context, period time.Duration, work func()) (context.C
 				case <-done:
 					return
 				case <-timer.C:
-					select {
-					case <-done:
-						return
-					default:
-						work()
-					}
+					work()
 					timer.Reset(0)
 				}
 			}
@@ -58,16 +53,11 @@ func scheduleOnce(ctx context.Context, delay time.Duration, work func()) (contex
 	go func() {
 		timer := time.NewTimer(delay)
 		defer timer.Stop()
-
 		select {
 		case <-done:
 		case <-timer.C:
-			select {
-			case <-done:
-			default:
-				defer cancel()
-				work()
-			}
+			work()
+			cancel()
 		}
 	}()
 
