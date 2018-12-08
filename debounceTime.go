@@ -28,11 +28,11 @@ func (op debounceTimeOperator) Call(ctx context.Context, sink Observer, source O
 
 		_, scheduleCancel = scheduleOnce(ctx, op.Duration, func() {
 			if try.Lock() {
-				defer try.Unlock()
 				if hasLatestValue {
 					sink.Next(latestValue)
 					hasLatestValue = false
 				}
+				try.Unlock()
 			}
 		})
 	}

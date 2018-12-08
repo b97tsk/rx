@@ -41,17 +41,13 @@ func (op concatOperator) Call(ctx context.Context, sink Observer, source Observa
 			obs := op.Project(outerValue, outerIndex)
 			obs.Subscribe(ctx, func(t Notification) {
 				switch {
-				case t.HasValue:
+				case t.HasValue, t.HasError:
 					sink(t)
-
-				case t.HasError:
-					sink(t)
-
 				default:
 					avoidRecursive.Do(func() {
 						mutex.Lock()
-						defer mutex.Unlock()
 						doNextLocked()
+						mutex.Unlock()
 					})
 				}
 			})
@@ -62,25 +58,23 @@ func (op concatOperator) Call(ctx context.Context, sink Observer, source Observa
 		switch {
 		case t.HasValue:
 			mutex.Lock()
-			defer mutex.Unlock()
-
 			buffer.PushBack(t.Value)
-
 			if activeCount == 1 {
 				activeCount++
 				doNextLocked()
 			}
+			mutex.Unlock()
 
 		case t.HasError:
 			sink(t)
 
 		default:
 			mutex.Lock()
-			defer mutex.Unlock()
 			activeCount--
 			if activeCount == 0 {
 				sink(t)
 			}
+			mutex.Unlock()
 		}
 	})
 

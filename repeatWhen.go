@@ -32,12 +32,9 @@ func (op repeatWhenOperator) Call(ctx context.Context, sink Observer, source Obs
 		source.Subscribe(sourceCtx, func(t Notification) {
 			if try.Lock() {
 				switch {
-				case t.HasValue:
-					defer try.Unlock()
+				case t.HasValue, t.HasError:
 					sink(t)
-				case t.HasError:
-					defer try.Unlock()
-					sink(t)
+					try.Unlock()
 				default:
 					activeCount := atomic.AddUint32(&activeCount, math.MaxUint32)
 					try.CancelAndUnlock()

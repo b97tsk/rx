@@ -26,11 +26,11 @@ func (op sampleOperator) Call(ctx context.Context, sink Observer, source Observa
 				sink(t)
 				return
 			}
-			defer try.Unlock()
 			if hasLatestValue {
 				sink.Next(latestValue)
 				hasLatestValue = false
 			}
+			try.Unlock()
 		}
 	})
 

@@ -40,8 +40,8 @@ func (op auditOperator) Call(ctx context.Context, sink Observer, source Observab
 					sink(t)
 					return
 				}
-				defer try.Unlock()
 				sink.Next(latestValue)
+				try.Unlock()
 			}
 		}
 

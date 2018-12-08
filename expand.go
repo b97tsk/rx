@@ -51,32 +51,27 @@ func (op ExpandOperator) Call(ctx context.Context, sink Observer, source Observa
 			switch {
 			case t.HasValue:
 				mutex.Lock()
-				defer mutex.Unlock()
-
 				buffer.PushBack(t.Value)
-
 				if activeCount != concurrent {
 					activeCount++
 					doNextLocked()
 				}
+				mutex.Unlock()
 
 			case t.HasError:
 				sink(t)
 
 			default:
 				mutex.Lock()
-				defer mutex.Unlock()
-
 				if buffer.Len() > 0 {
 					doNextLocked()
-					break
+				} else {
+					activeCount--
+					if activeCount == 0 && sourceCompleted {
+						sink(t)
+					}
 				}
-
-				activeCount--
-
-				if activeCount == 0 && sourceCompleted {
-					sink(t)
-				}
+				mutex.Unlock()
 			}
 		})
 	}
@@ -85,25 +80,23 @@ func (op ExpandOperator) Call(ctx context.Context, sink Observer, source Observa
 		switch {
 		case t.HasValue:
 			mutex.Lock()
-			defer mutex.Unlock()
-
 			buffer.PushBack(t.Value)
-
 			if activeCount != concurrent {
 				activeCount++
 				doNextLocked()
 			}
+			mutex.Unlock()
 
 		case t.HasError:
 			sink(t)
 
 		default:
 			mutex.Lock()
-			defer mutex.Unlock()
 			sourceCompleted = true
 			if activeCount == 0 {
 				sink(t)
 			}
+			mutex.Unlock()
 		}
 	})
 

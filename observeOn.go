@@ -28,8 +28,8 @@ func (op observeOnOperator) Call(ctx context.Context, sink Observer, source Obse
 				if try.Lock() {
 					switch t := queue.Remove(queue.Front()).(Notification); {
 					case t.HasValue:
-						defer try.Unlock()
 						sink(t)
+						try.Unlock()
 					default:
 						try.CancelAndUnlock()
 						sink(t)

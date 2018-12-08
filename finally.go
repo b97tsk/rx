@@ -13,8 +13,8 @@ func Finally(sink Observer, finally func()) Observer {
 			sink(t)
 			return
 		}
-		defer finally()
 		sink(t)
+		finally()
 	}
 }
 

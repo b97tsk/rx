@@ -47,26 +47,19 @@ func (op MergeOperator) Call(ctx context.Context, sink Observer, source Observab
 
 		go obs.Subscribe(ctx, func(t Notification) {
 			switch {
-			case t.HasValue:
+			case t.HasValue, t.HasError:
 				sink(t)
-
-			case t.HasError:
-				sink(t)
-
 			default:
 				mutex.Lock()
-				defer mutex.Unlock()
-
 				if buffer.Len() > 0 {
 					doNextLocked()
-					break
+				} else {
+					activeCount--
+					if activeCount == 0 && sourceCompleted {
+						sink(t)
+					}
 				}
-
-				activeCount--
-
-				if activeCount == 0 && sourceCompleted {
-					sink(t)
-				}
+				mutex.Unlock()
 			}
 		})
 	}
@@ -75,25 +68,23 @@ func (op MergeOperator) Call(ctx context.Context, sink Observer, source Observab
 		switch {
 		case t.HasValue:
 			mutex.Lock()
-			defer mutex.Unlock()
-
 			buffer.PushBack(t.Value)
-
 			if activeCount != concurrent {
 				activeCount++
 				doNextLocked()
 			}
+			mutex.Unlock()
 
 		case t.HasError:
 			sink(t)
 
 		default:
 			mutex.Lock()
-			defer mutex.Unlock()
 			sourceCompleted = true
 			if activeCount == 0 {
 				sink(t)
 			}
+			mutex.Unlock()
 		}
 	})
 

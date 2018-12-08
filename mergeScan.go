@@ -60,21 +60,18 @@ func (op MergeScanOperator) Call(ctx context.Context, sink Observer, source Obse
 
 			default:
 				mutex.Lock()
-				defer mutex.Unlock()
-
 				if buffer.Len() > 0 {
 					doNextLocked()
-					break
-				}
-
-				activeCount--
-
-				if activeCount == 0 && sourceCompleted {
-					if !hasValue {
-						sink.Next(seed)
+				} else {
+					activeCount--
+					if activeCount == 0 && sourceCompleted {
+						if !hasValue {
+							sink.Next(seed)
+						}
+						sink(t)
 					}
-					sink(t)
 				}
+				mutex.Unlock()
 			}
 		})
 	}
@@ -83,21 +80,18 @@ func (op MergeScanOperator) Call(ctx context.Context, sink Observer, source Obse
 		switch {
 		case t.HasValue:
 			mutex.Lock()
-			defer mutex.Unlock()
-
 			buffer.PushBack(t.Value)
-
 			if activeCount != concurrent {
 				activeCount++
 				doNextLocked()
 			}
+			mutex.Unlock()
 
 		case t.HasError:
 			sink(t)
 
 		default:
 			mutex.Lock()
-			defer mutex.Unlock()
 			sourceCompleted = true
 			if activeCount == 0 {
 				if !hasValue {
@@ -105,6 +99,7 @@ func (op MergeScanOperator) Call(ctx context.Context, sink Observer, source Obse
 				}
 				sink(t)
 			}
+			mutex.Unlock()
 		}
 	})
 

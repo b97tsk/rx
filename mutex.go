@@ -12,8 +12,8 @@ func Mutex(sink Observer) Observer {
 		if try.Lock() {
 			switch {
 			case t.HasValue:
-				defer try.Unlock()
 				sink(t)
+				try.Unlock()
 			default:
 				try.CancelAndUnlock()
 				sink(t)

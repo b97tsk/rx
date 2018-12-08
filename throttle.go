@@ -53,10 +53,10 @@ func (op ThrottleOperator) Call(ctx context.Context, sink Observer, source Obser
 						try.CancelAndUnlock()
 						sink(t)
 					case hasTrailingValue:
-						defer try.Unlock()
 						sink.Next(trailingValue)
 						hasTrailingValue = false
 						doThrottle(trailingValue)
+						try.Unlock()
 					}
 				}
 			}
@@ -70,23 +70,18 @@ func (op ThrottleOperator) Call(ctx context.Context, sink Observer, source Obser
 		if try.Lock() {
 			switch {
 			case t.HasValue:
-				defer try.Unlock()
-
 				trailingValue = t.Value
 				hasTrailingValue = true
-
 				select {
 				case <-throttleCtx.Done():
+					doThrottle(t.Value)
+					if leading {
+						sink(t)
+						hasTrailingValue = false
+					}
 				default:
-					return
 				}
-
-				doThrottle(t.Value)
-
-				if leading {
-					sink(t)
-					hasTrailingValue = false
-				}
+				try.Unlock()
 
 			default:
 				try.CancelAndUnlock()

@@ -31,11 +31,11 @@ func (s *BehaviorSubject) notify(t Notification) {
 		case t.HasValue:
 			s.val.Store(behaviorSubjectValue{t.Value})
 
-			defer s.try.Unlock()
-
 			for _, sink := range s.observers {
 				sink.Notify(t)
 			}
+
+			s.try.Unlock()
 
 		case t.HasError:
 			observers := s.observers
@@ -63,8 +63,6 @@ func (s *BehaviorSubject) notify(t Notification) {
 
 func (s *BehaviorSubject) call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	if s.try.Lock() {
-		defer s.try.Unlock()
-
 		ctx, cancel := context.WithCancel(ctx)
 
 		observer := Finally(sink, cancel)
@@ -86,6 +84,8 @@ func (s *BehaviorSubject) call(ctx context.Context, sink Observer, source Observ
 		}()
 
 		sink.Next(s.Value())
+
+		s.try.Unlock()
 		return ctx, cancel
 	}
 

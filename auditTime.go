@@ -30,8 +30,8 @@ func (op auditTimeOperator) Call(ctx context.Context, sink Observer, source Obse
 
 		scheduleCtx, _ = scheduleOnce(ctx, op.Duration, func() {
 			if try.Lock() {
-				defer try.Unlock()
 				sink.Next(latestValue)
+				try.Unlock()
 			}
 		})
 	}

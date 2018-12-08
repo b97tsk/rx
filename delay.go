@@ -58,7 +58,6 @@ func (op delayOperator) Call(ctx context.Context, sink Observer, source Observab
 
 	source.Subscribe(ctx, func(t Notification) {
 		mutex.Lock()
-		defer mutex.Unlock()
 		switch {
 		case t.HasValue:
 			queue.PushBack(delayValue{
@@ -76,6 +75,7 @@ func (op delayOperator) Call(ctx context.Context, sink Observer, source Observab
 			})
 			doSchedule(op.Duration)
 		}
+		mutex.Unlock()
 	})
 
 	return ctx, cancel

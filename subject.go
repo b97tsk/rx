@@ -21,11 +21,11 @@ func (s *subject) notify(t Notification) {
 	if s.try.Lock() {
 		switch {
 		case t.HasValue:
-			defer s.try.Unlock()
-
 			for _, sink := range s.observers {
 				sink.Notify(t)
 			}
+
+			s.try.Unlock()
 
 		case t.HasError:
 			observers := s.observers
@@ -53,8 +53,6 @@ func (s *subject) notify(t Notification) {
 
 func (s *subject) call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	if s.try.Lock() {
-		defer s.try.Unlock()
-
 		ctx, cancel := context.WithCancel(ctx)
 
 		observer := Finally(sink, cancel)
@@ -75,6 +73,7 @@ func (s *subject) call(ctx context.Context, sink Observer, source Observable) (c
 			}
 		}()
 
+		s.try.Unlock()
 		return ctx, cancel
 	}
 

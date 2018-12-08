@@ -22,11 +22,11 @@ func (op sampleTimeOperator) Call(ctx context.Context, sink Observer, source Obs
 
 	schedule(ctx, op.Duration, func() {
 		if try.Lock() {
-			defer try.Unlock()
 			if hasLatestValue {
 				sink.Next(latestValue)
 				hasLatestValue = false
 			}
+			try.Unlock()
 		}
 	})
 

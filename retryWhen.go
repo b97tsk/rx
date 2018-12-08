@@ -34,8 +34,8 @@ func (op retryWhenOperator) Call(ctx context.Context, sink Observer, source Obse
 			if try.Lock() {
 				switch {
 				case t.HasValue:
-					defer try.Unlock()
 					sink(t)
+					try.Unlock()
 				case t.HasError:
 					lastError = t.Value.(error)
 					activeCount := atomic.AddUint32(&activeCount, math.MaxUint32)
@@ -49,8 +49,8 @@ func (op retryWhenOperator) Call(ctx context.Context, sink Observer, source Obse
 					}
 					subject.Next(t.Value)
 				default:
-					defer try.Unlock()
 					sink(t)
+					try.Unlock()
 				}
 			}
 		})

@@ -28,7 +28,6 @@ func (op switchMapOperator) Call(ctx context.Context, sink Observer, source Obse
 		switch {
 		case t.HasValue:
 			mutex.Lock()
-			defer mutex.Unlock()
 
 			outerIndex++
 			outerIndex := outerIndex
@@ -43,38 +42,32 @@ func (op switchMapOperator) Call(ctx context.Context, sink Observer, source Obse
 
 			go obs.Subscribe(childCtx, func(t Notification) {
 				switch {
-				case t.HasValue:
+				case t.HasValue, t.HasError:
 					sink(t)
-
-				case t.HasError:
-					sink(t)
-
 				default:
 					mutex.Lock()
-					defer mutex.Unlock()
-
-					if activeIndex != outerIndex {
-						break
+					if activeIndex == outerIndex {
+						activeIndex = -1
+						if sourceCompleted {
+							sink(t)
+						}
 					}
-
-					activeIndex = -1
-
-					if sourceCompleted {
-						sink(t)
-					}
+					mutex.Unlock()
 				}
 			})
+
+			mutex.Unlock()
 
 		case t.HasError:
 			sink(t)
 
 		default:
 			mutex.Lock()
-			defer mutex.Unlock()
 			sourceCompleted = true
 			if activeIndex == -1 {
 				sink(t)
 			}
+			mutex.Unlock()
 		}
 	})
 

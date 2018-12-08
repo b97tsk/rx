@@ -22,10 +22,10 @@ func (op bufferOperator) Call(ctx context.Context, sink Observer, source Observa
 		if try.Lock() {
 			switch {
 			case t.HasValue:
-				defer try.Unlock()
 				value := buffer
 				buffer = nil
 				sink.Next(value)
+				try.Unlock()
 			default:
 				try.CancelAndUnlock()
 				sink(t)
@@ -43,8 +43,8 @@ func (op bufferOperator) Call(ctx context.Context, sink Observer, source Observa
 		if try.Lock() {
 			switch {
 			case t.HasValue:
-				defer try.Unlock()
 				buffer = append(buffer, t.Value)
+				try.Unlock()
 			default:
 				try.CancelAndUnlock()
 				sink(t)

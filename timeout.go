@@ -20,11 +20,6 @@ func (op timeoutOperator) Call(ctx context.Context, sink Observer, source Observ
 		try cancellableLocker
 	)
 
-	doNextAndUnlock := func(t Notification) {
-		defer try.Unlock()
-		sink(t)
-	}
-
 	doSchedule := func() {
 		scheduleCancel()
 
@@ -42,7 +37,8 @@ func (op timeoutOperator) Call(ctx context.Context, sink Observer, source Observ
 		if try.Lock() {
 			switch {
 			case t.HasValue:
-				doNextAndUnlock(t)
+				sink(t)
+				try.Unlock()
 				doSchedule()
 			default:
 				try.CancelAndUnlock()
