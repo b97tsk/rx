@@ -4,20 +4,13 @@ import (
 	"context"
 )
 
-// ReduceOperator is an operator type.
-type ReduceOperator struct {
+type reduceOperator struct {
 	Accumulator func(interface{}, interface{}, int) interface{}
 	Seed        interface{}
 	HasSeed     bool
 }
 
-// MakeFunc creates an OperatorFunc from this operator.
-func (op ReduceOperator) MakeFunc() OperatorFunc {
-	return MakeFunc(op.Call)
-}
-
-// Call invokes an execution of this operator.
-func (op ReduceOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op reduceOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	var (
 		seed       = op.Seed
 		hasSeed    = op.HasSeed
@@ -47,16 +40,30 @@ func (op ReduceOperator) Call(ctx context.Context, sink Observer, source Observa
 	})
 }
 
-// Reduce creates an Observable that applies an accumulator function over the
-// source Observable, and emits the accumulated result when the source
-// completes, given an optional seed value.
+// Reduce creates an Observable that applies an accumulator function over
+// the source Observable, and emits the accumulated result when the source
+// completes.
 //
-// Reduce combines together all values emitted on the source, using an
-// accumulator function that knows how to join a new source value into the
-// accumulation from the past.
+// It's like Fold, but no need to specify an initial value.
 func (Operators) Reduce(accumulator func(interface{}, interface{}, int) interface{}) OperatorFunc {
 	return func(source Observable) Observable {
-		op := ReduceOperator{Accumulator: accumulator}
+		op := reduceOperator{Accumulator: accumulator}
+		return source.Lift(op.Call)
+	}
+}
+
+// Fold creates an Observable that applies an accumulator function over
+// the source Observable, and emits the accumulated result when the source
+// completes, given an initial value.
+//
+// It's like Reduce, but you could specify an initial value.
+func (Operators) Fold(initialValue interface{}, accumulator func(interface{}, interface{}, int) interface{}) OperatorFunc {
+	return func(source Observable) Observable {
+		op := reduceOperator{
+			Accumulator: accumulator,
+			Seed:        initialValue,
+			HasSeed:     true,
+		}
 		return source.Lift(op.Call)
 	}
 }
