@@ -30,9 +30,7 @@ func (op delayOperator) Call(ctx context.Context, sink Observer, source Observab
 	)
 
 	doSchedule = func(timeout time.Duration) {
-		select {
-		case <-scheduleCtx.Done():
-		default:
+		if !isDone(scheduleCtx) {
 			return
 		}
 
@@ -40,10 +38,8 @@ func (op delayOperator) Call(ctx context.Context, sink Observer, source Observab
 			mutex.Lock()
 			defer mutex.Unlock()
 			for e := queue.Front(); e != nil; e, _ = e.Next(), queue.Remove(e) {
-				select {
-				case <-ctx.Done():
+				if isDone(ctx) {
 					return
-				default:
 				}
 				t := e.Value.(delayValue)
 				now := time.Now()

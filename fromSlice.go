@@ -9,12 +9,9 @@ type fromSliceOperator struct {
 }
 
 func (op fromSliceOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
-	done := ctx.Done()
 	for _, val := range op.Slice {
-		select {
-		case <-done:
+		if isDone(ctx) {
 			return canceledCtx, nothingToDo
-		default:
 		}
 		sink.Next(val)
 	}

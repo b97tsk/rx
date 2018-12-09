@@ -33,10 +33,8 @@ func (op bufferOperator) Call(ctx context.Context, sink Observer, source Observa
 		}
 	})
 
-	select {
-	case <-ctx.Done():
+	if isDone(ctx) {
 		return canceledCtx, nothingToDo
-	default:
 	}
 
 	source.Subscribe(ctx, func(t Notification) {

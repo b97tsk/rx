@@ -15,16 +15,14 @@ func (op auditTimeOperator) Call(ctx context.Context, sink Observer, source Obse
 	sink = Finally(sink, cancel)
 
 	var (
-		scheduleCtx  = canceledCtx
+		scheduleCtx = canceledCtx
 
 		latestValue interface{}
 		try         cancellableLocker
 	)
 
 	doSchedule := func() {
-		select {
-		case <-scheduleCtx.Done():
-		default:
+		if !isDone(scheduleCtx) {
 			return
 		}
 

@@ -33,12 +33,9 @@ func (op takeLastOperator) Call(ctx context.Context, sink Observer, source Obser
 			sink(t)
 		default:
 			if length > 0 {
-				done := ctx.Done()
 				for i := 0; i < length; i++ {
-					select {
-					case <-done:
+					if isDone(ctx) {
 						return
-					default:
 					}
 					sink.Next(head.Value)
 					head = head.Next()

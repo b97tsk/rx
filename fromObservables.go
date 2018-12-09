@@ -9,12 +9,9 @@ type fromObservablesOperator struct {
 }
 
 func (op fromObservablesOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
-	done := ctx.Done()
 	for _, obs := range op.Observables {
-		select {
-		case <-done:
+		if isDone(ctx) {
 			return canceledCtx, nothingToDo
-		default:
 		}
 		sink.Next(obs)
 	}

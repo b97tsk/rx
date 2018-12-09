@@ -82,10 +82,8 @@ func (o *connectableObservable) connect(addRef bool) (context.Context, context.C
 			t.Observe(subject.Observer)
 		})
 
-		select {
-		case <-ctx.Done():
+		if isDone(ctx) {
 			return canceledCtx, nothingToDo
-		default:
 		}
 
 		connection = ctx

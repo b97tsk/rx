@@ -72,14 +72,12 @@ func (op ThrottleOperator) Call(ctx context.Context, sink Observer, source Obser
 			case t.HasValue:
 				trailingValue = t.Value
 				hasTrailingValue = true
-				select {
-				case <-throttleCtx.Done():
+				if isDone(throttleCtx) {
 					doThrottle(t.Value)
 					if leading {
 						sink(t)
 						hasTrailingValue = false
 					}
-				default:
 				}
 				try.Unlock()
 

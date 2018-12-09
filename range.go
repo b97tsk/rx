@@ -9,12 +9,9 @@ type rangeOperator struct {
 }
 
 func (op rangeOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
-	done := ctx.Done()
 	for index := op.Low; index < op.High; index++ {
-		select {
-		case <-done:
+		if isDone(ctx) {
 			return canceledCtx, nothingToDo
-		default:
 		}
 		sink.Next(index)
 	}

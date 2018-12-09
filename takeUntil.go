@@ -22,10 +22,8 @@ func (op takeUntilOperator) Call(ctx context.Context, sink Observer, source Obse
 		}
 	})
 
-	select {
-	case <-ctx.Done():
+	if isDone(ctx) {
 		return canceledCtx, nothingToDo
-	default:
 	}
 
 	source.Subscribe(ctx, sink)

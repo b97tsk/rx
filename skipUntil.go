@@ -38,10 +38,8 @@ func (op skipUntilOperator) Call(ctx context.Context, sink Observer, source Obse
 		op.Notifier.Subscribe(ctx, observer.Notify)
 	}
 
-	select {
-	case <-ctx.Done():
+	if isDone(ctx) {
 		return canceledCtx, nothingToDo
-	default:
 	}
 
 	{

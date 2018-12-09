@@ -24,7 +24,7 @@ func (op ThrottleTimeOperator) Call(ctx context.Context, sink Observer, source O
 	sink = Finally(sink, cancel)
 
 	var (
-		throttleCtx  = canceledCtx
+		throttleCtx = canceledCtx
 
 		trailingValue    interface{}
 		hasTrailingValue bool
@@ -60,14 +60,12 @@ func (op ThrottleTimeOperator) Call(ctx context.Context, sink Observer, source O
 			case t.HasValue:
 				trailingValue = t.Value
 				hasTrailingValue = true
-				select {
-				case <-throttleCtx.Done():
+				if isDone(throttleCtx) {
 					doThrottle()
 					if leading {
 						sink(t)
 						hasTrailingValue = false
 					}
-				default:
 				}
 				try.Unlock()
 

@@ -22,9 +22,7 @@ func (op auditOperator) Call(ctx context.Context, sink Observer, source Observab
 	)
 
 	doSchedule := func(val interface{}) {
-		select {
-		case <-scheduleCtx.Done():
-		default:
+		if !isDone(scheduleCtx) {
 			return
 		}
 

@@ -9,10 +9,9 @@ type fromChannelOperator struct {
 }
 
 func (op fromChannelOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
-	done := ctx.Done()
 	for {
 		select {
-		case <-done:
+		case <-ctx.Done():
 			return canceledCtx, nothingToDo
 		case val, ok := <-op.Chan:
 			if !ok {
@@ -22,10 +21,8 @@ func (op fromChannelOperator) Call(ctx context.Context, sink Observer, source Ob
 			sink.Next(val)
 			// Check done before next loop, such that Take(1)
 			// would exactly take one from the channel.
-			select {
-			case <-done:
+			if isDone(ctx) {
 				return canceledCtx, nothingToDo
-			default:
 			}
 		}
 	}
