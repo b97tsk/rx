@@ -3,6 +3,7 @@ package rx
 import (
 	"context"
 	"sync"
+	"time"
 )
 
 // A ConnectableObservable is an Observable that only subscribes the source
@@ -204,8 +205,14 @@ func (o Observable) Publish() ConnectableObservable {
 
 // PublishBehavior is like Publish, but it uses a BehaviorSubject instead.
 func (o Observable) PublishBehavior(val interface{}) ConnectableObservable {
-	bs := NewBehaviorSubject(val)
-	return o.Multicast(func() Subject { return bs.Subject })
+	subject := NewBehaviorSubject(val)
+	return o.Multicast(func() Subject { return subject.Subject })
+}
+
+// PublishReplay is like Publish, but it uses a ReplaySubject instead.
+func (o Observable) PublishReplay(bufferSize int, windowTime time.Duration) ConnectableObservable {
+	subject := NewReplaySubject(bufferSize, windowTime)
+	return o.Multicast(func() Subject { return subject.Subject })
 }
 
 // Share returns a new Observable that multicasts (shares) the original
@@ -215,5 +222,15 @@ func (o Observable) PublishBehavior(val interface{}) ConnectableObservable {
 func (Operators) Share() OperatorFunc {
 	return func(source Observable) Observable {
 		return source.Multicast(NewSubject).RefCount()
+	}
+}
+
+// ShareReplay is like Share, but it uses a ReplaySubject instead.
+func (Operators) ShareReplay(bufferSize int, windowTime time.Duration) OperatorFunc {
+	return func(source Observable) Observable {
+		newSubject := func() Subject {
+			return NewReplaySubject(bufferSize, windowTime).Subject
+		}
+		return source.Multicast(newSubject).RefCount()
 	}
 }
