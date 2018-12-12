@@ -1,8 +1,9 @@
 package rx
 
 import (
-	"container/list"
 	"context"
+
+	"github.com/b97tsk/rx/x/queue"
 )
 
 type zipOperator struct {
@@ -24,7 +25,7 @@ func (op zipOperator) Call(ctx context.Context, sink Observer, source Observable
 	q := make(chan zipValue, length)
 
 	go func() {
-		values := make([]list.List, length)
+		values := make([]queue.Queue, length)
 		hasValues := make([]bool, length)
 		hasValuesCount := 0
 		hasCompleted := make([]bool, length)
@@ -55,9 +56,9 @@ func (op zipOperator) Call(ctx context.Context, sink Observer, source Observable
 					shouldComplete := false
 
 					for i := range values {
-						ls := &values[i]
-						nextValues[i] = ls.Remove(ls.Front())
-						if ls.Len() == 0 {
+						queue := &values[i]
+						nextValues[i] = queue.PopFront()
+						if queue.Len() == 0 {
 							hasValues[i] = false
 							hasValuesCount--
 							if hasCompleted[i] {

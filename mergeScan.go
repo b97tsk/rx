@@ -1,9 +1,10 @@
 package rx
 
 import (
-	"container/list"
 	"context"
 	"sync"
+
+	"github.com/b97tsk/rx/x/queue"
 )
 
 // MergeScanOperator is an operator type.
@@ -30,7 +31,7 @@ func (op MergeScanOperator) Call(ctx context.Context, sink Observer, source Obse
 		sourceCompleted bool
 		seed            = op.Seed
 		hasValue        bool
-		buffer          list.List
+		buffer          queue.Queue
 		doNextLocked    func()
 	)
 
@@ -40,7 +41,7 @@ func (op MergeScanOperator) Call(ctx context.Context, sink Observer, source Obse
 	}
 
 	doNextLocked = func() {
-		outerValue := buffer.Remove(buffer.Front())
+		outerValue := buffer.PopFront()
 
 		// calls op.Accumulator synchronously
 		obs := op.Accumulator(seed, outerValue)

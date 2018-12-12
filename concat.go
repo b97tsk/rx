@@ -1,9 +1,10 @@
 package rx
 
 import (
-	"container/list"
 	"context"
 	"sync"
+
+	"github.com/b97tsk/rx/x/queue"
 )
 
 type concatOperator struct {
@@ -19,7 +20,7 @@ func (op concatOperator) Call(ctx context.Context, sink Observer, source Observa
 		mutex        sync.Mutex
 		outerIndex   = -1
 		activeCount  = 1
-		buffer       list.List
+		buffer       queue.Queue
 		doNextLocked func()
 	)
 
@@ -36,7 +37,7 @@ func (op concatOperator) Call(ctx context.Context, sink Observer, source Observa
 
 			outerIndex++
 			outerIndex := outerIndex
-			outerValue := buffer.Remove(buffer.Front())
+			outerValue := buffer.PopFront()
 
 			obs := op.Project(outerValue, outerIndex)
 			obs.Subscribe(ctx, func(t Notification) {

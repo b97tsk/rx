@@ -1,9 +1,10 @@
 package rx
 
 import (
-	"container/list"
 	"context"
 	"time"
+
+	"github.com/b97tsk/rx/x/queue"
 )
 
 type observeOnOperator struct {
@@ -16,17 +17,16 @@ func (op observeOnOperator) Call(ctx context.Context, sink Observer, source Obse
 	sink = Finally(sink, cancel)
 
 	var (
-		queue list.List
+		queue queue.Queue
 		try   cancellableLocker
 	)
 
 	source.Subscribe(ctx, func(t Notification) {
 		if try.Lock() {
-			defer try.Unlock()
 			queue.PushBack(t)
 			scheduleOnce(ctx, op.Duration, func() {
 				if try.Lock() {
-					switch t := queue.Remove(queue.Front()).(Notification); {
+					switch t := queue.PopFront().(Notification); {
 					case t.HasValue:
 						sink(t)
 						try.Unlock()
@@ -36,6 +36,7 @@ func (op observeOnOperator) Call(ctx context.Context, sink Observer, source Obse
 					}
 				}
 			})
+			try.Unlock()
 		}
 	})
 

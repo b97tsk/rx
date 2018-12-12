@@ -1,8 +1,9 @@
 package rx
 
 import (
-	"container/list"
 	"context"
+
+	"github.com/b97tsk/rx/x/queue"
 )
 
 type congestOperator struct {
@@ -15,14 +16,14 @@ func (op congestOperator) Call(ctx context.Context, sink Observer, source Observ
 
 	sink = Finally(sink, cancel)
 
-	c := make(chan *list.Element)
+	c := make(chan Notification)
 	go func() {
 		for {
 			select {
 			case <-done:
 				return
-			case e := <-c:
-				switch t := e.Value.(Notification); {
+			case t := <-c:
+				switch {
 				case t.HasValue:
 					sink(t)
 				default:
@@ -35,11 +36,12 @@ func (op congestOperator) Call(ctx context.Context, sink Observer, source Observ
 
 	q := make(chan Notification)
 	go func() {
-		var queue list.List
+		var queue queue.Queue
 		for {
 			var (
-				in  <-chan Notification
-				out chan<- *list.Element
+				in       <-chan Notification
+				out      chan<- Notification
+				outValue Notification
 			)
 			length := queue.Len()
 			if length < op.Capacity {
@@ -47,14 +49,15 @@ func (op congestOperator) Call(ctx context.Context, sink Observer, source Observ
 			}
 			if length > 0 {
 				out = c
+				outValue = queue.Front().(Notification)
 			}
 			select {
 			case <-done:
 				return
 			case t := <-in:
 				queue.PushBack(t)
-			case out <- queue.Front():
-				queue.Remove(queue.Front())
+			case out <- outValue:
+				queue.PopFront()
 			}
 		}
 	}()

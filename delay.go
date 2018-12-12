@@ -1,10 +1,11 @@
 package rx
 
 import (
-	"container/list"
 	"context"
 	"sync"
 	"time"
+
+	"github.com/b97tsk/rx/x/queue"
 )
 
 type delayOperator struct {
@@ -22,10 +23,10 @@ func (op delayOperator) Call(ctx context.Context, sink Observer, source Observab
 	sink = Finally(sink, cancel)
 
 	var (
-		scheduleCtx  = canceledCtx
+		scheduleCtx = canceledCtx
 
 		mutex      sync.Mutex
-		queue      list.List
+		queue      queue.Queue
 		doSchedule func(time.Duration)
 	)
 
@@ -37,16 +38,17 @@ func (op delayOperator) Call(ctx context.Context, sink Observer, source Observab
 		scheduleCtx, _ = scheduleOnce(ctx, timeout, func() {
 			mutex.Lock()
 			defer mutex.Unlock()
-			for e := queue.Front(); e != nil; e, _ = e.Next(), queue.Remove(e) {
+			for queue.Len() > 0 {
 				if isDone(ctx) {
 					return
 				}
-				t := e.Value.(delayValue)
+				t := queue.Front().(delayValue)
 				now := time.Now()
 				if t.Time.After(now) {
 					doSchedule(t.Time.Sub(now))
 					return
 				}
+				queue.PopFront()
 				sink(t.Notification)
 			}
 		})

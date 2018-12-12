@@ -1,9 +1,10 @@
 package rx
 
 import (
-	"container/list"
 	"context"
 	"time"
+
+	"github.com/b97tsk/rx/x/queue"
 )
 
 // A ReplaySubject buffers a set number of values and will emit those values
@@ -14,7 +15,7 @@ type ReplaySubject struct {
 	try        cancellableLocker
 	observers  []*Observer
 	err        error
-	buffer     list.List
+	buffer     queue.Queue
 	bufferSize int
 	windowTime time.Duration
 }
@@ -27,20 +28,16 @@ type replaySubjectValue struct {
 func (s *ReplaySubject) trimBuffer() {
 	if s.bufferSize > 0 {
 		for s.buffer.Len() > s.bufferSize {
-			s.buffer.Remove(s.buffer.Front())
+			s.buffer.PopFront()
 		}
 	}
-	if s.windowTime > 0 && s.buffer.Len() > 0 {
+	if s.windowTime > 0 {
 		now := time.Now()
-		for {
-			e := s.buffer.Front()
-			if e == nil {
+		for s.buffer.Len() > 0 {
+			if s.buffer.Front().(replaySubjectValue).Deadline.After(now) {
 				break
 			}
-			if e.Value.(replaySubjectValue).Deadline.After(now) {
-				break
-			}
-			s.buffer.Remove(e)
+			s.buffer.PopFront()
 		}
 	}
 }
@@ -110,11 +107,11 @@ func (s *ReplaySubject) call(ctx context.Context, sink Observer, source Observab
 
 		s.trimBuffer()
 
-		for e := s.buffer.Front(); e != nil; e = e.Next() {
+		for i, j := 0, s.buffer.Len(); i < j; i++ {
 			if isDone(ctx) {
 				break
 			}
-			sink.Next(e.Value.(replaySubjectValue).Value)
+			sink.Next(s.buffer.At(i).(replaySubjectValue).Value)
 		}
 
 		s.try.Unlock()
@@ -128,11 +125,11 @@ func (s *ReplaySubject) call(ctx context.Context, sink Observer, source Observab
 
 	s.trimBuffer()
 
-	for e := s.buffer.Front(); e != nil; e = e.Next() {
+	for i, j := 0, s.buffer.Len(); i < j; i++ {
 		if isDone(ctx) {
 			return canceledCtx, nothingToDo
 		}
-		sink.Next(e.Value.(replaySubjectValue).Value)
+		sink.Next(s.buffer.At(i).(replaySubjectValue).Value)
 	}
 	sink.Complete()
 	return canceledCtx, nothingToDo

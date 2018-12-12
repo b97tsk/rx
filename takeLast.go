@@ -1,8 +1,9 @@
 package rx
 
 import (
-	"container/ring"
 	"context"
+
+	"github.com/b97tsk/rx/x/queue"
 )
 
 type takeLastOperator struct {
@@ -10,36 +11,22 @@ type takeLastOperator struct {
 }
 
 func (op takeLastOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
-	var (
-		head   *ring.Ring
-		length int
-	)
+	var queue queue.Queue
 	return source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
-			if length < op.Count {
-				tail := &ring.Ring{Value: t.Value}
-				if head == nil {
-					head = tail
-				} else {
-					tail.Link(head)
-				}
-				length++
-			} else {
-				head.Value = t.Value
-				head = head.Next()
+			if queue.Len() == op.Count {
+				queue.PopFront()
 			}
+			queue.PushBack(t.Value)
 		case t.HasError:
 			sink(t)
 		default:
-			if length > 0 {
-				for i := 0; i < length; i++ {
-					if isDone(ctx) {
-						return
-					}
-					sink.Next(head.Value)
-					head = head.Next()
+			for i, j := 0, queue.Len(); i < j; i++ {
+				if isDone(ctx) {
+					return
 				}
+				sink.Next(queue.At(i))
 			}
 			sink(t)
 		}

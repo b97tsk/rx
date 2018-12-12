@@ -1,9 +1,10 @@
 package rx
 
 import (
-	"container/list"
 	"context"
 	"sync"
+
+	"github.com/b97tsk/rx/x/queue"
 )
 
 // MergeOperator is an operator type.
@@ -28,7 +29,7 @@ func (op MergeOperator) Call(ctx context.Context, sink Observer, source Observab
 		outerIndex      = -1
 		activeCount     int
 		sourceCompleted bool
-		buffer          list.List
+		buffer          queue.Queue
 		doNextLocked    func()
 	)
 
@@ -40,7 +41,7 @@ func (op MergeOperator) Call(ctx context.Context, sink Observer, source Observab
 	doNextLocked = func() {
 		outerIndex++
 		outerIndex := outerIndex
-		outerValue := buffer.Remove(buffer.Front())
+		outerValue := buffer.PopFront()
 
 		// calls op.Project synchronously
 		obs := op.Project(outerValue, outerIndex)
