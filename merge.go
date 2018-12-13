@@ -48,7 +48,7 @@ func (op MergeOperator) Call(ctx context.Context, sink Observer, source Observab
 
 		go obs.Subscribe(ctx, func(t Notification) {
 			switch {
-			case t.HasValue, t.HasError:
+			case t.HasValue || t.HasError:
 				sink(t)
 			default:
 				mutex.Lock()

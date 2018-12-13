@@ -64,8 +64,9 @@ func (s *subject) call(ctx context.Context, sink Observer, source Observable) (c
 				for i, sink := range s.observers {
 					if sink == &observer {
 						copy(s.observers[i:], s.observers[i+1:])
-						s.observers[len(s.observers)-1] = nil
-						s.observers = s.observers[:len(s.observers)-1]
+						n := len(s.observers)
+						s.observers[n-1] = nil
+						s.observers = s.observers[:n-1]
 						break
 					}
 				}

@@ -42,7 +42,7 @@ func (op switchMapOperator) Call(ctx context.Context, sink Observer, source Obse
 
 			go obs.Subscribe(childCtx, func(t Notification) {
 				switch {
-				case t.HasValue, t.HasError:
+				case t.HasValue || t.HasError:
 					sink(t)
 				default:
 					mutex.Lock()

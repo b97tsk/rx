@@ -34,7 +34,7 @@ func (op exhaustMapOperator) Call(ctx context.Context, sink Observer, source Obs
 			obs := op.Project(outerValue, outerIndex)
 			obs.Subscribe(ctx, func(t Notification) {
 				switch {
-				case t.HasValue, t.HasError:
+				case t.HasValue || t.HasError:
 					sink(t)
 				default:
 					if atomic.AddUint32(&activeCount, math.MaxUint32) > 0 {

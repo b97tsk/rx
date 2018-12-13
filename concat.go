@@ -42,7 +42,7 @@ func (op concatOperator) Call(ctx context.Context, sink Observer, source Observa
 			obs := op.Project(outerValue, outerIndex)
 			obs.Subscribe(ctx, func(t Notification) {
 				switch {
-				case t.HasValue, t.HasError:
+				case t.HasValue || t.HasError:
 					sink(t)
 				default:
 					avoidRecursive.Do(func() {

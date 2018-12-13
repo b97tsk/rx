@@ -25,7 +25,7 @@ func (op repeatOperator) Call(ctx context.Context, sink Observer, source Observa
 
 	observer = func(t Notification) {
 		switch {
-		case t.HasValue, t.HasError:
+		case t.HasValue || t.HasError:
 			sink(t)
 		default:
 			if count == 0 {

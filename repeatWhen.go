@@ -32,7 +32,7 @@ func (op repeatWhenOperator) Call(ctx context.Context, sink Observer, source Obs
 		source.Subscribe(sourceCtx, func(t Notification) {
 			if try.Lock() {
 				switch {
-				case t.HasValue, t.HasError:
+				case t.HasValue || t.HasError:
 					sink(t)
 					try.Unlock()
 				default:
