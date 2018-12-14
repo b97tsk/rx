@@ -9,6 +9,24 @@ import (
 // whenever a new Observer subscribes, it will immediately receive the
 // "current value" from the BehaviorSubject.
 type BehaviorSubject struct {
+	*behaviorSubject
+}
+
+// NewBehaviorSubject returns a new BehaviorSubject.
+func NewBehaviorSubject(val interface{}) BehaviorSubject {
+	s := new(behaviorSubject)
+	s.Observer = s.notify
+	s.Observable = s.Observable.Lift(s.call)
+	s.val.Store(behaviorSubjectValue{val})
+	return BehaviorSubject{s}
+}
+
+// Value returns the latest value stored in this BehaviorSubject.
+func (s BehaviorSubject) Value() interface{} {
+	return s.getValue()
+}
+
+type behaviorSubject struct {
 	Subject
 	try       cancellableLocker
 	observers []*Observer
@@ -20,12 +38,11 @@ type behaviorSubjectValue struct {
 	Value interface{}
 }
 
-// Value returns the latest value stored in this BehaviorSubject.
-func (s *BehaviorSubject) Value() interface{} {
+func (s *behaviorSubject) getValue() interface{} {
 	return s.val.Load().(behaviorSubjectValue).Value
 }
 
-func (s *BehaviorSubject) notify(t Notification) {
+func (s *behaviorSubject) notify(t Notification) {
 	if s.try.Lock() {
 		switch {
 		case t.HasValue:
@@ -61,7 +78,7 @@ func (s *BehaviorSubject) notify(t Notification) {
 	}
 }
 
-func (s *BehaviorSubject) call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (s *behaviorSubject) call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	if s.try.Lock() {
 		ctx, cancel := context.WithCancel(ctx)
 
@@ -84,7 +101,7 @@ func (s *BehaviorSubject) call(ctx context.Context, sink Observer, source Observ
 			}
 		}()
 
-		sink.Next(s.Value())
+		sink.Next(s.getValue())
 
 		s.try.Unlock()
 		return ctx, cancel
@@ -93,18 +110,9 @@ func (s *BehaviorSubject) call(ctx context.Context, sink Observer, source Observ
 	if s.err != nil {
 		sink.Error(s.err)
 	} else {
-		sink.Next(s.Value())
+		sink.Next(s.getValue())
 		sink.Complete()
 	}
 
 	return canceledCtx, nothingToDo
-}
-
-// NewBehaviorSubject returns a new BehaviorSubject.
-func NewBehaviorSubject(val interface{}) *BehaviorSubject {
-	s := new(BehaviorSubject)
-	s.Observer = s.notify
-	s.Observable = s.Observable.Lift(s.call)
-	s.val.Store(behaviorSubjectValue{val})
-	return s
 }
