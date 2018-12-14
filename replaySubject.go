@@ -11,6 +11,21 @@ import (
 // immediately to any new subscribers in addition to emitting new values to
 // existing subscribers.
 type ReplaySubject struct {
+	*replaySubject
+}
+
+// NewReplaySubject returns a new ReplaySubject.
+func NewReplaySubject(bufferSize int, windowTime time.Duration) ReplaySubject {
+	s := &replaySubject{
+		bufferSize: bufferSize,
+		windowTime: windowTime,
+	}
+	s.Observer = s.notify
+	s.Observable = s.Observable.Lift(s.call)
+	return ReplaySubject{s}
+}
+
+type replaySubject struct {
 	Subject
 	try        cancellableLocker
 	observers  []*Observer
@@ -25,7 +40,7 @@ type replaySubjectValue struct {
 	Value    interface{}
 }
 
-func (s *ReplaySubject) trimBuffer() {
+func (s *replaySubject) trimBuffer() {
 	if s.bufferSize > 0 {
 		for s.buffer.Len() > s.bufferSize {
 			s.buffer.PopFront()
@@ -42,7 +57,7 @@ func (s *ReplaySubject) trimBuffer() {
 	}
 }
 
-func (s *ReplaySubject) notify(t Notification) {
+func (s *replaySubject) notify(t Notification) {
 	if s.try.Lock() {
 		switch {
 		case t.HasValue:
@@ -83,7 +98,7 @@ func (s *ReplaySubject) notify(t Notification) {
 	}
 }
 
-func (s *ReplaySubject) call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (s *replaySubject) call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	if s.try.Lock() {
 		ctx, cancel := context.WithCancel(ctx)
 
@@ -134,15 +149,4 @@ func (s *ReplaySubject) call(ctx context.Context, sink Observer, source Observab
 	}
 	sink.Complete()
 	return canceledCtx, nothingToDo
-}
-
-// NewReplaySubject returns a new ReplaySubject.
-func NewReplaySubject(bufferSize int, windowTime time.Duration) *ReplaySubject {
-	s := &ReplaySubject{
-		bufferSize: bufferSize,
-		windowTime: windowTime,
-	}
-	s.Observer = s.notify
-	s.Observable = s.Observable.Lift(s.call)
-	return s
 }
