@@ -104,7 +104,7 @@ func CombineLatest(observables ...Observable) Observable {
 // when the Observable-of-Observables completes.
 func (Operators) CombineAll() OperatorFunc {
 	return func(source Observable) Observable {
-		op := ToObservablesOperator{CombineLatest}
+		op := toObservablesOperator{CombineLatest}
 		return source.Lift(op.Call)
 	}
 }

@@ -16,7 +16,7 @@ func TestOperators_ThrottleTime(t *testing.T) {
 			),
 			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				addLatencyToValue(0, 4),
-				ThrottleTimeOperator{
+				ThrottleTimeConfigure{
 					Duration: step(9),
 					Leading:  false,
 					Trailing: true,
@@ -24,7 +24,7 @@ func TestOperators_ThrottleTime(t *testing.T) {
 			),
 			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				addLatencyToValue(0, 4),
-				ThrottleTimeOperator{
+				ThrottleTimeConfigure{
 					Duration: step(9),
 					Leading:  true,
 					Trailing: true,

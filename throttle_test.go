@@ -24,7 +24,7 @@ func TestOperators_Throttle(t *testing.T) {
 			),
 			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				addLatencyToValue(0, 4),
-				ThrottleOperator{
+				ThrottleConfigure{
 					DurationSelector: func(interface{}) Observable {
 						return Interval(step(9))
 					},
@@ -34,7 +34,7 @@ func TestOperators_Throttle(t *testing.T) {
 			),
 			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				addLatencyToValue(0, 4),
-				ThrottleOperator{
+				ThrottleConfigure{
 					DurationSelector: func(interface{}) Observable {
 						return Interval(step(9))
 					},

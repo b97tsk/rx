@@ -119,7 +119,7 @@ func Zip(observables ...Observable) Observable {
 // Observable-of-Observables completes.
 func (Operators) ZipAll() OperatorFunc {
 	return func(source Observable) Observable {
-		op := ToObservablesOperator{Zip}
+		op := toObservablesOperator{Zip}
 		return source.Lift(op.Call)
 	}
 }

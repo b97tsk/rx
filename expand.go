@@ -7,19 +7,20 @@ import (
 	"github.com/b97tsk/rx/x/queue"
 )
 
-// ExpandOperator is an operator type.
-type ExpandOperator struct {
+// An ExpandConfigure is a configure for Expand.
+type ExpandConfigure struct {
 	Project    func(interface{}, int) Observable
 	Concurrent int
 }
 
-// MakeFunc creates an OperatorFunc from this operator.
-func (op ExpandOperator) MakeFunc() OperatorFunc {
-	return MakeFunc(op.Call)
+// MakeFunc creates an OperatorFunc from this type.
+func (conf ExpandConfigure) MakeFunc() OperatorFunc {
+	return MakeFunc(expandOperator(conf).Call)
 }
 
-// Call invokes an execution of this operator.
-func (op ExpandOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+type expandOperator ExpandConfigure
+
+func (op expandOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = Mutex(Finally(sink, cancel))
@@ -111,7 +112,7 @@ func (op ExpandOperator) Call(ctx context.Context, sink Observer, source Observa
 // source value as well as every output value. It's recursive.
 func (Operators) Expand(project func(interface{}, int) Observable) OperatorFunc {
 	return func(source Observable) Observable {
-		op := ExpandOperator{project, -1}
+		op := expandOperator{project, -1}
 		return source.Lift(op.Call)
 	}
 }

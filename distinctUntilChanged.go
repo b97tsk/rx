@@ -4,19 +4,20 @@ import (
 	"context"
 )
 
-// DistinctUntilChangedOperator is an operator type.
-type DistinctUntilChangedOperator struct {
+// A DistinctUntilChangedConfigure is a configure for DistinctUntilChanged.
+type DistinctUntilChangedConfigure struct {
 	Compare     func(interface{}, interface{}) bool
 	KeySelector func(interface{}) interface{}
 }
 
-// MakeFunc creates an OperatorFunc from this operator.
-func (op DistinctUntilChangedOperator) MakeFunc() OperatorFunc {
-	return MakeFunc(op.Call)
+// MakeFunc creates an OperatorFunc from this type.
+func (conf DistinctUntilChangedConfigure) MakeFunc() OperatorFunc {
+	return MakeFunc(distinctUntilChangedOperator(conf).Call)
 }
 
-// Call invokes an execution of this operator.
-func (op DistinctUntilChangedOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+type distinctUntilChangedOperator DistinctUntilChangedConfigure
+
+func (op distinctUntilChangedOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	var (
 		key    interface{}
 		hasKey bool
@@ -43,7 +44,7 @@ func (op DistinctUntilChangedOperator) Call(ctx context.Context, sink Observer, 
 // If a comparator function is not provided, an equality check is used by default.
 func (Operators) DistinctUntilChanged() OperatorFunc {
 	return func(source Observable) Observable {
-		op := DistinctUntilChangedOperator{defaultCompare, defaultKeySelector}
+		op := distinctUntilChangedOperator{defaultCompare, defaultKeySelector}
 		return source.Lift(op.Call)
 	}
 }

@@ -5,25 +5,26 @@ import (
 	"time"
 )
 
-// BufferTimeOperator is an operator type.
-type BufferTimeOperator struct {
+// A BufferTimeConfigure is a configure for BufferTime.
+type BufferTimeConfigure struct {
 	TimeSpan         time.Duration
 	CreationInterval time.Duration
 	MaxBufferSize    int
 }
+
+// MakeFunc creates an OperatorFunc from this type.
+func (conf BufferTimeConfigure) MakeFunc() OperatorFunc {
+	return MakeFunc(bufferTimeOperator(conf).Call)
+}
+
+type bufferTimeOperator BufferTimeConfigure
 
 type bufferTimeContext struct {
 	Cancel context.CancelFunc
 	Buffer []interface{}
 }
 
-// MakeFunc creates an OperatorFunc from this operator.
-func (op BufferTimeOperator) MakeFunc() OperatorFunc {
-	return MakeFunc(op.Call)
-}
-
-// Call invokes an execution of this operator.
-func (op BufferTimeOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (op bufferTimeOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = Finally(sink, cancel)
@@ -122,7 +123,7 @@ func (op BufferTimeOperator) Call(ctx context.Context, sink Observer, source Obs
 // periodically in time.
 func (Operators) BufferTime(timeSpan time.Duration, maxBufferSize int) OperatorFunc {
 	return func(source Observable) Observable {
-		op := BufferTimeOperator{
+		op := bufferTimeOperator{
 			TimeSpan:      timeSpan,
 			MaxBufferSize: maxBufferSize,
 		}

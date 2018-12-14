@@ -60,17 +60,17 @@ func TestOperators_BufferTime(t *testing.T) {
 		[]Observable{
 			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				addLatencyToValue(1, 2),
-				BufferTimeOperator{step(2), step(2), 0}.MakeFunc(),
+				BufferTimeConfigure{step(2), step(2), 0}.MakeFunc(),
 				toString,
 			),
 			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				addLatencyToValue(1, 2),
-				BufferTimeOperator{step(2), step(4), 0}.MakeFunc(),
+				BufferTimeConfigure{step(2), step(4), 0}.MakeFunc(),
 				toString,
 			),
 			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				addLatencyToValue(1, 2),
-				BufferTimeOperator{step(4), step(2), 0}.MakeFunc(),
+				BufferTimeConfigure{step(4), step(2), 0}.MakeFunc(),
 				toString,
 			),
 		},

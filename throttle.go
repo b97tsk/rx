@@ -4,20 +4,21 @@ import (
 	"context"
 )
 
-// ThrottleOperator is an operator type.
-type ThrottleOperator struct {
+// A ThrottleConfigure is a configure for Throttle.
+type ThrottleConfigure struct {
 	DurationSelector func(interface{}) Observable
 	Leading          bool
 	Trailing         bool
 }
 
-// MakeFunc creates an OperatorFunc from this operator.
-func (op ThrottleOperator) MakeFunc() OperatorFunc {
-	return MakeFunc(op.Call)
+// MakeFunc creates an OperatorFunc from this type.
+func (conf ThrottleConfigure) MakeFunc() OperatorFunc {
+	return MakeFunc(throttleOperator(conf).Call)
 }
 
-// Call invokes an execution of this operator.
-func (op ThrottleOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+type throttleOperator ThrottleConfigure
+
+func (op throttleOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = Finally(sink, cancel)
@@ -102,7 +103,7 @@ func (op ThrottleOperator) Call(ctx context.Context, sink Observer, source Obser
 // Observable.
 func (Operators) Throttle(durationSelector func(interface{}) Observable) OperatorFunc {
 	return func(source Observable) Observable {
-		op := ThrottleOperator{
+		op := throttleOperator{
 			DurationSelector: durationSelector,
 			Leading:          true,
 			Trailing:         false,

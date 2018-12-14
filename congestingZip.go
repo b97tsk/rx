@@ -79,7 +79,7 @@ func CongestingZip(observables ...Observable) Observable {
 // It's like ZipAll, but it congests subscribed Observables.
 func (Operators) CongestingZipAll() OperatorFunc {
 	return func(source Observable) Observable {
-		op := ToObservablesOperator{CongestingZip}
+		op := toObservablesOperator{CongestingZip}
 		return source.Lift(op.Call)
 	}
 }

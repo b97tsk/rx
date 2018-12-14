@@ -4,18 +4,19 @@ import (
 	"context"
 )
 
-// ToObservablesOperator is an operator type.
-type ToObservablesOperator struct {
+// A ToObservablesConfigure is a configure for ToObservables.
+type ToObservablesConfigure struct {
 	Flat func(observables ...Observable) Observable
 }
 
-// MakeFunc creates an OperatorFunc from this operator.
-func (op ToObservablesOperator) MakeFunc() OperatorFunc {
-	return MakeFunc(op.Call)
+// MakeFunc creates an OperatorFunc from this type.
+func (conf ToObservablesConfigure) MakeFunc() OperatorFunc {
+	return MakeFunc(toObservablesOperator(conf).Call)
 }
 
-// Call invokes an execution of this operator.
-func (op ToObservablesOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+type toObservablesOperator ToObservablesConfigure
+
+func (op toObservablesOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = Finally(sink, cancel)
@@ -57,7 +58,7 @@ func (op ToObservablesOperator) Call(ctx context.Context, sink Observer, source 
 // completes.
 func (Operators) ToObservables() OperatorFunc {
 	return func(source Observable) Observable {
-		op := ToObservablesOperator{}
+		op := toObservablesOperator{}
 		return source.Lift(op.Call)
 	}
 }
