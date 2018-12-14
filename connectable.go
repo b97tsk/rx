@@ -15,6 +15,7 @@ type ConnectableObservable struct {
 }
 
 type connectableObservable struct {
+	Observable
 	mutex          sync.Mutex
 	source         Observable
 	subjectFactory func() Subject
@@ -22,6 +23,19 @@ type connectableObservable struct {
 	disconnect     context.CancelFunc
 	subject        Subject
 	refCount       int
+}
+
+func newConnectableObservable(source Observable, subjectFactory func() Subject) *connectableObservable {
+	connectable := connectableObservable{
+		source:         source,
+		subjectFactory: subjectFactory,
+	}
+	connectable.Observable = Observable{}.Lift(
+		func(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+			return connectable.getSubject().Subscribe(ctx, sink)
+		},
+	)
+	return &connectable
 }
 
 func (o *connectableObservable) getSubjectLocked() Subject {
@@ -142,25 +156,6 @@ func (o ConnectableObservable) Connect() (context.Context, context.CancelFunc) {
 	return o.connect(false)
 }
 
-// Pipe stitches Operators together into a chain, returns the Observable result
-// of all of the Operators having been called in the order they were passed in.
-func (o ConnectableObservable) Pipe(operations ...OperatorFunc) Observable {
-	source := Observable{}.Lift(
-		func(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
-			return o.getSubject().Subscribe(ctx, sink)
-		},
-	)
-	for _, op := range operations {
-		source = op(source)
-	}
-	return source
-}
-
-// Subscribe subscribes a local Subject, which is used to multicast to many Observers.
-func (o ConnectableObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	return o.getSubject().Subscribe(ctx, sink)
-}
-
 type refCountOperator struct {
 	Connectable ConnectableObservable
 }
@@ -191,10 +186,7 @@ func (o ConnectableObservable) RefCount() Observable {
 // that waits until its Connect method is called before it begins emitting
 // items to those Observers that have subscribed to it.
 func (o Observable) Multicast(subjectFactory func() Subject) ConnectableObservable {
-	return ConnectableObservable{&connectableObservable{
-		source:         o,
-		subjectFactory: subjectFactory,
-	}}
+	return ConnectableObservable{newConnectableObservable(o, subjectFactory)}
 }
 
 // Publish is like Multicast, but it uses only one subject.
