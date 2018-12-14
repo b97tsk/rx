@@ -121,12 +121,9 @@ func (op bufferTimeOperator) Call(ctx context.Context, sink Observer, source Obs
 //
 // BufferTime collects values from the past as a slice, and emits those slices
 // periodically in time.
-func (Operators) BufferTime(timeSpan time.Duration, maxBufferSize int) OperatorFunc {
+func (Operators) BufferTime(timeSpan time.Duration) OperatorFunc {
 	return func(source Observable) Observable {
-		op := bufferTimeOperator{
-			TimeSpan:      timeSpan,
-			MaxBufferSize: maxBufferSize,
-		}
+		op := bufferTimeOperator{TimeSpan: timeSpan}
 		return source.Lift(op.Call)
 	}
 }

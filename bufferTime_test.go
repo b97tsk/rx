@@ -12,43 +12,49 @@ func TestOperators_BufferTime(t *testing.T) {
 		[]Observable{
 			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				addLatencyToValue(1, 2),
-				operators.BufferTime(step(2), 0),
+				operators.BufferTime(step(2)),
 				toString,
 			),
 			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				addLatencyToValue(1, 2),
-				operators.BufferTime(step(4), 0),
+				operators.BufferTime(step(4)),
 				toString,
 			),
 			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				addLatencyToValue(1, 2),
-				operators.BufferTime(step(6), 0),
-				toString,
-			),
-			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
-				addLatencyToValue(1, 2),
-				operators.BufferTime(step(8), 0),
-				toString,
-			),
-			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
-				addLatencyToValue(1, 2),
-				operators.BufferTime(step(8), 3),
-				toString,
-			),
-			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
-				addLatencyToValue(1, 2),
-				operators.BufferTime(step(8), 2),
-				toString,
-			),
-			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
-				addLatencyToValue(1, 2),
-				operators.BufferTime(step(8), 1),
+				operators.BufferTime(step(6)),
 				toString,
 			),
 		},
 		"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", "[G]", xComplete,
 		"[A B]", "[C D]", "[E F]", "[G]", xComplete,
 		"[A B C]", "[D E F]", "[G]", xComplete,
+	)
+	t.Log("----------")
+	subscribe(
+		t,
+		[]Observable{
+			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+				addLatencyToValue(1, 2),
+				BufferTimeConfigure{step(8), 0, 0}.MakeFunc(),
+				toString,
+			),
+			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+				addLatencyToValue(1, 2),
+				BufferTimeConfigure{step(8), 0, 3}.MakeFunc(),
+				toString,
+			),
+			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+				addLatencyToValue(1, 2),
+				BufferTimeConfigure{step(8), 0, 2}.MakeFunc(),
+				toString,
+			),
+			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+				addLatencyToValue(1, 2),
+				BufferTimeConfigure{step(8), 0, 1}.MakeFunc(),
+				toString,
+			),
+		},
 		"[A B C D]", "[E F G]", xComplete,
 		"[A B C]", "[D E F]", "[G]", xComplete,
 		"[A B]", "[C D]", "[E F]", "[G]", xComplete,
