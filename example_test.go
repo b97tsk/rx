@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	. "github.com/b97tsk/rx"
+	"github.com/b97tsk/rx"
 )
 
 func Example() {
-	var operators Operators
+	var operators rx.Operators
 
-	Range(1, 10).Pipe(
+	rx.Range(1, 10).Pipe(
 		operators.Filter(
 			func(val interface{}, idx int) bool {
 				return val.(int)%2 == 1
@@ -22,7 +22,7 @@ func Example() {
 			},
 		),
 		operators.Do(
-			func(t Notification) {
+			func(t rx.Notification) {
 				switch {
 				case t.HasValue:
 					fmt.Println(t.Value)
@@ -33,7 +33,7 @@ func Example() {
 				}
 			},
 		),
-	).Subscribe(context.Background(), NopObserver)
+	).Subscribe(context.Background(), rx.NopObserver)
 
 	// Output:
 	// 2
