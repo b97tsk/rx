@@ -15,13 +15,13 @@ func init() {
 	canceledCtx = ctx
 }
 
-func isDone(ctx context.Context) bool {
+func isDone(ctx context.Context) (isDone bool) {
 	select {
 	case <-ctx.Done():
-		return true
+		isDone = true
 	default:
-		return false
 	}
+	return
 }
 
 func defaultCompare(v1, v2 interface{}) bool {
@@ -34,7 +34,7 @@ func defaultKeySelector(val interface{}) interface{} {
 
 // ProjectToObservable type-casts each value to an Observable and returns it,
 // if failed, returns Throw(ErrNotObservable).
-func ProjectToObservable(val interface{}, index int) Observable {
+func ProjectToObservable(val interface{}, idx int) Observable {
 	if obs, ok := val.(Observable); ok {
 		return obs
 	}

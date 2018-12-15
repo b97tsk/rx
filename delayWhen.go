@@ -20,7 +20,7 @@ func (op delayWhenOperator) Call(ctx context.Context, sink Observer, source Obse
 		activeCount = uint32(1)
 	)
 
-	doSchedule := func(val interface{}, index int) {
+	doSchedule := func(val interface{}, idx int) {
 		scheduleCtx, scheduleCancel := context.WithCancel(ctx)
 
 		var observer Observer
@@ -45,7 +45,7 @@ func (op delayWhenOperator) Call(ctx context.Context, sink Observer, source Obse
 			}
 		}
 
-		obs := op.DurationSelector(val, index)
+		obs := op.DurationSelector(val, idx)
 		obs.Subscribe(scheduleCtx, observer.Notify)
 	}
 
