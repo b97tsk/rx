@@ -21,8 +21,8 @@ func (op countOperator) Call(ctx context.Context, sink Observer, source Observab
 	})
 }
 
-// Count creates an Observable that counts the number of emissions on the
-// source and emits that number when the source completes.
+// Count creates an Observable that counts the number of Next emissions on
+// the source and emits that number when the source completes.
 func (Operators) Count() OperatorFunc {
 	return func(source Observable) Observable {
 		op := countOperator{}

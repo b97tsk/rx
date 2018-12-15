@@ -37,10 +37,7 @@ func (op dematerializeOperator) Call(ctx context.Context, sink Observer, source 
 }
 
 // Dematerialize converts an Observable of Notification objects into the
-// emissions that they represent.
-//
-// Unwraps Notification objects as actual Next, Error and Complete emissions.
-// The opposite of Materialize.
+// emissions that they represent. It's the opposite of Materialize.
 func (Operators) Dematerialize() OperatorFunc {
 	return func(source Observable) Observable {
 		op := dematerializeOperator{}
