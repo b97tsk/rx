@@ -30,10 +30,16 @@ func TestOperators_Buffer(t *testing.T) {
 				operators.Buffer(Interval(step(8))),
 				toString,
 			),
+			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+				addLatencyToValue(1, 2),
+				operators.Buffer(Throw(xErrTest)),
+				toString,
+			),
 		},
 		"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", xComplete,
 		"[A B]", "[C D]", "[E F]", xComplete,
 		"[A B C]", "[D E F]", xComplete,
 		"[A B C D]", xComplete,
+		xErrTest,
 	)
 }

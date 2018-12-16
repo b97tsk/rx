@@ -13,21 +13,20 @@ func (op bufferOperator) Call(ctx context.Context, sink Observer, source Observa
 
 	sink = Finally(sink, cancel)
 
-	var (
-		buffer []interface{}
-		try    cancellableLocker
-	)
+	var buffer struct {
+		cancellableLocker
+		List []interface{}
+	}
 
 	op.Notifier.Subscribe(ctx, func(t Notification) {
-		if try.Lock() {
+		if buffer.Lock() {
 			switch {
 			case t.HasValue:
-				value := buffer
-				buffer = nil
-				sink.Next(value)
-				try.Unlock()
+				sink.Next(buffer.List)
+				buffer.List = nil
+				buffer.Unlock()
 			default:
-				try.CancelAndUnlock()
+				buffer.CancelAndUnlock()
 				sink(t)
 			}
 		}
@@ -38,13 +37,13 @@ func (op bufferOperator) Call(ctx context.Context, sink Observer, source Observa
 	}
 
 	source.Subscribe(ctx, func(t Notification) {
-		if try.Lock() {
+		if buffer.Lock() {
 			switch {
 			case t.HasValue:
-				buffer = append(buffer, t.Value)
-				try.Unlock()
+				buffer.List = append(buffer.List, t.Value)
+				buffer.Unlock()
 			default:
-				try.CancelAndUnlock()
+				buffer.CancelAndUnlock()
 				sink(t)
 			}
 		}
