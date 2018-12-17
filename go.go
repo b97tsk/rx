@@ -4,8 +4,7 @@ import (
 	"context"
 )
 
-// Go creates an Observable that asynchronously subscribes the source
-// Observable in a goroutine.
+// Go creates an Observable that mirrors the source Observable in a goroutine.
 func (Operators) Go() OperatorFunc {
 	return func(source Observable) Observable {
 		return source.Lift(

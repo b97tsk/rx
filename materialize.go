@@ -5,7 +5,7 @@ import (
 )
 
 // Materialize creates an Observable that represents all of the notifications
-// from the source Observable as Next emissions, and then completes.
+// from the source Observable as NEXT emissions, and then completes.
 func (Operators) Materialize() OperatorFunc {
 	return func(source Observable) Observable {
 		return source.Lift(

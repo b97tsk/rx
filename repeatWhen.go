@@ -83,10 +83,10 @@ func (op repeatWhenOperator) Call(ctx context.Context, sink Observer, source Obs
 }
 
 // RepeatWhen creates an Observable that mirrors the source Observable with
-// the exception of a Complete. If the source Observable completes, this
-// operator will emit nil to the Observable returned from notifier. If that
-// Observable emits a value, this operator will resubscribe to the source
-// Observable. Otherwise, this operator will emit a Complete on the child
+// the exception of COMPLETE emission. If the source Observable completes,
+// this operator will emit nil to the Observable returned from notifier. If
+// that Observable emits a value, this operator will resubscribe to the source
+// Observable. Otherwise, this operator will emit a COMPLETE on the child
 // subscription.
 func (Operators) RepeatWhen(notifier func(Observable) Observable) OperatorFunc {
 	return func(source Observable) Observable {

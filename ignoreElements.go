@@ -5,7 +5,7 @@ import (
 )
 
 // IgnoreElements creates an Observable that ignores all values emitted by the
-// source Observable and only passes Complete or Error emission.
+// source Observable and only passes ERROR or COMPLETE emission.
 func (Operators) IgnoreElements() OperatorFunc {
 	return func(source Observable) Observable {
 		return source.Lift(

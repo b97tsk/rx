@@ -88,11 +88,11 @@ func (op retryWhenOperator) Call(ctx context.Context, sink Observer, source Obse
 }
 
 // RetryWhen creates an Observable that mirrors the source Observable with
-// the exception of an Error. If the source Observable emits an Error, this
-// operator will emit the Error to the Observable returned from notifier. If
-// that Observable emits a value, this operator will resubscribe to the source
-// Observable. Otherwise, this operator will emit the last Error on the child
-// subscription.
+// the exception of ERROR emission. If the source Observable errors, this
+// operator will emit the error to the Observable returned from notifier.
+// If that Observable emits a value, this operator will resubscribe to the
+// source Observable. Otherwise, this operator will emit the last error on
+// the child subscription.
 func (Operators) RetryWhen(notifier func(Observable) Observable) OperatorFunc {
 	return func(source Observable) Observable {
 		op := retryWhenOperator{notifier}

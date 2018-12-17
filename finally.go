@@ -5,7 +5,7 @@ import (
 )
 
 // Finally creates an Observer that passes all emissions to the specified
-// Observer, in the case that an Error or Complete emission is passed, makes
+// Observer, in the case that an ERROR or COMPLETE emission is passed, makes
 // a call to the specified function.
 func Finally(sink Observer, finally func()) Observer {
 	return func(t Notification) {
@@ -19,7 +19,7 @@ func Finally(sink Observer, finally func()) Observer {
 }
 
 // Finally creates an Observable that mirrors the source Observable, in the
-// case that an Error or Complete emission is mirrored, makes a call to the
+// case that an ERROR or COMPLETE emission is mirrored, makes a call to the
 // specified function.
 func (Operators) Finally(finally func()) OperatorFunc {
 	return func(source Observable) Observable {

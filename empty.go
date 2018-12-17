@@ -12,7 +12,7 @@ var empty = Observable{}.Lift(
 )
 
 // Empty creates an Observable that emits no items to the Observer and
-// immediately emits a Complete notification.
+// immediately emits a COMPLETE notification.
 func Empty() Observable {
 	return empty
 }

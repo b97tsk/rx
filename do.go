@@ -37,8 +37,8 @@ func (Operators) DoOnNext(onNext func(interface{})) OperatorFunc {
 }
 
 // DoOnError creates an Observable that mirrors the source Observable, in
-// the case that the source emits an Error emission, performs a side effect
-// before mirroring that emission.
+// the case that the source errors, performs a side effect before mirroring
+// the ERROR emission.
 func (Operators) DoOnError(onError func(error)) OperatorFunc {
 	return func(source Observable) Observable {
 		return source.Lift(
@@ -55,8 +55,8 @@ func (Operators) DoOnError(onError func(error)) OperatorFunc {
 }
 
 // DoOnComplete creates an Observable that mirrors the source Observable, in
-// the case that the source emits an Error emission, performs a side effect
-// before mirroring that emission.
+// the case that the source completes, performs a side effect before mirroring
+// the COMPLETE emission.
 func (Operators) DoOnComplete(onComplete func()) OperatorFunc {
 	return func(source Observable) Observable {
 		return source.Lift(

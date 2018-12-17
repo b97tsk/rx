@@ -5,7 +5,7 @@ import (
 )
 
 // Throw creates an Observable that emits no items to the Observer and
-// immediately emits an Error notification.
+// immediately emits an ERROR notification.
 func Throw(err error) Observable {
 	return Observable{}.Lift(
 		func(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {

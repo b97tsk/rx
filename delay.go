@@ -63,7 +63,7 @@ func (op delayOperator) Call(ctx context.Context, sink Observer, source Observab
 			})
 			doSchedule(op.Duration)
 		case t.HasError:
-			// Error notification will not be delayed.
+			// ERROR notification will not be delayed.
 			queue.Init()
 			sink(t)
 		default:

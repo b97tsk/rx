@@ -83,7 +83,7 @@ func (op bufferWhenOperator) Call(ctx context.Context, sink Observer, source Obs
 // tells when to close the buffer and restart collecting.
 //
 // Dead loop could happen if closing Observables emit a value or complete as
-// soon as they are subscribed.
+// soon as they are subscribed to.
 func (Operators) BufferWhen(closingSelector func() Observable) OperatorFunc {
 	return func(source Observable) Observable {
 		op := bufferWhenOperator{closingSelector}

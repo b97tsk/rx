@@ -6,10 +6,10 @@ import (
 	"time"
 )
 
-// A ConnectableObservable is an Observable that only subscribes the source
-// Observable by calling its Connect method. Calling its Subscribe method
-// will not subscribe the source, instead, it subscribes a local Subject,
-// which means that its can be called many times with different Observers.
+// A ConnectableObservable is an Observable that only subscribes to the source
+// Observable by calling its Connect method. Calling its Subscribe method will
+// not subscribe the source, instead, it subscribes to a local Subject, which
+// means that it can be called many times with different Observers.
 type ConnectableObservable struct {
 	*connectableObservable
 }
