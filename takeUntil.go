@@ -23,7 +23,7 @@ func (op takeUntilOperator) Call(ctx context.Context, sink Observer, source Obse
 	})
 
 	if isDone(ctx) {
-		return canceledCtx, nothingToDo
+		return Done()
 	}
 
 	source.Subscribe(ctx, sink)

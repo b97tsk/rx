@@ -11,12 +11,12 @@ type fromSliceOperator struct {
 func (op fromSliceOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	for _, val := range op.Slice {
 		if isDone(ctx) {
-			return canceledCtx, nothingToDo
+			return Done()
 		}
 		sink.Next(val)
 	}
 	sink.Complete()
-	return canceledCtx, nothingToDo
+	return Done()
 }
 
 func just(one interface{}) Observable {
@@ -24,7 +24,7 @@ func just(one interface{}) Observable {
 		func(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 			sink.Next(one)
 			sink.Complete()
-			return canceledCtx, nothingToDo
+			return Done()
 		},
 	)
 }

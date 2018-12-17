@@ -10,13 +10,11 @@ type debounceOperator struct {
 
 func (op debounceOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
+	scheduleCtx, scheduleCancel := Done()
 
 	sink = Finally(sink, cancel)
 
 	var (
-		scheduleCtx    = canceledCtx
-		scheduleCancel = nothingToDo
-
 		latestValue    interface{}
 		hasLatestValue bool
 

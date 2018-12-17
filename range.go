@@ -11,12 +11,12 @@ type rangeOperator struct {
 func (op rangeOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	for index := op.Low; index < op.High; index++ {
 		if isDone(ctx) {
-			return canceledCtx, nothingToDo
+			return Done()
 		}
 		sink.Next(index)
 	}
 	sink.Complete()
-	return canceledCtx, nothingToDo
+	return Done()
 }
 
 // Range creates an Observable that emits a sequence of integers within a

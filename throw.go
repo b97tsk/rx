@@ -10,7 +10,7 @@ func Throw(err error) Observable {
 	return Observable{}.Lift(
 		func(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 			sink.Error(err)
-			return canceledCtx, nothingToDo
+			return Done()
 		},
 	)
 }

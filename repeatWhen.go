@@ -15,10 +15,10 @@ func (op repeatWhenOperator) Call(ctx context.Context, sink Observer, source Obs
 
 	sink = Mutex(Finally(sink, cancel))
 
+	var sourceLocker *cancellableLocker
+	sourceCtx, sourceCancel := Done()
+
 	var (
-		sourceLocker   *cancellableLocker
-		sourceCtx      = canceledCtx
-		sourceCancel   = nothingToDo
 		activeCount    = uint32(2)
 		subject        Subject
 		createSubject  func() Subject

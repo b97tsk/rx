@@ -71,7 +71,7 @@ func (op bufferToggleOperator) Call(ctx context.Context, sink Observer, source O
 	})
 
 	if isDone(ctx) {
-		return canceledCtx, nothingToDo
+		return Done()
 	}
 
 	source.Subscribe(ctx, func(t Notification) {

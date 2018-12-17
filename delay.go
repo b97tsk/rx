@@ -19,12 +19,11 @@ type delayValue struct {
 
 func (op delayOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
+	scheduleCtx, _ := Done()
 
 	sink = Finally(sink, cancel)
 
 	var (
-		scheduleCtx = canceledCtx
-
 		mutex      sync.Mutex
 		queue      queue.Queue
 		doSchedule func(time.Duration)

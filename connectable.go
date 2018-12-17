@@ -98,7 +98,7 @@ func (o *connectableObservable) connect(addRef bool) (context.Context, context.C
 		})
 
 		if isDone(ctx) {
-			return canceledCtx, nothingToDo
+			return Done()
 		}
 
 		connection = ctx

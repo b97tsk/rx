@@ -114,5 +114,5 @@ func (s *behaviorSubject) call(ctx context.Context, sink Observer, source Observ
 		sink.Complete()
 	}
 
-	return canceledCtx, nothingToDo
+	return Done()
 }

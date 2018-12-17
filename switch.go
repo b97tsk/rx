@@ -11,13 +11,11 @@ type switchMapOperator struct {
 
 func (op switchMapOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
+	childCtx, childCancel := Done()
 
 	sink = Mutex(Finally(sink, cancel))
 
 	var (
-		childCtx    = canceledCtx
-		childCancel = nothingToDo
-
 		mutex           sync.Mutex
 		outerIndex      = -1
 		activeIndex     = -1

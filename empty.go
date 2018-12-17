@@ -7,7 +7,7 @@ import (
 var empty = Observable{}.Lift(
 	func(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 		sink.Complete()
-		return canceledCtx, nothingToDo
+		return Done()
 	},
 )
 

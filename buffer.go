@@ -33,7 +33,7 @@ func (op bufferOperator) Call(ctx context.Context, sink Observer, source Observa
 	})
 
 	if isDone(ctx) {
-		return canceledCtx, nothingToDo
+		return Done()
 	}
 
 	source.Subscribe(ctx, func(t Notification) {

@@ -20,15 +20,12 @@ type timeoutOperator TimeoutConfigure
 
 func (op timeoutOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
-	childCtx, childCancel := context.WithCancel(ctx)
 
 	sink = Finally(sink, cancel)
 
-	var (
-		scheduleCancel = nothingToDo
-
-		try cancellableLocker
-	)
+	var try cancellableLocker
+	_, scheduleCancel := Done()
+	childCtx, childCancel := context.WithCancel(ctx)
 
 	doSchedule := func() {
 		scheduleCancel()

@@ -84,7 +84,7 @@ func (s *subject) call(ctx context.Context, sink Observer, source Observable) (c
 		sink.Complete()
 	}
 
-	return canceledCtx, nothingToDo
+	return Done()
 }
 
 // NewSubject returns a new Subject.

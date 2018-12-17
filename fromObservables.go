@@ -11,12 +11,12 @@ type fromObservablesOperator struct {
 func (op fromObservablesOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	for _, obs := range op.Observables {
 		if isDone(ctx) {
-			return canceledCtx, nothingToDo
+			return Done()
 		}
 		sink.Next(obs)
 	}
 	sink.Complete()
-	return canceledCtx, nothingToDo
+	return Done()
 }
 
 // FromObservables creates an Observable that emits some Observables

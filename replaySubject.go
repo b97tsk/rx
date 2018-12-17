@@ -136,17 +136,17 @@ func (s *replaySubject) call(ctx context.Context, sink Observer, source Observab
 
 	if s.err != nil {
 		sink.Error(s.err)
-		return canceledCtx, nothingToDo
+		return Done()
 	}
 
 	s.trimBuffer()
 
 	for i, j := 0, s.buffer.Len(); i < j; i++ {
 		if isDone(ctx) {
-			return canceledCtx, nothingToDo
+			return Done()
 		}
 		sink.Next(s.buffer.At(i).(replaySubjectValue).Value)
 	}
 	sink.Complete()
-	return canceledCtx, nothingToDo
+	return Done()
 }

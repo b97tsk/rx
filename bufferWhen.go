@@ -54,7 +54,7 @@ func (op bufferWhenOperator) Call(ctx context.Context, sink Observer, source Obs
 	avoidRecursive.Do(openBuffer)
 
 	if isDone(ctx) {
-		return canceledCtx, nothingToDo
+		return Done()
 	}
 
 	source.Subscribe(ctx, func(t Notification) {

@@ -11,12 +11,11 @@ type debounceTimeOperator struct {
 
 func (op debounceTimeOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
+	_, scheduleCancel := Done()
 
 	sink = Finally(sink, cancel)
 
 	var (
-		scheduleCancel = nothingToDo
-
 		latestValue    interface{}
 		hasLatestValue bool
 

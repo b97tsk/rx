@@ -12,17 +12,17 @@ func (op fromChannelOperator) Call(ctx context.Context, sink Observer, source Ob
 	for {
 		select {
 		case <-ctx.Done():
-			return canceledCtx, nothingToDo
+			return Done()
 		case val, ok := <-op.Chan:
 			if !ok {
 				sink.Complete()
-				return canceledCtx, nothingToDo
+				return Done()
 			}
 			sink.Next(val)
 			// Check done before next loop, such that Take(1)
 			// would exactly take one from the channel.
 			if isDone(ctx) {
-				return canceledCtx, nothingToDo
+				return Done()
 			}
 		}
 	}

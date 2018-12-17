@@ -15,10 +15,10 @@ func (op retryWhenOperator) Call(ctx context.Context, sink Observer, source Obse
 
 	sink = Mutex(Finally(sink, cancel))
 
+	var sourceLocker *cancellableLocker
+	sourceCtx, sourceCancel := Done()
+
 	var (
-		sourceLocker   *cancellableLocker
-		sourceCtx      = canceledCtx
-		sourceCancel   = nothingToDo
 		activeCount    = uint32(2)
 		lastError      error
 		subject        Subject

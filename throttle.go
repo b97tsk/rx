@@ -20,13 +20,11 @@ type throttleOperator ThrottleConfigure
 
 func (op throttleOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
+	throttleCtx, throttleCancel := Done()
 
 	sink = Finally(sink, cancel)
 
 	var (
-		throttleCtx    = canceledCtx
-		throttleCancel = nothingToDo
-
 		trailingValue    interface{}
 		hasTrailingValue bool
 
