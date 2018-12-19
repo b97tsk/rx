@@ -31,11 +31,6 @@ func (op throttleOperator) Call(ctx context.Context, sink Observer, source Obser
 		try cancellableLocker
 	)
 
-	leading, trailing := op.Leading, op.Trailing
-	if !leading && !trailing {
-		leading = true
-	}
-
 	var doThrottle func(interface{})
 
 	doThrottle = func(val interface{}) {
@@ -45,7 +40,7 @@ func (op throttleOperator) Call(ctx context.Context, sink Observer, source Obser
 		observer = func(t Notification) {
 			observer = NopObserver
 			defer throttleCancel()
-			if trailing || t.HasError {
+			if op.Trailing || t.HasError {
 				if try.Lock() {
 					switch {
 					case t.HasError:
@@ -73,7 +68,7 @@ func (op throttleOperator) Call(ctx context.Context, sink Observer, source Obser
 				hasTrailingValue = true
 				if isDone(throttleCtx) {
 					doThrottle(t.Value)
-					if leading {
+					if op.Leading {
 						sink(t)
 						hasTrailingValue = false
 					}

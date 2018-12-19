@@ -32,16 +32,11 @@ func (op throttleTimeOperator) Call(ctx context.Context, sink Observer, source O
 		try cancellableLocker
 	)
 
-	leading, trailing := op.Leading, op.Trailing
-	if !leading && !trailing {
-		leading = true
-	}
-
 	var doThrottle func()
 
 	doThrottle = func() {
 		throttleCtx, _ = scheduleOnce(ctx, op.Duration, func() {
-			if trailing {
+			if op.Trailing {
 				if try.Lock() {
 					if hasTrailingValue {
 						sink.Next(trailingValue)
@@ -62,7 +57,7 @@ func (op throttleTimeOperator) Call(ctx context.Context, sink Observer, source O
 				hasTrailingValue = true
 				if isDone(throttleCtx) {
 					doThrottle()
-					if leading {
+					if op.Leading {
 						sink(t)
 						hasTrailingValue = false
 					}

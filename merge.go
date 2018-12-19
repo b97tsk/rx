@@ -34,11 +34,6 @@ func (op mergeOperator) Call(ctx context.Context, sink Observer, source Observab
 		doNextLocked    func()
 	)
 
-	concurrent := op.Concurrent
-	if concurrent == 0 {
-		concurrent = -1
-	}
-
 	doNextLocked = func() {
 		outerIndex++
 		outerIndex := outerIndex
@@ -71,7 +66,7 @@ func (op mergeOperator) Call(ctx context.Context, sink Observer, source Observab
 		case t.HasValue:
 			mutex.Lock()
 			buffer.PushBack(t.Value)
-			if activeCount != concurrent {
+			if activeCount != op.Concurrent {
 				activeCount++
 				doNextLocked()
 			}

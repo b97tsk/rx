@@ -31,16 +31,11 @@ func (op congestingMergeOperator) Call(ctx context.Context, sink Observer, sourc
 		completeSignal = make(chan struct{}, 1)
 	)
 
-	concurrent := op.Concurrent
-	if concurrent == 0 {
-		concurrent = -1
-	}
-
 	source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			mutex.Lock()
-			for activeCount == concurrent {
+			for activeCount == op.Concurrent {
 				mutex.Unlock()
 				select {
 				case <-done:
