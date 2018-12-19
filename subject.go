@@ -11,6 +11,15 @@ type Subject struct {
 	Observer
 }
 
+// NewSubject creates a new Subject.
+func NewSubject() Subject {
+	s := new(subject)
+	return Subject{
+		Observable: Observable{}.Lift(s.call),
+		Observer:   s.notify,
+	}
+}
+
 type subject struct {
 	try       cancellableLocker
 	observers []*Observer
@@ -85,13 +94,4 @@ func (s *subject) call(ctx context.Context, sink Observer, source Observable) (c
 	}
 
 	return Done()
-}
-
-// NewSubject returns a new Subject.
-func NewSubject() Subject {
-	s := new(subject)
-	return Subject{
-		Observable: Observable{}.Lift(s.call),
-		Observer:   s.notify,
-	}
 }
