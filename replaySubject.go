@@ -14,14 +14,16 @@ type ReplaySubject struct {
 	*replaySubject
 }
 
-// NewReplaySubject returns a new ReplaySubject.
+// NewReplaySubject creates a new ReplaySubject.
 func NewReplaySubject(bufferSize int, windowTime time.Duration) ReplaySubject {
 	s := &replaySubject{
-		bufferSize: bufferSize,
-		windowTime: windowTime,
+		BufferSize: bufferSize,
+		WindowTime: windowTime,
 	}
-	s.Observer = s.notify
-	s.Observable = s.Observable.Lift(s.call)
+	s.Subject = Subject{
+		Observable: Observable{}.Lift(s.call),
+		Observer:   s.notify,
+	}
 	return ReplaySubject{s}
 }
 
@@ -31,8 +33,8 @@ type replaySubject struct {
 	observers  []*Observer
 	err        error
 	buffer     queue.Queue
-	bufferSize int
-	windowTime time.Duration
+	BufferSize int
+	WindowTime time.Duration
 }
 
 type replaySubjectValue struct {
@@ -41,12 +43,12 @@ type replaySubjectValue struct {
 }
 
 func (s *replaySubject) trimBuffer() {
-	if s.bufferSize > 0 {
-		for s.buffer.Len() > s.bufferSize {
+	if s.BufferSize > 0 {
+		for s.buffer.Len() > s.BufferSize {
 			s.buffer.PopFront()
 		}
 	}
-	if s.windowTime > 0 {
+	if s.WindowTime > 0 {
 		now := time.Now()
 		for s.buffer.Len() > 0 {
 			if s.buffer.Front().(replaySubjectValue).Deadline.After(now) {
@@ -62,8 +64,8 @@ func (s *replaySubject) notify(t Notification) {
 		switch {
 		case t.HasValue:
 			var deadline time.Time
-			if s.windowTime > 0 {
-				deadline = time.Now().Add(s.windowTime)
+			if s.WindowTime > 0 {
+				deadline = time.Now().Add(s.WindowTime)
 			}
 			s.buffer.PushBack(replaySubjectValue{deadline, t.Value})
 			s.trimBuffer()
