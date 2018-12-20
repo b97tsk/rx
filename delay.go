@@ -19,24 +19,25 @@ type delayValue struct {
 
 func (op delayOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
-	scheduleCtx, _ := Done()
 
 	sink = Finally(sink, cancel)
 
 	var (
-		mutex      sync.Mutex
-		queue      queue.Queue
-		doSchedule func(time.Duration)
+		mutex       sync.Mutex
+		queue       queue.Queue
+		doSchedule  func(time.Duration)
+		isScheduled bool
 	)
 
 	doSchedule = func(timeout time.Duration) {
-		if !isDone(scheduleCtx) {
+		if isScheduled {
 			return
 		}
-
-		scheduleCtx, _ = scheduleOnce(ctx, timeout, func() {
+		isScheduled = true
+		scheduleOnce(ctx, timeout, func() {
 			mutex.Lock()
 			defer mutex.Unlock()
+			isScheduled = false
 			for queue.Len() > 0 {
 				if isDone(ctx) {
 					return
