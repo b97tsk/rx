@@ -12,11 +12,13 @@ type BehaviorSubject struct {
 	*behaviorSubject
 }
 
-// NewBehaviorSubject returns a new BehaviorSubject.
+// NewBehaviorSubject creates a new BehaviorSubject.
 func NewBehaviorSubject(val interface{}) BehaviorSubject {
 	s := new(behaviorSubject)
-	s.Observer = s.notify
-	s.Observable = s.Observable.Lift(s.call)
+	s.Subject = Subject{
+		Observable: Observable{}.Lift(s.call),
+		Observer:   s.notify,
+	}
 	s.val.Store(behaviorSubjectValue{val})
 	return BehaviorSubject{s}
 }
@@ -30,8 +32,8 @@ type behaviorSubject struct {
 	Subject
 	try       cancellableLocker
 	observers []*Observer
-	val       atomic.Value
 	err       error
+	val       atomic.Value
 }
 
 type behaviorSubjectValue struct {
