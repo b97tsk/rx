@@ -1,21 +1,20 @@
 package rx
 
 import (
-	"math"
-	"sync/atomic"
+	"github.com/b97tsk/rx/x/atomic"
 )
 
 type avoidRecursiveCalls struct {
-	n uint32
+	counter atomic.Uint32
 }
 
 func (arc *avoidRecursiveCalls) Do(work func()) {
-	if atomic.AddUint32(&arc.n, 1) > 1 {
+	if arc.counter.Add(1) > 1 {
 		return
 	}
 	yes := true
 	for yes {
 		work()
-		yes = atomic.AddUint32(&arc.n, math.MaxUint32) > 0
+		yes = arc.counter.Sub(1) > 0
 	}
 }

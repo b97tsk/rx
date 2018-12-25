@@ -2,8 +2,8 @@ package rx
 
 import (
 	"context"
-	"math"
-	"sync/atomic"
+
+	"github.com/b97tsk/rx/x/atomic"
 )
 
 type delayWhenOperator struct {
@@ -17,7 +17,7 @@ func (op delayWhenOperator) Call(ctx context.Context, sink Observer, source Obse
 
 	var (
 		outerIndex  = -1
-		activeCount = uint32(1)
+		activeCount = atomic.Uint32(1)
 	)
 
 	doSchedule := func(val interface{}, idx int) {
@@ -31,7 +31,7 @@ func (op delayWhenOperator) Call(ctx context.Context, sink Observer, source Obse
 			case t.HasValue:
 				sink.Next(val)
 
-				if atomic.AddUint32(&activeCount, math.MaxUint32) == 0 {
+				if activeCount.Sub(1) == 0 {
 					sink.Complete()
 				}
 
@@ -39,7 +39,7 @@ func (op delayWhenOperator) Call(ctx context.Context, sink Observer, source Obse
 				sink(t)
 
 			default:
-				if atomic.AddUint32(&activeCount, math.MaxUint32) == 0 {
+				if activeCount.Sub(1) == 0 {
 					sink(t)
 				}
 			}
@@ -53,12 +53,12 @@ func (op delayWhenOperator) Call(ctx context.Context, sink Observer, source Obse
 		switch {
 		case t.HasValue:
 			outerIndex++
-			atomic.AddUint32(&activeCount, 1)
+			activeCount.Add(1)
 			doSchedule(t.Value, outerIndex)
 		case t.HasError:
 			sink(t)
 		default:
-			if atomic.AddUint32(&activeCount, math.MaxUint32) == 0 {
+			if activeCount.Sub(1) == 0 {
 				sink(t)
 			}
 		}

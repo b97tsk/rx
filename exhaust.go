@@ -2,8 +2,8 @@ package rx
 
 import (
 	"context"
-	"math"
-	"sync/atomic"
+
+	"github.com/b97tsk/rx/x/atomic"
 )
 
 type exhaustMapOperator struct {
@@ -17,13 +17,13 @@ func (op exhaustMapOperator) Call(ctx context.Context, sink Observer, source Obs
 
 	var (
 		outerIndex  = -1
-		activeCount = uint32(1)
+		activeCount = atomic.Uint32(1)
 	)
 
 	source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
-			if !atomic.CompareAndSwapUint32(&activeCount, 1, 2) {
+			if !activeCount.Cas(1, 2) {
 				break
 			}
 
@@ -37,7 +37,7 @@ func (op exhaustMapOperator) Call(ctx context.Context, sink Observer, source Obs
 				case t.HasValue || t.HasError:
 					sink(t)
 				default:
-					if atomic.AddUint32(&activeCount, math.MaxUint32) > 0 {
+					if activeCount.Sub(1) > 0 {
 						break
 					}
 					sink(t)
@@ -48,7 +48,7 @@ func (op exhaustMapOperator) Call(ctx context.Context, sink Observer, source Obs
 			sink(t)
 
 		default:
-			if atomic.AddUint32(&activeCount, math.MaxUint32) > 0 {
+			if activeCount.Sub(1) > 0 {
 				break
 			}
 			sink(t)

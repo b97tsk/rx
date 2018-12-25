@@ -2,7 +2,8 @@ package rx
 
 import (
 	"context"
-	"sync/atomic"
+
+	"github.com/b97tsk/rx/x/atomic"
 )
 
 type skipUntilOperator struct {
@@ -15,7 +16,7 @@ func (op skipUntilOperator) Call(ctx context.Context, sink Observer, source Obse
 	sinkNoMutex := Finally(sink, cancel)
 	sink = Mutex(sinkNoMutex)
 
-	var noSkipping uint32
+	var noSkipping atomic.Uint32
 
 	{
 		ctx, cancel := context.WithCancel(ctx)
@@ -25,7 +26,7 @@ func (op skipUntilOperator) Call(ctx context.Context, sink Observer, source Obse
 		observer = func(t Notification) {
 			switch {
 			case t.HasValue:
-				atomic.StoreUint32(&noSkipping, 1)
+				noSkipping.Store(1)
 				observer = NopObserver
 				cancel()
 			case t.HasError:
@@ -48,7 +49,7 @@ func (op skipUntilOperator) Call(ctx context.Context, sink Observer, source Obse
 		observer = func(t Notification) {
 			switch {
 			case t.HasValue:
-				if atomic.LoadUint32(&noSkipping) != 0 {
+				if noSkipping.Equals(1) {
 					observer = sinkNoMutex
 					sinkNoMutex(t)
 				}

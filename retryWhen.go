@@ -2,8 +2,8 @@ package rx
 
 import (
 	"context"
-	"math"
-	"sync/atomic"
+
+	"github.com/b97tsk/rx/x/atomic"
 )
 
 type retryWhenOperator struct {
@@ -19,7 +19,7 @@ func (op retryWhenOperator) Call(ctx context.Context, sink Observer, source Obse
 	sourceCtx, sourceCancel := Done()
 
 	var (
-		activeCount    = uint32(2)
+		activeCount    = atomic.Uint32(2)
 		lastError      error
 		subject        Subject
 		createSubject  func() Subject
@@ -38,7 +38,7 @@ func (op retryWhenOperator) Call(ctx context.Context, sink Observer, source Obse
 					try.Unlock()
 				case t.HasError:
 					lastError = t.Value.(error)
-					activeCount := atomic.AddUint32(&activeCount, math.MaxUint32)
+					activeCount := activeCount.Sub(1)
 					try.CancelAndUnlock()
 					if activeCount == 0 {
 						sink(t)
@@ -66,7 +66,7 @@ func (op retryWhenOperator) Call(ctx context.Context, sink Observer, source Obse
 				if sourceLocker.Lock() {
 					sourceLocker.CancelAndUnlock()
 				} else {
-					atomic.AddUint32(&activeCount, 1)
+					activeCount.Add(1)
 				}
 				avoidRecursive.Do(subscribe)
 
@@ -74,7 +74,7 @@ func (op retryWhenOperator) Call(ctx context.Context, sink Observer, source Obse
 				sink(t)
 
 			default:
-				if atomic.AddUint32(&activeCount, math.MaxUint32) == 0 {
+				if activeCount.Sub(1) == 0 {
 					sink.Error(lastError)
 				}
 			}

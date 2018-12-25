@@ -2,7 +2,8 @@ package rx
 
 import (
 	"context"
-	"sync/atomic"
+
+	"github.com/b97tsk/rx/x/atomic"
 )
 
 type auditOperator struct {
@@ -22,13 +23,13 @@ func (op auditOperator) Call(ctx context.Context, sink Observer, source Observab
 
 	var (
 		latestValue interface{}
-		state       uint32
+		state       atomic.Uint32
 
 		try cancellableLocker
 	)
 
 	doSchedule := func(val interface{}) {
-		if !atomic.CompareAndSwapUint32(&state, stateHasValue, stateScheduled) {
+		if !state.Cas(stateHasValue, stateScheduled) {
 			return
 		}
 
@@ -45,7 +46,7 @@ func (op auditOperator) Call(ctx context.Context, sink Observer, source Observab
 					return
 				}
 				sink.Next(latestValue)
-				atomic.StoreUint32(&state, stateZero)
+				state.Store(stateZero)
 				try.Unlock()
 			}
 		}
@@ -59,9 +60,7 @@ func (op auditOperator) Call(ctx context.Context, sink Observer, source Observab
 			switch {
 			case t.HasValue:
 				latestValue = t.Value
-				if state == stateZero {
-					state = stateHasValue
-				}
+				state.Cas(stateZero, stateHasValue)
 				try.Unlock()
 				doSchedule(t.Value)
 			default:

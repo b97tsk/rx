@@ -2,22 +2,23 @@ package rx
 
 import (
 	"sync"
-	"sync/atomic"
+
+	"github.com/b97tsk/rx/x/atomic"
 )
 
 type cancellableLocker struct {
 	mutex    sync.Mutex
-	canceled uint32
+	canceled atomic.Uint32
 }
 
 func (l *cancellableLocker) Lock() bool {
-	if atomic.LoadUint32(&l.canceled) != 0 {
+	if l.canceled.Equals(1) {
 		return false
 	}
 
 	l.mutex.Lock()
 
-	if atomic.LoadUint32(&l.canceled) != 0 {
+	if l.canceled.Equals(1) {
 		l.mutex.Unlock()
 		return false
 	}
@@ -30,6 +31,6 @@ func (l *cancellableLocker) Unlock() {
 }
 
 func (l *cancellableLocker) CancelAndUnlock() {
-	atomic.StoreUint32(&l.canceled, 1)
+	l.canceled.Store(1)
 	l.mutex.Unlock()
 }

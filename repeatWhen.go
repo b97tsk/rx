@@ -2,8 +2,8 @@ package rx
 
 import (
 	"context"
-	"math"
-	"sync/atomic"
+
+	"github.com/b97tsk/rx/x/atomic"
 )
 
 type repeatWhenOperator struct {
@@ -19,7 +19,7 @@ func (op repeatWhenOperator) Call(ctx context.Context, sink Observer, source Obs
 	sourceCtx, sourceCancel := Done()
 
 	var (
-		activeCount    = uint32(2)
+		activeCount    = atomic.Uint32(2)
 		subject        Subject
 		createSubject  func() Subject
 		avoidRecursive avoidRecursiveCalls
@@ -36,7 +36,7 @@ func (op repeatWhenOperator) Call(ctx context.Context, sink Observer, source Obs
 					sink(t)
 					try.Unlock()
 				default:
-					activeCount := atomic.AddUint32(&activeCount, math.MaxUint32)
+					activeCount := activeCount.Sub(1)
 					try.CancelAndUnlock()
 					if activeCount == 0 {
 						sink(t)
@@ -61,7 +61,7 @@ func (op repeatWhenOperator) Call(ctx context.Context, sink Observer, source Obs
 				if sourceLocker.Lock() {
 					sourceLocker.CancelAndUnlock()
 				} else {
-					atomic.AddUint32(&activeCount, 1)
+					activeCount.Add(1)
 				}
 				avoidRecursive.Do(subscribe)
 
@@ -69,7 +69,7 @@ func (op repeatWhenOperator) Call(ctx context.Context, sink Observer, source Obs
 				sink(t)
 
 			default:
-				if atomic.AddUint32(&activeCount, math.MaxUint32) == 0 {
+				if activeCount.Sub(1) == 0 {
 					sink(t)
 				}
 			}
