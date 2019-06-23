@@ -48,13 +48,15 @@ func (s *behaviorSubject) notify(t Notification) {
 	if s.try.Lock() {
 		switch {
 		case t.HasValue:
+			observers := append([]*Observer(nil), s.observers...)
+
 			s.val.Store(behaviorSubjectValue{t.Value})
 
-			for _, sink := range s.observers {
+			s.try.Unlock()
+
+			for _, sink := range observers {
 				sink.Notify(t)
 			}
-
-			s.try.Unlock()
 
 		case t.HasError:
 			observers := s.observers
@@ -84,7 +86,7 @@ func (s *behaviorSubject) call(ctx context.Context, sink Observer, source Observ
 	if s.try.Lock() {
 		ctx, cancel := context.WithCancel(ctx)
 
-		observer := Finally(sink, cancel)
+		observer := Mutex(Finally(sink, cancel))
 		s.observers = append(s.observers, &observer)
 
 		go func() {

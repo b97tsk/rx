@@ -30,11 +30,13 @@ func (s *subject) notify(t Notification) {
 	if s.try.Lock() {
 		switch {
 		case t.HasValue:
-			for _, sink := range s.observers {
-				sink.Notify(t)
-			}
+			observers := append([]*Observer(nil), s.observers...)
 
 			s.try.Unlock()
+
+			for _, sink := range observers {
+				sink.Notify(t)
+			}
 
 		case t.HasError:
 			observers := s.observers
@@ -64,7 +66,7 @@ func (s *subject) call(ctx context.Context, sink Observer, source Observable) (c
 	if s.try.Lock() {
 		ctx, cancel := context.WithCancel(ctx)
 
-		observer := Finally(sink, cancel)
+		observer := Mutex(Finally(sink, cancel))
 		s.observers = append(s.observers, &observer)
 
 		go func() {

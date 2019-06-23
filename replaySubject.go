@@ -63,6 +63,8 @@ func (s *replaySubject) notify(t Notification) {
 	if s.try.Lock() {
 		switch {
 		case t.HasValue:
+			observers := append([]*Observer(nil), s.observers...)
+
 			var deadline time.Time
 			if s.WindowTime > 0 {
 				deadline = time.Now().Add(s.WindowTime)
@@ -70,11 +72,11 @@ func (s *replaySubject) notify(t Notification) {
 			s.buffer.PushBack(replaySubjectValue{deadline, t.Value})
 			s.trimBuffer()
 
-			for _, sink := range s.observers {
+			s.try.Unlock()
+
+			for _, sink := range observers {
 				sink.Notify(t)
 			}
-
-			s.try.Unlock()
 
 		case t.HasError:
 			observers := s.observers
@@ -104,7 +106,7 @@ func (s *replaySubject) call(ctx context.Context, sink Observer, source Observab
 	if s.try.Lock() {
 		ctx, cancel := context.WithCancel(ctx)
 
-		observer := Finally(sink, cancel)
+		observer := Mutex(Finally(sink, cancel))
 		s.observers = append(s.observers, &observer)
 
 		go func() {
