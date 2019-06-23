@@ -22,7 +22,7 @@ func NewSubject() Subject {
 
 type subject struct {
 	try       cancellableLocker
-	observers []*Observer
+	observers observerList
 	err       error
 }
 
@@ -30,7 +30,7 @@ func (s *subject) notify(t Notification) {
 	if s.try.Lock() {
 		switch {
 		case t.HasValue:
-			observers := append([]*Observer(nil), s.observers...)
+			observers, releaseRef := s.observers.AddRef()
 
 			s.try.Unlock()
 
@@ -38,9 +38,10 @@ func (s *subject) notify(t Notification) {
 				sink.Notify(t)
 			}
 
+			releaseRef()
+
 		case t.HasError:
-			observers := s.observers
-			s.observers = nil
+			observers := s.observers.Swap(nil)
 			s.err = t.Value.(error)
 
 			s.try.CancelAndUnlock()
@@ -50,8 +51,7 @@ func (s *subject) notify(t Notification) {
 			}
 
 		default:
-			observers := s.observers
-			s.observers = nil
+			observers := s.observers.Swap(nil)
 
 			s.try.CancelAndUnlock()
 
@@ -67,20 +67,12 @@ func (s *subject) call(ctx context.Context, sink Observer, source Observable) (c
 		ctx, cancel := context.WithCancel(ctx)
 
 		observer := Mutex(Finally(sink, cancel))
-		s.observers = append(s.observers, &observer)
+		s.observers.Append(&observer)
 
 		go func() {
 			<-ctx.Done()
 			if s.try.Lock() {
-				for i, sink := range s.observers {
-					if sink == &observer {
-						copy(s.observers[i:], s.observers[i+1:])
-						n := len(s.observers)
-						s.observers[n-1] = nil
-						s.observers = s.observers[:n-1]
-						break
-					}
-				}
+				s.observers.Remove(&observer)
 				s.try.Unlock()
 			}
 		}()

@@ -31,7 +31,7 @@ func (s BehaviorSubject) Value() interface{} {
 type behaviorSubject struct {
 	Subject
 	try       cancellableLocker
-	observers []*Observer
+	observers observerList
 	err       error
 	val       atomic.Value
 }
@@ -48,7 +48,7 @@ func (s *behaviorSubject) notify(t Notification) {
 	if s.try.Lock() {
 		switch {
 		case t.HasValue:
-			observers := append([]*Observer(nil), s.observers...)
+			observers, releaseRef := s.observers.AddRef()
 
 			s.val.Store(behaviorSubjectValue{t.Value})
 
@@ -58,9 +58,10 @@ func (s *behaviorSubject) notify(t Notification) {
 				sink.Notify(t)
 			}
 
+			releaseRef()
+
 		case t.HasError:
-			observers := s.observers
-			s.observers = nil
+			observers := s.observers.Swap(nil)
 			s.err = t.Value.(error)
 
 			s.try.CancelAndUnlock()
@@ -70,8 +71,7 @@ func (s *behaviorSubject) notify(t Notification) {
 			}
 
 		default:
-			observers := s.observers
-			s.observers = nil
+			observers := s.observers.Swap(nil)
 
 			s.try.CancelAndUnlock()
 
@@ -87,20 +87,12 @@ func (s *behaviorSubject) call(ctx context.Context, sink Observer, source Observ
 		ctx, cancel := context.WithCancel(ctx)
 
 		observer := Mutex(Finally(sink, cancel))
-		s.observers = append(s.observers, &observer)
+		s.observers.Append(&observer)
 
 		go func() {
 			<-ctx.Done()
 			if s.try.Lock() {
-				for i, sink := range s.observers {
-					if sink == &observer {
-						copy(s.observers[i:], s.observers[i+1:])
-						n := len(s.observers)
-						s.observers[n-1] = nil
-						s.observers = s.observers[:n-1]
-						break
-					}
-				}
+				s.observers.Remove(&observer)
 				s.try.Unlock()
 			}
 		}()
