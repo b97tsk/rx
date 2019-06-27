@@ -19,6 +19,8 @@ func NewBehaviorSubject(val interface{}) BehaviorSubject {
 		Observable: Observable{}.Lift(s.call),
 		Observer:   s.notify,
 	}
+	s.lock = make(chan struct{}, 1)
+	s.lock <- struct{}{}
 	s.val.Store(behaviorSubjectValue{val})
 	return BehaviorSubject{s}
 }
@@ -30,7 +32,7 @@ func (s BehaviorSubject) Value() interface{} {
 
 type behaviorSubject struct {
 	Subject
-	try       cancellableLocker
+	lock      chan struct{}
 	observers observerList
 	err       error
 	val       atomic.Value
@@ -45,14 +47,14 @@ func (s *behaviorSubject) getValue() interface{} {
 }
 
 func (s *behaviorSubject) notify(t Notification) {
-	if s.try.Lock() {
+	if _, ok := <-s.lock; ok {
 		switch {
 		case t.HasValue:
 			observers, releaseRef := s.observers.AddRef()
 
 			s.val.Store(behaviorSubjectValue{t.Value})
 
-			s.try.Unlock()
+			s.lock <- struct{}{}
 
 			for _, sink := range observers {
 				sink.Notify(t)
@@ -64,7 +66,7 @@ func (s *behaviorSubject) notify(t Notification) {
 			observers := s.observers.Swap(nil)
 			s.err = t.Value.(error)
 
-			s.try.CancelAndUnlock()
+			close(s.lock)
 
 			for _, sink := range observers {
 				sink.Notify(t)
@@ -73,7 +75,7 @@ func (s *behaviorSubject) notify(t Notification) {
 		default:
 			observers := s.observers.Swap(nil)
 
-			s.try.CancelAndUnlock()
+			close(s.lock)
 
 			for _, sink := range observers {
 				sink.Notify(t)
@@ -83,7 +85,7 @@ func (s *behaviorSubject) notify(t Notification) {
 }
 
 func (s *behaviorSubject) call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
-	if s.try.Lock() {
+	if _, ok := <-s.lock; ok {
 		ctx, cancel := context.WithCancel(ctx)
 
 		observer := Mutex(Finally(sink, cancel))
@@ -91,15 +93,15 @@ func (s *behaviorSubject) call(ctx context.Context, sink Observer, source Observ
 
 		go func() {
 			<-ctx.Done()
-			if s.try.Lock() {
+			if _, ok := <-s.lock; ok {
 				s.observers.Remove(&observer)
-				s.try.Unlock()
+				s.lock <- struct{}{}
 			}
 		}()
 
 		sink.Next(s.getValue())
 
-		s.try.Unlock()
+		s.lock <- struct{}{}
 		return ctx, cancel
 	}
 

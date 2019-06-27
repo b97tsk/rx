@@ -24,12 +24,14 @@ func NewReplaySubject(bufferSize int, windowTime time.Duration) ReplaySubject {
 		Observable: Observable{}.Lift(s.call),
 		Observer:   s.notify,
 	}
+	s.lock = make(chan struct{}, 1)
+	s.lock <- struct{}{}
 	return ReplaySubject{s}
 }
 
 type replaySubject struct {
 	Subject
-	try        cancellableLocker
+	lock       chan struct{}
 	observers  observerList
 	err        error
 	buffer     queue.Queue
@@ -60,7 +62,7 @@ func (s *replaySubject) trimBuffer() {
 }
 
 func (s *replaySubject) notify(t Notification) {
-	if s.try.Lock() {
+	if _, ok := <-s.lock; ok {
 		switch {
 		case t.HasValue:
 			observers, releaseRef := s.observers.AddRef()
@@ -72,7 +74,7 @@ func (s *replaySubject) notify(t Notification) {
 			s.buffer.PushBack(replaySubjectValue{deadline, t.Value})
 			s.trimBuffer()
 
-			s.try.Unlock()
+			s.lock <- struct{}{}
 
 			for _, sink := range observers {
 				sink.Notify(t)
@@ -84,7 +86,7 @@ func (s *replaySubject) notify(t Notification) {
 			observers := s.observers.Swap(nil)
 			s.err = t.Value.(error)
 
-			s.try.CancelAndUnlock()
+			close(s.lock)
 
 			for _, sink := range observers {
 				sink.Notify(t)
@@ -93,7 +95,7 @@ func (s *replaySubject) notify(t Notification) {
 		default:
 			observers := s.observers.Swap(nil)
 
-			s.try.CancelAndUnlock()
+			close(s.lock)
 
 			for _, sink := range observers {
 				sink.Notify(t)
@@ -103,7 +105,7 @@ func (s *replaySubject) notify(t Notification) {
 }
 
 func (s *replaySubject) call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
-	if s.try.Lock() {
+	if _, ok := <-s.lock; ok {
 		ctx, cancel := context.WithCancel(ctx)
 
 		observer := Mutex(Finally(sink, cancel))
@@ -111,9 +113,9 @@ func (s *replaySubject) call(ctx context.Context, sink Observer, source Observab
 
 		go func() {
 			<-ctx.Done()
-			if s.try.Lock() {
+			if _, ok := <-s.lock; ok {
 				s.observers.Remove(&observer)
-				s.try.Unlock()
+				s.lock <- struct{}{}
 			}
 		}()
 
@@ -126,7 +128,7 @@ func (s *replaySubject) call(ctx context.Context, sink Observer, source Observab
 			sink.Next(s.buffer.At(i).(replaySubjectValue).Value)
 		}
 
-		s.try.Unlock()
+		s.lock <- struct{}{}
 		return ctx, cancel
 	}
 

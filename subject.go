@@ -14,6 +14,8 @@ type Subject struct {
 // NewSubject creates a new Subject.
 func NewSubject() Subject {
 	s := new(subject)
+	s.lock = make(chan struct{}, 1)
+	s.lock <- struct{}{}
 	return Subject{
 		Observable: Observable{}.Lift(s.call),
 		Observer:   s.notify,
@@ -21,18 +23,18 @@ func NewSubject() Subject {
 }
 
 type subject struct {
-	try       cancellableLocker
+	lock      chan struct{}
 	observers observerList
 	err       error
 }
 
 func (s *subject) notify(t Notification) {
-	if s.try.Lock() {
+	if _, ok := <-s.lock; ok {
 		switch {
 		case t.HasValue:
 			observers, releaseRef := s.observers.AddRef()
 
-			s.try.Unlock()
+			s.lock <- struct{}{}
 
 			for _, sink := range observers {
 				sink.Notify(t)
@@ -44,7 +46,7 @@ func (s *subject) notify(t Notification) {
 			observers := s.observers.Swap(nil)
 			s.err = t.Value.(error)
 
-			s.try.CancelAndUnlock()
+			close(s.lock)
 
 			for _, sink := range observers {
 				sink.Notify(t)
@@ -53,7 +55,7 @@ func (s *subject) notify(t Notification) {
 		default:
 			observers := s.observers.Swap(nil)
 
-			s.try.CancelAndUnlock()
+			close(s.lock)
 
 			for _, sink := range observers {
 				sink.Notify(t)
@@ -63,7 +65,7 @@ func (s *subject) notify(t Notification) {
 }
 
 func (s *subject) call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
-	if s.try.Lock() {
+	if _, ok := <-s.lock; ok {
 		ctx, cancel := context.WithCancel(ctx)
 
 		observer := Mutex(Finally(sink, cancel))
@@ -71,13 +73,13 @@ func (s *subject) call(ctx context.Context, sink Observer, source Observable) (c
 
 		go func() {
 			<-ctx.Done()
-			if s.try.Lock() {
+			if _, ok := <-s.lock; ok {
 				s.observers.Remove(&observer)
-				s.try.Unlock()
+				s.lock <- struct{}{}
 			}
 		}()
 
-		s.try.Unlock()
+		s.lock <- struct{}{}
 		return ctx, cancel
 	}
 
