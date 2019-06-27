@@ -16,27 +16,28 @@ func (op observeOnOperator) Call(ctx context.Context, sink Observer, source Obse
 
 	sink = Finally(sink, cancel)
 
-	var (
-		queue queue.Queue
-		try   cancellableLocker
-	)
+	type X struct {
+		Queue queue.Queue
+	}
+	cx := make(chan *X, 1)
+	cx <- &X{}
 
 	source.Subscribe(ctx, func(t Notification) {
-		if try.Lock() {
-			queue.PushBack(t)
+		if x, ok := <-cx; ok {
+			x.Queue.PushBack(t)
 			scheduleOnce(ctx, op.Duration, func() {
-				if try.Lock() {
-					switch t := queue.PopFront().(Notification); {
+				if x, ok := <-cx; ok {
+					switch t := x.Queue.PopFront().(Notification); {
 					case t.HasValue:
 						sink(t)
-						try.Unlock()
+						cx <- x
 					default:
-						try.CancelAndUnlock()
+						close(cx)
 						sink(t)
 					}
 				}
 			})
-			try.Unlock()
+			cx <- x
 		}
 	})
 
