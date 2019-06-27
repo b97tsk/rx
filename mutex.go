@@ -7,15 +7,16 @@ import (
 // Mutex creates an Observer that passes all emissions to the specified
 // Observer in a mutually exclusive way.
 func Mutex(sink Observer) Observer {
-	var try cancellableLocker
+	cx := make(chan Observer, 1)
+	cx <- sink
 	return func(t Notification) {
-		if try.Lock() {
+		if sink, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
 				sink(t)
-				try.Unlock()
+				cx <- sink
 			default:
-				try.CancelAndUnlock()
+				close(cx)
 				sink(t)
 			}
 		}
