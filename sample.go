@@ -13,24 +13,25 @@ func (op sampleOperator) Call(ctx context.Context, sink Observer, source Observa
 
 	sink = Finally(sink, cancel)
 
-	var (
-		latestValue    interface{}
-		hasLatestValue bool
-		try            cancellableLocker
-	)
+	type X struct {
+		LatestValue    interface{}
+		HasLatestValue bool
+	}
+	cx := make(chan *X, 1)
+	cx <- &X{}
 
 	op.Notifier.Subscribe(ctx, func(t Notification) {
-		if try.Lock() {
+		if x, ok := <-cx; ok {
 			if t.HasError {
-				try.CancelAndUnlock()
+				close(cx)
 				sink(t)
 				return
 			}
-			if hasLatestValue {
-				sink.Next(latestValue)
-				hasLatestValue = false
+			if x.HasLatestValue {
+				sink.Next(x.LatestValue)
+				x.HasLatestValue = false
 			}
-			try.Unlock()
+			cx <- x
 		}
 	})
 
@@ -39,14 +40,14 @@ func (op sampleOperator) Call(ctx context.Context, sink Observer, source Observa
 	}
 
 	source.Subscribe(ctx, func(t Notification) {
-		if try.Lock() {
+		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
-				latestValue = t.Value
-				hasLatestValue = true
-				try.Unlock()
+				x.LatestValue = t.Value
+				x.HasLatestValue = true
+				cx <- x
 			default:
-				try.CancelAndUnlock()
+				close(cx)
 				sink(t)
 			}
 		}
