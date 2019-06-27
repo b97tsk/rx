@@ -25,49 +25,49 @@ func (op throttleTimeOperator) Call(ctx context.Context, sink Observer, source O
 
 	sink = Finally(sink, cancel)
 
-	var (
-		trailingValue    interface{}
-		hasTrailingValue bool
-
-		try cancellableLocker
-	)
+	type X struct {
+		TrailingValue    interface{}
+		HasTrailingValue bool
+	}
+	cx := make(chan *X, 1)
+	cx <- &X{}
 
 	var doThrottle func()
 
 	doThrottle = func() {
 		throttleCtx, _ = scheduleOnce(ctx, op.Duration, func() {
 			if op.Trailing {
-				if try.Lock() {
-					if hasTrailingValue {
-						sink.Next(trailingValue)
-						hasTrailingValue = false
+				if x, ok := <-cx; ok {
+					if x.HasTrailingValue {
+						sink.Next(x.TrailingValue)
+						x.HasTrailingValue = false
 						doThrottle()
 					}
-					try.Unlock()
+					cx <- x
 				}
 			}
 		})
 	}
 
 	source.Subscribe(ctx, func(t Notification) {
-		if try.Lock() {
+		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
-				trailingValue = t.Value
-				hasTrailingValue = true
+				x.TrailingValue = t.Value
+				x.HasTrailingValue = true
 				if isDone(throttleCtx) {
 					doThrottle()
 					if op.Leading {
 						sink(t)
-						hasTrailingValue = false
+						x.HasTrailingValue = false
 					}
 				}
-				try.Unlock()
+				cx <- x
 
 			default:
-				try.CancelAndUnlock()
-				if hasTrailingValue {
-					sink.Next(trailingValue)
+				close(cx)
+				if x.HasTrailingValue {
+					sink.Next(x.TrailingValue)
 				}
 				sink(t)
 			}
