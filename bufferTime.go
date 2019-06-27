@@ -29,85 +29,86 @@ func (op bufferTimeOperator) Call(ctx context.Context, sink Observer, source Obs
 
 	sink = Finally(sink, cancel)
 
-	var contexts struct {
-		cancellableLocker
-		List []*bufferTimeContext
+	type X struct {
+		Contexts []*bufferTimeContext
 	}
+	cx := make(chan *X, 1)
+	cx <- &X{}
 
 	var closeContext func(*bufferTimeContext)
 
-	openContextLocked := func() {
+	openContextLocked := func(x *X) {
 		ctx, cancel := context.WithCancel(ctx)
 		newContext := &bufferTimeContext{Cancel: cancel}
-		contexts.List = append(contexts.List, newContext)
+		x.Contexts = append(x.Contexts, newContext)
 		scheduleOnce(ctx, op.TimeSpan, func() {
 			closeContext(newContext)
 		})
 	}
 
 	openContext := func() {
-		if contexts.Lock() {
-			openContextLocked()
-			contexts.Unlock()
+		if x, ok := <-cx; ok {
+			openContextLocked(x)
+			cx <- x
 		}
 	}
 
 	closeContext = func(toBeClosed *bufferTimeContext) {
 		toBeClosed.Cancel()
-		if contexts.Lock() {
-			for i, btc := range contexts.List {
-				if btc == toBeClosed {
-					copy(contexts.List[i:], contexts.List[i+1:])
-					n := len(contexts.List)
-					contexts.List[n-1] = nil
-					contexts.List = contexts.List[:n-1]
+		if x, ok := <-cx; ok {
+			for i, c := range x.Contexts {
+				if c == toBeClosed {
+					copy(x.Contexts[i:], x.Contexts[i+1:])
+					n := len(x.Contexts)
+					x.Contexts[n-1] = nil
+					x.Contexts = x.Contexts[:n-1]
 					sink.Next(toBeClosed.Buffer)
 					if op.CreationInterval <= 0 {
-						openContextLocked()
+						openContextLocked(x)
 					}
 					break
 				}
 			}
-			contexts.Unlock()
+			cx <- x
 		}
 	}
 
-	// No need to lock for the first time.
-	openContextLocked()
+	openContext()
 
 	if op.CreationInterval > 0 {
 		schedule(ctx, op.CreationInterval, openContext)
 	}
 
 	source.Subscribe(ctx, func(t Notification) {
-		if contexts.Lock() {
+		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
 				var bufferFullContexts []*bufferTimeContext
-				for _, btc := range contexts.List {
-					btc.Buffer = append(btc.Buffer, t.Value)
-					if len(btc.Buffer) == op.MaxBufferSize {
-						bufferFullContexts = append(bufferFullContexts, btc)
+				for _, c := range x.Contexts {
+					c.Buffer = append(c.Buffer, t.Value)
+					if len(c.Buffer) == op.MaxBufferSize {
+						bufferFullContexts = append(bufferFullContexts, c)
 					}
 				}
-				contexts.Unlock()
 
-				for _, btc := range bufferFullContexts {
-					closeContext(btc)
+				cx <- x
+
+				for _, c := range bufferFullContexts {
+					closeContext(c)
 				}
 
 			case t.HasError:
-				contexts.CancelAndUnlock()
+				close(cx)
 				sink(t)
 
 			default:
-				contexts.CancelAndUnlock()
-				for _, btc := range contexts.List {
+				close(cx)
+				for _, c := range x.Contexts {
 					if isDone(ctx) {
 						return
 					}
-					btc.Cancel()
-					sink.Next(btc.Buffer)
+					c.Cancel()
+					sink.Next(c.Buffer)
 				}
 				sink(t)
 			}

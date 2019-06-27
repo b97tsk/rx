@@ -19,41 +19,43 @@ func (op bufferToggleOperator) Call(ctx context.Context, sink Observer, source O
 
 	sink = Finally(sink, cancel)
 
-	var contexts struct {
-		cancellableLocker
-		List []*bufferToggleContext
+	type X struct {
+		Contexts []*bufferToggleContext
 	}
+	cx := make(chan *X, 1)
+	cx <- &X{}
 
 	op.Openings.Subscribe(ctx, func(t Notification) {
-		if contexts.Lock() {
+		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
 				ctx, cancel := context.WithCancel(ctx)
 				newContext := &bufferToggleContext{Cancel: cancel}
-				contexts.List = append(contexts.List, newContext)
-				contexts.Unlock()
+				x.Contexts = append(x.Contexts, newContext)
+
+				cx <- x
 
 				var observer Observer
 				observer = func(t Notification) {
 					observer = NopObserver
 					cancel()
-					if contexts.Lock() {
+					if x, ok := <-cx; ok {
 						if t.HasError {
-							contexts.CancelAndUnlock()
+							close(cx)
 							sink(t)
 							return
 						}
-						for i, btc := range contexts.List {
-							if btc == newContext {
-								copy(contexts.List[i:], contexts.List[i+1:])
-								n := len(contexts.List)
-								contexts.List[n-1] = nil
-								contexts.List = contexts.List[:n-1]
+						for i, c := range x.Contexts {
+							if c == newContext {
+								copy(x.Contexts[i:], x.Contexts[i+1:])
+								n := len(x.Contexts)
+								x.Contexts[n-1] = nil
+								x.Contexts = x.Contexts[:n-1]
 								sink.Next(newContext.Buffer)
 								break
 							}
 						}
-						contexts.Unlock()
+						cx <- x
 					}
 				}
 
@@ -61,11 +63,11 @@ func (op bufferToggleOperator) Call(ctx context.Context, sink Observer, source O
 				closingNotifier.Subscribe(ctx, observer.Notify)
 
 			case t.HasError:
-				contexts.CancelAndUnlock()
+				close(cx)
 				sink(t)
 
 			default:
-				contexts.Unlock()
+				cx <- x
 			}
 		}
 	})
@@ -75,26 +77,27 @@ func (op bufferToggleOperator) Call(ctx context.Context, sink Observer, source O
 	}
 
 	source.Subscribe(ctx, func(t Notification) {
-		if contexts.Lock() {
+		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
-				for _, btc := range contexts.List {
-					btc.Buffer = append(btc.Buffer, t.Value)
+				for _, c := range x.Contexts {
+					c.Buffer = append(c.Buffer, t.Value)
 				}
-				contexts.Unlock()
+
+				cx <- x
 
 			case t.HasError:
-				contexts.CancelAndUnlock()
+				close(cx)
 				sink(t)
 
 			default:
-				contexts.CancelAndUnlock()
-				for _, btc := range contexts.List {
+				close(cx)
+				for _, c := range x.Contexts {
 					if isDone(ctx) {
 						return
 					}
-					btc.Cancel()
-					sink.Next(btc.Buffer)
+					c.Cancel()
+					sink.Next(c.Buffer)
 				}
 				sink(t)
 			}
