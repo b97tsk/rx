@@ -2,7 +2,6 @@ package rx
 
 import (
 	"context"
-	"sync"
 
 	"github.com/b97tsk/rx/x/queue"
 )
@@ -26,29 +25,31 @@ func (op mergeScanOperator) Call(ctx context.Context, sink Observer, source Obse
 
 	sink = Mutex(Finally(sink, cancel))
 
-	var (
-		mutex           sync.Mutex
-		activeCount     int
-		sourceCompleted bool
-		seed            = op.Seed
-		hasValue        bool
-		buffer          queue.Queue
-		doNextLocked    func()
-	)
+	type X struct {
+		ActiveCount     int
+		SourceCompleted bool
+		Buffer          queue.Queue
+		Seed            interface{}
+		HasValue        bool
+	}
+	cx := make(chan *X, 1)
+	cx <- &X{Seed: op.Seed}
 
-	doNextLocked = func() {
-		outerValue := buffer.PopFront()
+	var doNextLocked func(*X)
+
+	doNextLocked = func(x *X) {
+		outerValue := x.Buffer.PopFront()
 
 		// calls op.Accumulator synchronously
-		obs := op.Accumulator(seed, outerValue)
+		obs := op.Accumulator(x.Seed, outerValue)
 
 		go obs.Subscribe(ctx, func(t Notification) {
 			switch {
 			case t.HasValue:
-				mutex.Lock()
-				seed = t.Value
-				hasValue = true
-				mutex.Unlock()
+				x := <-cx
+				x.Seed = t.Value
+				x.HasValue = true
+				cx <- x
 
 				sink(t)
 
@@ -56,19 +57,19 @@ func (op mergeScanOperator) Call(ctx context.Context, sink Observer, source Obse
 				sink(t)
 
 			default:
-				mutex.Lock()
-				if buffer.Len() > 0 {
-					doNextLocked()
+				x := <-cx
+				if x.Buffer.Len() > 0 {
+					doNextLocked(x)
 				} else {
-					activeCount--
-					if activeCount == 0 && sourceCompleted {
-						if !hasValue {
-							sink.Next(seed)
+					x.ActiveCount--
+					if x.ActiveCount == 0 && x.SourceCompleted {
+						if !x.HasValue {
+							sink.Next(x.Seed)
 						}
 						sink(t)
 					}
 				}
-				mutex.Unlock()
+				cx <- x
 			}
 		})
 	}
@@ -76,27 +77,27 @@ func (op mergeScanOperator) Call(ctx context.Context, sink Observer, source Obse
 	source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
-			mutex.Lock()
-			buffer.PushBack(t.Value)
-			if activeCount != op.Concurrent {
-				activeCount++
-				doNextLocked()
+			x := <-cx
+			x.Buffer.PushBack(t.Value)
+			if x.ActiveCount != op.Concurrent {
+				x.ActiveCount++
+				doNextLocked(x)
 			}
-			mutex.Unlock()
+			cx <- x
 
 		case t.HasError:
 			sink(t)
 
 		default:
-			mutex.Lock()
-			sourceCompleted = true
-			if activeCount == 0 {
-				if !hasValue {
-					sink.Next(seed)
+			x := <-cx
+			x.SourceCompleted = true
+			if x.ActiveCount == 0 {
+				if !x.HasValue {
+					sink.Next(x.Seed)
 				}
 				sink(t)
 			}
-			mutex.Unlock()
+			cx <- x
 		}
 	})
 

@@ -2,7 +2,6 @@ package rx
 
 import (
 	"context"
-	"sync"
 
 	"github.com/b97tsk/rx/x/queue"
 )
@@ -25,19 +24,21 @@ func (op mergeOperator) Call(ctx context.Context, sink Observer, source Observab
 
 	sink = Mutex(Finally(sink, cancel))
 
-	var (
-		mutex           sync.Mutex
-		outerIndex      = -1
-		activeCount     int
-		sourceCompleted bool
-		buffer          queue.Queue
-		doNextLocked    func()
-	)
+	type X struct {
+		Index           int
+		ActiveCount     int
+		SourceCompleted bool
+		Buffer          queue.Queue
+	}
+	cx := make(chan *X, 1)
+	cx <- &X{}
 
-	doNextLocked = func() {
-		outerIndex++
-		outerIndex := outerIndex
-		outerValue := buffer.PopFront()
+	var doNextLocked func(*X)
+
+	doNextLocked = func(x *X) {
+		outerIndex := x.Index
+		outerValue := x.Buffer.PopFront()
+		x.Index++
 
 		// calls op.Project synchronously
 		obs := op.Project(outerValue, outerIndex)
@@ -47,16 +48,16 @@ func (op mergeOperator) Call(ctx context.Context, sink Observer, source Observab
 			case t.HasValue || t.HasError:
 				sink(t)
 			default:
-				mutex.Lock()
-				if buffer.Len() > 0 {
-					doNextLocked()
+				x := <-cx
+				if x.Buffer.Len() > 0 {
+					doNextLocked(x)
 				} else {
-					activeCount--
-					if activeCount == 0 && sourceCompleted {
+					x.ActiveCount--
+					if x.ActiveCount == 0 && x.SourceCompleted {
 						sink(t)
 					}
 				}
-				mutex.Unlock()
+				cx <- x
 			}
 		})
 	}
@@ -64,24 +65,24 @@ func (op mergeOperator) Call(ctx context.Context, sink Observer, source Observab
 	source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
-			mutex.Lock()
-			buffer.PushBack(t.Value)
-			if activeCount != op.Concurrent {
-				activeCount++
-				doNextLocked()
+			x := <-cx
+			x.Buffer.PushBack(t.Value)
+			if x.ActiveCount != op.Concurrent {
+				x.ActiveCount++
+				doNextLocked(x)
 			}
-			mutex.Unlock()
+			cx <- x
 
 		case t.HasError:
 			sink(t)
 
 		default:
-			mutex.Lock()
-			sourceCompleted = true
-			if activeCount == 0 {
+			x := <-cx
+			x.SourceCompleted = true
+			if x.ActiveCount == 0 {
 				sink(t)
 			}
-			mutex.Unlock()
+			cx <- x
 		}
 	})
 
