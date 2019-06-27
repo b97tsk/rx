@@ -45,11 +45,14 @@ func (op congestingMergeOperator) Call(ctx context.Context, sink Observer, sourc
 				mutex.Lock()
 			}
 
-			var try cancellableLocker
+			type X struct{}
+			cx := make(chan X, 1)
+			cx <- X{}
+
 			defer func() {
-				try.Lock()
+				<-cx
 				mutex.Unlock()
-				try.CancelAndUnlock()
+				close(cx)
 			}()
 
 			activeCount++
@@ -66,9 +69,9 @@ func (op congestingMergeOperator) Call(ctx context.Context, sink Observer, sourc
 				case t.HasValue || t.HasError:
 					sink(t)
 				default:
-					if try.Lock() {
+					if x, ok := <-cx; ok {
 						activeCount--
-						try.Unlock()
+						cx <- x
 					} else {
 						mutex.Lock()
 						activeCount--
