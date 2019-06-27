@@ -54,10 +54,13 @@ func (o *connectableObservable) getSubject() Subject {
 func (o *connectableObservable) connect(addRef bool) (context.Context, context.CancelFunc) {
 	o.mutex.Lock()
 
-	var try *cancellableLocker
+	type X struct{}
+	var cx chan X
+
 	defer func() {
-		if try != nil && try.Lock() {
-			defer try.CancelAndUnlock()
+		if cx != nil {
+			<-cx
+			defer close(cx)
 		}
 		o.mutex.Unlock()
 	}()
@@ -65,7 +68,8 @@ func (o *connectableObservable) connect(addRef bool) (context.Context, context.C
 	connection := o.connection
 
 	if connection == nil {
-		try = &cancellableLocker{}
+		cx = make(chan X, 1)
+		cx <- X{}
 
 		subject := o.getSubjectLocked()
 
@@ -75,9 +79,9 @@ func (o *connectableObservable) connect(addRef bool) (context.Context, context.C
 				return
 			}
 
-			tryLocked := try.Lock()
+			x, cxLocked := <-cx
 
-			if !tryLocked {
+			if !cxLocked {
 				o.mutex.Lock()
 			}
 
@@ -88,8 +92,8 @@ func (o *connectableObservable) connect(addRef bool) (context.Context, context.C
 				o.refCount = 0
 			}
 
-			if tryLocked {
-				try.Unlock()
+			if cxLocked {
+				cx <- x
 			} else {
 				o.mutex.Unlock()
 			}
