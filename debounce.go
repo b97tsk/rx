@@ -14,57 +14,57 @@ func (op debounceOperator) Call(ctx context.Context, sink Observer, source Obser
 
 	sink = Finally(sink, cancel)
 
-	var (
-		latestValue    interface{}
-		hasLatestValue bool
-
-		try cancellableLocker
-	)
-
-	doSchedule := func(val interface{}) {
-		scheduleCancel()
-
-		scheduleCtx, scheduleCancel = context.WithCancel(ctx)
-
-		var observer Observer
-		observer = func(t Notification) {
-			observer = NopObserver
-			scheduleCancel()
-			if try.Lock() {
-				if t.HasError {
-					try.CancelAndUnlock()
-					sink(t)
-					return
-				}
-				if hasLatestValue {
-					sink.Next(latestValue)
-					hasLatestValue = false
-				}
-				try.Unlock()
-			}
-		}
-
-		obs := op.DurationSelector(val)
-		obs.Subscribe(scheduleCtx, observer.Notify)
+	type X struct {
+		LatestValue    interface{}
+		HasLatestValue bool
 	}
+	cx := make(chan *X, 1)
+	cx <- &X{}
 
 	source.Subscribe(ctx, func(t Notification) {
-		if try.Lock() {
+		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
-				latestValue = t.Value
-				hasLatestValue = true
-				try.Unlock()
-				doSchedule(t.Value)
+				x.LatestValue = t.Value
+				x.HasLatestValue = true
+
+				cx <- x
+
+				{
+					scheduleCancel()
+
+					scheduleCtx, scheduleCancel = context.WithCancel(ctx)
+
+					var observer Observer
+					observer = func(t Notification) {
+						observer = NopObserver
+						scheduleCancel()
+						if x, ok := <-cx; ok {
+							if t.HasError {
+								close(cx)
+								sink(t)
+								return
+							}
+							if x.HasLatestValue {
+								sink.Next(x.LatestValue)
+								x.HasLatestValue = false
+							}
+							cx <- x
+						}
+					}
+
+					obs := op.DurationSelector(t.Value)
+					obs.Subscribe(scheduleCtx, observer.Notify)
+				}
 
 			case t.HasError:
-				try.CancelAndUnlock()
+				close(cx)
 				sink(t)
 
 			default:
-				try.CancelAndUnlock()
-				if hasLatestValue {
-					sink.Next(latestValue)
+				close(cx)
+				if x.HasLatestValue {
+					sink.Next(x.LatestValue)
 				}
 				sink(t)
 			}

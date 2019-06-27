@@ -15,44 +15,44 @@ func (op debounceTimeOperator) Call(ctx context.Context, sink Observer, source O
 
 	sink = Finally(sink, cancel)
 
-	var (
-		latestValue    interface{}
-		hasLatestValue bool
-
-		try cancellableLocker
-	)
-
-	doSchedule := func() {
-		scheduleCancel()
-
-		_, scheduleCancel = scheduleOnce(ctx, op.Duration, func() {
-			if try.Lock() {
-				if hasLatestValue {
-					sink.Next(latestValue)
-					hasLatestValue = false
-				}
-				try.Unlock()
-			}
-		})
+	type X struct {
+		LatestValue    interface{}
+		HasLatestValue bool
 	}
+	cx := make(chan *X, 1)
+	cx <- &X{}
 
 	source.Subscribe(ctx, func(t Notification) {
-		if try.Lock() {
+		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
-				latestValue = t.Value
-				hasLatestValue = true
-				try.Unlock()
-				doSchedule()
+				x.LatestValue = t.Value
+				x.HasLatestValue = true
+
+				cx <- x
+
+				{
+					scheduleCancel()
+
+					_, scheduleCancel = scheduleOnce(ctx, op.Duration, func() {
+						if x, ok := <-cx; ok {
+							if x.HasLatestValue {
+								sink.Next(x.LatestValue)
+								x.HasLatestValue = false
+							}
+							cx <- x
+						}
+					})
+				}
 
 			case t.HasError:
-				try.CancelAndUnlock()
+				close(cx)
 				sink(t)
 
 			default:
-				try.CancelAndUnlock()
-				if hasLatestValue {
-					sink.Next(latestValue)
+				close(cx)
+				if x.HasLatestValue {
+					sink.Next(x.LatestValue)
 				}
 				sink(t)
 			}
