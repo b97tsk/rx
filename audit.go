@@ -2,8 +2,6 @@ package rx
 
 import (
 	"context"
-
-	"github.com/b97tsk/rx/x/atomic"
 )
 
 type auditOperator struct {
@@ -15,56 +13,48 @@ func (op auditOperator) Call(ctx context.Context, sink Observer, source Observab
 
 	sink = Finally(sink, cancel)
 
-	const (
-		stateZero = iota
-		stateHasValue
-		stateScheduled
-	)
-
-	var (
-		latestValue interface{}
-		state       atomic.Uint32
-
-		try cancellableLocker
-	)
-
-	doSchedule := func(val interface{}) {
-		if !state.Cas(stateHasValue, stateScheduled) {
-			return
-		}
-
-		scheduleCtx, scheduleCancel := context.WithCancel(ctx)
-
-		var observer Observer
-		observer = func(t Notification) {
-			observer = NopObserver
-			scheduleCancel()
-			if try.Lock() {
-				if t.HasError {
-					try.CancelAndUnlock()
-					sink(t)
-					return
-				}
-				sink.Next(latestValue)
-				state.Store(stateZero)
-				try.Unlock()
-			}
-		}
-
-		obs := op.DurationSelector(val)
-		obs.Subscribe(scheduleCtx, observer.Notify)
+	type X struct {
+		LatestValue interface{}
+		Scheduled   bool
 	}
+	cx := make(chan *X, 1)
+	cx <- &X{}
 
 	source.Subscribe(ctx, func(t Notification) {
-		if try.Lock() {
+		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
-				latestValue = t.Value
-				state.Cas(stateZero, stateHasValue)
-				try.Unlock()
-				doSchedule(t.Value)
+				x.LatestValue = t.Value
+				shouldSchedule := !x.Scheduled
+				x.Scheduled = true
+
+				cx <- x
+
+				if shouldSchedule {
+					scheduleCtx, scheduleCancel := context.WithCancel(ctx)
+
+					var observer Observer
+					observer = func(t Notification) {
+						observer = NopObserver
+						scheduleCancel()
+						if x, ok := <-cx; ok {
+							if t.HasError {
+								close(cx)
+								sink(t)
+								return
+							}
+							sink.Next(x.LatestValue)
+							x.Scheduled = false
+							cx <- x
+						}
+					}
+
+					obs := op.DurationSelector(t.Value)
+					obs.Subscribe(scheduleCtx, observer.Notify)
+				}
+
 			default:
-				try.CancelAndUnlock()
+				close(cx)
 				sink(t)
 			}
 		}

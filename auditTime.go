@@ -3,8 +3,6 @@ package rx
 import (
 	"context"
 	"time"
-
-	"github.com/b97tsk/rx/x/atomic"
 )
 
 type auditTimeOperator struct {
@@ -16,42 +14,35 @@ func (op auditTimeOperator) Call(ctx context.Context, sink Observer, source Obse
 
 	sink = Finally(sink, cancel)
 
-	const (
-		stateZero = iota
-		stateHasValue
-		stateScheduled
-	)
-
-	var (
-		latestValue interface{}
-		state       atomic.Uint32
-
-		try cancellableLocker
-	)
-
-	doSchedule := func() {
-		if !state.Cas(stateHasValue, stateScheduled) {
-			return
-		}
-		scheduleOnce(ctx, op.Duration, func() {
-			if try.Lock() {
-				sink.Next(latestValue)
-				state.Store(stateZero)
-				try.Unlock()
-			}
-		})
+	type X struct {
+		LatestValue interface{}
+		Scheduled   bool
 	}
+	cx := make(chan *X, 1)
+	cx <- &X{}
 
 	source.Subscribe(ctx, func(t Notification) {
-		if try.Lock() {
+		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
-				latestValue = t.Value
-				state.Cas(stateZero, stateHasValue)
-				try.Unlock()
-				doSchedule()
+				x.LatestValue = t.Value
+				shouldSchedule := !x.Scheduled
+				x.Scheduled = true
+
+				cx <- x
+
+				if shouldSchedule {
+					scheduleOnce(ctx, op.Duration, func() {
+						if x, ok := <-cx; ok {
+							sink.Next(x.LatestValue)
+							x.Scheduled = false
+							cx <- x
+						}
+					})
+				}
+
 			default:
-				try.CancelAndUnlock()
+				close(cx)
 				sink(t)
 			}
 		}
