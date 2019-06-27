@@ -23,16 +23,19 @@ func (op timeoutOperator) Call(ctx context.Context, sink Observer, source Observ
 
 	sink = Finally(sink, cancel)
 
-	var try cancellableLocker
 	_, scheduleCancel := Done()
 	childCtx, childCancel := context.WithCancel(ctx)
+
+	type X struct{}
+	cx := make(chan X, 1)
+	cx <- X{}
 
 	doSchedule := func() {
 		scheduleCancel()
 
 		_, scheduleCancel = scheduleOnce(childCtx, op.Duration, func() {
-			if try.Lock() {
-				try.CancelAndUnlock()
+			if _, ok := <-cx; ok {
+				close(cx)
 				childCancel()
 				op.Observable.Subscribe(ctx, sink)
 			}
@@ -42,14 +45,14 @@ func (op timeoutOperator) Call(ctx context.Context, sink Observer, source Observ
 	doSchedule()
 
 	source.Subscribe(childCtx, func(t Notification) {
-		if try.Lock() {
+		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
 				sink(t)
-				try.Unlock()
+				cx <- x
 				doSchedule()
 			default:
-				try.CancelAndUnlock()
+				close(cx)
 				sink(t)
 			}
 		}
