@@ -13,10 +13,11 @@ func (op bufferWhenOperator) Call(ctx context.Context, sink Observer, source Obs
 
 	sink = Finally(sink, cancel)
 
-	var buffer struct {
-		cancellableLocker
-		List []interface{}
+	type X struct {
+		Buffers []interface{}
 	}
+	cx := make(chan *X, 1)
+	cx <- &X{}
 
 	var (
 		openBuffer     func()
@@ -34,15 +35,15 @@ func (op bufferWhenOperator) Call(ctx context.Context, sink Observer, source Obs
 		observer = func(t Notification) {
 			observer = NopObserver
 			cancel()
-			if buffer.Lock() {
+			if x, ok := <-cx; ok {
 				if t.HasError {
-					buffer.CancelAndUnlock()
+					close(cx)
 					sink(t)
 					return
 				}
-				sink.Next(buffer.List)
-				buffer.List = nil
-				buffer.Unlock()
+				sink.Next(x.Buffers)
+				x.Buffers = nil
+				cx <- x
 				avoidRecursive.Do(openBuffer)
 			}
 		}
@@ -58,14 +59,14 @@ func (op bufferWhenOperator) Call(ctx context.Context, sink Observer, source Obs
 	}
 
 	source.Subscribe(ctx, func(t Notification) {
-		if buffer.Lock() {
+		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
-				buffer.List = append(buffer.List, t.Value)
-				buffer.Unlock()
+				x.Buffers = append(x.Buffers, t.Value)
+				cx <- x
 			default:
-				buffer.CancelAndUnlock()
-				sink.Next(buffer.List)
+				close(cx)
+				sink.Next(x.Buffers)
 				sink(t)
 			}
 		}
