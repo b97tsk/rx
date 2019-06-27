@@ -2,7 +2,6 @@ package rx
 
 import (
 	"context"
-	"sync"
 )
 
 // A CongestingMergeConfigure is a configure for CongestingMerge.
@@ -25,41 +24,45 @@ func (op congestingMergeOperator) Call(ctx context.Context, sink Observer, sourc
 	sink = Mutex(Finally(sink, cancel))
 
 	var (
-		mutex          sync.Mutex
-		outerIndex     = -1
-		activeCount    = 0
 		completeSignal = make(chan struct{}, 1)
 	)
+
+	type X struct {
+		Index       int
+		ActiveCount int
+	}
+	cx := make(chan *X, 1)
+	cx <- &X{}
 
 	source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
-			mutex.Lock()
-			for activeCount == op.Concurrent {
-				mutex.Unlock()
+			x := <-cx
+			for x.ActiveCount == op.Concurrent {
+				cx <- x
 				select {
 				case <-done:
 					return
 				case <-completeSignal:
 				}
-				mutex.Lock()
+				x = <-cx
 			}
 
-			type X struct{}
-			cx := make(chan X, 1)
-			cx <- X{}
+			type Y struct{}
+			cy := make(chan Y, 1)
+			cy <- Y{}
 
 			defer func() {
-				<-cx
-				mutex.Unlock()
-				close(cx)
+				<-cy
+				cx <- x
+				close(cy)
 			}()
 
-			activeCount++
+			x.ActiveCount++
 
-			outerIndex++
-			outerIndex := outerIndex
+			outerIndex := x.Index
 			outerValue := t.Value
+			x.Index++
 
 			// calls op.Project synchronously
 			obs := op.Project(outerValue, outerIndex)
@@ -69,13 +72,13 @@ func (op congestingMergeOperator) Call(ctx context.Context, sink Observer, sourc
 				case t.HasValue || t.HasError:
 					sink(t)
 				default:
-					if x, ok := <-cx; ok {
-						activeCount--
-						cx <- x
+					if y, ok := <-cy; ok {
+						x.ActiveCount--
+						cy <- y
 					} else {
-						mutex.Lock()
-						activeCount--
-						mutex.Unlock()
+						x := <-cx
+						x.ActiveCount--
+						cx <- x
 					}
 					select {
 					case completeSignal <- struct{}{}:
@@ -88,24 +91,24 @@ func (op congestingMergeOperator) Call(ctx context.Context, sink Observer, sourc
 			sink(t)
 
 		default:
-			mutex.Lock()
-			if activeCount > 0 {
+			x := <-cx
+			if x.ActiveCount > 0 {
 				go func() {
-					for activeCount > 0 {
-						mutex.Unlock()
+					for x.ActiveCount > 0 {
+						cx <- x
 						select {
 						case <-done:
 							return
 						case <-completeSignal:
 						}
-						mutex.Lock()
+						x = <-cx
 					}
-					mutex.Unlock()
+					cx <- x
 					sink.Complete()
 				}()
 				return
 			}
-			mutex.Unlock()
+			cx <- x
 			sink(t)
 		}
 	})
