@@ -13,33 +13,37 @@ func (op raceOperator) Call(ctx context.Context, sink Observer, source Observabl
 
 	sink = Finally(sink, cancel)
 
-	length := len(op.Observables)
-	subscriptions := make([]context.CancelFunc, 0, length)
-
-	var try cancellableLocker
+	type X struct {
+		Subscriptions []context.CancelFunc
+	}
+	cx := make(chan *X, 1)
+	cx <- &X{
+		Subscriptions: make([]context.CancelFunc, 0, len(op.Observables)),
+	}
 
 	for index, obs := range op.Observables {
 		index := index
 
-		if !try.Lock() {
+		x, ok := <-cx
+		if !ok {
 			break
 		}
 
 		ctx, cancel := context.WithCancel(ctx)
-		subscriptions = append(subscriptions, cancel)
+		x.Subscriptions = append(x.Subscriptions, cancel)
 
-		try.Unlock()
+		cx <- x
 
 		var observer Observer
 
 		observer = func(t Notification) {
-			if try.Lock() {
-				for i, cancel := range subscriptions {
+			if x, ok := <-cx; ok {
+				for i, cancel := range x.Subscriptions {
 					if i != index {
 						cancel()
 					}
 				}
-				try.CancelAndUnlock()
+				close(cx)
 				observer = sink
 				sink(t)
 				return
