@@ -2,7 +2,6 @@ package rx
 
 import (
 	"context"
-	"sync"
 )
 
 type switchMapOperator struct {
@@ -15,23 +14,24 @@ func (op switchMapOperator) Call(ctx context.Context, sink Observer, source Obse
 
 	sink = Mutex(Finally(sink, cancel))
 
-	var (
-		mutex           sync.Mutex
-		outerIndex      = -1
-		activeIndex     = -1
-		sourceCompleted bool
-	)
+	type X struct {
+		Index           int
+		ActiveIndex     int
+		SourceCompleted bool
+	}
+	cx := make(chan *X, 1)
+	cx <- &X{ActiveIndex: -1}
 
 	source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
-			mutex.Lock()
+			x := <-cx
 
-			outerIndex++
-			outerIndex := outerIndex
+			outerIndex := x.Index
 			outerValue := t.Value
+			x.Index++
 
-			activeIndex = outerIndex
+			x.ActiveIndex = outerIndex
 			childCancel()
 
 			obs := op.Project(outerValue, outerIndex)
@@ -43,29 +43,29 @@ func (op switchMapOperator) Call(ctx context.Context, sink Observer, source Obse
 				case t.HasValue || t.HasError:
 					sink(t)
 				default:
-					mutex.Lock()
-					if activeIndex == outerIndex {
-						activeIndex = -1
-						if sourceCompleted {
+					x := <-cx
+					if x.ActiveIndex == outerIndex {
+						x.ActiveIndex = -1
+						if x.SourceCompleted {
 							sink(t)
 						}
 					}
-					mutex.Unlock()
+					cx <- x
 				}
 			})
 
-			mutex.Unlock()
+			cx <- x
 
 		case t.HasError:
 			sink(t)
 
 		default:
-			mutex.Lock()
-			sourceCompleted = true
-			if activeIndex == -1 {
+			x := <-cx
+			x.SourceCompleted = true
+			if x.ActiveIndex == -1 {
 				sink(t)
 			}
-			mutex.Unlock()
+			cx <- x
 		}
 	})
 
