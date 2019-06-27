@@ -15,7 +15,6 @@ func (op retryWhenOperator) Call(ctx context.Context, sink Observer, source Obse
 
 	sink = Mutex(Finally(sink, cancel))
 
-	var sourceLocker *cancellableLocker
 	sourceCtx, sourceCancel := Done()
 
 	var (
@@ -26,20 +25,24 @@ func (op retryWhenOperator) Call(ctx context.Context, sink Observer, source Obse
 		avoidRecursive avoidRecursiveCalls
 	)
 
+	type X struct{}
+	var cxCurrent chan X
+
 	subscribe := func() {
-		var try cancellableLocker
-		sourceLocker = &try
+		cx := make(chan X, 1)
+		cx <- X{}
+		cxCurrent = cx
 		sourceCtx, sourceCancel = context.WithCancel(ctx)
 		source.Subscribe(sourceCtx, func(t Notification) {
-			if try.Lock() {
+			if x, ok := <-cx; ok {
 				switch {
 				case t.HasValue:
 					sink(t)
-					try.Unlock()
+					cx <- x
 				case t.HasError:
 					lastError = t.Value.(error)
 					activeCount := activeCount.Sub(1)
-					try.CancelAndUnlock()
+					close(cx)
 					if activeCount == 0 {
 						sink(t)
 						break
@@ -50,7 +53,7 @@ func (op retryWhenOperator) Call(ctx context.Context, sink Observer, source Obse
 					subject.Next(t.Value)
 				default:
 					sink(t)
-					try.Unlock()
+					cx <- x
 				}
 			}
 		})
@@ -63,8 +66,8 @@ func (op retryWhenOperator) Call(ctx context.Context, sink Observer, source Obse
 			switch {
 			case t.HasValue:
 				sourceCancel()
-				if sourceLocker.Lock() {
-					sourceLocker.CancelAndUnlock()
+				if _, ok := <-cxCurrent; ok {
+					close(cxCurrent)
 				} else {
 					activeCount.Add(1)
 				}
