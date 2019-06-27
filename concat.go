@@ -2,7 +2,6 @@ package rx
 
 import (
 	"context"
-	"sync"
 
 	"github.com/b97tsk/rx/x/queue"
 )
@@ -16,28 +15,30 @@ func (op concatOperator) Call(ctx context.Context, sink Observer, source Observa
 
 	sink = Mutex(Finally(sink, cancel))
 
-	var (
-		mutex        sync.Mutex
-		outerIndex   = -1
-		activeCount  = 1
-		buffer       queue.Queue
-		doNextLocked func()
-	)
+	type X struct {
+		Index       int
+		ActiveCount int
+		Buffer      queue.Queue
+	}
+	cx := make(chan *X, 1)
+	cx <- &X{ActiveCount: 1}
 
-	doNextLocked = func() {
+	var doNextLocked func(*X)
+
+	doNextLocked = func(x *X) {
 		var avoidRecursive avoidRecursiveCalls
 		avoidRecursive.Do(func() {
-			if buffer.Len() == 0 {
-				activeCount--
-				if activeCount == 0 {
+			if x.Buffer.Len() == 0 {
+				x.ActiveCount--
+				if x.ActiveCount == 0 {
 					sink.Complete()
 				}
 				return
 			}
 
-			outerIndex++
-			outerIndex := outerIndex
-			outerValue := buffer.PopFront()
+			outerIndex := x.Index
+			outerValue := x.Buffer.PopFront()
+			x.Index++
 
 			obs := op.Project(outerValue, outerIndex)
 			obs.Subscribe(ctx, func(t Notification) {
@@ -46,9 +47,9 @@ func (op concatOperator) Call(ctx context.Context, sink Observer, source Observa
 					sink(t)
 				default:
 					avoidRecursive.Do(func() {
-						mutex.Lock()
-						doNextLocked()
-						mutex.Unlock()
+						x := <-cx
+						doNextLocked(x)
+						cx <- x
 					})
 				}
 			})
@@ -58,24 +59,24 @@ func (op concatOperator) Call(ctx context.Context, sink Observer, source Observa
 	source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
-			mutex.Lock()
-			buffer.PushBack(t.Value)
-			if activeCount == 1 {
-				activeCount++
-				doNextLocked()
+			x := <-cx
+			x.Buffer.PushBack(t.Value)
+			if x.ActiveCount == 1 {
+				x.ActiveCount++
+				doNextLocked(x)
 			}
-			mutex.Unlock()
+			cx <- x
 
 		case t.HasError:
 			sink(t)
 
 		default:
-			mutex.Lock()
-			activeCount--
-			if activeCount == 0 {
+			x := <-cx
+			x.ActiveCount--
+			if x.ActiveCount == 0 {
 				sink(t)
 			}
-			mutex.Unlock()
+			cx <- x
 		}
 	})
 
