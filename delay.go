@@ -2,7 +2,6 @@ package rx
 
 import (
 	"context"
-	"sync"
 	"time"
 
 	"github.com/b97tsk/rx/x/queue"
@@ -22,58 +21,67 @@ func (op delayOperator) Call(ctx context.Context, sink Observer, source Observab
 
 	sink = Finally(sink, cancel)
 
-	var (
-		mutex       sync.Mutex
-		queue       queue.Queue
-		doSchedule  func(time.Duration)
-		isScheduled bool
-	)
+	type X struct {
+		Queue     queue.Queue
+		Scheduled bool
+	}
+	cx := make(chan *X, 1)
+	cx <- &X{}
+
+	var doSchedule func(time.Duration)
 
 	doSchedule = func(timeout time.Duration) {
-		if isScheduled {
-			return
-		}
-		isScheduled = true
 		scheduleOnce(ctx, timeout, func() {
-			mutex.Lock()
-			defer mutex.Unlock()
-			isScheduled = false
-			for queue.Len() > 0 {
+			x := <-cx
+			x.Scheduled = false
+			for x.Queue.Len() > 0 {
 				if isDone(ctx) {
-					return
+					break
 				}
-				t := queue.Front().(delayValue)
+				t := x.Queue.Front().(delayValue)
 				now := time.Now()
 				if t.Time.After(now) {
+					x.Scheduled = true
 					doSchedule(t.Time.Sub(now))
-					return
+					break
 				}
-				queue.PopFront()
+				x.Queue.PopFront()
 				sink(t.Notification)
 			}
+			cx <- x
 		})
 	}
 
 	source.Subscribe(ctx, func(t Notification) {
-		mutex.Lock()
+		x := <-cx
 		switch {
 		case t.HasValue:
-			queue.PushBack(delayValue{
-				Time:         time.Now().Add(op.Duration),
-				Notification: t,
-			})
-			doSchedule(op.Duration)
+			x.Queue.PushBack(
+				delayValue{
+					Time:         time.Now().Add(op.Duration),
+					Notification: t,
+				},
+			)
+			if !x.Scheduled {
+				x.Scheduled = true
+				doSchedule(op.Duration)
+			}
 		case t.HasError:
 			// ERROR notification will not be delayed.
-			queue.Init()
+			x.Queue.Init()
 			sink(t)
 		default:
-			queue.PushBack(delayValue{
-				Time: time.Now().Add(op.Duration),
-			})
-			doSchedule(op.Duration)
+			x.Queue.PushBack(
+				delayValue{
+					Time: time.Now().Add(op.Duration),
+				},
+			)
+			if !x.Scheduled {
+				x.Scheduled = true
+				doSchedule(op.Duration)
+			}
 		}
-		mutex.Unlock()
+		cx <- x
 	})
 
 	return ctx, cancel
