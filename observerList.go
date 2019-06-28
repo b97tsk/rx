@@ -19,16 +19,13 @@ func (list *observerList) AddRef() ([]*Observer, func()) {
 	return list.observers, func() { refs.Sub(1) }
 }
 
-func (list *observerList) Append(observers ...*Observer) {
-	if len(observers) == 0 {
-		return
-	}
+func (list *observerList) Append(observer *Observer) {
 	if list.refs == nil || list.refs.Equals(0) {
-		list.observers = append(list.observers, observers...)
+		list.observers = append(list.observers, observer)
 		return
 	}
 	n := len(list.observers)
-	list.observers = append(list.observers[:n:n], observers...)
+	list.observers = append(list.observers[:n:n], observer)
 	list.refs = nil
 }
 

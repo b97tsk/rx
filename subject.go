@@ -25,6 +25,7 @@ func NewSubject() Subject {
 type subject struct {
 	lock      chan struct{}
 	observers observerList
+	cws       contextWaitService
 	err       error
 }
 
@@ -71,13 +72,16 @@ func (s *subject) call(ctx context.Context, sink Observer, source Observable) (c
 		observer := Mutex(Finally(sink, cancel))
 		s.observers.Append(&observer)
 
-		go func() {
-			<-ctx.Done()
+		finalize := func() {
 			if _, ok := <-s.lock; ok {
 				s.observers.Remove(&observer)
 				s.lock <- struct{}{}
 			}
-		}()
+		}
+
+		for s.cws == nil || !s.cws.Submit(ctx, finalize) {
+			s.cws = newContextWaitService()
+		}
 
 		s.lock <- struct{}{}
 		return ctx, cancel
