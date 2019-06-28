@@ -5,7 +5,7 @@ import (
 )
 
 type bufferOperator struct {
-	Notifier Observable
+	ClosingNotifier Observable
 }
 
 func (op bufferOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
@@ -19,7 +19,7 @@ func (op bufferOperator) Call(ctx context.Context, sink Observer, source Observa
 	cx := make(chan *X, 1)
 	cx <- &X{}
 
-	op.Notifier.Subscribe(ctx, func(t Notification) {
+	op.ClosingNotifier.Subscribe(ctx, func(t Notification) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
@@ -53,13 +53,13 @@ func (op bufferOperator) Call(ctx context.Context, sink Observer, source Observa
 	return ctx, cancel
 }
 
-// Buffer buffers the source Observable values until notifier emits.
+// Buffer buffers the source Observable values until closingNotifier emits.
 //
 // Buffer collects values from the past as a slice, and emits that slice
 // only when another Observable emits.
-func (Operators) Buffer(notifier Observable) OperatorFunc {
+func (Operators) Buffer(closingNotifier Observable) OperatorFunc {
 	return func(source Observable) Observable {
-		op := bufferOperator{notifier}
+		op := bufferOperator{closingNotifier}
 		return source.Lift(op.Call)
 	}
 }

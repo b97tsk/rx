@@ -22,6 +22,9 @@ func (op bufferCountOperator) Call(ctx context.Context, sink Observer, source Ob
 		buffer    = make([]interface{}, 0, op.BufferSize)
 		skipCount int
 	)
+	if op.StartBufferEvery == 0 {
+		op.StartBufferEvery = op.BufferSize
+	}
 	return source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
@@ -64,7 +67,7 @@ func (op bufferCountOperator) Call(ctx context.Context, sink Observer, source Ob
 // only when its size reaches bufferSize.
 func (Operators) BufferCount(bufferSize int) OperatorFunc {
 	return func(source Observable) Observable {
-		op := bufferCountOperator{bufferSize, bufferSize}
+		op := bufferCountOperator{BufferSize: bufferSize}
 		return source.Lift(op.Call)
 	}
 }
