@@ -35,12 +35,15 @@ func newContextWaitService() contextWaitService {
 		for {
 			i, v, _ := reflect.Select(cases)
 			if i == 0 {
-				<-service
-				if len(actionChan) == 0 {
-					close(service)
-					return
+				select {
+				case <-service:
+					if len(actionChan) == 0 {
+						close(service)
+						return
+					}
+					service <- actionChan
+				default:
 				}
-				service <- actionChan
 				cases[0].Chan = reflect.ValueOf(nil)
 				continue
 			}
@@ -67,7 +70,7 @@ func newContextWaitService() contextWaitService {
 				j := len(actions) - 1
 				actions[i], actions[j] = actions[j], actions[i]
 				actions = actions[:j]
-				action.Callback()
+				go action.Callback()
 			}
 			if len(actions) == 0 {
 				cases[0].Chan = reflect.ValueOf(time.After(autoCloseDelay))
