@@ -85,7 +85,7 @@ func (s *replaySubject) notify(t Notification) {
 
 		case t.HasError:
 			observers := s.observers.Swap(nil)
-			s.err = t.Value.(error)
+			s.err = t.Error
 
 			close(s.lock)
 

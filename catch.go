@@ -18,7 +18,7 @@ func (op catchOperator) Call(ctx context.Context, sink Observer, source Observab
 		case t.HasValue:
 			sink(t)
 		case t.HasError:
-			obs := op.Selector(t.Value.(error))
+			obs := op.Selector(t.Error)
 			obs.Subscribe(ctx, sink)
 		default:
 			sink(t)

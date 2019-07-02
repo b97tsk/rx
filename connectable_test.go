@@ -28,7 +28,7 @@ func TestObservable_Publish(t *testing.T) {
 				t.Fail()
 			}
 		case x.HasError:
-			t.Error(x.Value)
+			t.Error(x.Error)
 		}
 	})
 	select {
@@ -63,7 +63,7 @@ func TestObservable_PublishBehavior(t *testing.T) {
 				t.Fail()
 			}
 		case x.HasError:
-			t.Error(x.Value)
+			t.Error(x.Error)
 		}
 	})
 	select {
@@ -98,7 +98,7 @@ func TestObservable_PublishReplay(t *testing.T) {
 				t.Fail()
 			}
 		case x.HasError:
-			t.Error(x.Value)
+			t.Error(x.Error)
 		}
 	})
 	select {

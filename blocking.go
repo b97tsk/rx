@@ -18,7 +18,7 @@ func (o Observable) BlockingFirst(ctx context.Context) (value interface{}, err e
 			value = t.Value
 			cancel()
 		case t.HasError:
-			err = t.Value.(error)
+			err = t.Error
 			cancel()
 		default:
 			err = ErrEmpty
@@ -42,7 +42,7 @@ func (o Observable) BlockingLast(ctx context.Context) (value interface{}, err er
 			value = t.Value
 			hasValue = true
 		case t.HasError:
-			err = t.Value.(error)
+			err = t.Error
 		default:
 			if !hasValue {
 				err = ErrEmpty
@@ -77,7 +77,7 @@ func (o Observable) BlockingSingle(ctx context.Context) (value interface{}, err 
 				hasValue = true
 			}
 		case t.HasError:
-			err = t.Value.(error)
+			err = t.Error
 			cancel()
 		default:
 			if !hasValue {
@@ -98,7 +98,7 @@ func (o Observable) BlockingSingle(ctx context.Context) (value interface{}, err 
 func (o Observable) BlockingSubscribe(ctx context.Context, sink Observer) (err error) {
 	ctx, _ = o.Subscribe(ctx, func(t Notification) {
 		if t.HasError {
-			err = t.Value.(error)
+			err = t.Error
 		}
 		sink(t)
 	})

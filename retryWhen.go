@@ -40,7 +40,7 @@ func (op retryWhenOperator) Call(ctx context.Context, sink Observer, source Obse
 					sink(t)
 					cx <- x
 				case t.HasError:
-					lastError = t.Value.(error)
+					lastError = t.Error
 					activeCount := activeCount.Sub(1)
 					close(cx)
 					if activeCount == 0 {
@@ -50,7 +50,7 @@ func (op retryWhenOperator) Call(ctx context.Context, sink Observer, source Obse
 					if subject.Observer == nil {
 						subject = createSubject()
 					}
-					subject.Next(t.Value)
+					subject.Next(t.Error)
 				default:
 					sink(t)
 					cx <- x

@@ -66,9 +66,12 @@ func subscribe(tt *testing.T, observables []Observable, output ...interface{}) {
 			context.Background(),
 			func(t Notification) {
 				if len(output) == 0 {
-					if t.HasValue || t.HasError {
+					switch {
+					case t.HasValue:
 						tt.Logf("expect Nothing, but got %v", t.Value)
-					} else {
+					case t.HasError:
+						tt.Logf("expect Nothing, but got %v", t.Error)
+					default:
 						tt.Log("expect Nothing, but got Complete")
 					}
 					tt.Fail()
@@ -78,14 +81,22 @@ func subscribe(tt *testing.T, observables []Observable, output ...interface{}) {
 				expected := output[0]
 				output = output[1:]
 
-				if t.HasValue || t.HasError {
+				switch {
+				case t.HasValue:
 					if expected != t.Value {
 						tt.Logf("expect %v, but got %v", expected, t.Value)
 						tt.Fail()
 					} else {
 						tt.Logf("expect %v", expected)
 					}
-				} else {
+				case t.HasError:
+					if expected != t.Error {
+						tt.Logf("expect %v, but got %v", expected, t.Error)
+						tt.Fail()
+					} else {
+						tt.Logf("expect %v", expected)
+					}
+				default:
 					if expected != xComplete {
 						tt.Logf("expect %v, but got Complete", expected)
 						tt.Fail()

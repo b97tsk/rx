@@ -10,7 +10,7 @@ func (sink Observer) Next(val interface{}) {
 
 // Error passes an ERROR notification to this Observer.
 func (sink Observer) Error(err error) {
-	sink(Notification{Value: err, HasError: true})
+	sink(Notification{Error: err, HasError: true})
 }
 
 // Complete passes a COMPLETE notification to this Observer.

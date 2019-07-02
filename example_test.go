@@ -27,7 +27,7 @@ func Example() {
 				case t.HasValue:
 					fmt.Println(t.Value)
 				case t.HasError:
-					fmt.Println(t.Value)
+					fmt.Println(t.Error)
 				default:
 					fmt.Println("Complete")
 				}

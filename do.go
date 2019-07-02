@@ -45,7 +45,7 @@ func (Operators) DoOnError(onError func(error)) OperatorFunc {
 			func(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 				return source.Subscribe(ctx, func(t Notification) {
 					if t.HasError {
-						onError(t.Value.(error))
+						onError(t.Error)
 					}
 					sink(t)
 				})
