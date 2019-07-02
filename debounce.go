@@ -30,32 +30,30 @@ func (op debounceOperator) Call(ctx context.Context, sink Observer, source Obser
 
 				cx <- x
 
-				{
+				scheduleCancel()
+
+				scheduleCtx, scheduleCancel = context.WithCancel(ctx)
+
+				var observer Observer
+				observer = func(t Notification) {
+					observer = NopObserver
 					scheduleCancel()
-
-					scheduleCtx, scheduleCancel = context.WithCancel(ctx)
-
-					var observer Observer
-					observer = func(t Notification) {
-						observer = NopObserver
-						scheduleCancel()
-						if x, ok := <-cx; ok {
-							if t.HasError {
-								close(cx)
-								sink(t)
-								return
-							}
-							if x.HasLatestValue {
-								sink.Next(x.LatestValue)
-								x.HasLatestValue = false
-							}
-							cx <- x
+					if x, ok := <-cx; ok {
+						if t.HasError {
+							close(cx)
+							sink(t)
+							return
 						}
+						if x.HasLatestValue {
+							sink.Next(x.LatestValue)
+							x.HasLatestValue = false
+						}
+						cx <- x
 					}
-
-					obs := op.DurationSelector(t.Value)
-					obs.Subscribe(scheduleCtx, observer.Notify)
 				}
+
+				obs := op.DurationSelector(t.Value)
+				obs.Subscribe(scheduleCtx, observer.Notify)
 
 			case t.HasError:
 				close(cx)

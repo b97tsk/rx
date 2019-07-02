@@ -31,19 +31,17 @@ func (op debounceTimeOperator) Call(ctx context.Context, sink Observer, source O
 
 				cx <- x
 
-				{
-					scheduleCancel()
+				scheduleCancel()
 
-					_, scheduleCancel = scheduleOnce(ctx, op.Duration, func() {
-						if x, ok := <-cx; ok {
-							if x.HasLatestValue {
-								sink.Next(x.LatestValue)
-								x.HasLatestValue = false
-							}
-							cx <- x
+				_, scheduleCancel = scheduleOnce(ctx, op.Duration, func() {
+					if x, ok := <-cx; ok {
+						if x.HasLatestValue {
+							sink.Next(x.LatestValue)
+							x.HasLatestValue = false
 						}
-					})
-				}
+						cx <- x
+					}
+				})
 
 			case t.HasError:
 				close(cx)
