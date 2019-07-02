@@ -15,15 +15,6 @@ func init() {
 	canceledCtx = ctx
 }
 
-func isDone(ctx context.Context) (isDone bool) {
-	select {
-	case <-ctx.Done():
-		isDone = true
-	default:
-	}
-	return
-}
-
 func defaultCompare(v1, v2 interface{}) bool {
 	return v1 == v2
 }

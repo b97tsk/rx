@@ -10,7 +10,7 @@ type fromSliceOperator struct {
 
 func (op fromSliceOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	for _, val := range op.Slice {
-		if isDone(ctx) {
+		if ctx.Err() != nil {
 			return Done()
 		}
 		sink.Next(val)

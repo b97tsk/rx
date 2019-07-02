@@ -22,7 +22,7 @@ func (op takeUntilOperator) Call(ctx context.Context, sink Observer, source Obse
 		}
 	})
 
-	if isDone(ctx) {
+	if ctx.Err() != nil {
 		return Done()
 	}
 

@@ -104,7 +104,7 @@ func (op bufferTimeOperator) Call(ctx context.Context, sink Observer, source Obs
 			default:
 				close(cx)
 				for _, c := range x.Contexts {
-					if isDone(ctx) {
+					if ctx.Err() != nil {
 						return
 					}
 					c.Cancel()

@@ -126,7 +126,7 @@ func (s *replaySubject) call(ctx context.Context, sink Observer, source Observab
 		s.trimBuffer()
 
 		for i, j := 0, s.buffer.Len(); i < j; i++ {
-			if isDone(ctx) {
+			if ctx.Err() != nil {
 				break
 			}
 			sink.Next(s.buffer.At(i).(replaySubjectValue).Value)
@@ -144,7 +144,7 @@ func (s *replaySubject) call(ctx context.Context, sink Observer, source Observab
 	s.trimBuffer()
 
 	for i, j := 0, s.buffer.Len(); i < j; i++ {
-		if isDone(ctx) {
+		if ctx.Err() != nil {
 			return Done()
 		}
 		sink.Next(s.buffer.At(i).(replaySubjectValue).Value)

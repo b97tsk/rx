@@ -72,7 +72,7 @@ func (op bufferToggleOperator) Call(ctx context.Context, sink Observer, source O
 		}
 	})
 
-	if isDone(ctx) {
+	if ctx.Err() != nil {
 		return Done()
 	}
 
@@ -93,7 +93,7 @@ func (op bufferToggleOperator) Call(ctx context.Context, sink Observer, source O
 			default:
 				close(cx)
 				for _, c := range x.Contexts {
-					if isDone(ctx) {
+					if ctx.Err() != nil {
 						return
 					}
 					c.Cancel()

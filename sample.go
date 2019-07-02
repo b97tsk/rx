@@ -35,7 +35,7 @@ func (op sampleOperator) Call(ctx context.Context, sink Observer, source Observa
 		}
 	})
 
-	if isDone(ctx) {
+	if ctx.Err() != nil {
 		return Done()
 	}
 

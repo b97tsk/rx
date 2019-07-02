@@ -85,7 +85,7 @@ func (op windowToggleOperator) Call(ctx context.Context, sink Observer, source O
 		}
 	})
 
-	if isDone(ctx) {
+	if ctx.Err() != nil {
 		return Done()
 	}
 

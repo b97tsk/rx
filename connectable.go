@@ -101,7 +101,7 @@ func (o *connectableObservable) connect(addRef bool) (context.Context, context.C
 			t.Observe(subject.Observer)
 		})
 
-		if isDone(ctx) {
+		if ctx.Err() != nil {
 			return Done()
 		}
 

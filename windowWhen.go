@@ -27,7 +27,7 @@ func (op windowWhenOperator) Call(ctx context.Context, sink Observer, source Obs
 	)
 
 	openWindow = func() {
-		if isDone(ctx) {
+		if ctx.Err() != nil {
 			return
 		}
 
@@ -58,7 +58,7 @@ func (op windowWhenOperator) Call(ctx context.Context, sink Observer, source Obs
 
 	avoidRecursive.Do(openWindow)
 
-	if isDone(ctx) {
+	if ctx.Err() != nil {
 		return Done()
 	}
 

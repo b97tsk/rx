@@ -25,7 +25,7 @@ func (op bufferWhenOperator) Call(ctx context.Context, sink Observer, source Obs
 	)
 
 	openBuffer = func() {
-		if isDone(ctx) {
+		if ctx.Err() != nil {
 			return
 		}
 
@@ -54,7 +54,7 @@ func (op bufferWhenOperator) Call(ctx context.Context, sink Observer, source Obs
 
 	avoidRecursive.Do(openBuffer)
 
-	if isDone(ctx) {
+	if ctx.Err() != nil {
 		return Done()
 	}
 

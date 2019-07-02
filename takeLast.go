@@ -23,7 +23,7 @@ func (op takeLastOperator) Call(ctx context.Context, sink Observer, source Obser
 			sink(t)
 		default:
 			for i, j := 0, queue.Len(); i < j; i++ {
-				if isDone(ctx) {
+				if ctx.Err() != nil {
 					return
 				}
 				sink.Next(queue.At(i))

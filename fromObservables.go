@@ -10,7 +10,7 @@ type fromObservablesOperator struct {
 
 func (op fromObservablesOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	for _, obs := range op.Observables {
-		if isDone(ctx) {
+		if ctx.Err() != nil {
 			return Done()
 		}
 		sink.Next(obs)

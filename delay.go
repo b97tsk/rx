@@ -35,7 +35,7 @@ func (op delayOperator) Call(ctx context.Context, sink Observer, source Observab
 			x := <-cx
 			x.Scheduled = false
 			for x.Queue.Len() > 0 {
-				if isDone(ctx) {
+				if ctx.Err() != nil {
 					break
 				}
 				t := x.Queue.Front().(delayValue)

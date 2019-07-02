@@ -39,7 +39,7 @@ func (op skipUntilOperator) Call(ctx context.Context, sink Observer, source Obse
 		op.Notifier.Subscribe(ctx, observer.Notify)
 	}
 
-	if isDone(ctx) {
+	if ctx.Err() != nil {
 		return Done()
 	}
 

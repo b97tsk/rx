@@ -55,7 +55,7 @@ func (op throttleTimeOperator) Call(ctx context.Context, sink Observer, source O
 			case t.HasValue:
 				x.TrailingValue = t.Value
 				x.HasTrailingValue = true
-				if isDone(throttleCtx) {
+				if throttleCtx.Err() != nil {
 					doThrottle()
 					if op.Leading {
 						sink(t)
