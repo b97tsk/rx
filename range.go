@@ -22,13 +22,13 @@ func (op rangeOperator) Call(ctx context.Context, sink Observer, source Observab
 // Range creates an Observable that emits a sequence of integers within a
 // specified range.
 func Range(low, high int) Observable {
-	switch n := high - low; {
-	case n > 1:
-		op := rangeOperator{low, high}
-		return Observable{}.Lift(op.Call)
-	case n == 1:
+	switch {
+	case low >= high:
+		return Empty()
+	case low+1 == high:
 		return just(low)
 	default:
-		return Empty()
+		op := rangeOperator{low, high}
+		return Observable{}.Lift(op.Call)
 	}
 }
