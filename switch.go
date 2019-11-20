@@ -10,7 +10,7 @@ type switchMapOperator struct {
 
 func (op switchMapOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
-	childCtx, childCancel := Done()
+	_, childCancel := Done()
 
 	sink = Mutex(Finally(sink, cancel))
 
@@ -32,13 +32,14 @@ func (op switchMapOperator) Call(ctx context.Context, sink Observer, source Obse
 			x.Index++
 
 			x.ActiveIndex = outerIndex
+
+			cx <- x
+
 			childCancel()
 
 			obs := op.Project(outerValue, outerIndex)
 
-			childCtx, childCancel = context.WithCancel(ctx)
-
-			go obs.Subscribe(childCtx, func(t Notification) {
+			_, childCancel = obs.Subscribe(ctx, func(t Notification) {
 				switch {
 				case t.HasValue || t.HasError:
 					sink(t)
@@ -53,8 +54,6 @@ func (op switchMapOperator) Call(ctx context.Context, sink Observer, source Obse
 					cx <- x
 				}
 			})
-
-			cx <- x
 
 		case t.HasError:
 			sink(t)
