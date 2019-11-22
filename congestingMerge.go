@@ -23,9 +23,7 @@ func (op congestingMergeOperator) Call(ctx context.Context, sink Observer, sourc
 
 	sink = Mutex(Finally(sink, cancel))
 
-	var (
-		completeSignal = make(chan struct{}, 1)
-	)
+	completeSignal := make(chan struct{}, 1)
 
 	type X struct {
 		Index       int
@@ -38,6 +36,7 @@ func (op congestingMergeOperator) Call(ctx context.Context, sink Observer, sourc
 		switch {
 		case t.HasValue:
 			x := <-cx
+
 			for x.ActiveCount == op.Concurrent {
 				cx <- x
 				select {
@@ -48,16 +47,6 @@ func (op congestingMergeOperator) Call(ctx context.Context, sink Observer, sourc
 				x = <-cx
 			}
 
-			type Y struct{}
-			cy := make(chan Y, 1)
-			cy <- Y{}
-
-			defer func() {
-				<-cy
-				cx <- x
-				close(cy)
-			}()
-
 			x.ActiveCount++
 
 			outerIndex := x.Index
@@ -67,19 +56,16 @@ func (op congestingMergeOperator) Call(ctx context.Context, sink Observer, sourc
 			// calls op.Project synchronously
 			obs := op.Project(outerValue, outerIndex)
 
+			cx <- x
+
 			obs.Subscribe(ctx, func(t Notification) {
 				switch {
 				case t.HasValue || t.HasError:
 					sink(t)
 				default:
-					if y, ok := <-cy; ok {
-						x.ActiveCount--
-						cy <- y
-					} else {
-						x := <-cx
-						x.ActiveCount--
-						cx <- x
-					}
+					x := <-cx
+					x.ActiveCount--
+					cx <- x
 					select {
 					case completeSignal <- struct{}{}:
 					default:
