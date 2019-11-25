@@ -66,7 +66,7 @@ func (o *connectableObservable) connect(addRef bool) (context.Context, context.C
 
 		ctx, cancel := o.source.Subscribe(context.Background(), func(t Notification) {
 			if t.HasValue {
-				subject.Next(t.Value)
+				t.Observe(subject.Observer)
 				return
 			}
 
