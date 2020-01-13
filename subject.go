@@ -17,7 +17,7 @@ func NewSubject() Subject {
 	s.lock = make(chan struct{}, 1)
 	s.lock <- struct{}{}
 	return Subject{
-		Observable: Observable{}.Lift(s.call),
+		Observable: s.subscribe,
 		Observer:   s.notify,
 	}
 }
@@ -65,7 +65,7 @@ func (s *subject) notify(t Notification) {
 	}
 }
 
-func (s *subject) call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (s *subject) subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	if _, ok := <-s.lock; ok {
 		ctx, cancel := context.WithCancel(ctx)
 

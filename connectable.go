@@ -16,7 +16,7 @@ type ConnectableObservable struct {
 
 type connectableObservable struct {
 	Observable
-	mutex          sync.Mutex
+	mux            sync.Mutex
 	source         Observable
 	subjectFactory func() Subject
 	connection     context.Context
@@ -30,41 +30,41 @@ func newConnectableObservable(source Observable, subjectFactory func() Subject) 
 		source:         source,
 		subjectFactory: subjectFactory,
 	}
-	connectable.Observable = Observable{}.Lift(
-		func(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+	connectable.Observable = Observable(
+		func(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 			return connectable.getSubject().Subscribe(ctx, sink)
 		},
 	)
 	return &connectable
 }
 
-func (o *connectableObservable) getSubjectLocked() Subject {
-	if o.subject.Observer == nil {
-		o.subject = o.subjectFactory()
+func (obs *connectableObservable) getSubjectLocked() Subject {
+	if obs.subject.Observer == nil {
+		obs.subject = obs.subjectFactory()
 	}
-	return o.subject
+	return obs.subject
 }
 
-func (o *connectableObservable) getSubject() Subject {
-	o.mutex.Lock()
-	defer o.mutex.Unlock()
-	return o.getSubjectLocked()
+func (obs *connectableObservable) getSubject() Subject {
+	obs.mux.Lock()
+	defer obs.mux.Unlock()
+	return obs.getSubjectLocked()
 }
 
-func (o *connectableObservable) connect(addRef bool) (context.Context, context.CancelFunc) {
-	o.mutex.Lock()
-	defer o.mutex.Unlock()
+func (obs *connectableObservable) connect(addRef bool) (context.Context, context.CancelFunc) {
+	obs.mux.Lock()
+	defer obs.mux.Unlock()
 
-	connection := o.connection
+	connection := obs.connection
 
 	if connection == nil {
 		type X struct{}
 		cx := make(chan X, 1)
 		cx <- X{}
 
-		subject := o.getSubjectLocked()
+		subject := obs.getSubjectLocked()
 
-		ctx, cancel := o.source.Subscribe(context.Background(), func(t Notification) {
+		ctx, cancel := obs.source.Subscribe(context.Background(), func(t Notification) {
 			if t.HasValue {
 				t.Observe(subject.Observer)
 				return
@@ -72,20 +72,20 @@ func (o *connectableObservable) connect(addRef bool) (context.Context, context.C
 
 			x, cxLocked := <-cx
 			if !cxLocked {
-				o.mutex.Lock()
+				obs.mux.Lock()
 			}
 
-			if connection == o.connection {
-				o.connection = nil
-				o.disconnect = nil
-				o.subject = Subject{}
-				o.refCount = 0
+			if connection == obs.connection {
+				obs.connection = nil
+				obs.disconnect = nil
+				obs.subject = Subject{}
+				obs.refCount = 0
 			}
 
 			if cxLocked {
 				cx <- x
 			} else {
-				o.mutex.Unlock()
+				obs.mux.Unlock()
 			}
 
 			t.Observe(subject.Observer)
@@ -99,58 +99,58 @@ func (o *connectableObservable) connect(addRef bool) (context.Context, context.C
 		}
 
 		connection = ctx
-		o.connection = ctx
-		o.disconnect = cancel
+		obs.connection = ctx
+		obs.disconnect = cancel
 	}
 
 	if addRef {
-		o.refCount++
+		obs.refCount++
 
 		return connection, func() {
-			o.mutex.Lock()
-			defer o.mutex.Unlock()
+			obs.mux.Lock()
+			defer obs.mux.Unlock()
 
-			if connection != o.connection {
+			if connection != obs.connection {
 				return
 			}
-			if o.refCount == 0 {
+			if obs.refCount == 0 {
 				return
 			}
 
-			o.refCount--
+			obs.refCount--
 
-			if o.refCount == 0 {
-				o.disconnect()
-				o.connection = nil
-				o.disconnect = nil
-				o.subject = Subject{}
+			if obs.refCount == 0 {
+				obs.disconnect()
+				obs.connection = nil
+				obs.disconnect = nil
+				obs.subject = Subject{}
 			}
 		}
 	}
 
 	return connection, func() {
-		o.mutex.Lock()
-		defer o.mutex.Unlock()
+		obs.mux.Lock()
+		defer obs.mux.Unlock()
 
-		if connection != o.connection {
+		if connection != obs.connection {
 			return
 		}
 
-		o.disconnect()
-		o.connection = nil
-		o.disconnect = nil
-		o.subject = Subject{}
-		o.refCount = 0
+		obs.disconnect()
+		obs.connection = nil
+		obs.disconnect = nil
+		obs.subject = Subject{}
+		obs.refCount = 0
 	}
 }
 
-func (o *connectableObservable) connectAddRef() (context.Context, context.CancelFunc) {
-	return o.connect(true)
+func (obs *connectableObservable) connectAddRef() (context.Context, context.CancelFunc) {
+	return obs.connect(true)
 }
 
 // Connect invokes an execution of an ConnectableObservable.
-func (o ConnectableObservable) Connect() (context.Context, context.CancelFunc) {
-	return o.connect(false)
+func (obs ConnectableObservable) Connect() (context.Context, context.CancelFunc) {
+	return obs.connect(false)
 }
 
 type refCountOperator struct {
@@ -174,34 +174,34 @@ func (op refCountOperator) Call(ctx context.Context, sink Observer, source Obser
 // Connect() for us, which starts the shared execution. Only when the number
 // of subscribers decreases from 1 to 0 will it be fully unsubscribed, stopping
 // further execution.
-func (o ConnectableObservable) RefCount() Observable {
-	op := refCountOperator{o}
-	return Observable{}.Lift(op.Call)
+func (obs ConnectableObservable) RefCount() Observable {
+	op := refCountOperator{obs}
+	return Empty().Lift(op.Call)
 }
 
 // Multicast returns a ConnectableObservable, which is a variety of Observable
 // that waits until its Connect method is called before it begins emitting
 // items to those Observers that have subscribed to it.
-func (o Observable) Multicast(subjectFactory func() Subject) ConnectableObservable {
-	return ConnectableObservable{newConnectableObservable(o, subjectFactory)}
+func (obs Observable) Multicast(subjectFactory func() Subject) ConnectableObservable {
+	return ConnectableObservable{newConnectableObservable(obs, subjectFactory)}
 }
 
 // Publish is like Multicast, but it uses only one subject.
-func (o Observable) Publish() ConnectableObservable {
+func (obs Observable) Publish() ConnectableObservable {
 	subject := NewSubject()
-	return o.Multicast(func() Subject { return subject })
+	return obs.Multicast(func() Subject { return subject })
 }
 
 // PublishBehavior is like Publish, but it uses a BehaviorSubject instead.
-func (o Observable) PublishBehavior(val interface{}) ConnectableObservable {
+func (obs Observable) PublishBehavior(val interface{}) ConnectableObservable {
 	subject := NewBehaviorSubject(val)
-	return o.Multicast(func() Subject { return subject.Subject })
+	return obs.Multicast(func() Subject { return subject.Subject })
 }
 
 // PublishReplay is like Publish, but it uses a ReplaySubject instead.
-func (o Observable) PublishReplay(bufferSize int, windowTime time.Duration) ConnectableObservable {
+func (obs Observable) PublishReplay(bufferSize int, windowTime time.Duration) ConnectableObservable {
 	subject := NewReplaySubject(bufferSize, windowTime)
-	return o.Multicast(func() Subject { return subject.Subject })
+	return obs.Multicast(func() Subject { return subject.Subject })
 }
 
 // Share returns a new Observable that multicasts (shares) the original

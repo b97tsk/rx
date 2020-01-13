@@ -7,31 +7,29 @@ import (
 // An Observable is a collection of future values. When an Observable is
 // subscribed, its values, when available, are emitted to the specified
 // Observer.
-type Observable struct {
-	*observable
-}
-
-type observable struct {
-	source Observable
-	op     Operator
-}
+type Observable func(context.Context, Observer) (context.Context, context.CancelFunc)
 
 // Lift creates a new Observable, with this Observable as the source, and
 // the passed Operator defined as the new Observable's Operator.
-func (o Observable) Lift(op Operator) Observable {
-	return Observable{&observable{o, op}}
+func (obs Observable) Lift(op Operator) Observable {
+	return func(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
+		return op(ctx, sink, obs)
+	}
 }
 
-// Pipe stitches Operators together into a chain, returns the Observable result
-// of all of the Operators having been called in the order they were passed in.
-func (o Observable) Pipe(operations ...OperatorFunc) Observable {
-	for _, call := range operations {
-		o = call(o)
+// Pipe stitches operators together into a chain, returns the Observable result
+// of all of the operators having been called in the order they were passed in.
+func (obs Observable) Pipe(operations ...OperatorFunc) Observable {
+	for _, op := range operations {
+		obs = op(obs)
 	}
-	return o
+	return obs
 }
 
 // Subscribe invokes an execution of an Observable.
-func (o Observable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	return o.op(ctx, sink, o.source)
+func (obs Observable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
+	if obs == nil {
+		obs = Empty()
+	}
+	return obs(ctx, sink)
 }

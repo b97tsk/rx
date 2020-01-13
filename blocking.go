@@ -7,7 +7,7 @@ import (
 // BlockingFirst subscribes to the source Observable, returns the first item
 // emitted by the source; if the source emits no items, it returns nil and
 // error ErrEmpty; if the source errors, it returns with the error.
-func (o Observable) BlockingFirst(ctx context.Context) (value interface{}, err error) {
+func (obs Observable) BlockingFirst(ctx context.Context) (value interface{}, err error) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	var observer Observer
@@ -25,7 +25,7 @@ func (o Observable) BlockingFirst(ctx context.Context) (value interface{}, err e
 			cancel()
 		}
 	}
-	o.Subscribe(ctx, observer.Notify)
+	obs.Subscribe(ctx, observer.Notify)
 
 	<-ctx.Done()
 	return
@@ -34,9 +34,9 @@ func (o Observable) BlockingFirst(ctx context.Context) (value interface{}, err e
 // BlockingLast subscribes to the source Observable, returns the last item
 // emitted by the source; if the source emits no items, it returns nil and
 // error ErrEmpty; if the source errors, it returns with the error.
-func (o Observable) BlockingLast(ctx context.Context) (value interface{}, err error) {
+func (obs Observable) BlockingLast(ctx context.Context) (value interface{}, err error) {
 	var hasValue bool
-	ctx, _ = o.Subscribe(ctx, func(t Notification) {
+	ctx, _ = obs.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			value = t.Value
@@ -57,7 +57,7 @@ func (o Observable) BlockingLast(ctx context.Context) (value interface{}, err er
 // emitted by the source; if the source emits more than one item or no items,
 // it returns with error ErrNotSingle or ErrEmpty respectively; if the source
 // errors, it returns with the error.
-func (o Observable) BlockingSingle(ctx context.Context) (value interface{}, err error) {
+func (obs Observable) BlockingSingle(ctx context.Context) (value interface{}, err error) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	var (
@@ -87,7 +87,7 @@ func (o Observable) BlockingSingle(ctx context.Context) (value interface{}, err 
 		}
 	}
 
-	o.Subscribe(ctx, observer.Notify)
+	obs.Subscribe(ctx, observer.Notify)
 	<-ctx.Done()
 	return
 }
@@ -95,8 +95,8 @@ func (o Observable) BlockingSingle(ctx context.Context) (value interface{}, err 
 // BlockingSubscribe subscribes to the source Observable, returns only when
 // the source completes or errors; if the source completes, it returns nil;
 // if the source errors, it returns the error.
-func (o Observable) BlockingSubscribe(ctx context.Context, sink Observer) (err error) {
-	ctx, _ = o.Subscribe(ctx, func(t Notification) {
+func (obs Observable) BlockingSubscribe(ctx context.Context, sink Observer) (err error) {
+	ctx, _ = obs.Subscribe(ctx, func(t Notification) {
 		if t.HasError {
 			err = t.Error
 		}

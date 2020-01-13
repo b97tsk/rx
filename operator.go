@@ -15,7 +15,9 @@ type OperatorFunc func(Observable) Observable
 // MakeFunc casts an Operator into an OperatorFunc.
 func MakeFunc(op Operator) OperatorFunc {
 	return func(source Observable) Observable {
-		return source.Lift(op)
+		return func(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
+			return op(ctx, sink, source)
+		}
 	}
 }
 

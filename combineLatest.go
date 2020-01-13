@@ -94,7 +94,7 @@ func CombineLatest(observables ...Observable) Observable {
 		return Empty()
 	}
 	op := combineLatestOperator{observables}
-	return Observable{}.Lift(op.Call)
+	return Empty().Lift(op.Call)
 }
 
 // CombineAll converts a higher-order Observable into a first-order Observable

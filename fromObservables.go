@@ -25,7 +25,7 @@ func FromObservables(observables ...Observable) Observable {
 	switch {
 	case len(observables) > 1:
 		op := fromObservablesOperator{observables}
-		return Observable{}.Lift(op.Call)
+		return Empty().Lift(op.Call)
 	case len(observables) == 1:
 		return just(observables[0])
 	default:

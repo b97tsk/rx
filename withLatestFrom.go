@@ -95,6 +95,6 @@ func (Operators) WithLatestFrom(observables ...Observable) OperatorFunc {
 	return func(source Observable) Observable {
 		observables = append([]Observable{source}, observables...)
 		op := withLatestFromOperator{observables}
-		return Observable{}.Lift(op.Call)
+		return Empty().Lift(op.Call)
 	}
 }

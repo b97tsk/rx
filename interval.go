@@ -41,7 +41,7 @@ func (op intervalOperator) Call(ctx context.Context, sink Observer, source Obser
 // specified interval of time.
 func Interval(period time.Duration) Observable {
 	op := intervalOperator{period, period}
-	return Observable{}.Lift(op.Call)
+	return Empty().Lift(op.Call)
 }
 
 // Timer creates an Observable that starts emitting after an initialDelay and
@@ -50,5 +50,5 @@ func Interval(period time.Duration) Observable {
 // Its like Interval, but you can specify when should the emissions start.
 func Timer(initialDelay, period time.Duration) Observable {
 	op := intervalOperator{initialDelay, period}
-	return Observable{}.Lift(op.Call)
+	return Empty().Lift(op.Call)
 }

@@ -27,10 +27,8 @@ func Mutex(sink Observer) Observer {
 // exclusive way.
 func (Operators) Mutex() OperatorFunc {
 	return func(source Observable) Observable {
-		return source.Lift(
-			func(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
-				return source.Subscribe(ctx, Mutex(sink))
-			},
-		)
+		return func(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
+			return source.Subscribe(ctx, Mutex(sink))
+		}
 	}
 }

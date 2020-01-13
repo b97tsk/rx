@@ -109,7 +109,7 @@ func Zip(observables ...Observable) Observable {
 		return Empty()
 	}
 	op := zipOperator{observables}
-	return Observable{}.Lift(op.Call)
+	return Empty().Lift(op.Call)
 }
 
 // ZipAll converts a higher-order Observable into a first-order Observable by

@@ -16,7 +16,7 @@ type BehaviorSubject struct {
 func NewBehaviorSubject(val interface{}) BehaviorSubject {
 	s := new(behaviorSubject)
 	s.Subject = Subject{
-		Observable: Observable{}.Lift(s.call),
+		Observable: s.subscribe,
 		Observer:   s.notify,
 	}
 	s.lock = make(chan struct{}, 1)
@@ -85,7 +85,7 @@ func (s *behaviorSubject) notify(t Notification) {
 	}
 }
 
-func (s *behaviorSubject) call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (s *behaviorSubject) subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	if _, ok := <-s.lock; ok {
 		ctx, cancel := context.WithCancel(ctx)
 

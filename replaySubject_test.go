@@ -11,7 +11,7 @@ import (
 func TestReplaySubject(t *testing.T) {
 	t.Run("#1", func(t *testing.T) {
 		subject := NewReplaySubject(3, 0)
-		subscribeThenComplete := Create(
+		subscribeThenComplete := Observable(
 			func(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 				ctx, cancel := context.WithCancel(ctx)
 				defer cancel()
@@ -34,7 +34,7 @@ func TestReplaySubject(t *testing.T) {
 	})
 	t.Run("#2", func(t *testing.T) {
 		subject := NewReplaySubject(0, step(5))
-		subscribeThenComplete := Create(
+		subscribeThenComplete := Observable(
 			func(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 				ctx, cancel := context.WithCancel(ctx)
 				defer cancel()

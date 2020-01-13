@@ -23,10 +23,8 @@ func Finally(sink Observer, finally func()) Observer {
 // specified function.
 func (Operators) Finally(finally func()) OperatorFunc {
 	return func(source Observable) Observable {
-		return source.Lift(
-			func(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
-				return source.Subscribe(ctx, Finally(sink, finally))
-			},
-		)
+		return func(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
+			return source.Subscribe(ctx, Finally(sink, finally))
+		}
 	}
 }

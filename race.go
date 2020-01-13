@@ -68,6 +68,6 @@ func Race(observables ...Observable) Observable {
 		return observables[0]
 	default:
 		op := raceOperator{observables}
-		return Observable{}.Lift(op.Call)
+		return Empty().Lift(op.Call)
 	}
 }

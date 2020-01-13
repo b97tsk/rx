@@ -29,6 +29,6 @@ func Range(low, high int) Observable {
 		return just(low)
 	default:
 		op := rangeOperator{low, high}
-		return Observable{}.Lift(op.Call)
+		return Empty().Lift(op.Call)
 	}
 }

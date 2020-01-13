@@ -48,5 +48,5 @@ func OnErrorResumeNext(observables ...Observable) Observable {
 		return Empty()
 	}
 	op := onErrorResumeNextOperator{observables}
-	return Observable{}.Lift(op.Call)
+	return Empty().Lift(op.Call)
 }

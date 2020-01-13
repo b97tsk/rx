@@ -8,14 +8,12 @@ import (
 // a side effect before each emission.
 func (Operators) Do(sink Observer) OperatorFunc {
 	return func(source Observable) Observable {
-		return source.Lift(
-			func(ctx context.Context, notify Observer, source Observable) (context.Context, context.CancelFunc) {
-				return source.Subscribe(ctx, func(t Notification) {
-					sink(t)
-					notify(t)
-				})
-			},
-		)
+		return func(ctx context.Context, notify Observer) (context.Context, context.CancelFunc) {
+			return source.Subscribe(ctx, func(t Notification) {
+				sink(t)
+				notify(t)
+			})
+		}
 	}
 }
 
@@ -23,16 +21,14 @@ func (Operators) Do(sink Observer) OperatorFunc {
 // performs a side effect before each value.
 func (Operators) DoOnNext(onNext func(interface{})) OperatorFunc {
 	return func(source Observable) Observable {
-		return source.Lift(
-			func(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
-				return source.Subscribe(ctx, func(t Notification) {
-					if t.HasValue {
-						onNext(t.Value)
-					}
-					sink(t)
-				})
-			},
-		)
+		return func(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
+			return source.Subscribe(ctx, func(t Notification) {
+				if t.HasValue {
+					onNext(t.Value)
+				}
+				sink(t)
+			})
+		}
 	}
 }
 
@@ -41,16 +37,14 @@ func (Operators) DoOnNext(onNext func(interface{})) OperatorFunc {
 // the ERROR emission.
 func (Operators) DoOnError(onError func(error)) OperatorFunc {
 	return func(source Observable) Observable {
-		return source.Lift(
-			func(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
-				return source.Subscribe(ctx, func(t Notification) {
-					if t.HasError {
-						onError(t.Error)
-					}
-					sink(t)
-				})
-			},
-		)
+		return func(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
+			return source.Subscribe(ctx, func(t Notification) {
+				if t.HasError {
+					onError(t.Error)
+				}
+				sink(t)
+			})
+		}
 	}
 }
 
@@ -59,17 +53,15 @@ func (Operators) DoOnError(onError func(error)) OperatorFunc {
 // the COMPLETE emission.
 func (Operators) DoOnComplete(onComplete func()) OperatorFunc {
 	return func(source Observable) Observable {
-		return source.Lift(
-			func(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
-				return source.Subscribe(ctx, func(t Notification) {
-					if t.HasValue || t.HasError {
-						sink(t)
-						return
-					}
-					onComplete()
+		return func(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
+			return source.Subscribe(ctx, func(t Notification) {
+				if t.HasValue || t.HasError {
 					sink(t)
-				})
-			},
-		)
+					return
+				}
+				onComplete()
+				sink(t)
+			})
+		}
 	}
 }

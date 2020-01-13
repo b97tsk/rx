@@ -8,15 +8,13 @@ import (
 // source Observable and only passes ERROR or COMPLETE emission.
 func (Operators) IgnoreElements() OperatorFunc {
 	return func(source Observable) Observable {
-		return source.Lift(
-			func(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
-				return source.Subscribe(ctx, func(t Notification) {
-					if t.HasValue {
-						return
-					}
-					sink(t)
-				})
-			},
-		)
+		return func(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
+			return source.Subscribe(ctx, func(t Notification) {
+				if t.HasValue {
+					return
+				}
+				sink(t)
+			})
+		}
 	}
 }

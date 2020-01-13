@@ -66,7 +66,7 @@ func CongestingZip(observables ...Observable) Observable {
 		return Empty()
 	}
 	op := congestingZipOperator{observables}
-	return Observable{}.Lift(op.Call)
+	return Empty().Lift(op.Call)
 }
 
 // CongestingZipAll converts a higher-order Observable into a first-order

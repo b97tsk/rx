@@ -21,7 +21,7 @@ func NewReplaySubject(bufferSize int, windowTime time.Duration) ReplaySubject {
 		WindowTime: windowTime,
 	}
 	s.Subject = Subject{
-		Observable: Observable{}.Lift(s.call),
+		Observable: s.subscribe,
 		Observer:   s.notify,
 	}
 	s.lock = make(chan struct{}, 1)
@@ -105,7 +105,7 @@ func (s *replaySubject) notify(t Notification) {
 	}
 }
 
-func (s *replaySubject) call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (s *replaySubject) subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	if _, ok := <-s.lock; ok {
 		ctx, cancel := context.WithCancel(ctx)
 

@@ -89,5 +89,5 @@ func ForkJoin(observables ...Observable) Observable {
 		return Empty()
 	}
 	op := forkJoinOperator{observables}
-	return Observable{}.Lift(op.Call)
+	return Empty().Lift(op.Call)
 }

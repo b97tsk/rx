@@ -11,17 +11,15 @@ import (
 // every time.
 func (Operators) MapTo(value interface{}) OperatorFunc {
 	return func(source Observable) Observable {
-		return source.Lift(
-			func(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
-				return source.Subscribe(ctx, func(t Notification) {
-					switch {
-					case t.HasValue:
-						sink.Next(value)
-					default:
-						sink(t)
-					}
-				})
-			},
-		)
+		return func(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
+			return source.Subscribe(ctx, func(t Notification) {
+				switch {
+				case t.HasValue:
+					sink.Next(value)
+				default:
+					sink(t)
+				}
+			})
+		}
 	}
 }

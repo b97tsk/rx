@@ -32,5 +32,5 @@ func (op fromChannelOperator) Call(ctx context.Context, sink Observer, source Ob
 // completes when the channel closes.
 func FromChannel(c <-chan interface{}) Observable {
 	op := fromChannelOperator{c}
-	return Observable{}.Lift(op.Call)
+	return Empty().Lift(op.Call)
 }
