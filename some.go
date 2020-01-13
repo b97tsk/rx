@@ -4,11 +4,12 @@ import (
 	"context"
 )
 
-type someOperator struct {
+type someObservable struct {
+	Source    Observable
 	Predicate func(interface{}, int) bool
 }
 
-func (op someOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs someObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = Finally(sink, cancel)
@@ -23,7 +24,7 @@ func (op someOperator) Call(ctx context.Context, sink Observer, source Observabl
 		case t.HasValue:
 			outerIndex++
 
-			if op.Predicate(t.Value, outerIndex) {
+			if obs.Predicate(t.Value, outerIndex) {
 				observer = NopObserver
 				sink.Next(true)
 				sink.Complete()
@@ -38,7 +39,7 @@ func (op someOperator) Call(ctx context.Context, sink Observer, source Observabl
 		}
 	}
 
-	source.Subscribe(ctx, observer.Notify)
+	obs.Source.Subscribe(ctx, observer.Notify)
 
 	return ctx, cancel
 }
@@ -49,7 +50,6 @@ func (op someOperator) Call(ctx context.Context, sink Observer, source Observabl
 // Some emits true or false, then completes.
 func (Operators) Some(predicate func(interface{}, int) bool) OperatorFunc {
 	return func(source Observable) Observable {
-		op := someOperator{predicate}
-		return source.Lift(op.Call)
+		return someObservable{source, predicate}.Subscribe
 	}
 }

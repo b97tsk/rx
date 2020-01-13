@@ -12,13 +12,18 @@ type ThrottleConfigure struct {
 }
 
 // MakeFunc creates an OperatorFunc from this type.
-func (conf ThrottleConfigure) MakeFunc() OperatorFunc {
-	return MakeFunc(throttleOperator(conf).Call)
+func (configure ThrottleConfigure) MakeFunc() OperatorFunc {
+	return func(source Observable) Observable {
+		return throttleObservable{source, configure}.Subscribe
+	}
 }
 
-type throttleOperator ThrottleConfigure
+type throttleObservable struct {
+	Source Observable
+	ThrottleConfigure
+}
 
-func (op throttleOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs throttleObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	throttleCtx, throttleCancel := Done()
 
@@ -40,7 +45,7 @@ func (op throttleOperator) Call(ctx context.Context, sink Observer, source Obser
 		observer = func(t Notification) {
 			observer = NopObserver
 			defer throttleCancel()
-			if op.Trailing || t.HasError {
+			if obs.Trailing || t.HasError {
 				if x, ok := <-cx; ok {
 					switch {
 					case t.HasError:
@@ -56,11 +61,11 @@ func (op throttleOperator) Call(ctx context.Context, sink Observer, source Obser
 			}
 		}
 
-		obs := op.DurationSelector(val)
+		obs := obs.DurationSelector(val)
 		go obs.Subscribe(throttleCtx, observer.Notify)
 	}
 
-	source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t Notification) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
@@ -68,7 +73,7 @@ func (op throttleOperator) Call(ctx context.Context, sink Observer, source Obser
 				x.HasTrailingValue = true
 				if throttleCtx.Err() != nil {
 					doThrottle(t.Value)
-					if op.Leading {
+					if obs.Leading {
 						sink(t)
 						x.HasTrailingValue = false
 					}
@@ -95,12 +100,9 @@ func (op throttleOperator) Call(ctx context.Context, sink Observer, source Obser
 // It's like ThrottleTime, but the silencing duration is determined by a second
 // Observable.
 func (Operators) Throttle(durationSelector func(interface{}) Observable) OperatorFunc {
-	return func(source Observable) Observable {
-		op := throttleOperator{
-			DurationSelector: durationSelector,
-			Leading:          true,
-			Trailing:         false,
-		}
-		return source.Lift(op.Call)
-	}
+	return ThrottleConfigure{
+		DurationSelector: durationSelector,
+		Leading:          true,
+		Trailing:         false,
+	}.MakeFunc()
 }

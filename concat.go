@@ -6,11 +6,12 @@ import (
 	"github.com/b97tsk/rx/x/queue"
 )
 
-type concatOperator struct {
+type concatObservable struct {
+	Source  Observable
 	Project func(interface{}, int) Observable
 }
 
-func (op concatOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs concatObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = Mutex(Finally(sink, cancel))
@@ -40,7 +41,7 @@ func (op concatOperator) Call(ctx context.Context, sink Observer, source Observa
 			outerValue := x.Buffer.PopFront()
 			x.Index++
 
-			obs := op.Project(outerValue, outerIndex)
+			obs := obs.Project(outerValue, outerIndex)
 			obs.Subscribe(ctx, func(t Notification) {
 				switch {
 				case t.HasValue || t.HasError:
@@ -56,7 +57,7 @@ func (op concatOperator) Call(ctx context.Context, sink Observer, source Observa
 		})
 	}
 
-	source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			x := <-cx
@@ -109,8 +110,7 @@ func (Operators) ConcatAll() OperatorFunc {
 // Observables using ConcatAll.
 func (Operators) ConcatMap(project func(interface{}, int) Observable) OperatorFunc {
 	return func(source Observable) Observable {
-		op := concatOperator{project}
-		return source.Lift(op.Call)
+		return concatObservable{source, project}.Subscribe
 	}
 }
 

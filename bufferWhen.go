@@ -4,11 +4,12 @@ import (
 	"context"
 )
 
-type bufferWhenOperator struct {
+type bufferWhenObservable struct {
+	Source          Observable
 	ClosingSelector func() Observable
 }
 
-func (op bufferWhenOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs bufferWhenObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = Finally(sink, cancel)
@@ -48,7 +49,7 @@ func (op bufferWhenOperator) Call(ctx context.Context, sink Observer, source Obs
 			}
 		}
 
-		closingNotifier := op.ClosingSelector()
+		closingNotifier := obs.ClosingSelector()
 		closingNotifier.Subscribe(ctx, observer.Notify)
 	}
 
@@ -58,7 +59,7 @@ func (op bufferWhenOperator) Call(ctx context.Context, sink Observer, source Obs
 		return Done()
 	}
 
-	source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t Notification) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
@@ -87,7 +88,6 @@ func (op bufferWhenOperator) Call(ctx context.Context, sink Observer, source Obs
 // soon as they are subscribed to.
 func (Operators) BufferWhen(closingSelector func() Observable) OperatorFunc {
 	return func(source Observable) Observable {
-		op := bufferWhenOperator{closingSelector}
-		return source.Lift(op.Call)
+		return bufferWhenObservable{source, closingSelector}.Subscribe
 	}
 }

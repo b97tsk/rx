@@ -13,13 +13,18 @@ type ExpandConfigure struct {
 }
 
 // MakeFunc creates an OperatorFunc from this type.
-func (conf ExpandConfigure) MakeFunc() OperatorFunc {
-	return MakeFunc(expandOperator(conf).Call)
+func (configure ExpandConfigure) MakeFunc() OperatorFunc {
+	return func(source Observable) Observable {
+		return expandObservable{source, configure}.Subscribe
+	}
 }
 
-type expandOperator ExpandConfigure
+type expandObservable struct {
+	Source Observable
+	ExpandConfigure
+}
 
-func (op expandOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs expandObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = Mutex(Finally(sink, cancel))
@@ -42,15 +47,15 @@ func (op expandOperator) Call(ctx context.Context, sink Observer, source Observa
 
 		sink.Next(outerValue)
 
-		// calls op.Project synchronously
-		obs := op.Project(outerValue, outerIndex)
+		// calls obs.Project synchronously
+		obs1 := obs.Project(outerValue, outerIndex)
 
-		go obs.Subscribe(ctx, func(t Notification) {
+		go obs1.Subscribe(ctx, func(t Notification) {
 			switch {
 			case t.HasValue:
 				x := <-cx
 				x.Buffer.PushBack(t.Value)
-				if x.ActiveCount != op.Concurrent {
+				if x.ActiveCount != obs.Concurrent {
 					x.ActiveCount++
 					doNextLocked(x)
 				}
@@ -74,12 +79,12 @@ func (op expandOperator) Call(ctx context.Context, sink Observer, source Observa
 		})
 	}
 
-	source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			x := <-cx
 			x.Buffer.PushBack(t.Value)
-			if x.ActiveCount != op.Concurrent {
+			if x.ActiveCount != obs.Concurrent {
 				x.ActiveCount++
 				doNextLocked(x)
 			}
@@ -107,8 +112,5 @@ func (op expandOperator) Call(ctx context.Context, sink Observer, source Observa
 // It's similar to MergeMap, but applies the projection function to every
 // source value as well as every output value. It's recursive.
 func (Operators) Expand(project func(interface{}, int) Observable) OperatorFunc {
-	return func(source Observable) Observable {
-		op := expandOperator{project, -1}
-		return source.Lift(op.Call)
-	}
+	return ExpandConfigure{project, -1}.MakeFunc()
 }

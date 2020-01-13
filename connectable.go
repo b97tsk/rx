@@ -153,13 +153,13 @@ func (obs ConnectableObservable) Connect() (context.Context, context.CancelFunc)
 	return obs.connect(false)
 }
 
-type refCountOperator struct {
+type refCountObservable struct {
 	Connectable ConnectableObservable
 }
 
-func (op refCountOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
-	ctx, cancel := op.Connectable.Subscribe(ctx, sink)
-	_, releaseRef := op.Connectable.connectAddRef()
+func (obs refCountObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
+	ctx, cancel := obs.Connectable.Subscribe(ctx, sink)
+	_, releaseRef := obs.Connectable.connectAddRef()
 
 	go func() {
 		<-ctx.Done()
@@ -175,8 +175,7 @@ func (op refCountOperator) Call(ctx context.Context, sink Observer, source Obser
 // of subscribers decreases from 1 to 0 will it be fully unsubscribed, stopping
 // further execution.
 func (obs ConnectableObservable) RefCount() Observable {
-	op := refCountOperator{obs}
-	return Empty().Lift(op.Call)
+	return refCountObservable{obs}.Subscribe
 }
 
 // Multicast returns a ConnectableObservable, which is a variety of Observable

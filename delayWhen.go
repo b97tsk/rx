@@ -4,11 +4,12 @@ import (
 	"context"
 )
 
-type delayWhenOperator struct {
+type delayWhenObservable struct {
+	Source           Observable
 	DurationSelector func(interface{}, int) Observable
 }
 
-func (op delayWhenOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs delayWhenObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = Finally(sink, cancel)
@@ -20,7 +21,7 @@ func (op delayWhenOperator) Call(ctx context.Context, sink Observer, source Obse
 	cx := make(chan *X, 1)
 	cx <- &X{ActiveCount: 1}
 
-	source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t Notification) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
@@ -62,7 +63,7 @@ func (op delayWhenOperator) Call(ctx context.Context, sink Observer, source Obse
 					}
 				}
 
-				obs := op.DurationSelector(outerValue, outerIndex)
+				obs := obs.DurationSelector(outerValue, outerIndex)
 				obs.Subscribe(scheduleCtx, observer.Notify)
 
 			case t.HasError:
@@ -92,7 +93,6 @@ func (op delayWhenOperator) Call(ctx context.Context, sink Observer, source Obse
 // a second Observable.
 func (Operators) DelayWhen(durationSelector func(interface{}, int) Observable) OperatorFunc {
 	return func(source Observable) Observable {
-		op := delayWhenOperator{durationSelector}
-		return source.Lift(op.Call)
+		return delayWhenObservable{source, durationSelector}.Subscribe
 	}
 }

@@ -4,11 +4,12 @@ import (
 	"context"
 )
 
-type findOperator struct {
+type findObservable struct {
+	Source    Observable
 	Predicate func(interface{}, int) bool
 }
 
-func (op findOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs findObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = Finally(sink, cancel)
@@ -23,7 +24,7 @@ func (op findOperator) Call(ctx context.Context, sink Observer, source Observabl
 		case t.HasValue:
 			outerIndex++
 
-			if op.Predicate(t.Value, outerIndex) {
+			if obs.Predicate(t.Value, outerIndex) {
 				observer = NopObserver
 				sink(t)
 				sink.Complete()
@@ -34,7 +35,7 @@ func (op findOperator) Call(ctx context.Context, sink Observer, source Observabl
 		}
 	}
 
-	source.Subscribe(ctx, observer.Notify)
+	obs.Source.Subscribe(ctx, observer.Notify)
 
 	return ctx, cancel
 }
@@ -43,7 +44,6 @@ func (op findOperator) Call(ctx context.Context, sink Observer, source Observabl
 // source Observable that meets some condition.
 func (Operators) Find(predicate func(interface{}, int) bool) OperatorFunc {
 	return func(source Observable) Observable {
-		op := findOperator{predicate}
-		return source.Lift(op.Call)
+		return findObservable{source, predicate}.Subscribe
 	}
 }

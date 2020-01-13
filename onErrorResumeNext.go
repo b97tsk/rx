@@ -4,11 +4,11 @@ import (
 	"context"
 )
 
-type onErrorResumeNextOperator struct {
+type onErrorResumeNextObservable struct {
 	Observables []Observable
 }
 
-func (op onErrorResumeNextOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs onErrorResumeNextObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = Finally(sink, cancel)
@@ -18,9 +18,10 @@ func (op onErrorResumeNextOperator) Call(ctx context.Context, sink Observer, sou
 		avoidRecursive avoidRecursiveCalls
 	)
 
-	remainder := op.Observables
+	remainder := obs.Observables
 	subscribe := func() {
-		source, remainder = remainder[0], remainder[1:]
+		source := remainder[0]
+		remainder = remainder[1:]
 		source.Subscribe(ctx, observer)
 	}
 
@@ -47,6 +48,5 @@ func OnErrorResumeNext(observables ...Observable) Observable {
 	if len(observables) == 0 {
 		return Empty()
 	}
-	op := onErrorResumeNextOperator{observables}
-	return Empty().Lift(op.Call)
+	return onErrorResumeNextObservable{observables}.Subscribe
 }

@@ -11,21 +11,26 @@ type BufferCountConfigure struct {
 }
 
 // MakeFunc creates an OperatorFunc from this type.
-func (conf BufferCountConfigure) MakeFunc() OperatorFunc {
-	return MakeFunc(bufferCountOperator(conf).Call)
+func (configure BufferCountConfigure) MakeFunc() OperatorFunc {
+	return func(source Observable) Observable {
+		return bufferCountObservable{source, configure}.Subscribe
+	}
 }
 
-type bufferCountOperator BufferCountConfigure
+type bufferCountObservable struct {
+	Source Observable
+	BufferCountConfigure
+}
 
-func (op bufferCountOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs bufferCountObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	var (
-		buffer    = make([]interface{}, 0, op.BufferSize)
+		buffer    = make([]interface{}, 0, obs.BufferSize)
 		skipCount int
 	)
-	if op.StartBufferEvery == 0 {
-		op.StartBufferEvery = op.BufferSize
+	if obs.StartBufferEvery == 0 {
+		obs.StartBufferEvery = obs.BufferSize
 	}
-	return source.Subscribe(ctx, func(t Notification) {
+	return obs.Source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			if skipCount > 0 {
@@ -33,14 +38,14 @@ func (op bufferCountOperator) Call(ctx context.Context, sink Observer, source Ob
 				break
 			}
 			buffer = append(buffer, t.Value)
-			if len(buffer) < op.BufferSize {
+			if len(buffer) < obs.BufferSize {
 				break
 			}
-			newBuffer := make([]interface{}, 0, op.BufferSize)
-			if op.StartBufferEvery < op.BufferSize {
-				newBuffer = append(newBuffer, buffer[op.StartBufferEvery:]...)
+			newBuffer := make([]interface{}, 0, obs.BufferSize)
+			if obs.StartBufferEvery < obs.BufferSize {
+				newBuffer = append(newBuffer, buffer[obs.StartBufferEvery:]...)
 			} else {
-				skipCount = op.StartBufferEvery - op.BufferSize
+				skipCount = obs.StartBufferEvery - obs.BufferSize
 			}
 			sink.Next(buffer)
 			buffer = newBuffer
@@ -48,8 +53,8 @@ func (op bufferCountOperator) Call(ctx context.Context, sink Observer, source Ob
 			sink(t)
 		default:
 			if len(buffer) > 0 {
-				for op.StartBufferEvery < len(buffer) {
-					newBuffer := append([]interface{}(nil), buffer[op.StartBufferEvery:]...)
+				for obs.StartBufferEvery < len(buffer) {
+					newBuffer := append([]interface{}(nil), buffer[obs.StartBufferEvery:]...)
 					sink.Next(buffer)
 					buffer = newBuffer
 				}
@@ -66,8 +71,5 @@ func (op bufferCountOperator) Call(ctx context.Context, sink Observer, source Ob
 // BufferCount collects values from the past as a slice, and emits that slice
 // only when its size reaches bufferSize.
 func (Operators) BufferCount(bufferSize int) OperatorFunc {
-	return func(source Observable) Observable {
-		op := bufferCountOperator{BufferSize: bufferSize}
-		return source.Lift(op.Call)
-	}
+	return BufferCountConfigure{BufferSize: bufferSize}.MakeFunc()
 }

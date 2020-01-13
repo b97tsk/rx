@@ -4,18 +4,19 @@ import (
 	"context"
 )
 
-type excludeOperator struct {
+type excludeObservable struct {
+	Source    Observable
 	Predicate func(interface{}, int) bool
 }
 
-func (op excludeOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs excludeObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	var outerIndex = -1
-	return source.Subscribe(ctx, func(t Notification) {
+	return obs.Source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			outerIndex++
 
-			if !op.Predicate(t.Value, outerIndex) {
+			if !obs.Predicate(t.Value, outerIndex) {
 				sink(t)
 			}
 
@@ -29,7 +30,6 @@ func (op excludeOperator) Call(ctx context.Context, sink Observer, source Observ
 // Observable by only emitting those that do not satisfy a specified predicate.
 func (Operators) Exclude(predicate func(interface{}, int) bool) OperatorFunc {
 	return func(source Observable) Observable {
-		op := excludeOperator{predicate}
-		return source.Lift(op.Call)
+		return excludeObservable{source, predicate}.Subscribe
 	}
 }

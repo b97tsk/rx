@@ -4,11 +4,12 @@ import (
 	"context"
 )
 
-type takeWhileOperator struct {
+type takeWhileObservable struct {
+	Source    Observable
 	Predicate func(interface{}, int) bool
 }
 
-func (op takeWhileOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs takeWhileObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = Finally(sink, cancel)
@@ -23,7 +24,7 @@ func (op takeWhileOperator) Call(ctx context.Context, sink Observer, source Obse
 		case t.HasValue:
 			outerIndex++
 
-			if op.Predicate(t.Value, outerIndex) {
+			if obs.Predicate(t.Value, outerIndex) {
 				sink(t)
 				break
 			}
@@ -36,7 +37,7 @@ func (op takeWhileOperator) Call(ctx context.Context, sink Observer, source Obse
 		}
 	}
 
-	source.Subscribe(ctx, observer.Notify)
+	obs.Source.Subscribe(ctx, observer.Notify)
 
 	return ctx, cancel
 }
@@ -49,7 +50,6 @@ func (op takeWhileOperator) Call(ctx context.Context, sink Observer, source Obse
 // given. When the first value does not satisfy, it completes.
 func (Operators) TakeWhile(predicate func(interface{}, int) bool) OperatorFunc {
 	return func(source Observable) Observable {
-		op := takeWhileOperator{predicate}
-		return source.Lift(op.Call)
+		return takeWhileObservable{source, predicate}.Subscribe
 	}
 }

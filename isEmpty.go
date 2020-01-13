@@ -4,9 +4,11 @@ import (
 	"context"
 )
 
-type isEmptyOperator struct{}
+type isEmptyObservable struct {
+	Source Observable
+}
 
-func (op isEmptyOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs isEmptyObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = Finally(sink, cancel)
@@ -25,7 +27,7 @@ func (op isEmptyOperator) Call(ctx context.Context, sink Observer, source Observ
 			sink.Complete()
 		}
 	}
-	source.Subscribe(ctx, observer.Notify)
+	obs.Source.Subscribe(ctx, observer.Notify)
 
 	return ctx, cancel
 }
@@ -34,7 +36,6 @@ func (op isEmptyOperator) Call(ctx context.Context, sink Observer, source Observ
 // emits no items, otherwise, it emits false.
 func (Operators) IsEmpty() OperatorFunc {
 	return func(source Observable) Observable {
-		op := isEmptyOperator{}
-		return source.Lift(op.Call)
+		return isEmptyObservable{source}.Subscribe
 	}
 }

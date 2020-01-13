@@ -13,13 +13,18 @@ type MergeConfigure struct {
 }
 
 // MakeFunc creates an OperatorFunc from this type.
-func (conf MergeConfigure) MakeFunc() OperatorFunc {
-	return MakeFunc(mergeOperator(conf).Call)
+func (configure MergeConfigure) MakeFunc() OperatorFunc {
+	return func(source Observable) Observable {
+		return mergeObservable{source, configure}.Subscribe
+	}
 }
 
-type mergeOperator MergeConfigure
+type mergeObservable struct {
+	Source Observable
+	MergeConfigure
+}
 
-func (op mergeOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs mergeObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = Mutex(Finally(sink, cancel))
@@ -40,8 +45,8 @@ func (op mergeOperator) Call(ctx context.Context, sink Observer, source Observab
 		outerValue := x.Buffer.PopFront()
 		x.Index++
 
-		// calls op.Project synchronously
-		obs := op.Project(outerValue, outerIndex)
+		// calls obs.Project synchronously
+		obs := obs.Project(outerValue, outerIndex)
 
 		go obs.Subscribe(ctx, func(t Notification) {
 			switch {
@@ -62,12 +67,12 @@ func (op mergeOperator) Call(ctx context.Context, sink Observer, source Observab
 		})
 	}
 
-	source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			x := <-cx
 			x.Buffer.PushBack(t.Value)
-			if x.ActiveCount != op.Concurrent {
+			if x.ActiveCount != obs.Concurrent {
 				x.ActiveCount++
 				doNextLocked(x)
 			}
@@ -111,10 +116,7 @@ func (Operators) MergeAll() OperatorFunc {
 // MergeMap maps each value to an Observable, then flattens all of these inner
 // Observables using MergeAll.
 func (Operators) MergeMap(project func(interface{}, int) Observable) OperatorFunc {
-	return func(source Observable) Observable {
-		op := mergeOperator{project, -1}
-		return source.Lift(op.Call)
-	}
+	return MergeConfigure{project, -1}.MakeFunc()
 }
 
 // MergeMapTo creates an Observable that projects each source value to the same

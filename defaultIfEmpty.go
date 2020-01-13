@@ -4,13 +4,14 @@ import (
 	"context"
 )
 
-type defaultIfEmptyOperator struct {
+type defaultIfEmptyObservable struct {
+	Source  Observable
 	Default interface{}
 }
 
-func (op defaultIfEmptyOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs defaultIfEmptyObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	var hasValue bool
-	return source.Subscribe(ctx, func(t Notification) {
+	return obs.Source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			hasValue = true
@@ -19,7 +20,7 @@ func (op defaultIfEmptyOperator) Call(ctx context.Context, sink Observer, source
 			sink(t)
 		default:
 			if !hasValue {
-				sink.Next(op.Default)
+				sink.Next(obs.Default)
 			}
 			sink(t)
 		}
@@ -34,7 +35,6 @@ func (op defaultIfEmptyOperator) Call(ctx context.Context, sink Observer, source
 // a default value.
 func (Operators) DefaultIfEmpty(defaultValue interface{}) OperatorFunc {
 	return func(source Observable) Observable {
-		op := defaultIfEmptyOperator{defaultValue}
-		return source.Lift(op.Call)
+		return defaultIfEmptyObservable{source, defaultValue}.Subscribe
 	}
 }

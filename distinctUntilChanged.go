@@ -11,21 +11,26 @@ type DistinctUntilChangedConfigure struct {
 }
 
 // MakeFunc creates an OperatorFunc from this type.
-func (conf DistinctUntilChangedConfigure) MakeFunc() OperatorFunc {
-	return MakeFunc(distinctUntilChangedOperator(conf).Call)
+func (configure DistinctUntilChangedConfigure) MakeFunc() OperatorFunc {
+	return func(source Observable) Observable {
+		return distinctUntilChangedObservable{source, configure}.Subscribe
+	}
 }
 
-type distinctUntilChangedOperator DistinctUntilChangedConfigure
+type distinctUntilChangedObservable struct {
+	Source Observable
+	DistinctUntilChangedConfigure
+}
 
-func (op distinctUntilChangedOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs distinctUntilChangedObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	var (
 		key    interface{}
 		hasKey bool
 	)
-	return source.Subscribe(ctx, func(t Notification) {
+	return obs.Source.Subscribe(ctx, func(t Notification) {
 		if t.HasValue {
-			newKey := op.KeySelector(t.Value)
-			if hasKey && op.Compare(key, newKey) {
+			newKey := obs.KeySelector(t.Value)
+			if hasKey && obs.Compare(key, newKey) {
 				return
 			}
 			key = newKey
@@ -43,8 +48,5 @@ func (op distinctUntilChangedOperator) Call(ctx context.Context, sink Observer, 
 //
 // If a comparator function is not provided, an equality check is used by default.
 func (Operators) DistinctUntilChanged() OperatorFunc {
-	return func(source Observable) Observable {
-		op := distinctUntilChangedOperator{defaultCompare, defaultKeySelector}
-		return source.Lift(op.Call)
-	}
+	return DistinctUntilChangedConfigure{defaultCompare, defaultKeySelector}.MakeFunc()
 }

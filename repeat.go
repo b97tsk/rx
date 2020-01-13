@@ -4,23 +4,24 @@ import (
 	"context"
 )
 
-type repeatOperator struct {
-	Count int
+type repeatObservable struct {
+	Source Observable
+	Count  int
 }
 
-func (op repeatOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs repeatObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = Finally(sink, cancel)
 
 	var (
-		count          = op.Count
+		count          = obs.Count
 		observer       Observer
 		avoidRecursive avoidRecursiveCalls
 	)
 
 	subscribe := func() {
-		source.Subscribe(ctx, observer)
+		obs.Source.Subscribe(ctx, observer)
 	}
 
 	observer = func(t Notification) {
@@ -57,7 +58,6 @@ func (Operators) Repeat(count int) OperatorFunc {
 		if count > 0 {
 			count--
 		}
-		op := repeatOperator{count}
-		return source.Lift(op.Call)
+		return repeatObservable{source, count}.Subscribe
 	}
 }

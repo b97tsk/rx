@@ -4,12 +4,12 @@ import (
 	"context"
 )
 
-type fromObservablesOperator struct {
+type fromObservablesObservable struct {
 	Observables []Observable
 }
 
-func (op fromObservablesOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
-	for _, obs := range op.Observables {
+func (obs fromObservablesObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
+	for _, obs := range obs.Observables {
 		if ctx.Err() != nil {
 			return Done()
 		}
@@ -24,8 +24,7 @@ func (op fromObservablesOperator) Call(ctx context.Context, sink Observer, sourc
 func FromObservables(observables ...Observable) Observable {
 	switch {
 	case len(observables) > 1:
-		op := fromObservablesOperator{observables}
-		return Empty().Lift(op.Call)
+		return fromObservablesObservable{observables}.Subscribe
 	case len(observables) == 1:
 		return just(observables[0])
 	default:

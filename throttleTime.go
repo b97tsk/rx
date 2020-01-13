@@ -13,13 +13,18 @@ type ThrottleTimeConfigure struct {
 }
 
 // MakeFunc creates an OperatorFunc from this type.
-func (conf ThrottleTimeConfigure) MakeFunc() OperatorFunc {
-	return MakeFunc(throttleTimeOperator(conf).Call)
+func (configure ThrottleTimeConfigure) MakeFunc() OperatorFunc {
+	return func(source Observable) Observable {
+		return throttleTimeObservable{source, configure}.Subscribe
+	}
 }
 
-type throttleTimeOperator ThrottleTimeConfigure
+type throttleTimeObservable struct {
+	Source Observable
+	ThrottleTimeConfigure
+}
 
-func (op throttleTimeOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs throttleTimeObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	throttleCtx, _ := Done()
 
@@ -35,8 +40,8 @@ func (op throttleTimeOperator) Call(ctx context.Context, sink Observer, source O
 	var doThrottle func()
 
 	doThrottle = func() {
-		throttleCtx, _ = scheduleOnce(ctx, op.Duration, func() {
-			if op.Trailing {
+		throttleCtx, _ = scheduleOnce(ctx, obs.Duration, func() {
+			if obs.Trailing {
 				if x, ok := <-cx; ok {
 					if x.HasTrailingValue {
 						sink.Next(x.TrailingValue)
@@ -49,7 +54,7 @@ func (op throttleTimeOperator) Call(ctx context.Context, sink Observer, source O
 		})
 	}
 
-	source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t Notification) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
@@ -57,7 +62,7 @@ func (op throttleTimeOperator) Call(ctx context.Context, sink Observer, source O
 				x.HasTrailingValue = true
 				if throttleCtx.Err() != nil {
 					doThrottle()
-					if op.Leading {
+					if obs.Leading {
 						sink(t)
 						x.HasTrailingValue = false
 					}
@@ -84,12 +89,9 @@ func (op throttleTimeOperator) Call(ctx context.Context, sink Observer, source O
 // ThrottleTime lets a value pass, then ignores source values for the next
 // duration time.
 func (Operators) ThrottleTime(duration time.Duration) OperatorFunc {
-	return func(source Observable) Observable {
-		op := throttleTimeOperator{
-			Duration: duration,
-			Leading:  true,
-			Trailing: false,
-		}
-		return source.Lift(op.Call)
-	}
+	return ThrottleTimeConfigure{
+		Duration: duration,
+		Leading:  true,
+		Trailing: false,
+	}.MakeFunc()
 }

@@ -4,9 +4,11 @@ import (
 	"context"
 )
 
-type singleOperator struct{}
+type singleObservable struct {
+	Source Observable
+}
 
-func (op singleOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs singleObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = Finally(sink, cancel)
@@ -39,7 +41,7 @@ func (op singleOperator) Call(ctx context.Context, sink Observer, source Observa
 		}
 	}
 
-	source.Subscribe(ctx, observer.Notify)
+	obs.Source.Subscribe(ctx, observer.Notify)
 
 	return ctx, cancel
 }
@@ -49,7 +51,6 @@ func (op singleOperator) Call(ctx context.Context, sink Observer, source Observa
 // notify of an ErrNotSingle or ErrEmpty respectively.
 func (Operators) Single() OperatorFunc {
 	return func(source Observable) Observable {
-		op := singleOperator{}
-		return source.Lift(op.Call)
+		return singleObservable{source}.Subscribe
 	}
 }

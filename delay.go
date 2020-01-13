@@ -7,7 +7,8 @@ import (
 	"github.com/b97tsk/rx/x/queue"
 )
 
-type delayOperator struct {
+type delayObservable struct {
+	Source   Observable
 	Duration time.Duration
 }
 
@@ -16,7 +17,7 @@ type delayValue struct {
 	Notification
 }
 
-func (op delayOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs delayObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = Finally(sink, cancel)
@@ -52,19 +53,19 @@ func (op delayOperator) Call(ctx context.Context, sink Observer, source Observab
 		})
 	}
 
-	source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t Notification) {
 		x := <-cx
 		switch {
 		case t.HasValue:
 			x.Queue.PushBack(
 				delayValue{
-					Time:         time.Now().Add(op.Duration),
+					Time:         time.Now().Add(obs.Duration),
 					Notification: t,
 				},
 			)
 			if !x.Scheduled {
 				x.Scheduled = true
-				doSchedule(op.Duration)
+				doSchedule(obs.Duration)
 			}
 		case t.HasError:
 			// ERROR notification will not be delayed.
@@ -73,12 +74,12 @@ func (op delayOperator) Call(ctx context.Context, sink Observer, source Observab
 		default:
 			x.Queue.PushBack(
 				delayValue{
-					Time: time.Now().Add(op.Duration),
+					Time: time.Now().Add(obs.Duration),
 				},
 			)
 			if !x.Scheduled {
 				x.Scheduled = true
-				doSchedule(op.Duration)
+				doSchedule(obs.Duration)
 			}
 		}
 		cx <- x
@@ -91,7 +92,6 @@ func (op delayOperator) Call(ctx context.Context, sink Observer, source Observab
 // timeout.
 func (Operators) Delay(timeout time.Duration) OperatorFunc {
 	return func(source Observable) Observable {
-		op := delayOperator{timeout}
-		return source.Lift(op.Call)
+		return delayObservable{source, timeout}.Subscribe
 	}
 }

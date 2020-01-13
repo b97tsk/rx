@@ -5,11 +5,12 @@ import (
 	"time"
 )
 
-type debounceTimeOperator struct {
+type debounceTimeObservable struct {
+	Source   Observable
 	Duration time.Duration
 }
 
-func (op debounceTimeOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs debounceTimeObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	_, scheduleCancel := Done()
 
@@ -22,7 +23,7 @@ func (op debounceTimeOperator) Call(ctx context.Context, sink Observer, source O
 	cx := make(chan *X, 1)
 	cx <- &X{}
 
-	source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t Notification) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
@@ -33,7 +34,7 @@ func (op debounceTimeOperator) Call(ctx context.Context, sink Observer, source O
 
 				scheduleCancel()
 
-				_, scheduleCancel = scheduleOnce(ctx, op.Duration, func() {
+				_, scheduleCancel = scheduleOnce(ctx, obs.Duration, func() {
 					if x, ok := <-cx; ok {
 						if x.HasLatestValue {
 							sink.Next(x.LatestValue)
@@ -68,7 +69,6 @@ func (op debounceTimeOperator) Call(ctx context.Context, sink Observer, source O
 // emissions.
 func (Operators) DebounceTime(duration time.Duration) OperatorFunc {
 	return func(source Observable) Observable {
-		op := debounceTimeOperator{duration}
-		return source.Lift(op.Call)
+		return debounceTimeObservable{source, duration}.Subscribe
 	}
 }

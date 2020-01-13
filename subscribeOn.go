@@ -5,17 +5,18 @@ import (
 	"time"
 )
 
-type subscribeOnOperator struct {
+type subscribeOnObservable struct {
+	Source   Observable
 	Duration time.Duration
 }
 
-func (op subscribeOnOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs subscribeOnObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = Finally(sink, cancel)
 
-	scheduleOnce(ctx, op.Duration, func() {
-		source.Subscribe(ctx, sink)
+	scheduleOnce(ctx, obs.Duration, func() {
+		obs.Source.Subscribe(ctx, sink)
 	})
 
 	return ctx, cancel
@@ -25,7 +26,6 @@ func (op subscribeOnOperator) Call(ctx context.Context, sink Observer, source Ob
 // source Observable after waits for the duration to elapse.
 func (Operators) SubscribeOn(d time.Duration) OperatorFunc {
 	return func(source Observable) Observable {
-		op := subscribeOnOperator{d}
-		return source.Lift(op.Call)
+		return subscribeOnObservable{source, d}.Subscribe
 	}
 }

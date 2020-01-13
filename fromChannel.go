@@ -4,16 +4,16 @@ import (
 	"context"
 )
 
-type fromChannelOperator struct {
+type fromChannelObservable struct {
 	Chan <-chan interface{}
 }
 
-func (op fromChannelOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs fromChannelObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	for {
 		select {
 		case <-ctx.Done():
 			return Done()
-		case val, ok := <-op.Chan:
+		case val, ok := <-obs.Chan:
 			if !ok {
 				sink.Complete()
 				return Done()
@@ -31,6 +31,5 @@ func (op fromChannelOperator) Call(ctx context.Context, sink Observer, source Ob
 // FromChannel creates an Observable that emits values from a channel, and
 // completes when the channel closes.
 func FromChannel(c <-chan interface{}) Observable {
-	op := fromChannelOperator{c}
-	return Empty().Lift(op.Call)
+	return fromChannelObservable{c}.Subscribe
 }

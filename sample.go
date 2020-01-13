@@ -4,11 +4,12 @@ import (
 	"context"
 )
 
-type sampleOperator struct {
+type sampleObservable struct {
+	Source   Observable
 	Notifier Observable
 }
 
-func (op sampleOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs sampleObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = Finally(sink, cancel)
@@ -20,7 +21,7 @@ func (op sampleOperator) Call(ctx context.Context, sink Observer, source Observa
 	cx := make(chan *X, 1)
 	cx <- &X{}
 
-	op.Notifier.Subscribe(ctx, func(t Notification) {
+	obs.Notifier.Subscribe(ctx, func(t Notification) {
 		if x, ok := <-cx; ok {
 			if t.HasError {
 				close(cx)
@@ -39,7 +40,7 @@ func (op sampleOperator) Call(ctx context.Context, sink Observer, source Observa
 		return Done()
 	}
 
-	source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t Notification) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
@@ -63,7 +64,6 @@ func (op sampleOperator) Call(ctx context.Context, sink Observer, source Observa
 // something.
 func (Operators) Sample(notifier Observable) OperatorFunc {
 	return func(source Observable) Observable {
-		op := sampleOperator{notifier}
-		return source.Lift(op.Call)
+		return sampleObservable{source, notifier}.Subscribe
 	}
 }

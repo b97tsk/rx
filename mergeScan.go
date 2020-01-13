@@ -14,13 +14,18 @@ type MergeScanConfigure struct {
 }
 
 // MakeFunc creates an OperatorFunc from this type.
-func (conf MergeScanConfigure) MakeFunc() OperatorFunc {
-	return MakeFunc(mergeScanOperator(conf).Call)
+func (configure MergeScanConfigure) MakeFunc() OperatorFunc {
+	return func(source Observable) Observable {
+		return mergeScanObservable{source, configure}.Subscribe
+	}
 }
 
-type mergeScanOperator MergeScanConfigure
+type mergeScanObservable struct {
+	Source Observable
+	MergeScanConfigure
+}
 
-func (op mergeScanOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs mergeScanObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = Mutex(Finally(sink, cancel))
@@ -33,15 +38,15 @@ func (op mergeScanOperator) Call(ctx context.Context, sink Observer, source Obse
 		HasValue        bool
 	}
 	cx := make(chan *X, 1)
-	cx <- &X{Seed: op.Seed}
+	cx <- &X{Seed: obs.Seed}
 
 	var doNextLocked func(*X)
 
 	doNextLocked = func(x *X) {
 		outerValue := x.Buffer.PopFront()
 
-		// calls op.Accumulator synchronously
-		obs := op.Accumulator(x.Seed, outerValue)
+		// calls obs.Accumulator synchronously
+		obs := obs.Accumulator(x.Seed, outerValue)
 
 		go obs.Subscribe(ctx, func(t Notification) {
 			switch {
@@ -74,12 +79,12 @@ func (op mergeScanOperator) Call(ctx context.Context, sink Observer, source Obse
 		})
 	}
 
-	source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			x := <-cx
 			x.Buffer.PushBack(t.Value)
-			if x.ActiveCount != op.Concurrent {
+			if x.ActiveCount != obs.Concurrent {
 				x.ActiveCount++
 				doNextLocked(x)
 			}
@@ -111,8 +116,5 @@ func (op mergeScanOperator) Call(ctx context.Context, sink Observer, source Obse
 // It's like Scan, but the Observables returned by the accumulator are merged
 // into the outer Observable.
 func (Operators) MergeScan(accumulator func(interface{}, interface{}) Observable, seed interface{}) OperatorFunc {
-	return func(source Observable) Observable {
-		op := mergeScanOperator{accumulator, seed, -1}
-		return source.Lift(op.Call)
-	}
+	return MergeScanConfigure{accumulator, seed, -1}.MakeFunc()
 }

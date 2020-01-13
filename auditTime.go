@@ -5,11 +5,12 @@ import (
 	"time"
 )
 
-type auditTimeOperator struct {
+type auditTimeObservable struct {
+	Source   Observable
 	Duration time.Duration
 }
 
-func (op auditTimeOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs auditTimeObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = Finally(sink, cancel)
@@ -21,7 +22,7 @@ func (op auditTimeOperator) Call(ctx context.Context, sink Observer, source Obse
 	cx := make(chan *X, 1)
 	cx <- &X{}
 
-	source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t Notification) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
@@ -32,7 +33,7 @@ func (op auditTimeOperator) Call(ctx context.Context, sink Observer, source Obse
 				cx <- x
 
 				if shouldSchedule {
-					scheduleOnce(ctx, op.Duration, func() {
+					scheduleOnce(ctx, obs.Duration, func() {
 						if x, ok := <-cx; ok {
 							sink.Next(x.LatestValue)
 							x.Scheduled = false
@@ -58,7 +59,6 @@ func (op auditTimeOperator) Call(ctx context.Context, sink Observer, source Obse
 // duration, and then it emits the most recent value from the source.
 func (Operators) AuditTime(duration time.Duration) OperatorFunc {
 	return func(source Observable) Observable {
-		op := auditTimeOperator{duration}
-		return source.Lift(op.Call)
+		return auditTimeObservable{source, duration}.Subscribe
 	}
 }

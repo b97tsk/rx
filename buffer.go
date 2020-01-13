@@ -4,11 +4,12 @@ import (
 	"context"
 )
 
-type bufferOperator struct {
+type bufferObservable struct {
+	Source          Observable
 	ClosingNotifier Observable
 }
 
-func (op bufferOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs bufferObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = Finally(sink, cancel)
@@ -19,7 +20,7 @@ func (op bufferOperator) Call(ctx context.Context, sink Observer, source Observa
 	cx := make(chan *X, 1)
 	cx <- &X{}
 
-	op.ClosingNotifier.Subscribe(ctx, func(t Notification) {
+	obs.ClosingNotifier.Subscribe(ctx, func(t Notification) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
@@ -37,7 +38,7 @@ func (op bufferOperator) Call(ctx context.Context, sink Observer, source Observa
 		return Done()
 	}
 
-	source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t Notification) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
@@ -59,7 +60,6 @@ func (op bufferOperator) Call(ctx context.Context, sink Observer, source Observa
 // only when another Observable emits.
 func (Operators) Buffer(closingNotifier Observable) OperatorFunc {
 	return func(source Observable) Observable {
-		op := bufferOperator{closingNotifier}
-		return source.Lift(op.Call)
+		return bufferObservable{source, closingNotifier}.Subscribe
 	}
 }

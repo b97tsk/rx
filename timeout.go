@@ -12,13 +12,18 @@ type TimeoutConfigure struct {
 }
 
 // MakeFunc creates an OperatorFunc from this type.
-func (conf TimeoutConfigure) MakeFunc() OperatorFunc {
-	return MakeFunc(timeoutOperator(conf).Call)
+func (configure TimeoutConfigure) MakeFunc() OperatorFunc {
+	return func(source Observable) Observable {
+		return timeoutObservable{source, configure}.Subscribe
+	}
 }
 
-type timeoutOperator TimeoutConfigure
+type timeoutObservable struct {
+	Source Observable
+	TimeoutConfigure
+}
 
-func (op timeoutOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs timeoutObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = Finally(sink, cancel)
@@ -33,18 +38,18 @@ func (op timeoutOperator) Call(ctx context.Context, sink Observer, source Observ
 	doSchedule := func() {
 		scheduleCancel()
 
-		_, scheduleCancel = scheduleOnce(childCtx, op.Duration, func() {
+		_, scheduleCancel = scheduleOnce(childCtx, obs.Duration, func() {
 			if _, ok := <-cx; ok {
 				close(cx)
 				childCancel()
-				op.Observable.Subscribe(ctx, sink)
+				obs.Observable.Subscribe(ctx, sink)
 			}
 		})
 	}
 
 	doSchedule()
 
-	source.Subscribe(childCtx, func(t Notification) {
+	obs.Source.Subscribe(childCtx, func(t Notification) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
@@ -64,8 +69,5 @@ func (op timeoutOperator) Call(ctx context.Context, sink Observer, source Observ
 // Timeout creates an Observable that mirrors the source Observable or notify
 // of an ErrTimeout if the source does not emit a value in given time span.
 func (Operators) Timeout(timeout time.Duration) OperatorFunc {
-	return func(source Observable) Observable {
-		op := timeoutOperator{timeout, Throw(ErrTimeout)}
-		return source.Lift(op.Call)
-	}
+	return TimeoutConfigure{timeout, Throw(ErrTimeout)}.MakeFunc()
 }

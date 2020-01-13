@@ -11,27 +11,32 @@ type WindowCountConfigure struct {
 }
 
 // MakeFunc creates an OperatorFunc from this type.
-func (conf WindowCountConfigure) MakeFunc() OperatorFunc {
-	return MakeFunc(windowCountOperator(conf).Call)
+func (configure WindowCountConfigure) MakeFunc() OperatorFunc {
+	return func(source Observable) Observable {
+		return windowCountObservable{source, configure}.Subscribe
+	}
 }
 
-type windowCountOperator WindowCountConfigure
+type windowCountObservable struct {
+	Source Observable
+	WindowCountConfigure
+}
 
-func (op windowCountOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs windowCountObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	var (
 		windows    []Subject
 		windowSize int
 	)
 
-	if op.StartWindowEvery == 0 {
-		op.StartWindowEvery = op.WindowSize
+	if obs.StartWindowEvery == 0 {
+		obs.StartWindowEvery = obs.WindowSize
 	}
 
 	window := NewSubject()
 	windows = append(windows, window)
 	sink.Next(window.Observable)
 
-	return source.Subscribe(ctx, func(t Notification) {
+	return obs.Source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			if windowSize < 0 {
@@ -45,14 +50,14 @@ func (op windowCountOperator) Call(ctx context.Context, sink Observer, source Ob
 
 			windowSize++
 
-			if windowSize == op.WindowSize {
+			if windowSize == obs.WindowSize {
 				window := windows[0]
 				copy(windows, windows[1:])
 				n := len(windows)
 				windows[n-1] = Subject{}
 				windows = windows[:n-1]
 				window.Complete()
-				windowSize = op.WindowSize - op.StartWindowEvery
+				windowSize = obs.WindowSize - obs.StartWindowEvery
 				if windowSize < 0 {
 					window := NewSubject()
 					windows = append(windows, window)
@@ -60,8 +65,8 @@ func (op windowCountOperator) Call(ctx context.Context, sink Observer, source Ob
 				}
 			}
 
-			if op.StartWindowEvery <= op.WindowSize {
-				if windowSize%op.StartWindowEvery == 0 {
+			if obs.StartWindowEvery <= obs.WindowSize {
+				if windowSize%obs.StartWindowEvery == 0 {
 					window := NewSubject()
 					windows = append(windows, window)
 					sink.Next(window.Observable)
@@ -82,8 +87,5 @@ func (op windowCountOperator) Call(ctx context.Context, sink Observer, source Ob
 //
 // It's like BufferCount, but emits a nested Observable instead of a slice.
 func (Operators) WindowCount(windowSize int) OperatorFunc {
-	return func(source Observable) Observable {
-		op := windowCountOperator{WindowSize: windowSize}
-		return source.Lift(op.Call)
-	}
+	return WindowCountConfigure{WindowSize: windowSize}.MakeFunc()
 }

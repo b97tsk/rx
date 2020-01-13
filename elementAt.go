@@ -4,19 +4,20 @@ import (
 	"context"
 )
 
-type elementAtOperator struct {
+type elementAtObservable struct {
+	Source     Observable
 	Index      int
 	Default    interface{}
 	HasDefault bool
 }
 
-func (op elementAtOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs elementAtObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = Finally(sink, cancel)
 
 	var (
-		index    = op.Index
+		index    = obs.Index
 		observer Observer
 	)
 
@@ -32,8 +33,8 @@ func (op elementAtOperator) Call(ctx context.Context, sink Observer, source Obse
 		case t.HasError:
 			sink(t)
 		default:
-			if op.HasDefault {
-				sink.Next(op.Default)
+			if obs.HasDefault {
+				sink.Next(obs.Default)
 				sink.Complete()
 			} else {
 				sink.Error(ErrOutOfRange)
@@ -41,7 +42,7 @@ func (op elementAtOperator) Call(ctx context.Context, sink Observer, source Obse
 		}
 	}
 
-	source.Subscribe(ctx, observer.Notify)
+	obs.Source.Subscribe(ctx, observer.Notify)
 
 	return ctx, cancel
 }
@@ -51,8 +52,10 @@ func (op elementAtOperator) Call(ctx context.Context, sink Observer, source Obse
 // specified index is out of range, notifies error ErrOutOfRange.
 func (Operators) ElementAt(index int) OperatorFunc {
 	return func(source Observable) Observable {
-		op := elementAtOperator{Index: index}
-		return source.Lift(op.Call)
+		return elementAtObservable{
+			Source: source,
+			Index:  index,
+		}.Subscribe
 	}
 }
 
@@ -61,11 +64,11 @@ func (Operators) ElementAt(index int) OperatorFunc {
 // the specified index is out of range, emits the provided default value.
 func (Operators) ElementAtOrDefault(index int, defaultValue interface{}) OperatorFunc {
 	return func(source Observable) Observable {
-		op := elementAtOperator{
+		return elementAtObservable{
+			Source:     source,
 			Index:      index,
 			Default:    defaultValue,
 			HasDefault: true,
-		}
-		return source.Lift(op.Call)
+		}.Subscribe
 	}
 }

@@ -4,7 +4,7 @@ import (
 	"context"
 )
 
-type combineLatestOperator struct {
+type combineLatestObservable struct {
 	Observables []Observable
 }
 
@@ -13,13 +13,13 @@ type combineLatestValue struct {
 	Notification
 }
 
-func (op combineLatestOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs combineLatestObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 
 	sink = Finally(sink, cancel)
 
-	length := len(op.Observables)
+	length := len(obs.Observables)
 	q := make(chan combineLatestValue, length)
 
 	go func() {
@@ -70,7 +70,7 @@ func (op combineLatestOperator) Call(ctx context.Context, sink Observer, source 
 		}
 	}()
 
-	for index, obs := range op.Observables {
+	for index, obs := range obs.Observables {
 		index := index
 		go obs.Subscribe(ctx, func(t Notification) {
 			select {
@@ -93,8 +93,7 @@ func CombineLatest(observables ...Observable) Observable {
 	if len(observables) == 0 {
 		return Empty()
 	}
-	op := combineLatestOperator{observables}
-	return Empty().Lift(op.Call)
+	return combineLatestObservable{observables}.Subscribe
 }
 
 // CombineAll converts a higher-order Observable into a first-order Observable
@@ -103,8 +102,5 @@ func CombineLatest(observables ...Observable) Observable {
 // CombineAll flattens an Observable-of-Observables by applying CombineLatest
 // when the Observable-of-Observables completes.
 func (Operators) CombineAll() OperatorFunc {
-	return func(source Observable) Observable {
-		op := toObservablesOperator{CombineLatest}
-		return source.Lift(op.Call)
-	}
+	return ToObservablesConfigure{CombineLatest}.MakeFunc()
 }

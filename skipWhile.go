@@ -4,11 +4,12 @@ import (
 	"context"
 )
 
-type skipWhileOperator struct {
+type skipWhileObservable struct {
+	Source    Observable
 	Predicate func(interface{}, int) bool
 }
 
-func (op skipWhileOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs skipWhileObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	var (
 		outerIndex = -1
 		observer   Observer
@@ -19,7 +20,7 @@ func (op skipWhileOperator) Call(ctx context.Context, sink Observer, source Obse
 		case t.HasValue:
 			outerIndex++
 
-			if !op.Predicate(t.Value, outerIndex) {
+			if !obs.Predicate(t.Value, outerIndex) {
 				observer = sink
 				sink(t)
 			}
@@ -29,7 +30,7 @@ func (op skipWhileOperator) Call(ctx context.Context, sink Observer, source Obse
 		}
 	}
 
-	return source.Subscribe(ctx, observer.Notify)
+	return obs.Source.Subscribe(ctx, observer.Notify)
 }
 
 // SkipWhile creates an Observable that skips all items emitted by the source
@@ -37,7 +38,6 @@ func (op skipWhileOperator) Call(ctx context.Context, sink Observer, source Obse
 // further source items as soon as the condition becomes false.
 func (Operators) SkipWhile(predicate func(interface{}, int) bool) OperatorFunc {
 	return func(source Observable) Observable {
-		op := skipWhileOperator{predicate}
-		return source.Lift(op.Call)
+		return skipWhileObservable{source, predicate}.Subscribe
 	}
 }

@@ -6,16 +6,17 @@ import (
 	"github.com/b97tsk/rx/x/queue"
 )
 
-type takeLastOperator struct {
-	Count int
+type takeLastObservable struct {
+	Source Observable
+	Count  int
 }
 
-func (op takeLastOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs takeLastObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	var queue queue.Queue
-	return source.Subscribe(ctx, func(t Notification) {
+	return obs.Source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
-			if queue.Len() == op.Count {
+			if queue.Len() == obs.Count {
 				queue.PopFront()
 			}
 			queue.PushBack(t.Value)
@@ -43,7 +44,6 @@ func (Operators) TakeLast(count int) OperatorFunc {
 		if count <= 0 {
 			return Empty()
 		}
-		op := takeLastOperator{count}
-		return source.Lift(op.Call)
+		return takeLastObservable{source, count}.Subscribe
 	}
 }

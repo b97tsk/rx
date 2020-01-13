@@ -11,13 +11,18 @@ type CongestingMergeConfigure struct {
 }
 
 // MakeFunc creates an OperatorFunc from this type.
-func (conf CongestingMergeConfigure) MakeFunc() OperatorFunc {
-	return MakeFunc(congestingMergeOperator(conf).Call)
+func (configure CongestingMergeConfigure) MakeFunc() OperatorFunc {
+	return func(source Observable) Observable {
+		return congestingMergeObservable{source, configure}.Subscribe
+	}
 }
 
-type congestingMergeOperator CongestingMergeConfigure
+type congestingMergeObservable struct {
+	Source Observable
+	CongestingMergeConfigure
+}
 
-func (op congestingMergeOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs congestingMergeObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 
@@ -32,12 +37,12 @@ func (op congestingMergeOperator) Call(ctx context.Context, sink Observer, sourc
 	cx := make(chan *X, 1)
 	cx <- &X{}
 
-	source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			x := <-cx
 
-			for x.ActiveCount == op.Concurrent {
+			for x.ActiveCount == obs.Concurrent {
 				cx <- x
 				select {
 				case <-done:
@@ -53,8 +58,8 @@ func (op congestingMergeOperator) Call(ctx context.Context, sink Observer, sourc
 			outerValue := t.Value
 			x.Index++
 
-			// calls op.Project synchronously
-			obs := op.Project(outerValue, outerIndex)
+			// calls obs.Project synchronously
+			obs := obs.Project(outerValue, outerIndex)
 
 			cx <- x
 
@@ -130,10 +135,7 @@ func (Operators) CongestingMergeAll() OperatorFunc {
 //
 // It's like MergeMap, but it may congest the source due to concurrent limit.
 func (Operators) CongestingMergeMap(project func(interface{}, int) Observable) OperatorFunc {
-	return func(source Observable) Observable {
-		op := congestingMergeOperator{project, -1}
-		return source.Lift(op.Call)
-	}
+	return CongestingMergeConfigure{project, -1}.MakeFunc()
 }
 
 // CongestingMergeMapTo creates an Observable that projects each source value

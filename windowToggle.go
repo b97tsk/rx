@@ -4,7 +4,8 @@ import (
 	"context"
 )
 
-type windowToggleOperator struct {
+type windowToggleObservable struct {
+	Source          Observable
 	Openings        Observable
 	ClosingSelector func(interface{}) Observable
 }
@@ -14,7 +15,7 @@ type windowToggleContext struct {
 	Window Subject
 }
 
-func (op windowToggleOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs windowToggleObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = Finally(sink, cancel)
@@ -32,7 +33,7 @@ func (op windowToggleOperator) Call(ctx context.Context, sink Observer, source O
 		}
 	}
 
-	op.Openings.Subscribe(ctx, func(t Notification) {
+	obs.Openings.Subscribe(ctx, func(t Notification) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
@@ -71,7 +72,7 @@ func (op windowToggleOperator) Call(ctx context.Context, sink Observer, source O
 					}
 				}
 
-				closingNotifier := op.ClosingSelector(t.Value)
+				closingNotifier := obs.ClosingSelector(t.Value)
 				closingNotifier.Subscribe(ctx, observer.Notify)
 
 			case t.HasError:
@@ -89,7 +90,7 @@ func (op windowToggleOperator) Call(ctx context.Context, sink Observer, source O
 		return Done()
 	}
 
-	source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t Notification) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
@@ -117,7 +118,6 @@ func (op windowToggleOperator) Call(ctx context.Context, sink Observer, source O
 // It's like BufferToggle, but emits a nested Observable instead of a slice.
 func (Operators) WindowToggle(openings Observable, closingSelector func(interface{}) Observable) OperatorFunc {
 	return func(source Observable) Observable {
-		op := windowToggleOperator{openings, closingSelector}
-		return source.Lift(op.Call)
+		return windowToggleObservable{source, openings, closingSelector}.Subscribe
 	}
 }

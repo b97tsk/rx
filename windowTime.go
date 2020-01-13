@@ -13,11 +13,16 @@ type WindowTimeConfigure struct {
 }
 
 // MakeFunc creates an OperatorFunc from this type.
-func (conf WindowTimeConfigure) MakeFunc() OperatorFunc {
-	return MakeFunc(windowTimeOperator(conf).Call)
+func (configure WindowTimeConfigure) MakeFunc() OperatorFunc {
+	return func(source Observable) Observable {
+		return windowTimeObservable{source, configure}.Subscribe
+	}
 }
 
-type windowTimeOperator WindowTimeConfigure
+type windowTimeObservable struct {
+	Source Observable
+	WindowTimeConfigure
+}
 
 type windowTimeContext struct {
 	Cancel context.CancelFunc
@@ -25,7 +30,7 @@ type windowTimeContext struct {
 	Size   int
 }
 
-func (op windowTimeOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs windowTimeObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = Finally(sink, cancel)
@@ -45,7 +50,7 @@ func (op windowTimeOperator) Call(ctx context.Context, sink Observer, source Obs
 			Window: NewSubject(),
 		}
 		x.Contexts = append(x.Contexts, newContext)
-		scheduleOnce(ctx, op.TimeSpan, func() {
+		scheduleOnce(ctx, obs.TimeSpan, func() {
 			closeContext(newContext)
 		})
 		sink.Next(newContext.Window.Observable)
@@ -68,7 +73,7 @@ func (op windowTimeOperator) Call(ctx context.Context, sink Observer, source Obs
 					x.Contexts[n-1] = nil
 					x.Contexts = x.Contexts[:n-1]
 					toBeClosed.Window.Complete()
-					if op.CreationInterval <= 0 {
+					if obs.CreationInterval <= 0 {
 						openContextLocked(x)
 					}
 					break
@@ -80,11 +85,11 @@ func (op windowTimeOperator) Call(ctx context.Context, sink Observer, source Obs
 
 	openContext()
 
-	if op.CreationInterval > 0 {
-		schedule(ctx, op.CreationInterval, openContext)
+	if obs.CreationInterval > 0 {
+		schedule(ctx, obs.CreationInterval, openContext)
 	}
 
-	source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t Notification) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
@@ -92,7 +97,7 @@ func (op windowTimeOperator) Call(ctx context.Context, sink Observer, source Obs
 				for _, c := range x.Contexts {
 					c.Size++
 					t.Observe(c.Window.Observer)
-					if c.Size == op.MaxWindowSize {
+					if c.Size == obs.MaxWindowSize {
 						windowFullContexts = append(windowFullContexts, c)
 					}
 				}
@@ -122,8 +127,5 @@ func (op windowTimeOperator) Call(ctx context.Context, sink Observer, source Obs
 //
 // It's like BufferTime, but emits a nested Observable instead of a slice.
 func (Operators) WindowTime(timeSpan time.Duration) OperatorFunc {
-	return func(source Observable) Observable {
-		op := windowTimeOperator{TimeSpan: timeSpan}
-		return source.Lift(op.Call)
-	}
+	return WindowTimeConfigure{TimeSpan: timeSpan}.MakeFunc()
 }

@@ -4,12 +4,12 @@ import (
 	"context"
 )
 
-type rangeOperator struct {
+type rangeObservable struct {
 	Low, High int
 }
 
-func (op rangeOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
-	for index := op.Low; index < op.High; index++ {
+func (obs rangeObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
+	for index := obs.Low; index < obs.High; index++ {
 		if ctx.Err() != nil {
 			return Done()
 		}
@@ -28,7 +28,6 @@ func Range(low, high int) Observable {
 	case low+1 == high:
 		return just(low)
 	default:
-		op := rangeOperator{low, high}
-		return Empty().Lift(op.Call)
+		return rangeObservable{low, high}.Subscribe
 	}
 }

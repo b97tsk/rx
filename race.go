@@ -4,11 +4,11 @@ import (
 	"context"
 )
 
-type raceOperator struct {
+type raceObservable struct {
 	Observables []Observable
 }
 
-func (op raceOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs raceObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = Finally(sink, cancel)
@@ -18,10 +18,10 @@ func (op raceOperator) Call(ctx context.Context, sink Observer, source Observabl
 	}
 	cx := make(chan *X, 1)
 	cx <- &X{
-		Subscriptions: make([]context.CancelFunc, 0, len(op.Observables)),
+		Subscriptions: make([]context.CancelFunc, 0, len(obs.Observables)),
 	}
 
-	for index, obs := range op.Observables {
+	for index, obs := range obs.Observables {
 		index := index
 
 		x, ok := <-cx
@@ -67,7 +67,6 @@ func Race(observables ...Observable) Observable {
 	case 1:
 		return observables[0]
 	default:
-		op := raceOperator{observables}
-		return Empty().Lift(op.Call)
+		return raceObservable{observables}.Subscribe
 	}
 }

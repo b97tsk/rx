@@ -4,11 +4,12 @@ import (
 	"context"
 )
 
-type switchMapOperator struct {
+type switchMapObservable struct {
+	Source  Observable
 	Project func(interface{}, int) Observable
 }
 
-func (op switchMapOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs switchMapObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	_, childCancel := Done()
 
@@ -22,7 +23,7 @@ func (op switchMapOperator) Call(ctx context.Context, sink Observer, source Obse
 	cx := make(chan *X, 1)
 	cx <- &X{ActiveIndex: -1}
 
-	source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			x := <-cx
@@ -37,7 +38,7 @@ func (op switchMapOperator) Call(ctx context.Context, sink Observer, source Obse
 
 			childCancel()
 
-			obs := op.Project(outerValue, outerIndex)
+			obs := obs.Project(outerValue, outerIndex)
 
 			_, childCancel = obs.Subscribe(ctx, func(t Notification) {
 				switch {
@@ -88,8 +89,7 @@ func (Operators) Switch() OperatorFunc {
 // Observables using Switch.
 func (Operators) SwitchMap(project func(interface{}, int) Observable) OperatorFunc {
 	return func(source Observable) Observable {
-		op := switchMapOperator{project}
-		return source.Lift(op.Call)
+		return switchMapObservable{source, project}.Subscribe
 	}
 }
 

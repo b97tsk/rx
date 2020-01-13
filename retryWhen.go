@@ -6,11 +6,12 @@ import (
 	"github.com/b97tsk/rx/x/atomic"
 )
 
-type retryWhenOperator struct {
+type retryWhenObservable struct {
+	Source   Observable
 	Notifier func(Observable) Observable
 }
 
-func (op retryWhenOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs retryWhenObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = Mutex(Finally(sink, cancel))
@@ -33,7 +34,7 @@ func (op retryWhenOperator) Call(ctx context.Context, sink Observer, source Obse
 		cx <- X{}
 		cxCurrent = cx
 		sourceCtx, sourceCancel = context.WithCancel(ctx)
-		source.Subscribe(sourceCtx, func(t Notification) {
+		obs.Source.Subscribe(sourceCtx, func(t Notification) {
 			if x, ok := <-cx; ok {
 				switch {
 				case t.HasValue:
@@ -61,7 +62,7 @@ func (op retryWhenOperator) Call(ctx context.Context, sink Observer, source Obse
 
 	createSubject = func() Subject {
 		subject := NewSubject()
-		obs := op.Notifier(subject.Observable)
+		obs := obs.Notifier(subject.Observable)
 		obs.Subscribe(ctx, func(t Notification) {
 			switch {
 			case t.HasValue:
@@ -98,7 +99,6 @@ func (op retryWhenOperator) Call(ctx context.Context, sink Observer, source Obse
 // the child subscription.
 func (Operators) RetryWhen(notifier func(Observable) Observable) OperatorFunc {
 	return func(source Observable) Observable {
-		op := retryWhenOperator{notifier}
-		return source.Lift(op.Call)
+		return retryWhenObservable{source, notifier}.Subscribe
 	}
 }

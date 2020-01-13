@@ -4,9 +4,11 @@ import (
 	"context"
 )
 
-type dematerializeOperator struct{}
+type dematerializeObservable struct {
+	Source Observable
+}
 
-func (op dematerializeOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs dematerializeObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = Finally(sink, cancel)
@@ -31,7 +33,7 @@ func (op dematerializeOperator) Call(ctx context.Context, sink Observer, source 
 			sink(t)
 		}
 	}
-	source.Subscribe(ctx, observer.Notify)
+	obs.Source.Subscribe(ctx, observer.Notify)
 
 	return ctx, cancel
 }
@@ -40,7 +42,6 @@ func (op dematerializeOperator) Call(ctx context.Context, sink Observer, source 
 // emissions that they represent. It's the opposite of Materialize.
 func (Operators) Dematerialize() OperatorFunc {
 	return func(source Observable) Observable {
-		op := dematerializeOperator{}
-		return source.Lift(op.Call)
+		return dematerializeObservable{source}.Subscribe
 	}
 }

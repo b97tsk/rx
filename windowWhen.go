@@ -4,11 +4,12 @@ import (
 	"context"
 )
 
-type windowWhenOperator struct {
+type windowWhenObservable struct {
+	Source          Observable
 	ClosingSelector func() Observable
 }
 
-func (op windowWhenOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs windowWhenObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = Finally(sink, cancel)
@@ -52,7 +53,7 @@ func (op windowWhenOperator) Call(ctx context.Context, sink Observer, source Obs
 			}
 		}
 
-		closingNotifier := op.ClosingSelector()
+		closingNotifier := obs.ClosingSelector()
 		closingNotifier.Subscribe(ctx, observer.Notify)
 	}
 
@@ -62,7 +63,7 @@ func (op windowWhenOperator) Call(ctx context.Context, sink Observer, source Obs
 		return Done()
 	}
 
-	source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t Notification) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
@@ -86,7 +87,6 @@ func (op windowWhenOperator) Call(ctx context.Context, sink Observer, source Obs
 // It's like BufferWhen, but emits a nested Observable instead of a slice.
 func (Operators) WindowWhen(closingSelector func() Observable) OperatorFunc {
 	return func(source Observable) Observable {
-		op := windowWhenOperator{closingSelector}
-		return source.Lift(op.Call)
+		return windowWhenObservable{source, closingSelector}.Subscribe
 	}
 }

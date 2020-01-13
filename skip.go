@@ -4,13 +4,14 @@ import (
 	"context"
 )
 
-type skipOperator struct {
-	Count int
+type skipObservable struct {
+	Source Observable
+	Count  int
 }
 
-func (op skipOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs skipObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	var (
-		count    = op.Count
+		count    = obs.Count
 		observer Observer
 	)
 
@@ -27,7 +28,7 @@ func (op skipOperator) Call(ctx context.Context, sink Observer, source Observabl
 		}
 	}
 
-	return source.Subscribe(ctx, observer.Notify)
+	return obs.Source.Subscribe(ctx, observer.Notify)
 }
 
 // Skip creates an Observable that skips the first count items emitted by the
@@ -37,7 +38,6 @@ func (Operators) Skip(count int) OperatorFunc {
 		if count <= 0 {
 			return source
 		}
-		op := skipOperator{count}
-		return source.Lift(op.Call)
+		return skipObservable{source, count}.Subscribe
 	}
 }

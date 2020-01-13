@@ -6,7 +6,7 @@ import (
 	"github.com/b97tsk/rx/x/queue"
 )
 
-type zipOperator struct {
+type zipObservable struct {
 	Observables []Observable
 }
 
@@ -15,13 +15,13 @@ type zipValue struct {
 	Notification
 }
 
-func (op zipOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs zipObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 
 	sink = Finally(sink, cancel)
 
-	length := len(op.Observables)
+	length := len(obs.Observables)
 	q := make(chan zipValue, length)
 
 	go func() {
@@ -89,7 +89,7 @@ func (op zipOperator) Call(ctx context.Context, sink Observer, source Observable
 		}
 	}()
 
-	for index, obs := range op.Observables {
+	for index, obs := range obs.Observables {
 		index := index
 		go obs.Subscribe(ctx, func(t Notification) {
 			select {
@@ -108,8 +108,7 @@ func Zip(observables ...Observable) Observable {
 	if len(observables) == 0 {
 		return Empty()
 	}
-	op := zipOperator{observables}
-	return Empty().Lift(op.Call)
+	return zipObservable{observables}.Subscribe
 }
 
 // ZipAll converts a higher-order Observable into a first-order Observable by
@@ -118,8 +117,5 @@ func Zip(observables ...Observable) Observable {
 // ZipAll flattens an Observable-of-Observables by applying Zip when the
 // Observable-of-Observables completes.
 func (Operators) ZipAll() OperatorFunc {
-	return func(source Observable) Observable {
-		op := toObservablesOperator{Zip}
-		return source.Lift(op.Call)
-	}
+	return ToObservablesConfigure{Zip}.MakeFunc()
 }

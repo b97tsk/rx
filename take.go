@@ -4,17 +4,18 @@ import (
 	"context"
 )
 
-type takeOperator struct {
-	Count int
+type takeObservable struct {
+	Source Observable
+	Count  int
 }
 
-func (op takeOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs takeObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = Finally(sink, cancel)
 
 	var (
-		count    = op.Count
+		count    = obs.Count
 		observer Observer
 	)
 
@@ -34,7 +35,7 @@ func (op takeOperator) Call(ctx context.Context, sink Observer, source Observabl
 		}
 	}
 
-	source.Subscribe(ctx, observer.Notify)
+	obs.Source.Subscribe(ctx, observer.Notify)
 
 	return ctx, cancel
 }
@@ -48,7 +49,6 @@ func (Operators) Take(count int) OperatorFunc {
 		if count <= 0 {
 			return Empty()
 		}
-		op := takeOperator{count}
-		return source.Lift(op.Call)
+		return takeObservable{source, count}.Subscribe
 	}
 }

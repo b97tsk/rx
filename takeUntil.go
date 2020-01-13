@@ -4,16 +4,17 @@ import (
 	"context"
 )
 
-type takeUntilOperator struct {
+type takeUntilObservable struct {
+	Source   Observable
 	Notifier Observable
 }
 
-func (op takeUntilOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs takeUntilObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = Mutex(Finally(sink, cancel))
 
-	op.Notifier.Subscribe(ctx, func(t Notification) {
+	obs.Notifier.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			sink.Complete()
@@ -26,7 +27,7 @@ func (op takeUntilOperator) Call(ctx context.Context, sink Observer, source Obse
 		return Done()
 	}
 
-	source.Subscribe(ctx, sink)
+	obs.Source.Subscribe(ctx, sink)
 
 	return ctx, cancel
 }
@@ -38,7 +39,6 @@ func (op takeUntilOperator) Call(ctx context.Context, sink Observer, source Obse
 // something. Then, it completes.
 func (Operators) TakeUntil(notifier Observable) OperatorFunc {
 	return func(source Observable) Observable {
-		op := takeUntilOperator{notifier}
-		return source.Lift(op.Call)
+		return takeUntilObservable{source, notifier}.Subscribe
 	}
 }

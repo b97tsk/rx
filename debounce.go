@@ -4,11 +4,12 @@ import (
 	"context"
 )
 
-type debounceOperator struct {
+type debounceObservable struct {
+	Source           Observable
 	DurationSelector func(interface{}) Observable
 }
 
-func (op debounceOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs debounceObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	scheduleCtx, scheduleCancel := Done()
 
@@ -21,7 +22,7 @@ func (op debounceOperator) Call(ctx context.Context, sink Observer, source Obser
 	cx := make(chan *X, 1)
 	cx <- &X{}
 
-	source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t Notification) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
@@ -52,7 +53,7 @@ func (op debounceOperator) Call(ctx context.Context, sink Observer, source Obser
 					}
 				}
 
-				obs := op.DurationSelector(t.Value)
+				obs := obs.DurationSelector(t.Value)
 				obs.Subscribe(scheduleCtx, observer.Notify)
 
 			case t.HasError:
@@ -80,7 +81,6 @@ func (op debounceOperator) Call(ctx context.Context, sink Observer, source Obser
 // by a second Observable.
 func (Operators) Debounce(durationSelector func(interface{}) Observable) OperatorFunc {
 	return func(source Observable) Observable {
-		op := debounceOperator{durationSelector}
-		return source.Lift(op.Call)
+		return debounceObservable{source, durationSelector}.Subscribe
 	}
 }

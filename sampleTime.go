@@ -5,11 +5,12 @@ import (
 	"time"
 )
 
-type sampleTimeOperator struct {
+type sampleTimeObservable struct {
+	Source   Observable
 	Duration time.Duration
 }
 
-func (op sampleTimeOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs sampleTimeObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = Finally(sink, cancel)
@@ -21,7 +22,7 @@ func (op sampleTimeOperator) Call(ctx context.Context, sink Observer, source Obs
 	cx := make(chan *X, 1)
 	cx <- &X{}
 
-	schedule(ctx, op.Duration, func() {
+	schedule(ctx, obs.Duration, func() {
 		if x, ok := <-cx; ok {
 			if x.HasLatestValue {
 				sink.Next(x.LatestValue)
@@ -31,7 +32,7 @@ func (op sampleTimeOperator) Call(ctx context.Context, sink Observer, source Obs
 		}
 	})
 
-	source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t Notification) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
@@ -52,7 +53,6 @@ func (op sampleTimeOperator) Call(ctx context.Context, sink Observer, source Obs
 // from the source Observable within periodic time intervals.
 func (Operators) SampleTime(interval time.Duration) OperatorFunc {
 	return func(source Observable) Observable {
-		op := sampleTimeOperator{interval}
-		return source.Lift(op.Call)
+		return sampleTimeObservable{source, interval}.Subscribe
 	}
 }

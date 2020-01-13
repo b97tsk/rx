@@ -4,11 +4,12 @@ import (
 	"context"
 )
 
-type windowOperator struct {
+type windowObservable struct {
+	Source           Observable
 	WindowBoundaries Observable
 }
 
-func (op windowOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs windowObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = Finally(sink, cancel)
@@ -21,7 +22,7 @@ func (op windowOperator) Call(ctx context.Context, sink Observer, source Observa
 	cx <- &X{window}
 	sink.Next(window.Observable)
 
-	op.WindowBoundaries.Subscribe(ctx, func(t Notification) {
+	obs.WindowBoundaries.Subscribe(ctx, func(t Notification) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
@@ -41,7 +42,7 @@ func (op windowOperator) Call(ctx context.Context, sink Observer, source Observa
 		return Done()
 	}
 
-	source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t Notification) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
@@ -64,7 +65,6 @@ func (op windowOperator) Call(ctx context.Context, sink Observer, source Observa
 // It's like Buffer, but emits a nested Observable instead of a slice.
 func (Operators) Window(windowBoundaries Observable) OperatorFunc {
 	return func(source Observable) Observable {
-		op := windowOperator{windowBoundaries}
-		return source.Lift(op.Call)
+		return windowObservable{source, windowBoundaries}.Subscribe
 	}
 }

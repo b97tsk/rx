@@ -4,12 +4,12 @@ import (
 	"context"
 )
 
-type fromSliceOperator struct {
+type fromSliceObservable struct {
 	Slice []interface{}
 }
 
-func (op fromSliceOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
-	for _, val := range op.Slice {
+func (obs fromSliceObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
+	for _, val := range obs.Slice {
 		if ctx.Err() != nil {
 			return Done()
 		}
@@ -32,8 +32,7 @@ func just(one interface{}) Observable {
 func FromSlice(slice []interface{}) Observable {
 	switch {
 	case len(slice) > 1:
-		op := fromSliceOperator{slice}
-		return Empty().Lift(op.Call)
+		return fromSliceObservable{slice}.Subscribe
 	case len(slice) == 1:
 		return just(slice[0])
 	default:

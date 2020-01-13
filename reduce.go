@@ -4,25 +4,26 @@ import (
 	"context"
 )
 
-type reduceOperator struct {
+type reduceObservable struct {
+	Source      Observable
 	Accumulator func(interface{}, interface{}, int) interface{}
 	Seed        interface{}
 	HasSeed     bool
 }
 
-func (op reduceOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs reduceObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	var (
-		seed       = op.Seed
-		hasSeed    = op.HasSeed
+		seed       = obs.Seed
+		hasSeed    = obs.HasSeed
 		outerIndex = -1
 	)
-	return source.Subscribe(ctx, func(t Notification) {
+	return obs.Source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			outerIndex++
 
 			if hasSeed {
-				seed = op.Accumulator(seed, t.Value, outerIndex)
+				seed = obs.Accumulator(seed, t.Value, outerIndex)
 			} else {
 				seed = t.Value
 				hasSeed = true
@@ -47,8 +48,10 @@ func (op reduceOperator) Call(ctx context.Context, sink Observer, source Observa
 // It's like Fold, but no need to specify an initial value.
 func (Operators) Reduce(accumulator func(interface{}, interface{}, int) interface{}) OperatorFunc {
 	return func(source Observable) Observable {
-		op := reduceOperator{Accumulator: accumulator}
-		return source.Lift(op.Call)
+		return reduceObservable{
+			Source:      source,
+			Accumulator: accumulator,
+		}.Subscribe
 	}
 }
 
@@ -59,11 +62,11 @@ func (Operators) Reduce(accumulator func(interface{}, interface{}, int) interfac
 // It's like Reduce, but you could specify an initial value.
 func (Operators) Fold(initialValue interface{}, accumulator func(interface{}, interface{}, int) interface{}) OperatorFunc {
 	return func(source Observable) Observable {
-		op := reduceOperator{
+		return reduceObservable{
+			Source:      source,
 			Accumulator: accumulator,
 			Seed:        initialValue,
 			HasSeed:     true,
-		}
-		return source.Lift(op.Call)
+		}.Subscribe
 	}
 }

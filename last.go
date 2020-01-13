@@ -4,14 +4,16 @@ import (
 	"context"
 )
 
-type lastOperator struct{}
+type lastObservable struct {
+	Source Observable
+}
 
-func (op lastOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs lastObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	var (
 		lastValue    interface{}
 		hasLastValue bool
 	)
-	return source.Subscribe(ctx, func(t Notification) {
+	return obs.Source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			lastValue = t.Value
@@ -33,7 +35,6 @@ func (op lastOperator) Call(ctx context.Context, sink Observer, source Observabl
 // source Observable.
 func (Operators) Last() OperatorFunc {
 	return func(source Observable) Observable {
-		op := lastOperator{}
-		return source.Lift(op.Call)
+		return lastObservable{source}.Subscribe
 	}
 }

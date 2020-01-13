@@ -4,11 +4,12 @@ import (
 	"context"
 )
 
-type auditOperator struct {
+type auditObservable struct {
+	Source           Observable
 	DurationSelector func(interface{}) Observable
 }
 
-func (op auditOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs auditObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = Finally(sink, cancel)
@@ -20,7 +21,7 @@ func (op auditOperator) Call(ctx context.Context, sink Observer, source Observab
 	cx := make(chan *X, 1)
 	cx <- &X{}
 
-	source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t Notification) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
@@ -49,7 +50,7 @@ func (op auditOperator) Call(ctx context.Context, sink Observer, source Observab
 						}
 					}
 
-					obs := op.DurationSelector(t.Value)
+					obs := obs.DurationSelector(t.Value)
 					obs.Subscribe(scheduleCtx, observer.Notify)
 				}
 
@@ -71,7 +72,6 @@ func (op auditOperator) Call(ctx context.Context, sink Observer, source Observab
 // Observable.
 func (Operators) Audit(durationSelector func(interface{}) Observable) OperatorFunc {
 	return func(source Observable) Observable {
-		op := auditOperator{durationSelector}
-		return source.Lift(op.Call)
+		return auditObservable{source, durationSelector}.Subscribe
 	}
 }

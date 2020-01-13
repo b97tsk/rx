@@ -6,11 +6,12 @@ import (
 	"github.com/b97tsk/rx/x/atomic"
 )
 
-type skipUntilOperator struct {
+type skipUntilObservable struct {
+	Source   Observable
 	Notifier Observable
 }
 
-func (op skipUntilOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs skipUntilObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	sinkNoMutex := Finally(sink, cancel)
@@ -36,7 +37,7 @@ func (op skipUntilOperator) Call(ctx context.Context, sink Observer, source Obse
 			}
 		}
 
-		op.Notifier.Subscribe(ctx, observer.Notify)
+		obs.Notifier.Subscribe(ctx, observer.Notify)
 	}
 
 	if ctx.Err() != nil {
@@ -58,7 +59,7 @@ func (op skipUntilOperator) Call(ctx context.Context, sink Observer, source Obse
 			}
 		}
 
-		source.Subscribe(ctx, observer.Notify)
+		obs.Source.Subscribe(ctx, observer.Notify)
 	}
 
 	return ctx, cancel
@@ -68,7 +69,6 @@ func (op skipUntilOperator) Call(ctx context.Context, sink Observer, source Obse
 // Observable until a second Observable emits an item.
 func (Operators) SkipUntil(notifier Observable) OperatorFunc {
 	return func(source Observable) Observable {
-		op := skipUntilOperator{notifier}
-		return source.Lift(op.Call)
+		return skipUntilObservable{source, notifier}.Subscribe
 	}
 }

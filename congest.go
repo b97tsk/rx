@@ -6,11 +6,12 @@ import (
 	"github.com/b97tsk/rx/x/queue"
 )
 
-type congestOperator struct {
+type congestObservable struct {
+	Source     Observable
 	BufferSize int
 }
 
-func (op congestOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs congestObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 
@@ -44,7 +45,7 @@ func (op congestOperator) Call(ctx context.Context, sink Observer, source Observ
 				outValue Notification
 			)
 			length := queue.Len()
-			if length < op.BufferSize {
+			if length < obs.BufferSize {
 				in = q
 			}
 			if length > 0 {
@@ -62,7 +63,7 @@ func (op congestOperator) Call(ctx context.Context, sink Observer, source Observ
 		}
 	}()
 
-	source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t Notification) {
 		select {
 		case <-done:
 		case q <- t:
@@ -80,7 +81,6 @@ func (Operators) Congest(bufferSize int) OperatorFunc {
 		if bufferSize < 1 {
 			return source
 		}
-		op := congestOperator{bufferSize}
-		return source.Lift(op.Call)
+		return congestObservable{source, bufferSize}.Subscribe
 	}
 }

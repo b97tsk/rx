@@ -4,11 +4,13 @@ import (
 	"context"
 )
 
-type toSliceOperator struct{}
+type toSliceObservable struct {
+	Source Observable
+}
 
-func (op toSliceOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs toSliceObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	var values []interface{}
-	return source.Subscribe(ctx, func(t Notification) {
+	return obs.Source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			values = append(values, t.Value)
@@ -25,7 +27,6 @@ func (op toSliceOperator) Call(ctx context.Context, sink Observer, source Observ
 // then emits them as a slice when the source completes.
 func (Operators) ToSlice() OperatorFunc {
 	return func(source Observable) Observable {
-		op := toSliceOperator{}
-		return source.Lift(op.Call)
+		return toSliceObservable{source}.Subscribe
 	}
 }

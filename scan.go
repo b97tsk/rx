@@ -12,25 +12,30 @@ type ScanConfigure struct {
 }
 
 // MakeFunc creates an OperatorFunc from this type.
-func (conf ScanConfigure) MakeFunc() OperatorFunc {
-	return MakeFunc(scanOperator(conf).Call)
+func (configure ScanConfigure) MakeFunc() OperatorFunc {
+	return func(source Observable) Observable {
+		return scanObservable{source, configure}.Subscribe
+	}
 }
 
-type scanOperator ScanConfigure
+type scanObservable struct {
+	Source Observable
+	ScanConfigure
+}
 
-func (op scanOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs scanObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	var (
-		seed       = op.Seed
-		hasSeed    = op.HasSeed
+		seed       = obs.Seed
+		hasSeed    = obs.HasSeed
 		outerIndex = -1
 	)
-	return source.Subscribe(ctx, func(t Notification) {
+	return obs.Source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			outerIndex++
 
 			if hasSeed {
-				seed = op.Accumulator(seed, t.Value, outerIndex)
+				seed = obs.Accumulator(seed, t.Value, outerIndex)
 			} else {
 				seed = t.Value
 				hasSeed = true
@@ -51,8 +56,5 @@ func (op scanOperator) Call(ctx context.Context, sink Observer, source Observabl
 // It's like Reduce, but emits the current accumulation whenever the source
 // emits a value.
 func (Operators) Scan(accumulator func(interface{}, interface{}, int) interface{}) OperatorFunc {
-	return func(source Observable) Observable {
-		op := scanOperator{Accumulator: accumulator}
-		return source.Lift(op.Call)
-	}
+	return ScanConfigure{Accumulator: accumulator}.MakeFunc()
 }

@@ -4,11 +4,13 @@ import (
 	"context"
 )
 
-type countOperator struct{}
+type countObservable struct {
+	Source Observable
+}
 
-func (op countOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs countObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	var count int
-	return source.Subscribe(ctx, func(t Notification) {
+	return obs.Source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			count++
@@ -25,7 +27,6 @@ func (op countOperator) Call(ctx context.Context, sink Observer, source Observab
 // the source and emits that number when the source completes.
 func (Operators) Count() OperatorFunc {
 	return func(source Observable) Observable {
-		op := countOperator{}
-		return source.Lift(op.Call)
+		return countObservable{source}.Subscribe
 	}
 }

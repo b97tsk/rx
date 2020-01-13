@@ -13,18 +13,23 @@ type BufferTimeConfigure struct {
 }
 
 // MakeFunc creates an OperatorFunc from this type.
-func (conf BufferTimeConfigure) MakeFunc() OperatorFunc {
-	return MakeFunc(bufferTimeOperator(conf).Call)
+func (configure BufferTimeConfigure) MakeFunc() OperatorFunc {
+	return func(source Observable) Observable {
+		return bufferTimeObservable{source, configure}.Subscribe
+	}
 }
 
-type bufferTimeOperator BufferTimeConfigure
+type bufferTimeObservable struct {
+	Source Observable
+	BufferTimeConfigure
+}
 
 type bufferTimeContext struct {
 	Cancel context.CancelFunc
 	Buffer []interface{}
 }
 
-func (op bufferTimeOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs bufferTimeObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = Finally(sink, cancel)
@@ -41,7 +46,7 @@ func (op bufferTimeOperator) Call(ctx context.Context, sink Observer, source Obs
 		ctx, cancel := context.WithCancel(ctx)
 		newContext := &bufferTimeContext{Cancel: cancel}
 		x.Contexts = append(x.Contexts, newContext)
-		scheduleOnce(ctx, op.TimeSpan, func() {
+		scheduleOnce(ctx, obs.TimeSpan, func() {
 			closeContext(newContext)
 		})
 	}
@@ -63,7 +68,7 @@ func (op bufferTimeOperator) Call(ctx context.Context, sink Observer, source Obs
 					x.Contexts[n-1] = nil
 					x.Contexts = x.Contexts[:n-1]
 					sink.Next(toBeClosed.Buffer)
-					if op.CreationInterval <= 0 {
+					if obs.CreationInterval <= 0 {
 						openContextLocked(x)
 					}
 					break
@@ -75,18 +80,18 @@ func (op bufferTimeOperator) Call(ctx context.Context, sink Observer, source Obs
 
 	openContext()
 
-	if op.CreationInterval > 0 {
-		schedule(ctx, op.CreationInterval, openContext)
+	if obs.CreationInterval > 0 {
+		schedule(ctx, obs.CreationInterval, openContext)
 	}
 
-	source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t Notification) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
 				var bufferFullContexts []*bufferTimeContext
 				for _, c := range x.Contexts {
 					c.Buffer = append(c.Buffer, t.Value)
-					if len(c.Buffer) == op.MaxBufferSize {
+					if len(c.Buffer) == obs.MaxBufferSize {
 						bufferFullContexts = append(bufferFullContexts, c)
 					}
 				}
@@ -123,8 +128,5 @@ func (op bufferTimeOperator) Call(ctx context.Context, sink Observer, source Obs
 // BufferTime collects values from the past as a slice, and emits those slices
 // periodically in time.
 func (Operators) BufferTime(timeSpan time.Duration) OperatorFunc {
-	return func(source Observable) Observable {
-		op := bufferTimeOperator{TimeSpan: timeSpan}
-		return source.Lift(op.Call)
-	}
+	return BufferTimeConfigure{TimeSpan: timeSpan}.MakeFunc()
 }

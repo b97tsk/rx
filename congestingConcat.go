@@ -4,11 +4,12 @@ import (
 	"context"
 )
 
-type congestingConcatOperator struct {
+type congestingConcatObservable struct {
+	Source  Observable
 	Project func(interface{}, int) Observable
 }
 
-func (op congestingConcatOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs congestingConcatObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = Finally(sink, cancel)
@@ -25,7 +26,7 @@ func (op congestingConcatOperator) Call(ctx context.Context, sink Observer, sour
 			outerIndex := outerIndex
 			outerValue := t.Value
 
-			obs := op.Project(outerValue, outerIndex)
+			obs := obs.Project(outerValue, outerIndex)
 
 			childCtx, _ := obs.Subscribe(ctx, func(t Notification) {
 				switch {
@@ -46,7 +47,7 @@ func (op congestingConcatOperator) Call(ctx context.Context, sink Observer, sour
 		}
 	}
 
-	source.Subscribe(ctx, observer.Notify)
+	obs.Source.Subscribe(ctx, observer.Notify)
 
 	return ctx, cancel
 }
@@ -80,8 +81,7 @@ func (Operators) CongestingConcatAll() OperatorFunc {
 // It's like ConcatMap, but it congests the source.
 func (Operators) CongestingConcatMap(project func(interface{}, int) Observable) OperatorFunc {
 	return func(source Observable) Observable {
-		op := congestingConcatOperator{project}
-		return source.Lift(op.Call)
+		return congestingConcatObservable{source, project}.Subscribe
 	}
 }
 

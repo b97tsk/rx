@@ -4,21 +4,22 @@ import (
 	"context"
 )
 
-type catchOperator struct {
+type catchObservable struct {
+	Source   Observable
 	Selector func(error) Observable
 }
 
-func (op catchOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs catchObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = Finally(sink, cancel)
 
-	source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			sink(t)
 		case t.HasError:
-			obs := op.Selector(t.Error)
+			obs := obs.Selector(t.Error)
 			obs.Subscribe(ctx, sink)
 		default:
 			sink(t)
@@ -32,7 +33,6 @@ func (op catchOperator) Call(ctx context.Context, sink Observer, source Observab
 // Observable.
 func (Operators) Catch(selector func(error) Observable) OperatorFunc {
 	return func(source Observable) Observable {
-		op := catchOperator{selector}
-		return source.Lift(op.Call)
+		return catchObservable{source, selector}.Subscribe
 	}
 }

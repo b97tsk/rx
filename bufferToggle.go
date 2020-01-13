@@ -4,7 +4,8 @@ import (
 	"context"
 )
 
-type bufferToggleOperator struct {
+type bufferToggleObservable struct {
+	Source          Observable
 	Openings        Observable
 	ClosingSelector func(interface{}) Observable
 }
@@ -14,7 +15,7 @@ type bufferToggleContext struct {
 	Buffer []interface{}
 }
 
-func (op bufferToggleOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs bufferToggleObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = Finally(sink, cancel)
@@ -25,7 +26,7 @@ func (op bufferToggleOperator) Call(ctx context.Context, sink Observer, source O
 	cx := make(chan *X, 1)
 	cx <- &X{}
 
-	op.Openings.Subscribe(ctx, func(t Notification) {
+	obs.Openings.Subscribe(ctx, func(t Notification) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
@@ -59,7 +60,7 @@ func (op bufferToggleOperator) Call(ctx context.Context, sink Observer, source O
 					}
 				}
 
-				closingNotifier := op.ClosingSelector(t.Value)
+				closingNotifier := obs.ClosingSelector(t.Value)
 				closingNotifier.Subscribe(ctx, observer.Notify)
 
 			case t.HasError:
@@ -76,7 +77,7 @@ func (op bufferToggleOperator) Call(ctx context.Context, sink Observer, source O
 		return Done()
 	}
 
-	source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t Notification) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
@@ -115,7 +116,6 @@ func (op bufferToggleOperator) Call(ctx context.Context, sink Observer, source O
 // Observable that tells when to close the buffer.
 func (Operators) BufferToggle(openings Observable, closingSelector func(interface{}) Observable) OperatorFunc {
 	return func(source Observable) Observable {
-		op := bufferToggleOperator{openings, closingSelector}
-		return source.Lift(op.Call)
+		return bufferToggleObservable{source, openings, closingSelector}.Subscribe
 	}
 }

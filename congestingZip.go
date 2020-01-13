@@ -4,17 +4,17 @@ import (
 	"context"
 )
 
-type congestingZipOperator struct {
+type congestingZipObservable struct {
 	Observables []Observable
 }
 
-func (op congestingZipOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs congestingZipObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 
 	sink = Finally(sink, cancel)
 
-	length := len(op.Observables)
+	length := len(obs.Observables)
 	channels := make([]chan Notification, length)
 
 	for i := 0; i < length; i++ {
@@ -44,7 +44,7 @@ func (op congestingZipOperator) Call(ctx context.Context, sink Observer, source 
 		}
 	}()
 
-	for index, obs := range op.Observables {
+	for index, obs := range obs.Observables {
 		c := channels[index]
 		go obs.Subscribe(ctx, func(t Notification) {
 			select {
@@ -65,8 +65,7 @@ func CongestingZip(observables ...Observable) Observable {
 	if len(observables) == 0 {
 		return Empty()
 	}
-	op := congestingZipOperator{observables}
-	return Empty().Lift(op.Call)
+	return congestingZipObservable{observables}.Subscribe
 }
 
 // CongestingZipAll converts a higher-order Observable into a first-order
@@ -78,8 +77,5 @@ func CongestingZip(observables ...Observable) Observable {
 //
 // It's like ZipAll, but it congests subscribed Observables.
 func (Operators) CongestingZipAll() OperatorFunc {
-	return func(source Observable) Observable {
-		op := toObservablesOperator{CongestingZip}
-		return source.Lift(op.Call)
-	}
+	return ToObservablesConfigure{CongestingZip}.MakeFunc()
 }

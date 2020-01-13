@@ -12,15 +12,6 @@ type Operator func(context.Context, Observer, Observable) (context.Context, cont
 // Observable, whose subscription logic is based on the first Observable.
 type OperatorFunc func(Observable) Observable
 
-// MakeFunc casts an Operator into an OperatorFunc.
-func MakeFunc(op Operator) OperatorFunc {
-	return func(source Observable) Observable {
-		return func(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
-			return op(ctx, sink, source)
-		}
-	}
-}
-
 // Pipe stitches Operators together into a chain.
 func Pipe(operations ...OperatorFunc) OperatorFunc {
 	return func(source Observable) Observable {

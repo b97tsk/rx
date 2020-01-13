@@ -4,11 +4,12 @@ import (
 	"context"
 )
 
-type everyOperator struct {
+type everyObservable struct {
+	Source    Observable
 	Predicate func(interface{}, int) bool
 }
 
-func (op everyOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs everyObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = Finally(sink, cancel)
@@ -23,7 +24,7 @@ func (op everyOperator) Call(ctx context.Context, sink Observer, source Observab
 		case t.HasValue:
 			outerIndex++
 
-			if !op.Predicate(t.Value, outerIndex) {
+			if !obs.Predicate(t.Value, outerIndex) {
 				observer = NopObserver
 				sink.Next(false)
 				sink.Complete()
@@ -38,7 +39,7 @@ func (op everyOperator) Call(ctx context.Context, sink Observer, source Observab
 		}
 	}
 
-	source.Subscribe(ctx, observer.Notify)
+	obs.Source.Subscribe(ctx, observer.Notify)
 
 	return ctx, cancel
 }
@@ -49,7 +50,6 @@ func (op everyOperator) Call(ctx context.Context, sink Observer, source Observab
 // Every emits true or false, then completes.
 func (Operators) Every(predicate func(interface{}, int) bool) OperatorFunc {
 	return func(source Observable) Observable {
-		op := everyOperator{predicate}
-		return source.Lift(op.Call)
+		return everyObservable{source, predicate}.Subscribe
 	}
 }

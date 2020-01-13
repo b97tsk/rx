@@ -7,11 +7,12 @@ import (
 	"github.com/b97tsk/rx/x/queue"
 )
 
-type observeOnOperator struct {
+type observeOnObservable struct {
+	Source   Observable
 	Duration time.Duration
 }
 
-func (op observeOnOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs observeOnObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = Finally(sink, cancel)
@@ -22,10 +23,10 @@ func (op observeOnOperator) Call(ctx context.Context, sink Observer, source Obse
 	cx := make(chan *X, 1)
 	cx <- &X{}
 
-	source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t Notification) {
 		if x, ok := <-cx; ok {
 			x.Queue.PushBack(t)
-			scheduleOnce(ctx, op.Duration, func() {
+			scheduleOnce(ctx, obs.Duration, func() {
 				if x, ok := <-cx; ok {
 					switch t := x.Queue.PopFront().(Notification); {
 					case t.HasValue:
@@ -48,7 +49,6 @@ func (op observeOnOperator) Call(ctx context.Context, sink Observer, source Obse
 // Observable after waits for the duration to elapse.
 func (Operators) ObserveOn(d time.Duration) OperatorFunc {
 	return func(source Observable) Observable {
-		op := observeOnOperator{d}
-		return source.Lift(op.Call)
+		return observeOnObservable{source, d}.Subscribe
 	}
 }

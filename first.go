@@ -4,9 +4,11 @@ import (
 	"context"
 )
 
-type firstOperator struct{}
+type firstObservable struct {
+	Source Observable
+}
 
-func (op firstOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs firstObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = Finally(sink, cancel)
@@ -24,7 +26,7 @@ func (op firstOperator) Call(ctx context.Context, sink Observer, source Observab
 			sink.Error(ErrEmpty)
 		}
 	}
-	source.Subscribe(ctx, observer.Notify)
+	obs.Source.Subscribe(ctx, observer.Notify)
 
 	return ctx, cancel
 }
@@ -33,7 +35,6 @@ func (op firstOperator) Call(ctx context.Context, sink Observer, source Observab
 // value that meets some condition) emitted by the source Observable.
 func (Operators) First() OperatorFunc {
 	return func(source Observable) Observable {
-		op := firstOperator{}
-		return source.Lift(op.Call)
+		return firstObservable{source}.Subscribe
 	}
 }

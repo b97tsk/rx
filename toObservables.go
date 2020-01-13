@@ -10,13 +10,18 @@ type ToObservablesConfigure struct {
 }
 
 // MakeFunc creates an OperatorFunc from this type.
-func (conf ToObservablesConfigure) MakeFunc() OperatorFunc {
-	return MakeFunc(toObservablesOperator(conf).Call)
+func (configure ToObservablesConfigure) MakeFunc() OperatorFunc {
+	return func(source Observable) Observable {
+		return toObservablesObservable{source, configure}.Subscribe
+	}
 }
 
-type toObservablesOperator ToObservablesConfigure
+type toObservablesObservable struct {
+	Source Observable
+	ToObservablesConfigure
+}
 
-func (op toObservablesOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs toObservablesObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = Finally(sink, cancel)
@@ -38,8 +43,8 @@ func (op toObservablesOperator) Call(ctx context.Context, sink Observer, source 
 		case t.HasError:
 			sink(t)
 		default:
-			if op.Flat != nil {
-				obs := op.Flat(observables...)
+			if obs.Flat != nil {
+				obs := obs.Flat(observables...)
 				obs.Subscribe(ctx, sink)
 			} else {
 				sink.Next(observables)
@@ -48,7 +53,7 @@ func (op toObservablesOperator) Call(ctx context.Context, sink Observer, source 
 		}
 	}
 
-	source.Subscribe(ctx, observer.Notify)
+	obs.Source.Subscribe(ctx, observer.Notify)
 
 	return ctx, cancel
 }
@@ -57,8 +62,5 @@ func (op toObservablesOperator) Call(ctx context.Context, sink Observer, source 
 // source emits, then emits them as a slice of Observable when the source
 // completes.
 func (Operators) ToObservables() OperatorFunc {
-	return func(source Observable) Observable {
-		op := toObservablesOperator{}
-		return source.Lift(op.Call)
-	}
+	return ToObservablesConfigure{}.MakeFunc()
 }

@@ -10,20 +10,21 @@ type GroupedObservable struct {
 	Key interface{}
 }
 
-type groupByOperator struct {
+type groupByObservable struct {
+	Source         Observable
 	KeySelector    func(interface{}) interface{}
 	SubjectFactory func() Subject
 }
 
-func (op groupByOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs groupByObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	var groups = make(map[interface{}]Subject)
-	return source.Subscribe(ctx, func(t Notification) {
+	return obs.Source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
-			key := op.KeySelector(t.Value)
+			key := obs.KeySelector(t.Value)
 			group, exists := groups[key]
 			if !exists {
-				group = op.SubjectFactory()
+				group = obs.SubjectFactory()
 				groups[key] = group
 				sink.Next(GroupedObservable{group.Observable, key})
 			}
@@ -43,7 +44,6 @@ func (op groupByOperator) Call(ctx context.Context, sink Observer, source Observ
 // items as GroupedObservables, one GroupedObservable per group.
 func (Operators) GroupBy(keySelector func(interface{}) interface{}, subjectFactory func() Subject) OperatorFunc {
 	return func(source Observable) Observable {
-		op := groupByOperator{keySelector, subjectFactory}
-		return source.Lift(op.Call)
+		return groupByObservable{source, keySelector, subjectFactory}.Subscribe
 	}
 }

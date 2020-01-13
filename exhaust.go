@@ -6,11 +6,12 @@ import (
 	"github.com/b97tsk/rx/x/atomic"
 )
 
-type exhaustMapOperator struct {
+type exhaustMapObservable struct {
+	Source  Observable
 	Project func(interface{}, int) Observable
 }
 
-func (op exhaustMapOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs exhaustMapObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = Mutex(Finally(sink, cancel))
@@ -20,7 +21,7 @@ func (op exhaustMapOperator) Call(ctx context.Context, sink Observer, source Obs
 		activeCount = atomic.Uint32(1)
 	)
 
-	source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
 			if !activeCount.Cas(1, 2) {
@@ -31,7 +32,7 @@ func (op exhaustMapOperator) Call(ctx context.Context, sink Observer, source Obs
 			outerIndex := outerIndex
 			outerValue := t.Value
 
-			obs := op.Project(outerValue, outerIndex)
+			obs := obs.Project(outerValue, outerIndex)
 			obs.Subscribe(ctx, func(t Notification) {
 				switch {
 				case t.HasValue || t.HasError:
@@ -76,7 +77,6 @@ func (Operators) Exhaust() OperatorFunc {
 // inner Observables using Exhaust.
 func (Operators) ExhaustMap(project func(interface{}, int) Observable) OperatorFunc {
 	return func(source Observable) Observable {
-		op := exhaustMapOperator{project}
-		return source.Lift(op.Call)
+		return exhaustMapObservable{source, project}.Subscribe
 	}
 }

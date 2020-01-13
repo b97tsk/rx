@@ -10,17 +10,22 @@ type DistinctConfigure struct {
 }
 
 // MakeFunc creates an OperatorFunc from this type.
-func (conf DistinctConfigure) MakeFunc() OperatorFunc {
-	return MakeFunc(distinctOperator(conf).Call)
+func (configure DistinctConfigure) MakeFunc() OperatorFunc {
+	return func(source Observable) Observable {
+		return distinctObservable{source, configure}.Subscribe
+	}
 }
 
-type distinctOperator DistinctConfigure
+type distinctObservable struct {
+	Source Observable
+	DistinctConfigure
+}
 
-func (op distinctOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs distinctObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	var keys = make(map[interface{}]struct{})
-	return source.Subscribe(ctx, func(t Notification) {
+	return obs.Source.Subscribe(ctx, func(t Notification) {
 		if t.HasValue {
-			key := op.KeySelector(t.Value)
+			key := obs.KeySelector(t.Value)
 			if _, exists := keys[key]; exists {
 				return
 			}
@@ -39,8 +44,5 @@ func (op distinctOperator) Call(ctx context.Context, sink Observer, source Obser
 // will use each value from the source Observable directly with an equality
 // check against previous values.
 func (Operators) Distinct() OperatorFunc {
-	return func(source Observable) Observable {
-		op := distinctOperator{defaultKeySelector}
-		return source.Lift(op.Call)
-	}
+	return DistinctConfigure{defaultKeySelector}.MakeFunc()
 }

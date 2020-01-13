@@ -5,19 +5,19 @@ import (
 	"time"
 )
 
-type intervalOperator struct {
+type intervalObservable struct {
 	InitialDelay time.Duration
 	Period       time.Duration
 }
 
-func (op intervalOperator) Call(ctx context.Context, sink Observer, source Observable) (context.Context, context.CancelFunc) {
+func (obs intervalObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 
-	if op.InitialDelay != op.Period {
-		scheduleOnce(ctx, op.InitialDelay, func() {
+	if obs.InitialDelay != obs.Period {
+		scheduleOnce(ctx, obs.InitialDelay, func() {
 			index := 0
 			wait := make(chan struct{})
-			schedule(ctx, op.Period, func() {
+			schedule(ctx, obs.Period, func() {
 				<-wait
 				sink.Next(index)
 				index++
@@ -28,7 +28,7 @@ func (op intervalOperator) Call(ctx context.Context, sink Observer, source Obser
 		})
 	} else {
 		index := 0
-		schedule(ctx, op.Period, func() {
+		schedule(ctx, obs.Period, func() {
 			sink.Next(index)
 			index++
 		})
@@ -40,8 +40,7 @@ func (op intervalOperator) Call(ctx context.Context, sink Observer, source Obser
 // Interval creates an Observable that emits sequential integers every
 // specified interval of time.
 func Interval(period time.Duration) Observable {
-	op := intervalOperator{period, period}
-	return Empty().Lift(op.Call)
+	return intervalObservable{period, period}.Subscribe
 }
 
 // Timer creates an Observable that starts emitting after an initialDelay and
@@ -49,6 +48,5 @@ func Interval(period time.Duration) Observable {
 //
 // Its like Interval, but you can specify when should the emissions start.
 func Timer(initialDelay, period time.Duration) Observable {
-	op := intervalOperator{initialDelay, period}
-	return Empty().Lift(op.Call)
+	return intervalObservable{initialDelay, period}.Subscribe
 }
