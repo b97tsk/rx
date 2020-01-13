@@ -86,7 +86,7 @@ func (obs bufferWhenObservable) Subscribe(ctx context.Context, sink Observer) (c
 //
 // Dead loop could happen if closing Observables emit a value or complete as
 // soon as they are subscribed to.
-func (Operators) BufferWhen(closingSelector func() Observable) OperatorFunc {
+func (Operators) BufferWhen(closingSelector func() Observable) Operator {
 	return func(source Observable) Observable {
 		return bufferWhenObservable{source, closingSelector}.Subscribe
 	}

@@ -28,7 +28,7 @@ func (obs filterObservable) Subscribe(ctx context.Context, sink Observer) (conte
 
 // Filter creates an Observable that filter items emitted by the source
 // Observable by only emitting those that satisfy a specified predicate.
-func (Operators) Filter(predicate func(interface{}, int) bool) OperatorFunc {
+func (Operators) Filter(predicate func(interface{}, int) bool) Operator {
 	return func(source Observable) Observable {
 		return filterObservable{source, predicate}.Subscribe
 	}

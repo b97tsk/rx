@@ -25,7 +25,7 @@ func (obs countObservable) Subscribe(ctx context.Context, sink Observer) (contex
 
 // Count creates an Observable that counts the number of NEXT emissions on
 // the source and emits that number when the source completes.
-func (Operators) Count() OperatorFunc {
+func (Operators) Count() Operator {
 	return func(source Observable) Observable {
 		return countObservable{source}.Subscribe
 	}

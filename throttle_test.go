@@ -30,7 +30,7 @@ func TestOperators_Throttle(t *testing.T) {
 					},
 					Leading:  false,
 					Trailing: true,
-				}.MakeFunc(),
+				}.Use(),
 			),
 			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				addLatencyToValue(0, 4),
@@ -40,7 +40,7 @@ func TestOperators_Throttle(t *testing.T) {
 					},
 					Leading:  true,
 					Trailing: true,
-				}.MakeFunc(),
+				}.Use(),
 			),
 		},
 		"A", "C", "E", "G", xComplete,

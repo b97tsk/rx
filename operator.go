@@ -1,20 +1,13 @@
 package rx
 
-import (
-	"context"
-)
-
-// An Operator is the implementation logic of an OperatorFunc.
-type Operator func(context.Context, Observer, Observable) (context.Context, context.CancelFunc)
-
-// An OperatorFunc is an operation on an Observable. When called, they do not
+// An Operator is an operation on an Observable. When called, they do not
 // change the existing Observable instance. Instead, they return a new
 // Observable, whose subscription logic is based on the first Observable.
-type OperatorFunc func(Observable) Observable
+type Operator func(Observable) Observable
 
-// Pipe stitches Operators together into a chain.
-func Pipe(operations ...OperatorFunc) OperatorFunc {
+// Pipe stitches operators together into a chain.
+func Pipe(operators ...Operator) Operator {
 	return func(source Observable) Observable {
-		return source.Pipe(operations...)
+		return source.Pipe(operators...)
 	}
 }

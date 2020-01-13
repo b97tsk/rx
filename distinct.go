@@ -9,8 +9,8 @@ type DistinctConfigure struct {
 	KeySelector func(interface{}) interface{}
 }
 
-// MakeFunc creates an OperatorFunc from this type.
-func (configure DistinctConfigure) MakeFunc() OperatorFunc {
+// Use creates an Operator from this configure.
+func (configure DistinctConfigure) Use() Operator {
 	return func(source Observable) Observable {
 		return distinctObservable{source, configure}.Subscribe
 	}
@@ -43,6 +43,6 @@ func (obs distinctObservable) Subscribe(ctx context.Context, sink Observer) (con
 // previously projected values. If a keySelector function is not provided, it
 // will use each value from the source Observable directly with an equality
 // check against previous values.
-func (Operators) Distinct() OperatorFunc {
-	return DistinctConfigure{defaultKeySelector}.MakeFunc()
+func (Operators) Distinct() Operator {
+	return DistinctConfigure{defaultKeySelector}.Use()
 }

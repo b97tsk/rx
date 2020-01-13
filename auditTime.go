@@ -57,7 +57,7 @@ func (obs auditTimeObservable) Subscribe(ctx context.Context, sink Observer) (co
 //
 // When it sees a source values, it ignores that plus the next ones for a
 // duration, and then it emits the most recent value from the source.
-func (Operators) AuditTime(duration time.Duration) OperatorFunc {
+func (Operators) AuditTime(duration time.Duration) Operator {
 	return func(source Observable) Observable {
 		return auditTimeObservable{source, duration}.Subscribe
 	}

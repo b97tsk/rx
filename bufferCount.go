@@ -10,8 +10,8 @@ type BufferCountConfigure struct {
 	StartBufferEvery int
 }
 
-// MakeFunc creates an OperatorFunc from this type.
-func (configure BufferCountConfigure) MakeFunc() OperatorFunc {
+// Use creates an Operator from this configure.
+func (configure BufferCountConfigure) Use() Operator {
 	return func(source Observable) Observable {
 		return bufferCountObservable{source, configure}.Subscribe
 	}
@@ -70,6 +70,6 @@ func (obs bufferCountObservable) Subscribe(ctx context.Context, sink Observer) (
 //
 // BufferCount collects values from the past as a slice, and emits that slice
 // only when its size reaches bufferSize.
-func (Operators) BufferCount(bufferSize int) OperatorFunc {
-	return BufferCountConfigure{BufferSize: bufferSize}.MakeFunc()
+func (Operators) BufferCount(bufferSize int) Operator {
+	return BufferCountConfigure{BufferSize: bufferSize}.Use()
 }

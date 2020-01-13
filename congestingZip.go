@@ -76,6 +76,6 @@ func CongestingZip(observables ...Observable) Observable {
 // CongestingZip when the Observable-of-Observables completes.
 //
 // It's like ZipAll, but it congests subscribed Observables.
-func (Operators) CongestingZipAll() OperatorFunc {
-	return ToObservablesConfigure{CongestingZip}.MakeFunc()
+func (Operators) CongestingZipAll() Operator {
+	return ToObservablesConfigure{CongestingZip}.Use()
 }

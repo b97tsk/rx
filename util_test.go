@@ -27,7 +27,7 @@ func step(n int) time.Duration {
 	return 60 * time.Millisecond * time.Duration(n)
 }
 
-func addLatencyToValue(initialDelay, period int) OperatorFunc {
+func addLatencyToValue(initialDelay, period int) Operator {
 	return func(source Observable) Observable {
 		initialDelay, period := step(initialDelay), step(period)
 		return Zip(source, Timer(initialDelay, period)).Pipe(
@@ -40,7 +40,7 @@ func addLatencyToValue(initialDelay, period int) OperatorFunc {
 	}
 }
 
-func addLatencyToNotification(initialDelay, period int) OperatorFunc {
+func addLatencyToNotification(initialDelay, period int) Operator {
 	return func(source Observable) Observable {
 		initialDelay, period := step(initialDelay), step(period)
 		return Zip(source.Pipe(operators.Materialize()), Timer(initialDelay, period)).Pipe(
@@ -54,7 +54,7 @@ func addLatencyToNotification(initialDelay, period int) OperatorFunc {
 	}
 }
 
-func delaySubscription(n int) OperatorFunc {
+func delaySubscription(n int) Operator {
 	return func(source Observable) Observable {
 		return source.Pipe(operators.SubscribeOn(step(n)))
 	}

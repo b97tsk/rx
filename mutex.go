@@ -25,7 +25,7 @@ func Mutex(sink Observer) Observer {
 
 // Mutex creates an Observable that mirrors the source Observable in a mutually
 // exclusive way.
-func (Operators) Mutex() OperatorFunc {
+func (Operators) Mutex() Operator {
 	return func(source Observable) Observable {
 		return func(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 			return source.Subscribe(ctx, Mutex(sink))

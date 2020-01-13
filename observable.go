@@ -11,8 +11,8 @@ type Observable func(context.Context, Observer) (context.Context, context.Cancel
 
 // Pipe stitches operators together into a chain, returns the Observable result
 // of all of the operators having been called in the order they were passed in.
-func (obs Observable) Pipe(operations ...OperatorFunc) Observable {
-	for _, op := range operations {
+func (obs Observable) Pipe(operators ...Operator) Observable {
+	for _, op := range operators {
 		obs = op(obs)
 	}
 	return obs

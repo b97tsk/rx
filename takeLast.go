@@ -39,7 +39,7 @@ func (obs takeLastObservable) Subscribe(ctx context.Context, sink Observer) (con
 //
 // TakeLast remembers the latest count values, then emits those only when the
 // source completes.
-func (Operators) TakeLast(count int) OperatorFunc {
+func (Operators) TakeLast(count int) Operator {
 	return func(source Observable) Observable {
 		if count <= 0 {
 			return Empty()

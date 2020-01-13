@@ -34,7 +34,7 @@ func (obs isEmptyObservable) Subscribe(ctx context.Context, sink Observer) (cont
 
 // IsEmpty creates an Observable that emits true if the source Observable
 // emits no items, otherwise, it emits false.
-func (Operators) IsEmpty() OperatorFunc {
+func (Operators) IsEmpty() Operator {
 	return func(source Observable) Observable {
 		return isEmptyObservable{source}.Subscribe
 	}

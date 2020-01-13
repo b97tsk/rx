@@ -33,7 +33,7 @@ func (obs firstObservable) Subscribe(ctx context.Context, sink Observer) (contex
 
 // First creates an Observable that emits only the first value (or the first
 // value that meets some condition) emitted by the source Observable.
-func (Operators) First() OperatorFunc {
+func (Operators) First() Operator {
 	return func(source Observable) Observable {
 		return firstObservable{source}.Subscribe
 	}

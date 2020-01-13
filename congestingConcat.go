@@ -68,7 +68,7 @@ func CongestingConcat(observables ...Observable) Observable {
 // inner Observables.
 //
 // It's like ConcatAll, but it congests the source.
-func (Operators) CongestingConcatAll() OperatorFunc {
+func (Operators) CongestingConcatAll() Operator {
 	return operators.CongestingConcatMap(ProjectToObservable)
 }
 
@@ -79,7 +79,7 @@ func (Operators) CongestingConcatAll() OperatorFunc {
 // these inner Observables using CongestingConcatAll.
 //
 // It's like ConcatMap, but it congests the source.
-func (Operators) CongestingConcatMap(project func(interface{}, int) Observable) OperatorFunc {
+func (Operators) CongestingConcatMap(project func(interface{}, int) Observable) Operator {
 	return func(source Observable) Observable {
 		return congestingConcatObservable{source, project}.Subscribe
 	}
@@ -93,6 +93,6 @@ func (Operators) CongestingConcatMap(project func(interface{}, int) Observable) 
 // Observable.
 //
 // It's like ConcatMapTo, but it congests the source.
-func (Operators) CongestingConcatMapTo(inner Observable) OperatorFunc {
+func (Operators) CongestingConcatMapTo(inner Observable) Operator {
 	return operators.CongestingConcatMap(func(interface{}, int) Observable { return inner })
 }

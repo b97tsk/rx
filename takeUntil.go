@@ -37,7 +37,7 @@ func (obs takeUntilObservable) Subscribe(ctx context.Context, sink Observer) (co
 //
 // TakeUntil lets values pass until a second Observable, notifier, emits
 // something. Then, it completes.
-func (Operators) TakeUntil(notifier Observable) OperatorFunc {
+func (Operators) TakeUntil(notifier Observable) Operator {
 	return func(source Observable) Observable {
 		return takeUntilObservable{source, notifier}.Subscribe
 	}

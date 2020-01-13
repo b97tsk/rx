@@ -10,8 +10,8 @@ type CongestingMergeConfigure struct {
 	Concurrent int
 }
 
-// MakeFunc creates an OperatorFunc from this type.
-func (configure CongestingMergeConfigure) MakeFunc() OperatorFunc {
+// Use creates an Operator from this configure.
+func (configure CongestingMergeConfigure) Use() Operator {
 	return func(source Observable) Observable {
 		return congestingMergeObservable{source, configure}.Subscribe
 	}
@@ -123,7 +123,7 @@ func CongestingMerge(observables ...Observable) Observable {
 // inner Observables.
 //
 // It's like MergeAll, but it may congest the source due to concurrent limit.
-func (Operators) CongestingMergeAll() OperatorFunc {
+func (Operators) CongestingMergeAll() Operator {
 	return operators.CongestingMergeMap(ProjectToObservable)
 }
 
@@ -134,8 +134,8 @@ func (Operators) CongestingMergeAll() OperatorFunc {
 // these inner Observables using CongestingMergeAll.
 //
 // It's like MergeMap, but it may congest the source due to concurrent limit.
-func (Operators) CongestingMergeMap(project func(interface{}, int) Observable) OperatorFunc {
-	return CongestingMergeConfigure{project, -1}.MakeFunc()
+func (Operators) CongestingMergeMap(project func(interface{}, int) Observable) Operator {
+	return CongestingMergeConfigure{project, -1}.Use()
 }
 
 // CongestingMergeMapTo creates an Observable that projects each source value
@@ -146,6 +146,6 @@ func (Operators) CongestingMergeMap(project func(interface{}, int) Observable) O
 // Observable.
 //
 // It's like MergeMapTo, but it may congest the source due to concurrent limit.
-func (Operators) CongestingMergeMapTo(inner Observable) OperatorFunc {
+func (Operators) CongestingMergeMapTo(inner Observable) Operator {
 	return operators.CongestingMergeMap(func(interface{}, int) Observable { return inner })
 }

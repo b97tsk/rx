@@ -70,7 +70,7 @@ func (obs auditObservable) Subscribe(ctx context.Context, sink Observer) (contex
 //
 // It's like AuditTime, but the silencing duration is determined by a second
 // Observable.
-func (Operators) Audit(durationSelector func(interface{}) Observable) OperatorFunc {
+func (Operators) Audit(durationSelector func(interface{}) Observable) Operator {
 	return func(source Observable) Observable {
 		return auditObservable{source, durationSelector}.Subscribe
 	}

@@ -48,7 +48,7 @@ func (obs someObservable) Subscribe(ctx context.Context, sink Observer) (context
 // satisfies the condition specified.
 //
 // Some emits true or false, then completes.
-func (Operators) Some(predicate func(interface{}, int) bool) OperatorFunc {
+func (Operators) Some(predicate func(interface{}, int) bool) Operator {
 	return func(source Observable) Observable {
 		return someObservable{source, predicate}.Subscribe
 	}

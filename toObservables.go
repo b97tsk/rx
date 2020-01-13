@@ -9,8 +9,8 @@ type ToObservablesConfigure struct {
 	Flat func(observables ...Observable) Observable
 }
 
-// MakeFunc creates an OperatorFunc from this type.
-func (configure ToObservablesConfigure) MakeFunc() OperatorFunc {
+// Use creates an Operator from this configure.
+func (configure ToObservablesConfigure) Use() Operator {
 	return func(source Observable) Observable {
 		return toObservablesObservable{source, configure}.Subscribe
 	}
@@ -61,6 +61,6 @@ func (obs toObservablesObservable) Subscribe(ctx context.Context, sink Observer)
 // ToObservables creates an Observable that collects all the Observables the
 // source emits, then emits them as a slice of Observable when the source
 // completes.
-func (Operators) ToObservables() OperatorFunc {
-	return ToObservablesConfigure{}.MakeFunc()
+func (Operators) ToObservables() Operator {
+	return ToObservablesConfigure{}.Use()
 }

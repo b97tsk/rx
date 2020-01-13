@@ -32,19 +32,19 @@ func TestOperators_WindowCount(t *testing.T) {
 			),
 			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				addLatencyToValue(1, 2),
-				WindowCountConfigure{3, 1}.MakeFunc(),
+				WindowCountConfigure{3, 1}.Use(),
 				operators.MergeMap(toSlice),
 				toString,
 			),
 			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				addLatencyToValue(1, 2),
-				WindowCountConfigure{3, 2}.MakeFunc(),
+				WindowCountConfigure{3, 2}.Use(),
 				operators.MergeMap(toSlice),
 				toString,
 			),
 			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				addLatencyToValue(1, 2),
-				WindowCountConfigure{3, 4}.MakeFunc(),
+				WindowCountConfigure{3, 4}.Use(),
 				operators.MergeMap(toSlice),
 				toString,
 			),

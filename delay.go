@@ -90,7 +90,7 @@ func (obs delayObservable) Subscribe(ctx context.Context, sink Observer) (contex
 
 // Delay delays the emission of items from the source Observable by a given
 // timeout.
-func (Operators) Delay(timeout time.Duration) OperatorFunc {
+func (Operators) Delay(timeout time.Duration) Operator {
 	return func(source Observable) Observable {
 		return delayObservable{source, timeout}.Subscribe
 	}

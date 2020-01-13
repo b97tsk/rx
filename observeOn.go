@@ -47,7 +47,7 @@ func (obs observeOnObservable) Subscribe(ctx context.Context, sink Observer) (co
 
 // ObserveOn creates an Observable that emits each notification from the source
 // Observable after waits for the duration to elapse.
-func (Operators) ObserveOn(d time.Duration) OperatorFunc {
+func (Operators) ObserveOn(d time.Duration) Operator {
 	return func(source Observable) Observable {
 		return observeOnObservable{source, d}.Subscribe
 	}

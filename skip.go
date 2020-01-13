@@ -33,7 +33,7 @@ func (obs skipObservable) Subscribe(ctx context.Context, sink Observer) (context
 
 // Skip creates an Observable that skips the first count items emitted by the
 // source Observable.
-func (Operators) Skip(count int) OperatorFunc {
+func (Operators) Skip(count int) Operator {
 	return func(source Observable) Observable {
 		if count <= 0 {
 			return source

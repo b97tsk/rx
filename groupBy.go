@@ -42,7 +42,7 @@ func (obs groupByObservable) Subscribe(ctx context.Context, sink Observer) (cont
 // GroupBy creates an Observable that groups the items emitted by the source
 // Observable according to a specified criterion, and emits these grouped
 // items as GroupedObservables, one GroupedObservable per group.
-func (Operators) GroupBy(keySelector func(interface{}) interface{}, subjectFactory func() Subject) OperatorFunc {
+func (Operators) GroupBy(keySelector func(interface{}) interface{}, subjectFactory func() Subject) Operator {
 	return func(source Observable) Observable {
 		return groupByObservable{source, keySelector, subjectFactory}.Subscribe
 	}

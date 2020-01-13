@@ -76,7 +76,7 @@ func (obs congestObservable) Subscribe(ctx context.Context, sink Observer) (cont
 // Congest creates an Observable that mirrors the source Observable, caches
 // emissions if the source emits too fast, and congests the source if the cache
 // is full.
-func (Operators) Congest(bufferSize int) OperatorFunc {
+func (Operators) Congest(bufferSize int) Operator {
 	return func(source Observable) Observable {
 		if bufferSize < 1 {
 			return source

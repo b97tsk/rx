@@ -12,8 +12,8 @@ type WindowTimeConfigure struct {
 	MaxWindowSize    int
 }
 
-// MakeFunc creates an OperatorFunc from this type.
-func (configure WindowTimeConfigure) MakeFunc() OperatorFunc {
+// Use creates an Operator from this configure.
+func (configure WindowTimeConfigure) Use() Operator {
 	return func(source Observable) Observable {
 		return windowTimeObservable{source, configure}.Subscribe
 	}
@@ -126,6 +126,6 @@ func (obs windowTimeObservable) Subscribe(ctx context.Context, sink Observer) (c
 // periodically in time.
 //
 // It's like BufferTime, but emits a nested Observable instead of a slice.
-func (Operators) WindowTime(timeSpan time.Duration) OperatorFunc {
-	return WindowTimeConfigure{TimeSpan: timeSpan}.MakeFunc()
+func (Operators) WindowTime(timeSpan time.Duration) Operator {
+	return WindowTimeConfigure{TimeSpan: timeSpan}.Use()
 }

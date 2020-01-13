@@ -91,7 +91,7 @@ func (obs withLatestFromObservable) Subscribe(ctx context.Context, sink Observer
 // To ensure output slice has always the same length, WithLatestFrom will
 // actually wait for all input Observables to emit at least once, before it
 // starts emitting results.
-func (Operators) WithLatestFrom(observables ...Observable) OperatorFunc {
+func (Operators) WithLatestFrom(observables ...Observable) Operator {
 	return func(source Observable) Observable {
 		observables = append([]Observable{source}, observables...)
 		return withLatestFromObservable{observables}.Subscribe

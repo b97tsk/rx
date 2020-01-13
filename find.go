@@ -42,7 +42,7 @@ func (obs findObservable) Subscribe(ctx context.Context, sink Observer) (context
 
 // Find creates an Observable that emits only the first value emitted by the
 // source Observable that meets some condition.
-func (Operators) Find(predicate func(interface{}, int) bool) OperatorFunc {
+func (Operators) Find(predicate func(interface{}, int) bool) Operator {
 	return func(source Observable) Observable {
 		return findObservable{source, predicate}.Subscribe
 	}

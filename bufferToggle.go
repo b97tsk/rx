@@ -114,7 +114,7 @@ func (obs bufferToggleObservable) Subscribe(ctx context.Context, sink Observer) 
 // BufferToggle collects values from the past as a slice, starts collecting
 // only when opening emits, and calls the closingSelector function to get an
 // Observable that tells when to close the buffer.
-func (Operators) BufferToggle(openings Observable, closingSelector func(interface{}) Observable) OperatorFunc {
+func (Operators) BufferToggle(openings Observable, closingSelector func(interface{}) Observable) Operator {
 	return func(source Observable) Observable {
 		return bufferToggleObservable{source, openings, closingSelector}.Subscribe
 	}

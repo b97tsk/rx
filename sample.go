@@ -62,7 +62,7 @@ func (obs sampleObservable) Subscribe(ctx context.Context, sink Observer) (conte
 //
 // It's like SampleTime, but samples whenever the notifier Observable emits
 // something.
-func (Operators) Sample(notifier Observable) OperatorFunc {
+func (Operators) Sample(notifier Observable) Operator {
 	return func(source Observable) Observable {
 		return sampleObservable{source, notifier}.Subscribe
 	}

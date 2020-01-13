@@ -77,7 +77,7 @@ func (obs switchMapObservable) Subscribe(ctx context.Context, sink Observer) (co
 //
 // Switch flattens an Observable-of-Observables by dropping the previous inner
 // Observable once a new one appears.
-func (Operators) Switch() OperatorFunc {
+func (Operators) Switch() Operator {
 	return operators.SwitchMap(ProjectToObservable)
 }
 
@@ -87,7 +87,7 @@ func (Operators) Switch() OperatorFunc {
 //
 // SwitchMap maps each value to an Observable, then flattens all of these inner
 // Observables using Switch.
-func (Operators) SwitchMap(project func(interface{}, int) Observable) OperatorFunc {
+func (Operators) SwitchMap(project func(interface{}, int) Observable) Operator {
 	return func(source Observable) Observable {
 		return switchMapObservable{source, project}.Subscribe
 	}
@@ -98,6 +98,6 @@ func (Operators) SwitchMap(project func(interface{}, int) Observable) OperatorFu
 // Observable.
 //
 // It's like SwitchMap, but maps each value always to the same inner Observable.
-func (Operators) SwitchMapTo(inner Observable) OperatorFunc {
+func (Operators) SwitchMapTo(inner Observable) Operator {
 	return operators.SwitchMap(func(interface{}, int) Observable { return inner })
 }

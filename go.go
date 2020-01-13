@@ -5,7 +5,7 @@ import (
 )
 
 // Go creates an Observable that mirrors the source Observable in a goroutine.
-func (Operators) Go() OperatorFunc {
+func (Operators) Go() Operator {
 	return func(source Observable) Observable {
 		return func(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 			ctx, cancel := context.WithCancel(ctx)

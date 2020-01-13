@@ -49,7 +49,7 @@ func (obs singleObservable) Subscribe(ctx context.Context, sink Observer) (conte
 // Single creates an Observable that emits the single item emitted by the
 // source Observable. If the source emits more than one item or no items,
 // notify of an ErrNotSingle or ErrEmpty respectively.
-func (Operators) Single() OperatorFunc {
+func (Operators) Single() Operator {
 	return func(source Observable) Observable {
 		return singleObservable{source}.Subscribe
 	}

@@ -27,7 +27,7 @@ func (obs mapObservable) Subscribe(ctx context.Context, sink Observer) (context.
 
 // Map creates an Observable that applies a given project function to each
 // value emitted by the source Observable, then emits the resulting values.
-func (Operators) Map(project func(interface{}, int) interface{}) OperatorFunc {
+func (Operators) Map(project func(interface{}, int) interface{}) Operator {
 	return func(source Observable) Observable {
 		return mapObservable{source, project}.Subscribe
 	}

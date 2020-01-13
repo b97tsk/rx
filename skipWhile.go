@@ -36,7 +36,7 @@ func (obs skipWhileObservable) Subscribe(ctx context.Context, sink Observer) (co
 // SkipWhile creates an Observable that skips all items emitted by the source
 // Observable as long as a specified condition holds true, but emits all
 // further source items as soon as the condition becomes false.
-func (Operators) SkipWhile(predicate func(interface{}, int) bool) OperatorFunc {
+func (Operators) SkipWhile(predicate func(interface{}, int) bool) Operator {
 	return func(source Observable) Observable {
 		return skipWhileObservable{source, predicate}.Subscribe
 	}

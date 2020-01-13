@@ -12,9 +12,9 @@ func TestOperators_BufferCount(t *testing.T) {
 		[]Observable{
 			Just("A", "B", "C", "D", "E", "F", "G").Pipe(operators.BufferCount(2), toString),
 			Just("A", "B", "C", "D", "E", "F", "G").Pipe(operators.BufferCount(3), toString),
-			Just("A", "B", "C", "D", "E", "F", "G").Pipe(BufferCountConfigure{3, 1}.MakeFunc(), toString),
-			Just("A", "B", "C", "D", "E", "F", "G").Pipe(BufferCountConfigure{3, 2}.MakeFunc(), toString),
-			Just("A", "B", "C", "D", "E", "F", "G").Pipe(BufferCountConfigure{3, 4}.MakeFunc(), toString),
+			Just("A", "B", "C", "D", "E", "F", "G").Pipe(BufferCountConfigure{3, 1}.Use(), toString),
+			Just("A", "B", "C", "D", "E", "F", "G").Pipe(BufferCountConfigure{3, 2}.Use(), toString),
+			Just("A", "B", "C", "D", "E", "F", "G").Pipe(BufferCountConfigure{3, 4}.Use(), toString),
 		},
 		"[A B]", "[C D]", "[E F]", "[G]", xComplete,
 		"[A B C]", "[D E F]", "[G]", xComplete,

@@ -92,7 +92,7 @@ func (obs repeatWhenObservable) Subscribe(ctx context.Context, sink Observer) (c
 // that Observable emits a value, this operator will resubscribe to the source
 // Observable. Otherwise, this operator will emit a COMPLETE on the child
 // subscription.
-func (Operators) RepeatWhen(notifier func(Observable) Observable) OperatorFunc {
+func (Operators) RepeatWhen(notifier func(Observable) Observable) Operator {
 	return func(source Observable) Observable {
 		return repeatWhenObservable{source, notifier}.Subscribe
 	}

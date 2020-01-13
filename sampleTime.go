@@ -51,7 +51,7 @@ func (obs sampleTimeObservable) Subscribe(ctx context.Context, sink Observer) (c
 
 // SampleTime creates an Observable that emits the most recently emitted value
 // from the source Observable within periodic time intervals.
-func (Operators) SampleTime(interval time.Duration) OperatorFunc {
+func (Operators) SampleTime(interval time.Duration) Operator {
 	return func(source Observable) Observable {
 		return sampleTimeObservable{source, interval}.Subscribe
 	}

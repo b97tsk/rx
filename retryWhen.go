@@ -97,7 +97,7 @@ func (obs retryWhenObservable) Subscribe(ctx context.Context, sink Observer) (co
 // If that Observable emits a value, this operator will resubscribe to the
 // source Observable. Otherwise, this operator will emit the last error on
 // the child subscription.
-func (Operators) RetryWhen(notifier func(Observable) Observable) OperatorFunc {
+func (Operators) RetryWhen(notifier func(Observable) Observable) Operator {
 	return func(source Observable) Observable {
 		return retryWhenObservable{source, notifier}.Subscribe
 	}

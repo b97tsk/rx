@@ -65,7 +65,7 @@ func (obs exhaustMapObservable) Subscribe(ctx context.Context, sink Observer) (c
 //
 // Exhaust flattens an Observable-of-Observables by dropping the next inner
 // Observables while the current inner is still executing.
-func (Operators) Exhaust() OperatorFunc {
+func (Operators) Exhaust() Operator {
 	return operators.ExhaustMap(ProjectToObservable)
 }
 
@@ -75,7 +75,7 @@ func (Operators) Exhaust() OperatorFunc {
 //
 // ExhaustMap maps each value to an Observable, then flattens all of these
 // inner Observables using Exhaust.
-func (Operators) ExhaustMap(project func(interface{}, int) Observable) OperatorFunc {
+func (Operators) ExhaustMap(project func(interface{}, int) Observable) Operator {
 	return func(source Observable) Observable {
 		return exhaustMapObservable{source, project}.Subscribe
 	}

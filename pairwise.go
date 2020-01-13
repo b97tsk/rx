@@ -31,7 +31,7 @@ func (obs pairwiseObservable) Subscribe(ctx context.Context, sink Observer) (con
 
 // Pairwise creates an Observable that groups pairs of consecutive emissions
 // together and emits them as a slice of two values.
-func (Operators) Pairwise() OperatorFunc {
+func (Operators) Pairwise() Operator {
 	return func(source Observable) Observable {
 		return pairwiseObservable{source}.Subscribe
 	}

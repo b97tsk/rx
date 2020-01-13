@@ -6,7 +6,7 @@ import (
 
 // Do creates an Observable that mirrors the source Observable, but performs
 // a side effect before each emission.
-func (Operators) Do(sink Observer) OperatorFunc {
+func (Operators) Do(sink Observer) Operator {
 	return func(source Observable) Observable {
 		return func(ctx context.Context, notify Observer) (context.Context, context.CancelFunc) {
 			return source.Subscribe(ctx, func(t Notification) {
@@ -19,7 +19,7 @@ func (Operators) Do(sink Observer) OperatorFunc {
 
 // DoOnNext creates an Observable that mirrors the source Observable, but
 // performs a side effect before each value.
-func (Operators) DoOnNext(onNext func(interface{})) OperatorFunc {
+func (Operators) DoOnNext(onNext func(interface{})) Operator {
 	return func(source Observable) Observable {
 		return func(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 			return source.Subscribe(ctx, func(t Notification) {
@@ -35,7 +35,7 @@ func (Operators) DoOnNext(onNext func(interface{})) OperatorFunc {
 // DoOnError creates an Observable that mirrors the source Observable, in
 // the case that the source errors, performs a side effect before mirroring
 // the ERROR emission.
-func (Operators) DoOnError(onError func(error)) OperatorFunc {
+func (Operators) DoOnError(onError func(error)) Operator {
 	return func(source Observable) Observable {
 		return func(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 			return source.Subscribe(ctx, func(t Notification) {
@@ -51,7 +51,7 @@ func (Operators) DoOnError(onError func(error)) OperatorFunc {
 // DoOnComplete creates an Observable that mirrors the source Observable, in
 // the case that the source completes, performs a side effect before mirroring
 // the COMPLETE emission.
-func (Operators) DoOnComplete(onComplete func()) OperatorFunc {
+func (Operators) DoOnComplete(onComplete func()) Operator {
 	return func(source Observable) Observable {
 		return func(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 			return source.Subscribe(ctx, func(t Notification) {

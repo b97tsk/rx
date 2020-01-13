@@ -33,7 +33,7 @@ func (obs lastObservable) Subscribe(ctx context.Context, sink Observer) (context
 
 // Last creates an Observable that emits only the last item emitted by the
 // source Observable.
-func (Operators) Last() OperatorFunc {
+func (Operators) Last() Operator {
 	return func(source Observable) Observable {
 		return lastObservable{source}.Subscribe
 	}

@@ -11,8 +11,8 @@ type ScanConfigure struct {
 	HasSeed     bool
 }
 
-// MakeFunc creates an OperatorFunc from this type.
-func (configure ScanConfigure) MakeFunc() OperatorFunc {
+// Use creates an Operator from this configure.
+func (configure ScanConfigure) Use() Operator {
 	return func(source Observable) Observable {
 		return scanObservable{source, configure}.Subscribe
 	}
@@ -55,6 +55,6 @@ func (obs scanObservable) Subscribe(ctx context.Context, sink Observer) (context
 //
 // It's like Reduce, but emits the current accumulation whenever the source
 // emits a value.
-func (Operators) Scan(accumulator func(interface{}, interface{}, int) interface{}) OperatorFunc {
-	return ScanConfigure{Accumulator: accumulator}.MakeFunc()
+func (Operators) Scan(accumulator func(interface{}, interface{}, int) interface{}) Operator {
+	return ScanConfigure{Accumulator: accumulator}.Use()
 }

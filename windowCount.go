@@ -10,8 +10,8 @@ type WindowCountConfigure struct {
 	StartWindowEvery int
 }
 
-// MakeFunc creates an OperatorFunc from this type.
-func (configure WindowCountConfigure) MakeFunc() OperatorFunc {
+// Use creates an Operator from this configure.
+func (configure WindowCountConfigure) Use() Operator {
 	return func(source Observable) Observable {
 		return windowCountObservable{source, configure}.Subscribe
 	}
@@ -86,6 +86,6 @@ func (obs windowCountObservable) Subscribe(ctx context.Context, sink Observer) (
 // with each nested Observable emitting at most windowSize values.
 //
 // It's like BufferCount, but emits a nested Observable instead of a slice.
-func (Operators) WindowCount(windowSize int) OperatorFunc {
-	return WindowCountConfigure{WindowSize: windowSize}.MakeFunc()
+func (Operators) WindowCount(windowSize int) Operator {
+	return WindowCountConfigure{WindowSize: windowSize}.Use()
 }

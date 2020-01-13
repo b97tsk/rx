@@ -91,7 +91,7 @@ func (obs delayWhenObservable) Subscribe(ctx context.Context, sink Observer) (co
 //
 // It's like Delay, but the time span of the delay duration is determined by
 // a second Observable.
-func (Operators) DelayWhen(durationSelector func(interface{}, int) Observable) OperatorFunc {
+func (Operators) DelayWhen(durationSelector func(interface{}, int) Observable) Operator {
 	return func(source Observable) Observable {
 		return delayWhenObservable{source, durationSelector}.Subscribe
 	}

@@ -12,8 +12,8 @@ type BufferTimeConfigure struct {
 	MaxBufferSize    int
 }
 
-// MakeFunc creates an OperatorFunc from this type.
-func (configure BufferTimeConfigure) MakeFunc() OperatorFunc {
+// Use creates an Operator from this configure.
+func (configure BufferTimeConfigure) Use() Operator {
 	return func(source Observable) Observable {
 		return bufferTimeObservable{source, configure}.Subscribe
 	}
@@ -127,6 +127,6 @@ func (obs bufferTimeObservable) Subscribe(ctx context.Context, sink Observer) (c
 //
 // BufferTime collects values from the past as a slice, and emits those slices
 // periodically in time.
-func (Operators) BufferTime(timeSpan time.Duration) OperatorFunc {
-	return BufferTimeConfigure{TimeSpan: timeSpan}.MakeFunc()
+func (Operators) BufferTime(timeSpan time.Duration) Operator {
+	return BufferTimeConfigure{TimeSpan: timeSpan}.Use()
 }

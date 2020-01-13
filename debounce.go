@@ -79,7 +79,7 @@ func (obs debounceObservable) Subscribe(ctx context.Context, sink Observer) (con
 //
 // It's like DebounceTime, but the time span of emission silence is determined
 // by a second Observable.
-func (Operators) Debounce(durationSelector func(interface{}) Observable) OperatorFunc {
+func (Operators) Debounce(durationSelector func(interface{}) Observable) Operator {
 	return func(source Observable) Observable {
 		return debounceObservable{source, durationSelector}.Subscribe
 	}

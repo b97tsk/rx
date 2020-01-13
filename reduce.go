@@ -46,7 +46,7 @@ func (obs reduceObservable) Subscribe(ctx context.Context, sink Observer) (conte
 // completes.
 //
 // It's like Fold, but no need to specify an initial value.
-func (Operators) Reduce(accumulator func(interface{}, interface{}, int) interface{}) OperatorFunc {
+func (Operators) Reduce(accumulator func(interface{}, interface{}, int) interface{}) Operator {
 	return func(source Observable) Observable {
 		return reduceObservable{
 			Source:      source,
@@ -60,7 +60,7 @@ func (Operators) Reduce(accumulator func(interface{}, interface{}, int) interfac
 // completes, given an initial value.
 //
 // It's like Reduce, but you could specify an initial value.
-func (Operators) Fold(initialValue interface{}, accumulator func(interface{}, interface{}, int) interface{}) OperatorFunc {
+func (Operators) Fold(initialValue interface{}, accumulator func(interface{}, interface{}, int) interface{}) Operator {
 	return func(source Observable) Observable {
 		return reduceObservable{
 			Source:      source,

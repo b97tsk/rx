@@ -28,7 +28,7 @@ func (obs excludeObservable) Subscribe(ctx context.Context, sink Observer) (cont
 
 // Exclude creates an Observable that filter items emitted by the source
 // Observable by only emitting those that do not satisfy a specified predicate.
-func (Operators) Exclude(predicate func(interface{}, int) bool) OperatorFunc {
+func (Operators) Exclude(predicate func(interface{}, int) bool) Operator {
 	return func(source Observable) Observable {
 		return excludeObservable{source, predicate}.Subscribe
 	}

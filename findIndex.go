@@ -42,7 +42,7 @@ func (obs findIndexObservable) Subscribe(ctx context.Context, sink Observer) (co
 
 // FindIndex creates an Observable that emits only the index of the first value
 // emitted by the source Observable that meets some condition.
-func (Operators) FindIndex(predicate func(interface{}, int) bool) OperatorFunc {
+func (Operators) FindIndex(predicate func(interface{}, int) bool) Operator {
 	return func(source Observable) Observable {
 		return findIndexObservable{source, predicate}.Subscribe
 	}

@@ -98,7 +98,7 @@ func Concat(observables ...Observable) Observable {
 //
 // ConcatAll flattens an Observable-of-Observables by putting one inner
 // Observable after the other.
-func (Operators) ConcatAll() OperatorFunc {
+func (Operators) ConcatAll() Operator {
 	return operators.ConcatMap(ProjectToObservable)
 }
 
@@ -108,7 +108,7 @@ func (Operators) ConcatAll() OperatorFunc {
 //
 // ConcatMap maps each value to an Observable, then flattens all of these inner
 // Observables using ConcatAll.
-func (Operators) ConcatMap(project func(interface{}, int) Observable) OperatorFunc {
+func (Operators) ConcatMap(project func(interface{}, int) Observable) Operator {
 	return func(source Observable) Observable {
 		return concatObservable{source, project}.Subscribe
 	}
@@ -118,6 +118,6 @@ func (Operators) ConcatMap(project func(interface{}, int) Observable) OperatorFu
 // merged multiple times in a serialized fashion on the output Observable.
 //
 // It's like ConcatMap, but maps each value always to the same inner Observable.
-func (Operators) ConcatMapTo(inner Observable) OperatorFunc {
+func (Operators) ConcatMapTo(inner Observable) Operator {
 	return operators.ConcatMap(func(interface{}, int) Observable { return inner })
 }

@@ -116,6 +116,6 @@ func Zip(observables ...Observable) Observable {
 //
 // ZipAll flattens an Observable-of-Observables by applying Zip when the
 // Observable-of-Observables completes.
-func (Operators) ZipAll() OperatorFunc {
-	return ToObservablesConfigure{Zip}.MakeFunc()
+func (Operators) ZipAll() Operator {
+	return ToObservablesConfigure{Zip}.Use()
 }

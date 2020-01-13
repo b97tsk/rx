@@ -33,7 +33,7 @@ func (obs defaultIfEmptyObservable) Subscribe(ctx context.Context, sink Observer
 //
 // If the source Observable turns out to be empty, then this operator will emit
 // a default value.
-func (Operators) DefaultIfEmpty(defaultValue interface{}) OperatorFunc {
+func (Operators) DefaultIfEmpty(defaultValue interface{}) Operator {
 	return func(source Observable) Observable {
 		return defaultIfEmptyObservable{source, defaultValue}.Subscribe
 	}

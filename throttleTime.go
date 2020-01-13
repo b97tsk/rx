@@ -12,8 +12,8 @@ type ThrottleTimeConfigure struct {
 	Trailing bool
 }
 
-// MakeFunc creates an OperatorFunc from this type.
-func (configure ThrottleTimeConfigure) MakeFunc() OperatorFunc {
+// Use creates an Operator from this configure.
+func (configure ThrottleTimeConfigure) Use() Operator {
 	return func(source Observable) Observable {
 		return throttleTimeObservable{source, configure}.Subscribe
 	}
@@ -88,10 +88,10 @@ func (obs throttleTimeObservable) Subscribe(ctx context.Context, sink Observer) 
 //
 // ThrottleTime lets a value pass, then ignores source values for the next
 // duration time.
-func (Operators) ThrottleTime(duration time.Duration) OperatorFunc {
+func (Operators) ThrottleTime(duration time.Duration) Operator {
 	return ThrottleTimeConfigure{
 		Duration: duration,
 		Leading:  true,
 		Trailing: false,
-	}.MakeFunc()
+	}.Use()
 }

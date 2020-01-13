@@ -67,7 +67,7 @@ func (obs skipUntilObservable) Subscribe(ctx context.Context, sink Observer) (co
 
 // SkipUntil creates an Observable that skips items emitted by the source
 // Observable until a second Observable emits an item.
-func (Operators) SkipUntil(notifier Observable) OperatorFunc {
+func (Operators) SkipUntil(notifier Observable) Operator {
 	return func(source Observable) Observable {
 		return skipUntilObservable{source, notifier}.Subscribe
 	}

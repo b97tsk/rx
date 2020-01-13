@@ -40,7 +40,7 @@ func (obs dematerializeObservable) Subscribe(ctx context.Context, sink Observer)
 
 // Dematerialize converts an Observable of Notification objects into the
 // emissions that they represent. It's the opposite of Materialize.
-func (Operators) Dematerialize() OperatorFunc {
+func (Operators) Dematerialize() Operator {
 	return func(source Observable) Observable {
 		return dematerializeObservable{source}.Subscribe
 	}

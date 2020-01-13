@@ -44,7 +44,7 @@ func (obs takeObservable) Subscribe(ctx context.Context, sink Observer) (context
 // by the source Observable.
 //
 // Take takes the first count values from the source, then completes.
-func (Operators) Take(count int) OperatorFunc {
+func (Operators) Take(count int) Operator {
 	return func(source Observable) Observable {
 		if count <= 0 {
 			return Empty()

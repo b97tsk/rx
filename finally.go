@@ -21,7 +21,7 @@ func Finally(sink Observer, finally func()) Observer {
 // Finally creates an Observable that mirrors the source Observable, in the
 // case that an ERROR or COMPLETE emission is mirrored, makes a call to the
 // specified function.
-func (Operators) Finally(finally func()) OperatorFunc {
+func (Operators) Finally(finally func()) Operator {
 	return func(source Observable) Observable {
 		return func(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 			return source.Subscribe(ctx, Finally(sink, finally))

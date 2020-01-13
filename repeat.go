@@ -47,7 +47,7 @@ func (obs repeatObservable) Subscribe(ctx context.Context, sink Observer) (conte
 
 // Repeat creates an Observable that repeats the stream of items emitted by the
 // source Observable at most count times.
-func (Operators) Repeat(count int) OperatorFunc {
+func (Operators) Repeat(count int) Operator {
 	return func(source Observable) Observable {
 		if count == 0 {
 			return Empty()

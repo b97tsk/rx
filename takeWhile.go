@@ -48,7 +48,7 @@ func (obs takeWhileObservable) Subscribe(ctx context.Context, sink Observer) (co
 //
 // TakeWhile takes values from the source only while they pass the condition
 // given. When the first value does not satisfy, it completes.
-func (Operators) TakeWhile(predicate func(interface{}, int) bool) OperatorFunc {
+func (Operators) TakeWhile(predicate func(interface{}, int) bool) Operator {
 	return func(source Observable) Observable {
 		return takeWhileObservable{source, predicate}.Subscribe
 	}

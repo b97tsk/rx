@@ -101,6 +101,6 @@ func CombineLatest(observables ...Observable) Observable {
 //
 // CombineAll flattens an Observable-of-Observables by applying CombineLatest
 // when the Observable-of-Observables completes.
-func (Operators) CombineAll() OperatorFunc {
-	return ToObservablesConfigure{CombineLatest}.MakeFunc()
+func (Operators) CombineAll() Operator {
+	return ToObservablesConfigure{CombineLatest}.Use()
 }

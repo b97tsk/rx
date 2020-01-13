@@ -85,7 +85,7 @@ func (obs windowWhenObservable) Subscribe(ctx context.Context, sink Observer) (c
 // a new window.
 //
 // It's like BufferWhen, but emits a nested Observable instead of a slice.
-func (Operators) WindowWhen(closingSelector func() Observable) OperatorFunc {
+func (Operators) WindowWhen(closingSelector func() Observable) Operator {
 	return func(source Observable) Observable {
 		return windowWhenObservable{source, closingSelector}.Subscribe
 	}

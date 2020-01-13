@@ -47,25 +47,25 @@ func TestOperators_WindowTime(t *testing.T) {
 		[]Observable{
 			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				addLatencyToValue(1, 2),
-				WindowTimeConfigure{step(8), 0, 0}.MakeFunc(),
+				WindowTimeConfigure{step(8), 0, 0}.Use(),
 				operators.MergeMap(toSlice),
 				toString,
 			),
 			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				addLatencyToValue(1, 2),
-				WindowTimeConfigure{step(8), 0, 3}.MakeFunc(),
+				WindowTimeConfigure{step(8), 0, 3}.Use(),
 				operators.MergeMap(toSlice),
 				toString,
 			),
 			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				addLatencyToValue(1, 2),
-				WindowTimeConfigure{step(8), 0, 2}.MakeFunc(),
+				WindowTimeConfigure{step(8), 0, 2}.Use(),
 				operators.MergeMap(toSlice),
 				toString,
 			),
 			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				addLatencyToValue(1, 2),
-				WindowTimeConfigure{step(8), 0, 1}.MakeFunc(),
+				WindowTimeConfigure{step(8), 0, 1}.Use(),
 				operators.MergeMap(toSlice),
 				toString,
 			),
@@ -81,19 +81,19 @@ func TestOperators_WindowTime(t *testing.T) {
 		[]Observable{
 			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				addLatencyToValue(1, 2),
-				WindowTimeConfigure{step(2), step(2), 0}.MakeFunc(),
+				WindowTimeConfigure{step(2), step(2), 0}.Use(),
 				operators.MergeMap(toSlice),
 				toString,
 			),
 			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				addLatencyToValue(1, 2),
-				WindowTimeConfigure{step(2), step(4), 0}.MakeFunc(),
+				WindowTimeConfigure{step(2), step(4), 0}.Use(),
 				operators.MergeMap(toSlice),
 				toString,
 			),
 			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				addLatencyToValue(1, 2),
-				WindowTimeConfigure{step(4), step(2), 0}.MakeFunc(),
+				WindowTimeConfigure{step(4), step(2), 0}.Use(),
 				operators.MergeMap(toSlice),
 				toString,
 			),

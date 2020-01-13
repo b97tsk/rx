@@ -51,7 +51,7 @@ func (obs retryObservable) Subscribe(ctx context.Context, sink Observer) (contex
 // exception of ERROR emission. If the source Observable errors, this
 // operator will resubscribe to the source Observable for a maximum of count
 // resubscriptions rather than propagating the ERROR emission.
-func (Operators) Retry(count int) OperatorFunc {
+func (Operators) Retry(count int) Operator {
 	return func(source Observable) Observable {
 		if count == 0 {
 			return source

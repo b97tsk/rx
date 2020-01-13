@@ -58,7 +58,7 @@ func (obs bufferObservable) Subscribe(ctx context.Context, sink Observer) (conte
 //
 // Buffer collects values from the past as a slice, and emits that slice
 // only when another Observable emits.
-func (Operators) Buffer(closingNotifier Observable) OperatorFunc {
+func (Operators) Buffer(closingNotifier Observable) Operator {
 	return func(source Observable) Observable {
 		return bufferObservable{source, closingNotifier}.Subscribe
 	}

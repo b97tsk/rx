@@ -10,8 +10,8 @@ type DistinctUntilChangedConfigure struct {
 	KeySelector func(interface{}) interface{}
 }
 
-// MakeFunc creates an OperatorFunc from this type.
-func (configure DistinctUntilChangedConfigure) MakeFunc() OperatorFunc {
+// Use creates an Operator from this configure.
+func (configure DistinctUntilChangedConfigure) Use() Operator {
 	return func(source Observable) Observable {
 		return distinctUntilChangedObservable{source, configure}.Subscribe
 	}
@@ -47,6 +47,6 @@ func (obs distinctUntilChangedObservable) Subscribe(ctx context.Context, sink Ob
 // to test for whether or not that value should be emitted.
 //
 // If a comparator function is not provided, an equality check is used by default.
-func (Operators) DistinctUntilChanged() OperatorFunc {
-	return DistinctUntilChangedConfigure{defaultCompare, defaultKeySelector}.MakeFunc()
+func (Operators) DistinctUntilChanged() Operator {
+	return DistinctUntilChangedConfigure{defaultCompare, defaultKeySelector}.Use()
 }

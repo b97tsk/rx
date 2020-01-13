@@ -34,7 +34,7 @@ func (obs skipLastObservable) Subscribe(ctx context.Context, sink Observer) (con
 
 // SkipLast creates an Observable that skip the last count values emitted by
 // the source Observable.
-func (Operators) SkipLast(count int) OperatorFunc {
+func (Operators) SkipLast(count int) Operator {
 	return func(source Observable) Observable {
 		if count <= 0 {
 			return source

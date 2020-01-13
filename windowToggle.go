@@ -116,7 +116,7 @@ func (obs windowToggleObservable) Subscribe(ctx context.Context, sink Observer) 
 // the output of closingSelector emits.
 //
 // It's like BufferToggle, but emits a nested Observable instead of a slice.
-func (Operators) WindowToggle(openings Observable, closingSelector func(interface{}) Observable) OperatorFunc {
+func (Operators) WindowToggle(openings Observable, closingSelector func(interface{}) Observable) Operator {
 	return func(source Observable) Observable {
 		return windowToggleObservable{source, openings, closingSelector}.Subscribe
 	}

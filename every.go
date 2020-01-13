@@ -48,7 +48,7 @@ func (obs everyObservable) Subscribe(ctx context.Context, sink Observer) (contex
 // satisfies the condition specified.
 //
 // Every emits true or false, then completes.
-func (Operators) Every(predicate func(interface{}, int) bool) OperatorFunc {
+func (Operators) Every(predicate func(interface{}, int) bool) Operator {
 	return func(source Observable) Observable {
 		return everyObservable{source, predicate}.Subscribe
 	}

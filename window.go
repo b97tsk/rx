@@ -63,7 +63,7 @@ func (obs windowObservable) Subscribe(ctx context.Context, sink Observer) (conte
 // whenever windowBoundaries emits.
 //
 // It's like Buffer, but emits a nested Observable instead of a slice.
-func (Operators) Window(windowBoundaries Observable) OperatorFunc {
+func (Operators) Window(windowBoundaries Observable) Operator {
 	return func(source Observable) Observable {
 		return windowObservable{source, windowBoundaries}.Subscribe
 	}

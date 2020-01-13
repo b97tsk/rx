@@ -25,7 +25,7 @@ func (obs toSliceObservable) Subscribe(ctx context.Context, sink Observer) (cont
 
 // ToSlice creates an Observable that collects all the values the source emits,
 // then emits them as a slice when the source completes.
-func (Operators) ToSlice() OperatorFunc {
+func (Operators) ToSlice() Operator {
 	return func(source Observable) Observable {
 		return toSliceObservable{source}.Subscribe
 	}

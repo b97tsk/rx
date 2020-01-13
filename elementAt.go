@@ -50,7 +50,7 @@ func (obs elementAtObservable) Subscribe(ctx context.Context, sink Observer) (co
 // ElementAt creates an Observable that emits the single value at the specified
 // index in a sequence of emissions from the source Observable, if the
 // specified index is out of range, notifies error ErrOutOfRange.
-func (Operators) ElementAt(index int) OperatorFunc {
+func (Operators) ElementAt(index int) Operator {
 	return func(source Observable) Observable {
 		return elementAtObservable{
 			Source: source,
@@ -62,7 +62,7 @@ func (Operators) ElementAt(index int) OperatorFunc {
 // ElementAtOrDefault creates an Observable that emits the single value at the
 // specified index in a sequence of emissions from the source Observable, if
 // the specified index is out of range, emits the provided default value.
-func (Operators) ElementAtOrDefault(index int, defaultValue interface{}) OperatorFunc {
+func (Operators) ElementAtOrDefault(index int, defaultValue interface{}) Operator {
 	return func(source Observable) Observable {
 		return elementAtObservable{
 			Source:     source,

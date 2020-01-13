@@ -9,7 +9,7 @@ import (
 //
 // It's like Map, but it maps every source value to the same output value
 // every time.
-func (Operators) MapTo(value interface{}) OperatorFunc {
+func (Operators) MapTo(value interface{}) Operator {
 	return func(source Observable) Observable {
 		return func(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 			return source.Subscribe(ctx, func(t Notification) {
