@@ -24,3 +24,17 @@ func TestOperators_Map(t *testing.T) {
 		2, 4, 6, 8, xErrTest,
 	)
 }
+
+func TestOperators_MapTo(t *testing.T) {
+	subscribe(
+		t,
+		[]Observable{
+			Empty().Pipe(operators.MapTo(42)),
+			Just("A", "B", "C").Pipe(operators.MapTo(42)),
+			Concat(Just("A", "B", "C"), Throw(xErrTest)).Pipe(operators.MapTo(42)),
+		},
+		xComplete,
+		42, 42, 42, xComplete,
+		42, 42, 42, xErrTest,
+	)
+}
