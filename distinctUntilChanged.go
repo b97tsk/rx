@@ -48,5 +48,8 @@ func (obs distinctUntilChangedObservable) Subscribe(ctx context.Context, sink Ob
 //
 // If a comparator function is not provided, an equality check is used by default.
 func (Operators) DistinctUntilChanged() Operator {
-	return DistinctUntilChangedConfigure{defaultCompare, defaultKeySelector}.Use()
+	return DistinctUntilChangedConfigure{
+		Compare:     func(v1, v2 interface{}) bool { return v1 == v2 },
+		KeySelector: func(val interface{}) interface{} { return val },
+	}.Use()
 }

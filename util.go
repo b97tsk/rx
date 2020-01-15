@@ -4,10 +4,7 @@ import (
 	"context"
 )
 
-var (
-	canceledCtx context.Context
-	nothingToDo = func() {}
-)
+var canceledCtx context.Context
 
 func init() {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -15,21 +12,13 @@ func init() {
 	canceledCtx = ctx
 }
 
-func defaultCompare(v1, v2 interface{}) bool {
-	return v1 == v2
-}
-
-func defaultKeySelector(val interface{}) interface{} {
-	return val
-}
-
 // Done returns a canceled context and a function does nothing.
 func Done() (context.Context, context.CancelFunc) {
-	return canceledCtx, nothingToDo
+	return canceledCtx, func() {}
 }
 
-// ProjectToObservable type-casts each value to an Observable and returns it,
-// if failed, returns Throw(ErrNotObservable).
+// ProjectToObservable type-asserts each value to be an Observable and returns
+// it. If type assertion fails, it returns Throw(ErrNotObservable).
 func ProjectToObservable(val interface{}, idx int) Observable {
 	if obs, ok := val.(Observable); ok {
 		return obs

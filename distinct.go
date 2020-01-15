@@ -44,5 +44,7 @@ func (obs distinctObservable) Subscribe(ctx context.Context, sink Observer) (con
 // will use each value from the source Observable directly with an equality
 // check against previous values.
 func (Operators) Distinct() Operator {
-	return DistinctConfigure{defaultKeySelector}.Use()
+	return DistinctConfigure{
+		KeySelector: func(val interface{}) interface{} { return val },
+	}.Use()
 }
