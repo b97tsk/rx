@@ -19,25 +19,13 @@ func (obs fromSliceObservable) Subscribe(ctx context.Context, sink Observer) (co
 	return Done()
 }
 
-func just(one interface{}) Observable {
-	return func(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
-		sink.Next(one)
-		sink.Complete()
-		return Done()
-	}
-}
-
 // FromSlice creates an Observable that emits values from a slice, one after
 // the other, and then completes.
 func FromSlice(slice []interface{}) Observable {
-	switch {
-	case len(slice) > 1:
-		return fromSliceObservable{slice}.Subscribe
-	case len(slice) == 1:
-		return just(slice[0])
-	default:
+	if len(slice) == 0 {
 		return Empty()
 	}
+	return fromSliceObservable{slice}.Subscribe
 }
 
 // Just creates an Observable that emits some values you specify as arguments,

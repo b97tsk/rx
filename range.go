@@ -22,12 +22,8 @@ func (obs rangeObservable) Subscribe(ctx context.Context, sink Observer) (contex
 // Range creates an Observable that emits a sequence of integers within a
 // specified range.
 func Range(low, high int) Observable {
-	switch {
-	case low >= high:
+	if low >= high {
 		return Empty()
-	case low+1 == high:
-		return just(low)
-	default:
-		return rangeObservable{low, high}.Subscribe
 	}
+	return rangeObservable{low, high}.Subscribe
 }

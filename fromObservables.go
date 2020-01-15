@@ -22,12 +22,8 @@ func (obs fromObservablesObservable) Subscribe(ctx context.Context, sink Observe
 // FromObservables creates an Observable that emits some Observables
 // you specify as arguments, one after the other, and then completes.
 func FromObservables(observables ...Observable) Observable {
-	switch {
-	case len(observables) > 1:
-		return fromObservablesObservable{observables}.Subscribe
-	case len(observables) == 1:
-		return just(observables[0])
-	default:
+	if len(observables) == 0 {
 		return Empty()
 	}
+	return fromObservablesObservable{observables}.Subscribe
 }
