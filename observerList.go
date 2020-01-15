@@ -34,7 +34,9 @@ func (list *observerList) Remove(observer *Observer) {
 		if sink == observer {
 			observers := list.observers
 			if list.refs != nil && !list.refs.Equals(0) {
-				observers = append([]*Observer(nil), observers...)
+				newObservers := make([]*Observer, len(observers))
+				copy(newObservers, observers)
+				observers = newObservers
 				list.refs = nil
 			}
 			copy(observers[i:], observers[i+1:])

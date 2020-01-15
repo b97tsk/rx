@@ -50,7 +50,9 @@ func (obs combineLatestObservable) Subscribe(ctx context.Context, sink Observer)
 						}
 					}
 
-					sink.Next(append([]interface{}(nil), values...))
+					newValues := make([]interface{}, len(values))
+					copy(newValues, values)
+					sink.Next(newValues)
 
 				case t.HasError:
 					sink(t.Notification)

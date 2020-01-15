@@ -54,7 +54,9 @@ func (obs bufferCountObservable) Subscribe(ctx context.Context, sink Observer) (
 		default:
 			if len(buffer) > 0 {
 				for obs.StartBufferEvery < len(buffer) {
-					newBuffer := append([]interface{}(nil), buffer[obs.StartBufferEvery:]...)
+					remains := buffer[obs.StartBufferEvery:]
+					newBuffer := make([]interface{}, len(remains))
+					copy(newBuffer, remains)
 					sink.Next(buffer)
 					buffer = newBuffer
 				}
