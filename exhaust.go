@@ -17,7 +17,7 @@ func (obs exhaustMapObservable) Subscribe(ctx context.Context, sink Observer) (c
 	sink = Mutex(Finally(sink, cancel))
 
 	var (
-		outerIndex  = -1
+		sourceIndex = -1
 		activeCount = atomic.Uint32(1)
 	)
 
@@ -28,11 +28,11 @@ func (obs exhaustMapObservable) Subscribe(ctx context.Context, sink Observer) (c
 				break
 			}
 
-			outerIndex++
-			outerIndex := outerIndex
-			outerValue := t.Value
+			sourceIndex++
+			sourceIndex := sourceIndex
+			sourceValue := t.Value
 
-			obs := obs.Project(outerValue, outerIndex)
+			obs := obs.Project(sourceValue, sourceIndex)
 			obs.Subscribe(ctx, func(t Notification) {
 				switch {
 				case t.HasValue || t.HasError:

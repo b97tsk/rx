@@ -54,12 +54,12 @@ func (obs congestingMergeObservable) Subscribe(ctx context.Context, sink Observe
 
 			x.ActiveCount++
 
-			outerIndex := x.Index
-			outerValue := t.Value
+			sourceIndex := x.Index
+			sourceValue := t.Value
 			x.Index++
 
 			// calls obs.Project synchronously
-			obs := obs.Project(outerValue, outerIndex)
+			obs := obs.Project(sourceValue, sourceIndex)
 
 			cx <- x
 

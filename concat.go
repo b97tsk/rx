@@ -37,11 +37,11 @@ func (obs concatObservable) Subscribe(ctx context.Context, sink Observer) (conte
 				return
 			}
 
-			outerIndex := x.Index
-			outerValue := x.Buffer.PopFront()
+			sourceIndex := x.Index
+			sourceValue := x.Buffer.PopFront()
 			x.Index++
 
-			obs := obs.Project(outerValue, outerIndex)
+			obs := obs.Project(sourceValue, sourceIndex)
 			obs.Subscribe(ctx, func(t Notification) {
 				switch {
 				case t.HasValue || t.HasError:

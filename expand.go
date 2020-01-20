@@ -41,14 +41,14 @@ func (obs expandObservable) Subscribe(ctx context.Context, sink Observer) (conte
 	var doNextLocked func(*X)
 
 	doNextLocked = func(x *X) {
-		outerIndex := x.Index
-		outerValue := x.Buffer.PopFront()
+		sourceIndex := x.Index
+		sourceValue := x.Buffer.PopFront()
 		x.Index++
 
-		sink.Next(outerValue)
+		sink.Next(sourceValue)
 
 		// calls obs.Project synchronously
-		obs1 := obs.Project(outerValue, outerIndex)
+		obs1 := obs.Project(sourceValue, sourceIndex)
 
 		go obs1.Subscribe(ctx, func(t Notification) {
 			switch {

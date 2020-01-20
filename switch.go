@@ -28,17 +28,17 @@ func (obs switchMapObservable) Subscribe(ctx context.Context, sink Observer) (co
 		case t.HasValue:
 			x := <-cx
 
-			outerIndex := x.Index
-			outerValue := t.Value
+			sourceIndex := x.Index
+			sourceValue := t.Value
 			x.Index++
 
-			x.ActiveIndex = outerIndex
+			x.ActiveIndex = sourceIndex
 
 			cx <- x
 
 			childCancel()
 
-			obs := obs.Project(outerValue, outerIndex)
+			obs := obs.Project(sourceValue, sourceIndex)
 
 			_, childCancel = obs.Subscribe(ctx, func(t Notification) {
 				switch {
@@ -46,7 +46,7 @@ func (obs switchMapObservable) Subscribe(ctx context.Context, sink Observer) (co
 					sink(t)
 				default:
 					x := <-cx
-					if x.ActiveIndex == outerIndex {
+					if x.ActiveIndex == sourceIndex {
 						x.ActiveIndex = -1
 						if x.SourceCompleted {
 							sink(t)

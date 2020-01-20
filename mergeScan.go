@@ -43,10 +43,10 @@ func (obs mergeScanObservable) Subscribe(ctx context.Context, sink Observer) (co
 	var doNextLocked func(*X)
 
 	doNextLocked = func(x *X) {
-		outerValue := x.Buffer.PopFront()
+		sourceValue := x.Buffer.PopFront()
 
 		// calls obs.Accumulator synchronously
-		obs := obs.Accumulator(x.Seed, outerValue)
+		obs := obs.Accumulator(x.Seed, sourceValue)
 
 		go obs.Subscribe(ctx, func(t Notification) {
 			switch {

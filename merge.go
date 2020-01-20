@@ -41,12 +41,12 @@ func (obs mergeObservable) Subscribe(ctx context.Context, sink Observer) (contex
 	var doNextLocked func(*X)
 
 	doNextLocked = func(x *X) {
-		outerIndex := x.Index
-		outerValue := x.Buffer.PopFront()
+		sourceIndex := x.Index
+		sourceValue := x.Buffer.PopFront()
 		x.Index++
 
 		// calls obs.Project synchronously
-		obs := obs.Project(outerValue, outerIndex)
+		obs := obs.Project(sourceValue, sourceIndex)
 
 		go obs.Subscribe(ctx, func(t Notification) {
 			switch {

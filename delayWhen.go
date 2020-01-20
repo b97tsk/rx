@@ -25,8 +25,8 @@ func (obs delayWhenObservable) Subscribe(ctx context.Context, sink Observer) (co
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
-				outerIndex := x.Index
-				outerValue := t.Value
+				sourceIndex := x.Index
+				sourceValue := t.Value
 				x.Index++
 				x.ActiveCount++
 
@@ -42,7 +42,7 @@ func (obs delayWhenObservable) Subscribe(ctx context.Context, sink Observer) (co
 						x.ActiveCount--
 						switch {
 						case t.HasValue:
-							sink.Next(outerValue)
+							sink.Next(sourceValue)
 							if x.ActiveCount == 0 {
 								close(cx)
 								sink.Complete()
@@ -63,7 +63,7 @@ func (obs delayWhenObservable) Subscribe(ctx context.Context, sink Observer) (co
 					}
 				}
 
-				obs := obs.DurationSelector(outerValue, outerIndex)
+				obs := obs.DurationSelector(sourceValue, sourceIndex)
 				obs.Subscribe(scheduleCtx, observer.Notify)
 
 			case t.HasError:

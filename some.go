@@ -15,16 +15,16 @@ func (obs someObservable) Subscribe(ctx context.Context, sink Observer) (context
 	sink = Finally(sink, cancel)
 
 	var (
-		outerIndex = -1
-		observer   Observer
+		sourceIndex = -1
+		observer    Observer
 	)
 
 	observer = func(t Notification) {
 		switch {
 		case t.HasValue:
-			outerIndex++
+			sourceIndex++
 
-			if obs.Predicate(t.Value, outerIndex) {
+			if obs.Predicate(t.Value, sourceIndex) {
 				observer = NopObserver
 				sink.Next(true)
 				sink.Complete()

@@ -25,17 +25,17 @@ type scanObservable struct {
 
 func (obs scanObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	var (
-		seed       = obs.Seed
-		hasSeed    = obs.HasSeed
-		outerIndex = -1
+		seed        = obs.Seed
+		hasSeed     = obs.HasSeed
+		sourceIndex = -1
 	)
 	return obs.Source.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue:
-			outerIndex++
+			sourceIndex++
 
 			if hasSeed {
-				seed = obs.Accumulator(seed, t.Value, outerIndex)
+				seed = obs.Accumulator(seed, t.Value, sourceIndex)
 			} else {
 				seed = t.Value
 				hasSeed = true

@@ -11,16 +11,16 @@ type skipWhileObservable struct {
 
 func (obs skipWhileObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	var (
-		outerIndex = -1
-		observer   Observer
+		sourceIndex = -1
+		observer    Observer
 	)
 
 	observer = func(t Notification) {
 		switch {
 		case t.HasValue:
-			outerIndex++
+			sourceIndex++
 
-			if !obs.Predicate(t.Value, outerIndex) {
+			if !obs.Predicate(t.Value, sourceIndex) {
 				observer = sink
 				sink(t)
 			}

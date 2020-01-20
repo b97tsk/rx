@@ -15,18 +15,18 @@ func (obs congestingConcatObservable) Subscribe(ctx context.Context, sink Observ
 	sink = Finally(sink, cancel)
 
 	var (
-		outerIndex = -1
-		observer   Observer
+		sourceIndex = -1
+		observer    Observer
 	)
 
 	observer = func(t Notification) {
 		switch {
 		case t.HasValue:
-			outerIndex++
-			outerIndex := outerIndex
-			outerValue := t.Value
+			sourceIndex++
+			sourceIndex := sourceIndex
+			sourceValue := t.Value
 
-			obs := obs.Project(outerValue, outerIndex)
+			obs := obs.Project(sourceValue, sourceIndex)
 
 			childCtx, _ := obs.Subscribe(ctx, func(t Notification) {
 				switch {
