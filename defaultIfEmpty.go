@@ -4,29 +4,6 @@ import (
 	"context"
 )
 
-type defaultIfEmptyObservable struct {
-	Source  Observable
-	Default interface{}
-}
-
-func (obs defaultIfEmptyObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	var hasValue bool
-	return obs.Source.Subscribe(ctx, func(t Notification) {
-		switch {
-		case t.HasValue:
-			hasValue = true
-			sink(t)
-		case t.HasError:
-			sink(t)
-		default:
-			if !hasValue {
-				sink.Next(obs.Default)
-			}
-			sink(t)
-		}
-	})
-}
-
 // DefaultIfEmpty creates an Observable that emits a given value if the source
 // Observable completes without emitting any next value, otherwise mirrors the
 // source Observable.
@@ -35,6 +12,22 @@ func (obs defaultIfEmptyObservable) Subscribe(ctx context.Context, sink Observer
 // a default value.
 func (Operators) DefaultIfEmpty(defaultValue interface{}) Operator {
 	return func(source Observable) Observable {
-		return defaultIfEmptyObservable{source, defaultValue}.Subscribe
+		return func(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
+			var hasValue bool
+			return source.Subscribe(ctx, func(t Notification) {
+				switch {
+				case t.HasValue:
+					hasValue = true
+					sink(t)
+				case t.HasError:
+					sink(t)
+				default:
+					if !hasValue {
+						sink.Next(defaultValue)
+					}
+					sink(t)
+				}
+			})
+		}
 	}
 }
