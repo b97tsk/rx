@@ -13,11 +13,11 @@ func FromObservables(observables ...Observable) Observable {
 	return func(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 		for _, obs := range observables {
 			if ctx.Err() != nil {
-				return Done()
+				return Done(ctx)
 			}
 			sink.Next(obs)
 		}
 		sink.Complete()
-		return Done()
+		return Done(ctx)
 	}
 }

@@ -56,7 +56,7 @@ func (obs bufferWhenObservable) Subscribe(ctx context.Context, sink Observer) (c
 	avoidRecursive.Do(openBuffer)
 
 	if ctx.Err() != nil {
-		return Done()
+		return ctx, cancel
 	}
 
 	obs.Source.Subscribe(ctx, func(t Notification) {

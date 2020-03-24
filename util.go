@@ -4,17 +4,11 @@ import (
 	"context"
 )
 
-var canceledCtx context.Context
-
-func init() {
-	ctx, cancel := context.WithCancel(context.Background())
+// Done returns a canceled context and a noop function.
+func Done(ctx context.Context) (context.Context, context.CancelFunc) {
+	ctx, cancel := context.WithCancel(ctx)
 	cancel()
-	canceledCtx = ctx
-}
-
-// Done returns a canceled context and a function does nothing.
-func Done() (context.Context, context.CancelFunc) {
-	return canceledCtx, func() {}
+	return ctx, cancel
 }
 
 // ProjectToObservable type-asserts each value to be an Observable and returns

@@ -138,17 +138,17 @@ func (s *replaySubject) subscribe(ctx context.Context, sink Observer) (context.C
 
 	if s.err != nil {
 		sink.Error(s.err)
-		return Done()
+		return Done(ctx)
 	}
 
 	s.trimBuffer()
 
 	for i, j := 0, s.buffer.Len(); i < j; i++ {
 		if ctx.Err() != nil {
-			return Done()
+			return Done(ctx)
 		}
 		sink.Next(s.buffer.At(i).(replaySubjectValue).Value)
 	}
 	sink.Complete()
-	return Done()
+	return Done(ctx)
 }

@@ -9,6 +9,6 @@ import (
 func Empty() Observable {
 	return func(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 		sink.Complete()
-		return Done()
+		return Done(ctx)
 	}
 }

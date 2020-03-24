@@ -26,7 +26,6 @@ type throttleTimeObservable struct {
 
 func (obs throttleTimeObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
-	throttleCtx, _ := Done()
 
 	sink = Finally(sink, cancel)
 
@@ -37,7 +36,10 @@ func (obs throttleTimeObservable) Subscribe(ctx context.Context, sink Observer) 
 	cx := make(chan *X, 1)
 	cx <- &X{}
 
-	var doThrottle func()
+	var (
+		doThrottle  func()
+		throttleCtx context.Context
+	)
 
 	doThrottle = func() {
 		throttleCtx, _ = scheduleOnce(ctx, obs.Duration, func() {
@@ -60,7 +62,7 @@ func (obs throttleTimeObservable) Subscribe(ctx context.Context, sink Observer) 
 			case t.HasValue:
 				x.TrailingValue = t.Value
 				x.HasTrailingValue = true
-				if throttleCtx.Err() != nil {
+				if throttleCtx == nil || throttleCtx.Err() != nil {
 					doThrottle()
 					if obs.Leading {
 						sink(t)

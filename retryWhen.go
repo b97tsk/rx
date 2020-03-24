@@ -16,8 +16,6 @@ func (obs retryWhenObservable) Subscribe(ctx context.Context, sink Observer) (co
 
 	sink = Mutex(Finally(sink, cancel))
 
-	sourceCtx, sourceCancel := Done()
-
 	var (
 		activeCount    = atomic.Uint32(2)
 		lastError      error
@@ -28,6 +26,11 @@ func (obs retryWhenObservable) Subscribe(ctx context.Context, sink Observer) (co
 
 	type X struct{}
 	var cxCurrent chan X
+
+	var (
+		sourceCtx    context.Context
+		sourceCancel context.CancelFunc
+	)
 
 	subscribe := func() {
 		cx := make(chan X, 1)

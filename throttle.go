@@ -25,7 +25,6 @@ type throttleObservable struct {
 
 func (obs throttleObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
-	throttleCtx, throttleCancel := Done()
 
 	sink = Finally(sink, cancel)
 
@@ -36,15 +35,19 @@ func (obs throttleObservable) Subscribe(ctx context.Context, sink Observer) (con
 	cx := make(chan *X, 1)
 	cx <- &X{}
 
-	var doThrottle func(interface{})
+	var (
+		doThrottle  func(interface{})
+		throttleCtx context.Context
+	)
 
 	doThrottle = func(val interface{}) {
-		throttleCtx, throttleCancel = context.WithCancel(ctx)
+		ctx, cancel := context.WithCancel(ctx)
+		throttleCtx = ctx
 
 		var observer Observer
 		observer = func(t Notification) {
 			observer = NopObserver
-			defer throttleCancel()
+			defer cancel()
 			if obs.Trailing || t.HasError {
 				if x, ok := <-cx; ok {
 					switch {
@@ -71,7 +74,7 @@ func (obs throttleObservable) Subscribe(ctx context.Context, sink Observer) (con
 			case t.HasValue:
 				x.TrailingValue = t.Value
 				x.HasTrailingValue = true
-				if throttleCtx.Err() != nil {
+				if throttleCtx == nil || throttleCtx.Err() != nil {
 					doThrottle(t.Value)
 					if obs.Leading {
 						sink(t)

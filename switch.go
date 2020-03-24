@@ -11,7 +11,6 @@ type switchMapObservable struct {
 
 func (obs switchMapObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
-	_, childCancel := Done()
 
 	sink = Mutex(Finally(sink, cancel))
 
@@ -22,6 +21,8 @@ func (obs switchMapObservable) Subscribe(ctx context.Context, sink Observer) (co
 	}
 	cx := make(chan *X, 1)
 	cx <- &X{ActiveIndex: -1}
+
+	var childCancel context.CancelFunc
 
 	obs.Source.Subscribe(ctx, func(t Notification) {
 		switch {
@@ -36,7 +37,9 @@ func (obs switchMapObservable) Subscribe(ctx context.Context, sink Observer) (co
 
 			cx <- x
 
-			childCancel()
+			if childCancel != nil {
+				childCancel()
+			}
 
 			obs := obs.Project(sourceValue, sourceIndex)
 

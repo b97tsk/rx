@@ -39,7 +39,7 @@ func (obs windowObservable) Subscribe(ctx context.Context, sink Observer) (conte
 	})
 
 	if ctx.Err() != nil {
-		return Done()
+		return ctx, cancel
 	}
 
 	obs.Source.Subscribe(ctx, func(t Notification) {

@@ -95,7 +95,7 @@ func (obs *connectableObservable) connect(addRef bool) (context.Context, context
 		defer close(cx)
 
 		if ctx.Err() != nil {
-			return Done()
+			return ctx, cancel
 		}
 
 		connection = ctx

@@ -93,5 +93,5 @@ func (s *subject) subscribe(ctx context.Context, sink Observer) (context.Context
 		sink.Complete()
 	}
 
-	return Done()
+	return Done(ctx)
 }

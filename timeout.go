@@ -25,19 +25,20 @@ type timeoutObservable struct {
 
 func (obs timeoutObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
+	childCtx, childCancel := context.WithCancel(ctx)
 
 	sink = Finally(sink, cancel)
-
-	_, scheduleCancel := Done()
-	childCtx, childCancel := context.WithCancel(ctx)
 
 	type X struct{}
 	cx := make(chan X, 1)
 	cx <- X{}
 
-	doSchedule := func() {
-		scheduleCancel()
+	var scheduleCancel context.CancelFunc
 
+	doSchedule := func() {
+		if scheduleCancel != nil {
+			scheduleCancel()
+		}
 		_, scheduleCancel = scheduleOnce(childCtx, obs.Duration, func() {
 			if _, ok := <-cx; ok {
 				close(cx)

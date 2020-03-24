@@ -12,17 +12,17 @@ func (obs fromChannelObservable) Subscribe(ctx context.Context, sink Observer) (
 	for {
 		select {
 		case <-ctx.Done():
-			return Done()
+			return Done(ctx)
 		case val, ok := <-obs.Chan:
 			if !ok {
 				sink.Complete()
-				return Done()
+				return Done(ctx)
 			}
 			sink.Next(val)
 			// Check if ctx is canceled before next loop, such that
 			// Take(1) would exactly take one from the channel.
 			if ctx.Err() != nil {
-				return Done()
+				return Done(ctx)
 			}
 		}
 	}

@@ -16,8 +16,6 @@ func (obs repeatWhenObservable) Subscribe(ctx context.Context, sink Observer) (c
 
 	sink = Mutex(Finally(sink, cancel))
 
-	sourceCtx, sourceCancel := Done()
-
 	var (
 		activeCount    = atomic.Uint32(2)
 		subject        Subject
@@ -27,6 +25,11 @@ func (obs repeatWhenObservable) Subscribe(ctx context.Context, sink Observer) (c
 
 	type X struct{}
 	var cxCurrent chan X
+
+	var (
+		sourceCtx    context.Context
+		sourceCancel context.CancelFunc
+	)
 
 	subscribe := func() {
 		cx := make(chan X, 1)

@@ -116,5 +116,5 @@ func (s *behaviorSubject) subscribe(ctx context.Context, sink Observer) (context
 		sink.Complete()
 	}
 
-	return Done()
+	return Done(ctx)
 }

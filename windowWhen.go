@@ -60,7 +60,7 @@ func (obs windowWhenObservable) Subscribe(ctx context.Context, sink Observer) (c
 	avoidRecursive.Do(openWindow)
 
 	if ctx.Err() != nil {
-		return Done()
+		return ctx, cancel
 	}
 
 	obs.Source.Subscribe(ctx, func(t Notification) {

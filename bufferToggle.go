@@ -74,7 +74,7 @@ func (obs bufferToggleObservable) Subscribe(ctx context.Context, sink Observer) 
 	})
 
 	if ctx.Err() != nil {
-		return Done()
+		return ctx, cancel
 	}
 
 	obs.Source.Subscribe(ctx, func(t Notification) {

@@ -12,7 +12,6 @@ type debounceTimeObservable struct {
 
 func (obs debounceTimeObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
-	_, scheduleCancel := Done()
 
 	sink = Finally(sink, cancel)
 
@@ -23,6 +22,8 @@ func (obs debounceTimeObservable) Subscribe(ctx context.Context, sink Observer) 
 	cx := make(chan *X, 1)
 	cx <- &X{}
 
+	var scheduleCancel context.CancelFunc
+
 	obs.Source.Subscribe(ctx, func(t Notification) {
 		if x, ok := <-cx; ok {
 			switch {
@@ -32,7 +33,9 @@ func (obs debounceTimeObservable) Subscribe(ctx context.Context, sink Observer) 
 
 				cx <- x
 
-				scheduleCancel()
+				if scheduleCancel != nil {
+					scheduleCancel()
+				}
 
 				_, scheduleCancel = scheduleOnce(ctx, obs.Duration, func() {
 					if x, ok := <-cx; ok {

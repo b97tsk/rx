@@ -9,6 +9,6 @@ import (
 func Throw(err error) Observable {
 	return func(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 		sink.Error(err)
-		return Done()
+		return Done(ctx)
 	}
 }

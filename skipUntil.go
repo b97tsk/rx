@@ -41,7 +41,7 @@ func (obs skipUntilObservable) Subscribe(ctx context.Context, sink Observer) (co
 	}
 
 	if ctx.Err() != nil {
-		return Done()
+		return ctx, cancel
 	}
 
 	{

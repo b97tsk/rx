@@ -13,12 +13,12 @@ func FromSlice(slice []interface{}) Observable {
 	return func(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 		for _, val := range slice {
 			if ctx.Err() != nil {
-				return Done()
+				return Done(ctx)
 			}
 			sink.Next(val)
 		}
 		sink.Complete()
-		return Done()
+		return Done(ctx)
 	}
 }
 
