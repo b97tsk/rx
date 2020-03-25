@@ -89,3 +89,24 @@ func TestOperators_DoOnComplete(t *testing.T) {
 		3, xComplete,
 	)
 }
+
+func TestOperators_DoAtLast(t *testing.T) {
+	n := 0
+	op := operators.DoAtLast(func(Notification) { n++ })
+	obs := Defer(func() Observable { return Just(n) })
+	subscribe(
+		t,
+		[]Observable{
+			Concat(Empty().Pipe(op), obs),
+			Concat(Just("A").Pipe(op), obs),
+			Concat(Just("A", "B").Pipe(op), obs),
+			Concat(Concat(Just("A", "B"), Throw(xErrTest)).Pipe(op), obs),
+			obs,
+		},
+		1, xComplete,
+		"A", 2, xComplete,
+		"A", "B", 3, xComplete,
+		"A", "B", xErrTest,
+		4, xComplete,
+	)
+}

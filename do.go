@@ -65,3 +65,28 @@ func (Operators) DoOnComplete(onComplete func()) Operator {
 		}
 	}
 }
+
+// DoAtLast creates an Observer that passes all emissions to the specified
+// Observer, in the case that an ERROR or COMPLETE emission is passed, makes
+// a call to the specified function.
+func DoAtLast(sink Observer, atLast func(Notification)) Observer {
+	return func(t Notification) {
+		if t.HasValue {
+			sink(t)
+			return
+		}
+		sink(t)
+		atLast(t)
+	}
+}
+
+// DoAtLast creates an Observable that mirrors the source Observable, in the
+// case that an ERROR or COMPLETE emission is mirrored, makes a call to the
+// specified function.
+func (Operators) DoAtLast(atLast func(Notification)) Operator {
+	return func(source Observable) Observable {
+		return func(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
+			return source.Subscribe(ctx, DoAtLast(sink, atLast))
+		}
+	}
+}
