@@ -9,20 +9,23 @@ import (
 // whenever a new Observer subscribes, it will immediately receive the
 // "current value" from the BehaviorSubject.
 type BehaviorSubject struct {
+	Subject
 	*behaviorSubject
 }
 
 // NewBehaviorSubject creates a new BehaviorSubject.
 func NewBehaviorSubject(val interface{}) BehaviorSubject {
 	s := new(behaviorSubject)
-	s.Subject = Subject{
-		Observable: s.subscribe,
-		Observer:   s.notify,
-	}
 	s.lock = make(chan struct{}, 1)
 	s.lock <- struct{}{}
 	s.val.Store(behaviorSubjectValue{val})
-	return BehaviorSubject{s}
+	return BehaviorSubject{
+		Subject{
+			Observable: s.subscribe,
+			Observer:   s.notify,
+		},
+		s,
+	}
 }
 
 // Value returns the latest value stored in this BehaviorSubject.
@@ -31,7 +34,6 @@ func (s BehaviorSubject) Value() interface{} {
 }
 
 type behaviorSubject struct {
-	Subject
 	lock      chan struct{}
 	observers observerList
 	cws       contextWaitService
