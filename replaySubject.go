@@ -12,34 +12,26 @@ import (
 // existing subscribers.
 type ReplaySubject struct {
 	Subject
-	*replaySubject
-}
-
-// NewReplaySubject creates a new ReplaySubject.
-func NewReplaySubject(bufferSize int, windowTime time.Duration) ReplaySubject {
-	s := &replaySubject{
-		BufferSize: bufferSize,
-		WindowTime: windowTime,
-	}
-	s.lock = make(chan struct{}, 1)
-	s.lock <- struct{}{}
-	return ReplaySubject{
-		Subject{
-			Observable: s.subscribe,
-			Observer:   s.notify,
-		},
-		s,
-	}
-}
-
-type replaySubject struct {
+	BufferSize int
+	WindowTime time.Duration
 	lock       chan struct{}
 	observers  observerList
 	cws        contextWaitService
 	err        error
 	buffer     queue.Queue
-	BufferSize int
-	WindowTime time.Duration
+}
+
+// NewReplaySubject creates a new ReplaySubject.
+func NewReplaySubject(bufferSize int, windowTime time.Duration) *ReplaySubject {
+	s := &ReplaySubject{
+		BufferSize: bufferSize,
+		WindowTime: windowTime,
+	}
+	s.Observable = s.subscribe
+	s.Observer = s.notify
+	s.lock = make(chan struct{}, 1)
+	s.lock <- struct{}{}
+	return s
 }
 
 type replaySubjectValue struct {
@@ -47,7 +39,7 @@ type replaySubjectValue struct {
 	Value    interface{}
 }
 
-func (s *replaySubject) trimBuffer() {
+func (s *ReplaySubject) trimBuffer() {
 	if s.BufferSize > 0 {
 		for s.buffer.Len() > s.BufferSize {
 			s.buffer.PopFront()
@@ -64,7 +56,7 @@ func (s *replaySubject) trimBuffer() {
 	}
 }
 
-func (s *replaySubject) notify(t Notification) {
+func (s *ReplaySubject) notify(t Notification) {
 	if _, ok := <-s.lock; ok {
 		switch {
 		case t.HasValue:
@@ -107,7 +99,7 @@ func (s *replaySubject) notify(t Notification) {
 	}
 }
 
-func (s *replaySubject) subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
+func (s *ReplaySubject) subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx := NewContext(parent)
 
 	if _, ok := <-s.lock; ok {
