@@ -11,6 +11,7 @@ import (
 // immediately to any new subscribers in addition to emitting new values to
 // existing subscribers.
 type ReplaySubject struct {
+	Subject
 	*replaySubject
 }
 
@@ -20,17 +21,18 @@ func NewReplaySubject(bufferSize int, windowTime time.Duration) ReplaySubject {
 		BufferSize: bufferSize,
 		WindowTime: windowTime,
 	}
-	s.Subject = Subject{
-		Observable: s.subscribe,
-		Observer:   s.notify,
-	}
 	s.lock = make(chan struct{}, 1)
 	s.lock <- struct{}{}
-	return ReplaySubject{s}
+	return ReplaySubject{
+		Subject{
+			Observable: s.subscribe,
+			Observer:   s.notify,
+		},
+		s,
+	}
 }
 
 type replaySubject struct {
-	Subject
 	lock       chan struct{}
 	observers  observerList
 	cws        contextWaitService
