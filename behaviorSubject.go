@@ -10,30 +10,6 @@ import (
 // "current value" from the BehaviorSubject.
 type BehaviorSubject struct {
 	Subject
-	*behaviorSubject
-}
-
-// NewBehaviorSubject creates a new BehaviorSubject.
-func NewBehaviorSubject(val interface{}) BehaviorSubject {
-	s := new(behaviorSubject)
-	s.lock = make(chan struct{}, 1)
-	s.lock <- struct{}{}
-	s.val.Store(behaviorSubjectValue{val})
-	return BehaviorSubject{
-		Subject{
-			Observable: s.subscribe,
-			Observer:   s.notify,
-		},
-		s,
-	}
-}
-
-// Value returns the latest value stored in this BehaviorSubject.
-func (s BehaviorSubject) Value() interface{} {
-	return s.getValue()
-}
-
-type behaviorSubject struct {
 	lock      chan struct{}
 	observers observerList
 	cws       contextWaitService
@@ -41,15 +17,27 @@ type behaviorSubject struct {
 	val       atomic.Value
 }
 
+// NewBehaviorSubject creates a new BehaviorSubject.
+func NewBehaviorSubject(val interface{}) *BehaviorSubject {
+	s := new(BehaviorSubject)
+	s.Observable = s.subscribe
+	s.Observer = s.notify
+	s.lock = make(chan struct{}, 1)
+	s.lock <- struct{}{}
+	s.val.Store(behaviorSubjectValue{val})
+	return s
+}
+
 type behaviorSubjectValue struct {
 	Value interface{}
 }
 
-func (s *behaviorSubject) getValue() interface{} {
+// Value returns the latest value stored in this BehaviorSubject.
+func (s *BehaviorSubject) Value() interface{} {
 	return s.val.Load().(behaviorSubjectValue).Value
 }
 
-func (s *behaviorSubject) notify(t Notification) {
+func (s *BehaviorSubject) notify(t Notification) {
 	if _, ok := <-s.lock; ok {
 		switch {
 		case t.HasValue:
@@ -87,7 +75,7 @@ func (s *behaviorSubject) notify(t Notification) {
 	}
 }
 
-func (s *behaviorSubject) subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
+func (s *BehaviorSubject) subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	ctx := NewContext(parent)
 
 	if _, ok := <-s.lock; ok {
@@ -105,7 +93,7 @@ func (s *behaviorSubject) subscribe(parent context.Context, sink Observer) (cont
 			s.cws = newContextWaitService()
 		}
 
-		sink.Next(s.getValue())
+		sink.Next(s.Value())
 
 		s.lock <- struct{}{}
 		return ctx, ctx.Cancel
@@ -115,7 +103,7 @@ func (s *behaviorSubject) subscribe(parent context.Context, sink Observer) (cont
 		sink.Error(s.err)
 		ctx.Unsubscribe(s.err)
 	} else {
-		sink.Next(s.getValue())
+		sink.Next(s.Value())
 		sink.Complete()
 		ctx.Unsubscribe(Complete)
 	}
