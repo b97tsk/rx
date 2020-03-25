@@ -16,6 +16,6 @@ func TestOperators_MergeAll(t *testing.T) {
 				Just("E", "F").Pipe(addLatencyToValue(1, 3)),
 			).Pipe(operators.MergeAll()),
 		},
-		"E", "C", "A", "F", "D", "B", xComplete,
+		"E", "C", "A", "F", "D", "B", Complete,
 	)
 }

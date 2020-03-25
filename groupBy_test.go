@@ -38,6 +38,6 @@ func TestOperators_GroupBy(t *testing.T) {
 				toString,
 			),
 		},
-		"[A 3]", "[B 2]", "[C 2]", "[D 1]", xComplete,
+		"[A 3]", "[B 2]", "[C 2]", "[D 1]", Complete,
 	)
 }

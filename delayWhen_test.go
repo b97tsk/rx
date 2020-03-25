@@ -16,6 +16,6 @@ func TestOperators_DelayWhen(t *testing.T) {
 				},
 			)),
 		},
-		1, 2, 3, 4, xComplete,
+		1, 2, 3, 4, Complete,
 	)
 }

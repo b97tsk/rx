@@ -11,7 +11,7 @@ func TestOperators_ToObservables(t *testing.T) {
 		Just("A", "B", "C"),
 		Just(Just("A"), Just("B"), Just("C")),
 		Empty(),
-		Throw(xErrTest),
+		Throw(errTest),
 	}
 	for i, obs := range observables {
 		observables[i] = obs.Pipe(
@@ -27,8 +27,8 @@ func TestOperators_ToObservables(t *testing.T) {
 	subscribe(
 		t, observables[:],
 		ErrNotObservable,
-		"A", "B", "C", xComplete,
-		xComplete,
-		xErrTest,
+		"A", "B", "C", Complete,
+		Complete,
+		errTest,
 	)
 }

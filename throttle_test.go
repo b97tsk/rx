@@ -19,7 +19,7 @@ func TestOperators_Throttle(t *testing.T) {
 			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				addLatencyToValue(0, 2),
 				operators.Throttle(func(interface{}) Observable {
-					return Throw(xErrTest)
+					return Throw(errTest)
 				}),
 			),
 			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
@@ -43,9 +43,9 @@ func TestOperators_Throttle(t *testing.T) {
 				}.Use(),
 			),
 		},
-		"A", "C", "E", "G", xComplete,
-		"A", xErrTest,
-		"C", "E", "G", xComplete,
-		"A", "C", "E", "G", xComplete,
+		"A", "C", "E", "G", Complete,
+		"A", errTest,
+		"C", "E", "G", Complete,
+		"A", "C", "E", "G", Complete,
 	)
 }

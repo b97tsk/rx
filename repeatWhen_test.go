@@ -17,12 +17,12 @@ func TestOperators_RepeatWhen(t *testing.T) {
 		[]Observable{
 			Range(1, 4).Pipe(operators.RepeatWhen(repeatOnce)),
 			Range(1, 4).Pipe(operators.RepeatWhen(repeatTwice)),
-			Concat(Range(1, 4), Throw(xErrTest)).Pipe(operators.RepeatWhen(repeatOnce)),
-			Concat(Range(1, 4), Throw(xErrTest)).Pipe(operators.RepeatWhen(repeatTwice)),
+			Concat(Range(1, 4), Throw(errTest)).Pipe(operators.RepeatWhen(repeatOnce)),
+			Concat(Range(1, 4), Throw(errTest)).Pipe(operators.RepeatWhen(repeatTwice)),
 		},
-		1, 2, 3, xComplete,
-		1, 2, 3, 1, 2, 3, xComplete,
-		1, 2, 3, xErrTest,
-		1, 2, 3, xErrTest,
+		1, 2, 3, Complete,
+		1, 2, 3, 1, 2, 3, Complete,
+		1, 2, 3, errTest,
+		1, 2, 3, errTest,
 	)
 }

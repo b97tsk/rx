@@ -14,23 +14,23 @@ func TestOperators_TakeUntil(t *testing.T) {
 		[]Observable{
 			Just("A", "B", "C").Pipe(addLatency, operators.TakeUntil(Just(42))),
 			Just("A", "B", "C").Pipe(addLatency, operators.TakeUntil(Empty())),
-			Just("A", "B", "C").Pipe(addLatency, operators.TakeUntil(Throw(xErrTest))),
+			Just("A", "B", "C").Pipe(addLatency, operators.TakeUntil(Throw(errTest))),
 			Just("A", "B", "C").Pipe(addLatency, operators.TakeUntil(Never())),
 		},
-		xComplete,
-		xComplete,
-		xErrTest,
-		"A", "B", "C", xComplete,
+		Complete,
+		Complete,
+		errTest,
+		"A", "B", "C", Complete,
 	)
 	subscribe(
 		t,
 		[]Observable{
 			Just("A", "B", "C").Pipe(addLatency, operators.TakeUntil(Just(42).Pipe(delay))),
 			Just("A", "B", "C").Pipe(addLatency, operators.TakeUntil(Empty().Pipe(delay))),
-			Just("A", "B", "C").Pipe(addLatency, operators.TakeUntil(Throw(xErrTest).Pipe(delay))),
+			Just("A", "B", "C").Pipe(addLatency, operators.TakeUntil(Throw(errTest).Pipe(delay))),
 		},
-		"A", "B", xComplete,
-		"A", "B", xComplete,
-		"A", "B", xErrTest,
+		"A", "B", Complete,
+		"A", "B", Complete,
+		"A", "B", errTest,
 	)
 }

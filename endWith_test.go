@@ -12,12 +12,12 @@ func TestOperators_EndWith(t *testing.T) {
 		[]Observable{
 			Just("A", "B", "C").Pipe(operators.EndWith("D", "E")),
 			Empty().Pipe(operators.EndWith("D", "E")),
-			Throw(xErrTest).Pipe(operators.EndWith("D", "E")),
-			Throw(xErrTest).Pipe(operators.EndWith()),
+			Throw(errTest).Pipe(operators.EndWith("D", "E")),
+			Throw(errTest).Pipe(operators.EndWith()),
 		},
-		"A", "B", "C", "D", "E", xComplete,
-		"D", "E", xComplete,
-		xErrTest,
-		xErrTest,
+		"A", "B", "C", "D", "E", Complete,
+		"D", "E", Complete,
+		errTest,
+		errTest,
 	)
 }

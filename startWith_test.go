@@ -12,12 +12,12 @@ func TestOperators_StartWith(t *testing.T) {
 		[]Observable{
 			Just("D", "E").Pipe(operators.StartWith("A", "B", "C")),
 			Empty().Pipe(operators.StartWith("A", "B", "C")),
-			Throw(xErrTest).Pipe(operators.StartWith("A", "B", "C")),
-			Throw(xErrTest).Pipe(operators.StartWith()),
+			Throw(errTest).Pipe(operators.StartWith("A", "B", "C")),
+			Throw(errTest).Pipe(operators.StartWith()),
 		},
-		"A", "B", "C", "D", "E", xComplete,
-		"A", "B", "C", xComplete,
-		"A", "B", "C", xErrTest,
-		xErrTest,
+		"A", "B", "C", "D", "E", Complete,
+		"A", "B", "C", Complete,
+		"A", "B", "C", errTest,
+		errTest,
 	)
 }

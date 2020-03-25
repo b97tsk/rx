@@ -31,8 +31,8 @@ func TestOperators_ThrottleTime(t *testing.T) {
 				}.Use(),
 			),
 		},
-		"A", "C", "E", "G", xComplete,
-		"C", "E", "G", xComplete,
-		"A", "C", "E", "G", xComplete,
+		"A", "C", "E", "G", Complete,
+		"C", "E", "G", Complete,
+		"A", "C", "E", "G", Complete,
 	)
 }

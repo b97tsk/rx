@@ -128,7 +128,7 @@ func TestOperators_Share(t *testing.T) {
 					obs.Pipe(delaySubscription(13)),
 				),
 			},
-			0, 1, 1, 2, 2, 2, 3, 3, 3, 0, 1, 2, 3, xComplete,
+			0, 1, 1, 2, 2, 2, 3, 3, 3, 0, 1, 2, 3, Complete,
 		)
 	})
 	t.Run("#2", func(t *testing.T) {
@@ -146,7 +146,7 @@ func TestOperators_Share(t *testing.T) {
 					obs.Pipe(delaySubscription(19)),
 				),
 			},
-			0, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 5, 0, 1, 2, 3, xComplete,
+			0, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 5, 0, 1, 2, 3, Complete,
 		)
 	})
 }
@@ -167,7 +167,7 @@ func TestOperators_ShareReplay(t *testing.T) {
 					obs.Pipe(delaySubscription(13)),
 				),
 			},
-			0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 0, 1, 2, 3, xComplete,
+			0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 0, 1, 2, 3, Complete,
 		)
 	})
 	t.Run("#2", func(t *testing.T) {
@@ -185,7 +185,7 @@ func TestOperators_ShareReplay(t *testing.T) {
 					obs.Pipe(delaySubscription(16)),
 				),
 			},
-			0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 0, 1, 2, 3, xComplete,
+			0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 0, 1, 2, 3, Complete,
 		)
 	})
 }

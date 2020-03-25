@@ -26,9 +26,9 @@ func TestOperators_WithLatestFrom(t *testing.T) {
 		}
 		subscribe(
 			t, observables[:],
-			"[A 1]", "[B 2]", xComplete,
-			"[A 1]", "[B 2]", "[C 3]", xComplete,
-			"[A 1]", "[B 2]", "[C 3]", "[D 3]", xComplete,
+			"[A 1]", "[B 2]", Complete,
+			"[A 1]", "[B 2]", "[C 3]", Complete,
+			"[A 1]", "[B 2]", "[C 3]", "[D 3]", Complete,
 		)
 	}
 
@@ -36,15 +36,15 @@ func TestOperators_WithLatestFrom(t *testing.T) {
 		observables := observables
 		for i, obs := range observables {
 			observables[i] = obs.Pipe(
-				operators.WithLatestFrom(Concat(Range(1, 4), Throw(xErrTest)).Pipe(addLatency2)),
+				operators.WithLatestFrom(Concat(Range(1, 4), Throw(errTest)).Pipe(addLatency2)),
 				toString,
 			)
 		}
 		subscribe(
 			t, observables[:],
-			"[A 1]", "[B 2]", xComplete,
-			"[A 1]", "[B 2]", "[C 3]", xComplete,
-			"[A 1]", "[B 2]", "[C 3]", xErrTest,
+			"[A 1]", "[B 2]", Complete,
+			"[A 1]", "[B 2]", "[C 3]", Complete,
+			"[A 1]", "[B 2]", "[C 3]", errTest,
 		)
 	}
 }

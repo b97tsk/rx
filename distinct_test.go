@@ -12,6 +12,6 @@ func TestOperators_Distinct(t *testing.T) {
 		[]Observable{
 			Just("A", "B", "B", "A", "C", "C", "A").Pipe(operators.Distinct()),
 		},
-		"A", "B", "C", xComplete,
+		"A", "B", "C", Complete,
 	)
 }

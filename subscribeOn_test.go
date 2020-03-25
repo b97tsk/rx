@@ -16,6 +16,6 @@ func TestOperators_SubscribeOn(t *testing.T) {
 				Just("E", "F").Pipe(operators.SubscribeOn(step(3))),
 			),
 		},
-		"A", "B", "C", "D", "E", "F", xComplete,
+		"A", "B", "C", "D", "E", "F", Complete,
 	)
 }

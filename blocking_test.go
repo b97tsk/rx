@@ -14,7 +14,7 @@ func TestObservable_BlockingFirst(t *testing.T) {
 		err error
 	}{
 		{Empty(), nil, ErrEmpty},
-		{Throw(xErrTest), nil, xErrTest},
+		{Throw(errTest), nil, errTest},
 		{Just("A"), "A", nil},
 		{Just("A", "B"), "A", nil},
 		{Just("A", "B").Pipe(operators.Go()), "A", nil},
@@ -37,7 +37,7 @@ func TestObservable_BlockingLast(t *testing.T) {
 		err error
 	}{
 		{Empty(), nil, ErrEmpty},
-		{Throw(xErrTest), nil, xErrTest},
+		{Throw(errTest), nil, errTest},
 		{Just("A"), "A", nil},
 		{Just("A", "B"), "B", nil},
 		{Just("A", "B").Pipe(operators.Go()), "B", nil},
@@ -60,7 +60,7 @@ func TestObservable_BlockingSingle(t *testing.T) {
 		err error
 	}{
 		{Empty(), nil, ErrEmpty},
-		{Throw(xErrTest), nil, xErrTest},
+		{Throw(errTest), nil, errTest},
 		{Just("A"), "A", nil},
 		{Just("A", "B"), nil, ErrNotSingle},
 		{Just("A", "B").Pipe(operators.Go()), nil, ErrNotSingle},
@@ -82,7 +82,7 @@ func TestObservable_BlockingSubscribe(t *testing.T) {
 		err error
 	}{
 		{Empty(), nil},
-		{Throw(xErrTest), xErrTest},
+		{Throw(errTest), errTest},
 		{Just("A"), nil},
 		{Just("A", "B"), nil},
 		{Just("A", "B").Pipe(operators.Go()), nil},

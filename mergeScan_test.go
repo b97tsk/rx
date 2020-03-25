@@ -21,6 +21,6 @@ func TestOperators_MergeScan(t *testing.T) {
 				nil,
 			)),
 		},
-		"E", "C", "A", "F", "D", "B", xComplete,
+		"E", "C", "A", "F", "D", "B", Complete,
 	)
 }

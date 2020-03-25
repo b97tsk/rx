@@ -16,9 +16,9 @@ func TestOperators_Catch(t *testing.T) {
 		t,
 		[]Observable{
 			Just("A", "B", "C").Pipe(op),
-			Concat(Just("A", "B", "C"), Throw(xErrTest)).Pipe(op),
+			Concat(Just("A", "B", "C"), Throw(errTest)).Pipe(op),
 		},
-		"A", "B", "C", xComplete,
-		"A", "B", "C", "D", "E", xComplete,
+		"A", "B", "C", Complete,
+		"A", "B", "C", "D", "E", Complete,
 	)
 }

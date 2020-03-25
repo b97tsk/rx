@@ -12,10 +12,10 @@ func TestOperators_Count(t *testing.T) {
 		[]Observable{
 			Empty().Pipe(operators.Count()),
 			Range(1, 9).Pipe(operators.Count()),
-			Concat(Range(1, 9), Throw(xErrTest)).Pipe(operators.Count()),
+			Concat(Range(1, 9), Throw(errTest)).Pipe(operators.Count()),
 		},
-		0, xComplete,
-		8, xComplete,
-		xErrTest,
+		0, Complete,
+		8, Complete,
+		errTest,
 	)
 }

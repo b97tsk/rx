@@ -34,7 +34,7 @@ func TestOperators_BufferToggle(t *testing.T) {
 				),
 				toString,
 			),
-			Concat(Just("A", "B", "C", "D", "E", "F", "G"), Throw(xErrTest)).Pipe(
+			Concat(Just("A", "B", "C", "D", "E", "F", "G"), Throw(errTest)).Pipe(
 				addLatencyToNotification(1, 2),
 				operators.BufferToggle(
 					Interval(step(4)),
@@ -48,7 +48,7 @@ func TestOperators_BufferToggle(t *testing.T) {
 					Interval(step(4)),
 					func(idx interface{}) Observable {
 						if idx.(int) > 1 {
-							return Throw(xErrTest)
+							return Throw(errTest)
 						}
 						return Interval(step(2))
 					},
@@ -66,18 +66,18 @@ func TestOperators_BufferToggle(t *testing.T) {
 			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				addLatencyToValue(1, 2),
 				operators.BufferToggle(
-					Concat(Interval(step(4)).Pipe(operators.Take(2)), Throw(xErrTest)),
+					Concat(Interval(step(4)).Pipe(operators.Take(2)), Throw(errTest)),
 					func(interface{}) Observable { return Interval(step(2)) },
 				),
 				toString,
 			),
 		},
-		"[B]", "[C]", "[D]", "[E]", "[F]", "[G]", xComplete,
-		"[B C]", "[C D]", "[D E]", "[E F]", "[F G]", "[G]", xComplete,
-		"[C]", "[E]", "[G]", xComplete,
-		"[C]", "[E]", "[G]", xErrTest,
-		"[C]", "[E]", xErrTest,
-		"[C]", "[E]", xComplete,
-		"[C]", xErrTest,
+		"[B]", "[C]", "[D]", "[E]", "[F]", "[G]", Complete,
+		"[B C]", "[C D]", "[D E]", "[E F]", "[F G]", "[G]", Complete,
+		"[C]", "[E]", "[G]", Complete,
+		"[C]", "[E]", "[G]", errTest,
+		"[C]", "[E]", errTest,
+		"[C]", "[E]", Complete,
+		"[C]", errTest,
 	)
 }

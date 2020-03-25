@@ -26,9 +26,9 @@ func TestOperators_BufferTime(t *testing.T) {
 				toString,
 			),
 		},
-		"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", "[G]", xComplete,
-		"[A B]", "[C D]", "[E F]", "[G]", xComplete,
-		"[A B C]", "[D E F]", "[G]", xComplete,
+		"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", "[G]", Complete,
+		"[A B]", "[C D]", "[E F]", "[G]", Complete,
+		"[A B C]", "[D E F]", "[G]", Complete,
 	)
 	t.Log("----------")
 	subscribe(
@@ -55,10 +55,10 @@ func TestOperators_BufferTime(t *testing.T) {
 				toString,
 			),
 		},
-		"[A B C D]", "[E F G]", xComplete,
-		"[A B C]", "[D E F]", "[G]", xComplete,
-		"[A B]", "[C D]", "[E F]", "[G]", xComplete,
-		"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", "[G]", "[]", xComplete,
+		"[A B C D]", "[E F G]", Complete,
+		"[A B C]", "[D E F]", "[G]", Complete,
+		"[A B]", "[C D]", "[E F]", "[G]", Complete,
+		"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", "[G]", "[]", Complete,
 	)
 	t.Log("----------")
 	subscribe(
@@ -80,8 +80,8 @@ func TestOperators_BufferTime(t *testing.T) {
 				toString,
 			),
 		},
-		"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", "[G]", xComplete,
-		"[A]", "[C]", "[E]", "[G]", xComplete,
-		"[A B]", "[B C]", "[C D]", "[D E]", "[E F]", "[F G]", "[G]", xComplete,
+		"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", "[G]", Complete,
+		"[A]", "[C]", "[E]", "[G]", Complete,
+		"[A B]", "[B C]", "[C D]", "[D E]", "[E F]", "[F G]", "[G]", Complete,
 	)
 }

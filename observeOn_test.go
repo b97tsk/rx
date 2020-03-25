@@ -16,6 +16,6 @@ func TestOperators_ObserveOn(t *testing.T) {
 				Just("E", "F").Pipe(operators.ObserveOn(step(3))),
 			),
 		},
-		"A", "B", "C", "D", "E", "F", xComplete,
+		"A", "B", "C", "D", "E", "F", Complete,
 	)
 }

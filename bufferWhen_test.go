@@ -32,14 +32,14 @@ func TestOperators_BufferWhen(t *testing.T) {
 			),
 			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				addLatencyToValue(1, 2),
-				operators.BufferWhen(func() Observable { return Throw(xErrTest) }),
+				operators.BufferWhen(func() Observable { return Throw(errTest) }),
 				toString,
 			),
 		},
-		"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", "[G]", xComplete,
-		"[A B]", "[C D]", "[E F]", "[G]", xComplete,
-		"[A B C]", "[D E F]", "[G]", xComplete,
-		"[A B C D]", "[E F G]", xComplete,
-		xErrTest,
+		"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", "[G]", Complete,
+		"[A B]", "[C D]", "[E F]", "[G]", Complete,
+		"[A B C]", "[D E F]", "[G]", Complete,
+		"[A B C D]", "[E F G]", Complete,
+		errTest,
 	)
 }

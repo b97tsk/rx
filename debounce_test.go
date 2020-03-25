@@ -23,7 +23,7 @@ func TestOperators_Debounce(t *testing.T) {
 				}),
 			),
 		},
-		"C", xComplete,
-		"A", "B", "C", xComplete,
+		"C", Complete,
+		"A", "B", "C", Complete,
 	)
 }

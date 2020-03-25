@@ -13,11 +13,11 @@ func TestOperators_Single(t *testing.T) {
 			Just("A", "B").Pipe(operators.Single()),
 			Just("A").Pipe(operators.Single()),
 			Empty().Pipe(operators.Single()),
-			Throw(xErrTest).Pipe(operators.Single()),
+			Throw(errTest).Pipe(operators.Single()),
 		},
 		ErrNotSingle,
-		"A", xComplete,
+		"A", Complete,
 		ErrEmpty,
-		xErrTest,
+		errTest,
 	)
 }

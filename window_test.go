@@ -44,15 +44,15 @@ func TestOperators_Window(t *testing.T) {
 			),
 			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				addLatencyToValue(1, 2),
-				operators.Window(Throw(xErrTest)),
+				operators.Window(Throw(errTest)),
 				operators.MergeMap(toSlice),
 				toString,
 			),
 		},
-		"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", "[G]", xComplete,
-		"[A B]", "[C D]", "[E F]", "[G]", xComplete,
-		"[A B C]", "[D E F]", "[G]", xComplete,
-		"[A B C D]", "[E F G]", xComplete,
-		xErrTest,
+		"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", "[G]", Complete,
+		"[A B]", "[C D]", "[E F]", "[G]", Complete,
+		"[A B C]", "[D E F]", "[G]", Complete,
+		"[A B C D]", "[E F G]", Complete,
+		errTest,
 	)
 }

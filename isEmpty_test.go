@@ -13,11 +13,11 @@ func TestOperators_IsEmpty(t *testing.T) {
 			Just("A", "B").Pipe(operators.IsEmpty()),
 			Just("A").Pipe(operators.IsEmpty()),
 			Empty().Pipe(operators.IsEmpty()),
-			Throw(xErrTest).Pipe(operators.IsEmpty()),
+			Throw(errTest).Pipe(operators.IsEmpty()),
 		},
-		false, xComplete,
-		false, xComplete,
-		true, xComplete,
-		xErrTest,
+		false, Complete,
+		false, Complete,
+		true, Complete,
+		errTest,
 	)
 }

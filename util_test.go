@@ -11,8 +11,7 @@ import (
 )
 
 var (
-	xComplete = errors.New("complete")
-	xErrTest  = errors.New("test")
+	operators Operators
 
 	toString = operators.Map(
 		func(val interface{}, idx int) interface{} {
@@ -20,7 +19,7 @@ var (
 		},
 	)
 
-	operators Operators
+	errTest = errors.New("errTest")
 )
 
 func step(n int) time.Duration {
@@ -60,21 +59,21 @@ func delaySubscription(n int) Operator {
 	}
 }
 
-func subscribe(tt *testing.T, observables []Observable, output ...interface{}) {
+func subscribe(t *testing.T, observables []Observable, output ...interface{}) {
 	for _, source := range observables {
 		source.BlockingSubscribe(
 			context.Background(),
-			func(t Notification) {
+			func(x Notification) {
 				if len(output) == 0 {
 					switch {
-					case t.HasValue:
-						tt.Logf("expect Nothing, but got %v", t.Value)
-					case t.HasError:
-						tt.Logf("expect Nothing, but got %v", t.Error)
+					case x.HasValue:
+						t.Logf("expect Nothing, but got %v", x.Value)
+					case x.HasError:
+						t.Logf("expect Nothing, but got %v", x.Error)
 					default:
-						tt.Log("expect Nothing, but got Complete")
+						t.Log("expect Nothing, but got Complete")
 					}
-					tt.Fail()
+					t.Fail()
 					return
 				}
 
@@ -82,26 +81,26 @@ func subscribe(tt *testing.T, observables []Observable, output ...interface{}) {
 				output = output[1:]
 
 				switch {
-				case t.HasValue:
-					if expected != t.Value {
-						tt.Logf("expect %v, but got %v", expected, t.Value)
-						tt.Fail()
+				case x.HasValue:
+					if expected != x.Value {
+						t.Logf("expect %v, but got %v", expected, x.Value)
+						t.Fail()
 					} else {
-						tt.Logf("expect %v", expected)
+						t.Logf("expect %v", expected)
 					}
-				case t.HasError:
-					if expected != t.Error {
-						tt.Logf("expect %v, but got %v", expected, t.Error)
-						tt.Fail()
+				case x.HasError:
+					if expected != x.Error {
+						t.Logf("expect %v, but got %v", expected, x.Error)
+						t.Fail()
 					} else {
-						tt.Logf("expect %v", expected)
+						t.Logf("expect %v", expected)
 					}
 				default:
-					if expected != xComplete {
-						tt.Logf("expect %v, but got Complete", expected)
-						tt.Fail()
+					if expected != Complete {
+						t.Logf("expect %v, but got Complete", expected)
+						t.Fail()
 					} else {
-						tt.Log("expect Complete")
+						t.Log("expect Complete")
 					}
 				}
 			},
@@ -109,8 +108,8 @@ func subscribe(tt *testing.T, observables []Observable, output ...interface{}) {
 	}
 	if len(output) > 0 {
 		for _, expected := range output {
-			tt.Logf("expect %v, but got Nothing", expected)
+			t.Logf("expect %v, but got Nothing", expected)
 		}
-		tt.Fail()
+		t.Fail()
 	}
 }

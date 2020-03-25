@@ -11,13 +11,13 @@ func TestOnErrorResumeNext(t *testing.T) {
 		t,
 		[]Observable{
 			OnErrorResumeNext(Range(1, 4), Range(4, 7), Range(7, 10)),
-			OnErrorResumeNext(Throw(xErrTest), Range(4, 7), Range(7, 10)),
-			OnErrorResumeNext(Range(1, 4), Throw(xErrTest), Range(7, 10)),
-			OnErrorResumeNext(Range(1, 4), Range(4, 7), Throw(xErrTest)),
+			OnErrorResumeNext(Throw(errTest), Range(4, 7), Range(7, 10)),
+			OnErrorResumeNext(Range(1, 4), Throw(errTest), Range(7, 10)),
+			OnErrorResumeNext(Range(1, 4), Range(4, 7), Throw(errTest)),
 		},
-		1, 2, 3, 4, 5, 6, 7, 8, 9, xComplete,
-		4, 5, 6, 7, 8, 9, xComplete,
-		1, 2, 3, 7, 8, 9, xComplete,
-		1, 2, 3, 4, 5, 6, xComplete,
+		1, 2, 3, 4, 5, 6, 7, 8, 9, Complete,
+		4, 5, 6, 7, 8, 9, Complete,
+		1, 2, 3, 7, 8, 9, Complete,
+		1, 2, 3, 4, 5, 6, Complete,
 	)
 }

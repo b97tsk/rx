@@ -17,6 +17,6 @@ func TestOperators_Audit(t *testing.T) {
 				}),
 			),
 		},
-		"B", "D", "F", xComplete,
+		"B", "D", "F", Complete,
 	)
 }

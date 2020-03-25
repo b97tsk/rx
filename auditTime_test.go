@@ -15,6 +15,6 @@ func TestOperators_AuditTime(t *testing.T) {
 				operators.AuditTime(step(3)),
 			),
 		},
-		"B", "D", "F", xComplete,
+		"B", "D", "F", Complete,
 	)
 }

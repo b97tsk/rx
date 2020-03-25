@@ -15,6 +15,6 @@ func TestOperators_SampleTime(t *testing.T) {
 				operators.SampleTime(step(4)),
 			),
 		},
-		"B", "D", "F", xComplete,
+		"B", "D", "F", Complete,
 	)
 }

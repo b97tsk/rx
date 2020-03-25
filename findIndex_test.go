@@ -17,12 +17,12 @@ func TestOperators_FindIndex(t *testing.T) {
 		[]Observable{
 			Just("A", "B", "C", "D", "E").Pipe(findIndex),
 			Just("A", "B", "C").Pipe(findIndex),
-			Concat(Just("A", "B", "C", "D", "E"), Throw(xErrTest)).Pipe(findIndex),
-			Concat(Just("A", "B", "C"), Throw(xErrTest)).Pipe(findIndex),
+			Concat(Just("A", "B", "C", "D", "E"), Throw(errTest)).Pipe(findIndex),
+			Concat(Just("A", "B", "C"), Throw(errTest)).Pipe(findIndex),
 		},
-		3, xComplete,
-		xComplete,
-		3, xComplete,
-		xErrTest,
+		3, Complete,
+		Complete,
+		3, Complete,
+		errTest,
 	)
 }

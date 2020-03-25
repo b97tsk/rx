@@ -19,12 +19,12 @@ func TestOperators_Sample(t *testing.T) {
 				operators.Sample(
 					Concat(
 						Interval(step(4)).Pipe(operators.Take(3)),
-						Throw(xErrTest),
+						Throw(errTest),
 					),
 				),
 			),
 		},
-		"B", "D", "F", xComplete,
-		"B", "D", "F", xErrTest,
+		"B", "D", "F", Complete,
+		"B", "D", "F", errTest,
 	)
 }

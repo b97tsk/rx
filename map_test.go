@@ -17,11 +17,11 @@ func TestOperators_Map(t *testing.T) {
 		[]Observable{
 			Empty().Pipe(op),
 			Range(1, 5).Pipe(op),
-			Concat(Range(1, 5), Throw(xErrTest)).Pipe(op),
+			Concat(Range(1, 5), Throw(errTest)).Pipe(op),
 		},
-		xComplete,
-		2, 4, 6, 8, xComplete,
-		2, 4, 6, 8, xErrTest,
+		Complete,
+		2, 4, 6, 8, Complete,
+		2, 4, 6, 8, errTest,
 	)
 }
 
@@ -31,10 +31,10 @@ func TestOperators_MapTo(t *testing.T) {
 		[]Observable{
 			Empty().Pipe(operators.MapTo(42)),
 			Just("A", "B", "C").Pipe(operators.MapTo(42)),
-			Concat(Just("A", "B", "C"), Throw(xErrTest)).Pipe(operators.MapTo(42)),
+			Concat(Just("A", "B", "C"), Throw(errTest)).Pipe(operators.MapTo(42)),
 		},
-		xComplete,
-		42, 42, 42, xComplete,
-		42, 42, 42, xErrTest,
+		Complete,
+		42, 42, 42, Complete,
+		42, 42, 42, errTest,
 	)
 }

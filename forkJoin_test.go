@@ -25,11 +25,11 @@ func TestOperators_ForkJoin(t *testing.T) {
 				Just("A", "B", "C").Pipe(addLatencyToValue(0, 3)),
 				Range(1, 5).Pipe(addLatencyToValue(1, 2)),
 				Range(5, 9).Pipe(addLatencyToValue(3, 1)),
-				Throw(xErrTest).Pipe(delaySubscription(5)),
+				Throw(errTest).Pipe(delaySubscription(5)),
 			).Pipe(toString),
 		},
-		"[C 4 8]", xComplete,
-		xComplete,
-		xErrTest,
+		"[C 4 8]", Complete,
+		Complete,
+		errTest,
 	)
 }

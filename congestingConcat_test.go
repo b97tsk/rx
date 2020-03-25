@@ -16,6 +16,6 @@ func TestOperators_CongestingConcatAll(t *testing.T) {
 				Just("E", "F").Pipe(addLatencyToValue(1, 3)),
 			).Pipe(operators.CongestingConcatAll()),
 		},
-		"A", "B", "C", "D", "E", "F", xComplete,
+		"A", "B", "C", "D", "E", "F", Complete,
 	)
 }

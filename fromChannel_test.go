@@ -15,7 +15,7 @@ func TestFromChannel(t *testing.T) {
 			c <- "C"
 			close(c)
 		}()
-		subscribe(t, []Observable{FromChannel(c)}, "A", "B", "C", xComplete)
+		subscribe(t, []Observable{FromChannel(c)}, "A", "B", "C", Complete)
 	})
 	t.Run("#2", func(t *testing.T) {
 		c := make(chan interface{})
@@ -31,8 +31,8 @@ func TestFromChannel(t *testing.T) {
 				FromChannel(c).Pipe(operators.Take(1)),
 				FromChannel(c).Pipe(operators.Take(2)),
 			},
-			"A", xComplete,
-			"B", "C", xComplete,
+			"A", Complete,
+			"B", "C", Complete,
 		)
 	})
 }

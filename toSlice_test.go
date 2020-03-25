@@ -11,7 +11,7 @@ func TestOperators_ToSlice(t *testing.T) {
 		Just("A", "B", "C"),
 		Just("A"),
 		Empty(),
-		Throw(xErrTest),
+		Throw(errTest),
 	}
 	for i, obs := range observables {
 		observables[i] = obs.Pipe(
@@ -22,9 +22,9 @@ func TestOperators_ToSlice(t *testing.T) {
 	}
 	subscribe(
 		t, observables[:],
-		"[A B C]", xComplete,
-		"[A]", xComplete,
-		"[]", xComplete,
-		xErrTest,
+		"[A B C]", Complete,
+		"[A]", Complete,
+		"[]", Complete,
+		errTest,
 	)
 }

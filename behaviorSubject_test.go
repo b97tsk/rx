@@ -27,16 +27,16 @@ func TestBehaviorSubject(t *testing.T) {
 					subject.Pipe(operators.Scan(sum)),
 				).Pipe(toString),
 			},
-			"[0 0]", "[3 3]", "[4 7]", "[5 12]", xComplete,
+			"[0 0]", "[3 3]", "[4 7]", "[5 12]", Complete,
 		)
 
-		subscribe(t, []Observable{subject.Observable}, 5, xComplete)
+		subscribe(t, []Observable{subject.Observable}, 5, Complete)
 	})
 
 	t.Run("Error", func(t *testing.T) {
 		subject := NewBehaviorSubject(0)
 
-		Concat(Just(3, 4, 5), Throw(xErrTest)).Pipe(
+		Concat(Just(3, 4, 5), Throw(errTest)).Pipe(
 			addLatencyToNotification(1, 1),
 		).Subscribe(context.Background(), subject.Observer)
 
@@ -48,9 +48,9 @@ func TestBehaviorSubject(t *testing.T) {
 					subject.Pipe(operators.Scan(sum)),
 				).Pipe(toString),
 			},
-			"[0 0]", "[3 3]", "[4 7]", "[5 12]", xErrTest,
+			"[0 0]", "[3 3]", "[4 7]", "[5 12]", errTest,
 		)
 
-		subscribe(t, []Observable{subject.Observable}, xErrTest)
+		subscribe(t, []Observable{subject.Observable}, errTest)
 	})
 }

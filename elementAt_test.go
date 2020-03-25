@@ -13,13 +13,13 @@ func TestOperators_ElementAt(t *testing.T) {
 		[]Observable{
 			Range(1, 9).Pipe(findFifth),
 			Range(1, 5).Pipe(findFifth),
-			Concat(Range(1, 9), Throw(xErrTest)).Pipe(findFifth),
-			Concat(Range(1, 5), Throw(xErrTest)).Pipe(findFifth),
+			Concat(Range(1, 9), Throw(errTest)).Pipe(findFifth),
+			Concat(Range(1, 5), Throw(errTest)).Pipe(findFifth),
 		},
-		5, xComplete,
+		5, Complete,
 		ErrOutOfRange,
-		5, xComplete,
-		xErrTest,
+		5, Complete,
+		errTest,
 	)
 }
 
@@ -30,12 +30,12 @@ func TestOperators_ElementAtOrDefault(t *testing.T) {
 		[]Observable{
 			Range(1, 9).Pipe(findFifth),
 			Range(1, 5).Pipe(findFifth),
-			Concat(Range(1, 9), Throw(xErrTest)).Pipe(findFifth),
-			Concat(Range(1, 5), Throw(xErrTest)).Pipe(findFifth),
+			Concat(Range(1, 9), Throw(errTest)).Pipe(findFifth),
+			Concat(Range(1, 5), Throw(errTest)).Pipe(findFifth),
 		},
-		5, xComplete,
-		404, xComplete,
-		5, xComplete,
-		xErrTest,
+		5, Complete,
+		404, Complete,
+		5, Complete,
+		errTest,
 	)
 }

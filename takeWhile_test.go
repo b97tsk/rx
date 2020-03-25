@@ -16,11 +16,11 @@ func TestOperators_TakeWhile(t *testing.T) {
 		t,
 		[]Observable{
 			Just(1, 2, 3, 4, 5, 4, 3, 2, 1).Pipe(takeLessThan5),
-			Concat(Range(1, 9), Throw(xErrTest)).Pipe(takeLessThan5),
-			Concat(Range(1, 5), Throw(xErrTest)).Pipe(takeLessThan5),
+			Concat(Range(1, 9), Throw(errTest)).Pipe(takeLessThan5),
+			Concat(Range(1, 5), Throw(errTest)).Pipe(takeLessThan5),
 		},
-		1, 2, 3, 4, xComplete,
-		1, 2, 3, 4, xComplete,
-		1, 2, 3, 4, xErrTest,
+		1, 2, 3, 4, Complete,
+		1, 2, 3, 4, Complete,
+		1, 2, 3, 4, errTest,
 	)
 }

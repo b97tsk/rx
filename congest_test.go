@@ -16,6 +16,6 @@ func TestOperators_Congest(t *testing.T) {
 				addLatencyToValue(3, 4),
 			),
 		},
-		1, 2, 3, 4, 5, 6, 7, 8, xComplete,
+		1, 2, 3, 4, 5, 6, 7, 8, Complete,
 	)
 }
