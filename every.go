@@ -9,10 +9,10 @@ type everyObservable struct {
 	Predicate func(interface{}, int) bool
 }
 
-func (obs everyObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx, cancel := context.WithCancel(ctx)
+func (obs everyObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
+	ctx := NewContext(parent)
 
-	sink = Finally(sink, cancel)
+	sink = DoAtLast(sink, ctx.AtLast)
 
 	var (
 		sourceIndex = -1
@@ -41,7 +41,7 @@ func (obs everyObservable) Subscribe(ctx context.Context, sink Observer) (contex
 
 	obs.Source.Subscribe(ctx, observer.Notify)
 
-	return ctx, cancel
+	return ctx, ctx.Cancel
 }
 
 // Every creates an Observable that emits whether or not every item of the source

@@ -23,11 +23,11 @@ type timeoutObservable struct {
 	TimeoutConfigure
 }
 
-func (obs timeoutObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx, cancel := context.WithCancel(ctx)
+func (obs timeoutObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
+	ctx := NewContext(parent)
 	childCtx, childCancel := context.WithCancel(ctx)
 
-	sink = Finally(sink, cancel)
+	sink = DoAtLast(sink, ctx.AtLast)
 
 	type X struct{}
 	cx := make(chan X, 1)
@@ -64,7 +64,7 @@ func (obs timeoutObservable) Subscribe(ctx context.Context, sink Observer) (cont
 		}
 	})
 
-	return ctx, cancel
+	return ctx, ctx.Cancel
 }
 
 // Timeout creates an Observable that mirrors the source Observable or notify

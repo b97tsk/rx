@@ -24,10 +24,10 @@ type throttleTimeObservable struct {
 	ThrottleTimeConfigure
 }
 
-func (obs throttleTimeObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx, cancel := context.WithCancel(ctx)
+func (obs throttleTimeObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
+	ctx := NewContext(parent)
 
-	sink = Finally(sink, cancel)
+	sink = DoAtLast(sink, ctx.AtLast)
 
 	type X struct {
 		TrailingValue    interface{}
@@ -81,7 +81,7 @@ func (obs throttleTimeObservable) Subscribe(ctx context.Context, sink Observer) 
 		}
 	})
 
-	return ctx, cancel
+	return ctx, ctx.Cancel
 }
 
 // ThrottleTime creates an Observable that emits a value from the source

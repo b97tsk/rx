@@ -9,10 +9,10 @@ type catchObservable struct {
 	Selector func(error) Observable
 }
 
-func (obs catchObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx, cancel := context.WithCancel(ctx)
+func (obs catchObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
+	ctx := NewContext(parent)
 
-	sink = Finally(sink, cancel)
+	sink = DoAtLast(sink, ctx.AtLast)
 
 	obs.Source.Subscribe(ctx, func(t Notification) {
 		switch {
@@ -26,7 +26,7 @@ func (obs catchObservable) Subscribe(ctx context.Context, sink Observer) (contex
 		}
 	})
 
-	return ctx, cancel
+	return ctx, ctx.Cancel
 }
 
 // Catch catches errors on the Observable to be handled by returning a new

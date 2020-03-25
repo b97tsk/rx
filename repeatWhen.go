@@ -11,10 +11,10 @@ type repeatWhenObservable struct {
 	Notifier func(Observable) Observable
 }
 
-func (obs repeatWhenObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx, cancel := context.WithCancel(ctx)
+func (obs repeatWhenObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
+	ctx := NewContext(parent)
 
-	sink = Mutex(Finally(sink, cancel))
+	sink = Mutex(DoAtLast(sink, ctx.AtLast))
 
 	var (
 		activeCount    = atomic.Uint32(2)
@@ -86,7 +86,7 @@ func (obs repeatWhenObservable) Subscribe(ctx context.Context, sink Observer) (c
 
 	avoidRecursive.Do(subscribe)
 
-	return ctx, cancel
+	return ctx, ctx.Cancel
 }
 
 // RepeatWhen creates an Observable that mirrors the source Observable with

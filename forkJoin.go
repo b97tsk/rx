@@ -13,11 +13,11 @@ type forkJoinValue struct {
 	Notification
 }
 
-func (obs forkJoinObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx, cancel := context.WithCancel(ctx)
+func (obs forkJoinObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
+	ctx := NewContext(parent)
 	done := ctx.Done()
 
-	sink = Finally(sink, cancel)
+	sink = DoAtLast(sink, ctx.AtLast)
 
 	length := len(obs.Observables)
 	q := make(chan forkJoinValue, length)
@@ -76,7 +76,7 @@ func (obs forkJoinObservable) Subscribe(ctx context.Context, sink Observer) (con
 		})
 	}
 
-	return ctx, cancel
+	return ctx, ctx.Cancel
 }
 
 // ForkJoin creates an Observable that joins last values emitted by passed

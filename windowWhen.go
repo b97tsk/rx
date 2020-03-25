@@ -9,10 +9,10 @@ type windowWhenObservable struct {
 	ClosingSelector func() Observable
 }
 
-func (obs windowWhenObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx, cancel := context.WithCancel(ctx)
+func (obs windowWhenObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
+	ctx := NewContext(parent)
 
-	sink = Finally(sink, cancel)
+	sink = DoAtLast(sink, ctx.AtLast)
 
 	type X struct {
 		Window Subject
@@ -60,7 +60,7 @@ func (obs windowWhenObservable) Subscribe(ctx context.Context, sink Observer) (c
 	avoidRecursive.Do(openWindow)
 
 	if ctx.Err() != nil {
-		return ctx, cancel
+		return ctx, ctx.Cancel
 	}
 
 	obs.Source.Subscribe(ctx, func(t Notification) {
@@ -77,7 +77,7 @@ func (obs windowWhenObservable) Subscribe(ctx context.Context, sink Observer) (c
 		}
 	})
 
-	return ctx, cancel
+	return ctx, ctx.Cancel
 }
 
 // WindowWhen branches out the source Observable values as a nested Observable

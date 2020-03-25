@@ -22,11 +22,11 @@ type congestingMergeObservable struct {
 	CongestingMergeConfigure
 }
 
-func (obs congestingMergeObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx, cancel := context.WithCancel(ctx)
+func (obs congestingMergeObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
+	ctx := NewContext(parent)
 	done := ctx.Done()
 
-	sink = Mutex(Finally(sink, cancel))
+	sink = Mutex(DoAtLast(sink, ctx.AtLast))
 
 	completeSignal := make(chan struct{}, 1)
 
@@ -104,7 +104,7 @@ func (obs congestingMergeObservable) Subscribe(ctx context.Context, sink Observe
 		}
 	})
 
-	return ctx, cancel
+	return ctx, ctx.Cancel
 }
 
 // CongestingMerge creates an output Observable which concurrently emits all

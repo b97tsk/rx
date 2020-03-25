@@ -30,10 +30,10 @@ type windowTimeContext struct {
 	Size   int
 }
 
-func (obs windowTimeObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx, cancel := context.WithCancel(ctx)
+func (obs windowTimeObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
+	ctx := NewContext(parent)
 
-	sink = Finally(sink, cancel)
+	sink = DoAtLast(sink, ctx.AtLast)
 
 	type X struct {
 		Contexts []*windowTimeContext
@@ -119,7 +119,7 @@ func (obs windowTimeObservable) Subscribe(ctx context.Context, sink Observer) (c
 		}
 	})
 
-	return ctx, cancel
+	return ctx, ctx.Cancel
 }
 
 // WindowTime branches out the source Observable values as a nested Observable

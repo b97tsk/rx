@@ -10,16 +10,16 @@ type subscribeOnObservable struct {
 	Duration time.Duration
 }
 
-func (obs subscribeOnObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx, cancel := context.WithCancel(ctx)
+func (obs subscribeOnObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
+	ctx := NewContext(parent)
 
-	sink = Finally(sink, cancel)
+	sink = DoAtLast(sink, ctx.AtLast)
 
 	scheduleOnce(ctx, obs.Duration, func() {
 		obs.Source.Subscribe(ctx, sink)
 	})
 
-	return ctx, cancel
+	return ctx, ctx.Cancel
 }
 
 // SubscribeOn creates an Observable that asynchronously subscribes to the

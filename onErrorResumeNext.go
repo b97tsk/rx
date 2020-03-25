@@ -8,10 +8,10 @@ type onErrorResumeNextObservable struct {
 	Observables []Observable
 }
 
-func (obs onErrorResumeNextObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx, cancel := context.WithCancel(ctx)
+func (obs onErrorResumeNextObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
+	ctx := NewContext(parent)
 
-	sink = Finally(sink, cancel)
+	sink = DoAtLast(sink, ctx.AtLast)
 
 	var (
 		observer       Observer
@@ -39,7 +39,7 @@ func (obs onErrorResumeNextObservable) Subscribe(ctx context.Context, sink Obser
 
 	avoidRecursive.Do(subscribe)
 
-	return ctx, cancel
+	return ctx, ctx.Cancel
 }
 
 // OnErrorResumeNext creates an Observable that concatenates the provided

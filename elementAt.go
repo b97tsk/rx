@@ -11,10 +11,10 @@ type elementAtObservable struct {
 	HasDefault bool
 }
 
-func (obs elementAtObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx, cancel := context.WithCancel(ctx)
+func (obs elementAtObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
+	ctx := NewContext(parent)
 
-	sink = Finally(sink, cancel)
+	sink = DoAtLast(sink, ctx.AtLast)
 
 	var (
 		index    = obs.Index
@@ -44,7 +44,7 @@ func (obs elementAtObservable) Subscribe(ctx context.Context, sink Observer) (co
 
 	obs.Source.Subscribe(ctx, observer.Notify)
 
-	return ctx, cancel
+	return ctx, ctx.Cancel
 }
 
 // ElementAt creates an Observable that emits the single value at the specified

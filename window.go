@@ -9,10 +9,10 @@ type windowObservable struct {
 	WindowBoundaries Observable
 }
 
-func (obs windowObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx, cancel := context.WithCancel(ctx)
+func (obs windowObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
+	ctx := NewContext(parent)
 
-	sink = Finally(sink, cancel)
+	sink = DoAtLast(sink, ctx.AtLast)
 
 	type X struct {
 		Window Subject
@@ -39,7 +39,7 @@ func (obs windowObservable) Subscribe(ctx context.Context, sink Observer) (conte
 	})
 
 	if ctx.Err() != nil {
-		return ctx, cancel
+		return ctx, ctx.Cancel
 	}
 
 	obs.Source.Subscribe(ctx, func(t Notification) {
@@ -56,7 +56,7 @@ func (obs windowObservable) Subscribe(ctx context.Context, sink Observer) (conte
 		}
 	})
 
-	return ctx, cancel
+	return ctx, ctx.Cancel
 }
 
 // Window branches out the source Observable values as a nested Observable

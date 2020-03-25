@@ -11,10 +11,10 @@ type skipUntilObservable struct {
 	Notifier Observable
 }
 
-func (obs skipUntilObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx, cancel := context.WithCancel(ctx)
+func (obs skipUntilObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
+	ctx := NewContext(parent)
 
-	sinkNoMutex := Finally(sink, cancel)
+	sinkNoMutex := DoAtLast(sink, ctx.AtLast)
 	sink = Mutex(sinkNoMutex)
 
 	var noSkipping atomic.Uint32
@@ -41,7 +41,7 @@ func (obs skipUntilObservable) Subscribe(ctx context.Context, sink Observer) (co
 	}
 
 	if ctx.Err() != nil {
-		return ctx, cancel
+		return ctx, ctx.Cancel
 	}
 
 	{
@@ -62,7 +62,7 @@ func (obs skipUntilObservable) Subscribe(ctx context.Context, sink Observer) (co
 		obs.Source.Subscribe(ctx, observer.Notify)
 	}
 
-	return ctx, cancel
+	return ctx, ctx.Cancel
 }
 
 // SkipUntil creates an Observable that skips items emitted by the source

@@ -12,10 +12,10 @@ type observeOnObservable struct {
 	Duration time.Duration
 }
 
-func (obs observeOnObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx, cancel := context.WithCancel(ctx)
+func (obs observeOnObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
+	ctx := NewContext(parent)
 
-	sink = Finally(sink, cancel)
+	sink = DoAtLast(sink, ctx.AtLast)
 
 	type X struct {
 		Queue queue.Queue
@@ -42,7 +42,7 @@ func (obs observeOnObservable) Subscribe(ctx context.Context, sink Observer) (co
 		}
 	})
 
-	return ctx, cancel
+	return ctx, ctx.Cancel
 }
 
 // ObserveOn creates an Observable that emits each notification from the source

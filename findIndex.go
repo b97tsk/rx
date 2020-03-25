@@ -9,10 +9,10 @@ type findIndexObservable struct {
 	Predicate func(interface{}, int) bool
 }
 
-func (obs findIndexObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx, cancel := context.WithCancel(ctx)
+func (obs findIndexObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
+	ctx := NewContext(parent)
 
-	sink = Finally(sink, cancel)
+	sink = DoAtLast(sink, ctx.AtLast)
 
 	var (
 		sourceIndex = -1
@@ -37,7 +37,7 @@ func (obs findIndexObservable) Subscribe(ctx context.Context, sink Observer) (co
 
 	obs.Source.Subscribe(ctx, observer.Notify)
 
-	return ctx, cancel
+	return ctx, ctx.Cancel
 }
 
 // FindIndex creates an Observable that emits only the index of the first value

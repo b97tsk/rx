@@ -10,10 +10,10 @@ type auditTimeObservable struct {
 	Duration time.Duration
 }
 
-func (obs auditTimeObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx, cancel := context.WithCancel(ctx)
+func (obs auditTimeObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
+	ctx := NewContext(parent)
 
-	sink = Finally(sink, cancel)
+	sink = DoAtLast(sink, ctx.AtLast)
 
 	type X struct {
 		LatestValue interface{}
@@ -49,7 +49,7 @@ func (obs auditTimeObservable) Subscribe(ctx context.Context, sink Observer) (co
 		}
 	})
 
-	return ctx, cancel
+	return ctx, ctx.Cancel
 }
 
 // AuditTime ignores source values for a duration, then emits the most recent

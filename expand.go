@@ -24,10 +24,10 @@ type expandObservable struct {
 	ExpandConfigure
 }
 
-func (obs expandObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx, cancel := context.WithCancel(ctx)
+func (obs expandObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
+	ctx := NewContext(parent)
 
-	sink = Mutex(Finally(sink, cancel))
+	sink = Mutex(DoAtLast(sink, ctx.AtLast))
 
 	type X struct {
 		Index           int
@@ -103,7 +103,7 @@ func (obs expandObservable) Subscribe(ctx context.Context, sink Observer) (conte
 		}
 	})
 
-	return ctx, cancel
+	return ctx, ctx.Cancel
 }
 
 // Expand recursively projects each source value to an Observable which is

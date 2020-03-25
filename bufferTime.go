@@ -29,10 +29,10 @@ type bufferTimeContext struct {
 	Buffer []interface{}
 }
 
-func (obs bufferTimeObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx, cancel := context.WithCancel(ctx)
+func (obs bufferTimeObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
+	ctx := NewContext(parent)
 
-	sink = Finally(sink, cancel)
+	sink = DoAtLast(sink, ctx.AtLast)
 
 	type X struct {
 		Contexts []*bufferTimeContext
@@ -120,7 +120,7 @@ func (obs bufferTimeObservable) Subscribe(ctx context.Context, sink Observer) (c
 		}
 	})
 
-	return ctx, cancel
+	return ctx, ctx.Cancel
 }
 
 // BufferTime buffers the source Observable values for a specific time period.

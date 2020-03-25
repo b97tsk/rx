@@ -10,14 +10,16 @@ func FromObservables(observables ...Observable) Observable {
 	if len(observables) == 0 {
 		return Empty()
 	}
-	return func(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
+	return func(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
+		ctx := NewContext(parent)
 		for _, obs := range observables {
 			if ctx.Err() != nil {
-				return Done(ctx)
+				return ctx, ctx.Cancel
 			}
 			sink.Next(obs)
 		}
 		sink.Complete()
-		return Done(ctx)
+		ctx.Unsubscribe(Complete)
+		return ctx, ctx.Cancel
 	}
 }

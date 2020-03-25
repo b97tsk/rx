@@ -24,10 +24,10 @@ type mergeObservable struct {
 	MergeConfigure
 }
 
-func (obs mergeObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx, cancel := context.WithCancel(ctx)
+func (obs mergeObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
+	ctx := NewContext(parent)
 
-	sink = Mutex(Finally(sink, cancel))
+	sink = Mutex(DoAtLast(sink, ctx.AtLast))
 
 	type X struct {
 		Index           int
@@ -91,7 +91,7 @@ func (obs mergeObservable) Subscribe(ctx context.Context, sink Observer) (contex
 		}
 	})
 
-	return ctx, cancel
+	return ctx, ctx.Cancel
 }
 
 // Merge creates an output Observable which concurrently emits all values from

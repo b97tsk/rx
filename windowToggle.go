@@ -15,10 +15,10 @@ type windowToggleContext struct {
 	Window Subject
 }
 
-func (obs windowToggleObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx, cancel := context.WithCancel(ctx)
+func (obs windowToggleObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
+	ctx := NewContext(parent)
 
-	sink = Finally(sink, cancel)
+	sink = DoAtLast(sink, ctx.AtLast)
 
 	type X struct {
 		Contexts []*windowToggleContext
@@ -87,7 +87,7 @@ func (obs windowToggleObservable) Subscribe(ctx context.Context, sink Observer) 
 	})
 
 	if ctx.Err() != nil {
-		return ctx, cancel
+		return ctx, ctx.Cancel
 	}
 
 	obs.Source.Subscribe(ctx, func(t Notification) {
@@ -108,7 +108,7 @@ func (obs windowToggleObservable) Subscribe(ctx context.Context, sink Observer) 
 		}
 	})
 
-	return ctx, cancel
+	return ctx, ctx.Cancel
 }
 
 // WindowToggle branches out the source Observable values as a nested

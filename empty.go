@@ -7,8 +7,10 @@ import (
 // Empty creates an Observable that emits no items to the Observer and
 // immediately emits a COMPLETE notification.
 func Empty() Observable {
-	return func(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
+	return func(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
+		ctx := NewContext(parent)
 		sink.Complete()
-		return Done(ctx)
+		ctx.Unsubscribe(Complete)
+		return ctx, ctx.Cancel
 	}
 }

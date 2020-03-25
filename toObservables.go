@@ -21,10 +21,10 @@ type toObservablesObservable struct {
 	ToObservablesConfigure
 }
 
-func (obs toObservablesObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx, cancel := context.WithCancel(ctx)
+func (obs toObservablesObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
+	ctx := NewContext(parent)
 
-	sink = Finally(sink, cancel)
+	sink = DoAtLast(sink, ctx.AtLast)
 
 	var (
 		observables []Observable
@@ -55,7 +55,7 @@ func (obs toObservablesObservable) Subscribe(ctx context.Context, sink Observer)
 
 	obs.Source.Subscribe(ctx, observer.Notify)
 
-	return ctx, cancel
+	return ctx, ctx.Cancel
 }
 
 // ToObservables creates an Observable that collects all the Observables the

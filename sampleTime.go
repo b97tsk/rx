@@ -10,10 +10,10 @@ type sampleTimeObservable struct {
 	Duration time.Duration
 }
 
-func (obs sampleTimeObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx, cancel := context.WithCancel(ctx)
+func (obs sampleTimeObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
+	ctx := NewContext(parent)
 
-	sink = Finally(sink, cancel)
+	sink = DoAtLast(sink, ctx.AtLast)
 
 	type X struct {
 		LatestValue    interface{}
@@ -46,7 +46,7 @@ func (obs sampleTimeObservable) Subscribe(ctx context.Context, sink Observer) (c
 		}
 	})
 
-	return ctx, cancel
+	return ctx, ctx.Cancel
 }
 
 // SampleTime creates an Observable that emits the most recently emitted value

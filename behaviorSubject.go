@@ -87,11 +87,11 @@ func (s *behaviorSubject) notify(t Notification) {
 	}
 }
 
-func (s *behaviorSubject) subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	if _, ok := <-s.lock; ok {
-		ctx, cancel := context.WithCancel(ctx)
+func (s *behaviorSubject) subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
+	ctx := NewContext(parent)
 
-		observer := Mutex(Finally(sink, cancel))
+	if _, ok := <-s.lock; ok {
+		observer := Mutex(DoAtLast(sink, ctx.AtLast))
 		s.observers.Append(&observer)
 
 		finalize := func() {
@@ -108,15 +108,17 @@ func (s *behaviorSubject) subscribe(ctx context.Context, sink Observer) (context
 		sink.Next(s.getValue())
 
 		s.lock <- struct{}{}
-		return ctx, cancel
+		return ctx, ctx.Cancel
 	}
 
 	if s.err != nil {
 		sink.Error(s.err)
+		ctx.Unsubscribe(s.err)
 	} else {
 		sink.Next(s.getValue())
 		sink.Complete()
+		ctx.Unsubscribe(Complete)
 	}
 
-	return Done(ctx)
+	return ctx, ctx.Cancel
 }

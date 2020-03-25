@@ -8,10 +8,10 @@ type singleObservable struct {
 	Source Observable
 }
 
-func (obs singleObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx, cancel := context.WithCancel(ctx)
+func (obs singleObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
+	ctx := NewContext(parent)
 
-	sink = Finally(sink, cancel)
+	sink = DoAtLast(sink, ctx.AtLast)
 
 	var (
 		value    interface{}
@@ -43,7 +43,7 @@ func (obs singleObservable) Subscribe(ctx context.Context, sink Observer) (conte
 
 	obs.Source.Subscribe(ctx, observer.Notify)
 
-	return ctx, cancel
+	return ctx, ctx.Cancel
 }
 
 // Single creates an Observable that emits the single item emitted by the

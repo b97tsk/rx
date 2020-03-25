@@ -8,10 +8,10 @@ type isEmptyObservable struct {
 	Source Observable
 }
 
-func (obs isEmptyObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx, cancel := context.WithCancel(ctx)
+func (obs isEmptyObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
+	ctx := NewContext(parent)
 
-	sink = Finally(sink, cancel)
+	sink = DoAtLast(sink, ctx.AtLast)
 
 	var observer Observer
 	observer = func(t Notification) {
@@ -29,7 +29,7 @@ func (obs isEmptyObservable) Subscribe(ctx context.Context, sink Observer) (cont
 	}
 	obs.Source.Subscribe(ctx, observer.Notify)
 
-	return ctx, cancel
+	return ctx, ctx.Cancel
 }
 
 // IsEmpty creates an Observable that emits true if the source Observable

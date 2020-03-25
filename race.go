@@ -8,10 +8,10 @@ type raceObservable struct {
 	Observables []Observable
 }
 
-func (obs raceObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx, cancel := context.WithCancel(ctx)
+func (obs raceObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
+	ctx := NewContext(parent)
 
-	sink = Finally(sink, cancel)
+	sink = DoAtLast(sink, ctx.AtLast)
 
 	type X struct {
 		Subscriptions []context.CancelFunc
@@ -55,7 +55,7 @@ func (obs raceObservable) Subscribe(ctx context.Context, sink Observer) (context
 		obs.Subscribe(ctx, observer.Notify)
 	}
 
-	return ctx, cancel
+	return ctx, ctx.Cancel
 }
 
 // Race creates an Observable that mirrors the first source Observable to emit

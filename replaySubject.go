@@ -107,11 +107,11 @@ func (s *replaySubject) notify(t Notification) {
 	}
 }
 
-func (s *replaySubject) subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	if _, ok := <-s.lock; ok {
-		ctx, cancel := context.WithCancel(ctx)
+func (s *replaySubject) subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
+	ctx := NewContext(parent)
 
-		observer := Mutex(Finally(sink, cancel))
+	if _, ok := <-s.lock; ok {
+		observer := Mutex(DoAtLast(sink, ctx.AtLast))
 		s.observers.Append(&observer)
 
 		finalize := func() {
@@ -135,22 +135,24 @@ func (s *replaySubject) subscribe(ctx context.Context, sink Observer) (context.C
 		}
 
 		s.lock <- struct{}{}
-		return ctx, cancel
+		return ctx, ctx.Cancel
 	}
 
 	if s.err != nil {
 		sink.Error(s.err)
-		return Done(ctx)
+		ctx.Unsubscribe(s.err)
+		return ctx, ctx.Cancel
 	}
 
 	s.trimBuffer()
 
 	for i, j := 0, s.buffer.Len(); i < j; i++ {
 		if ctx.Err() != nil {
-			return Done(ctx)
+			return ctx, ctx.Cancel
 		}
 		sink.Next(s.buffer.At(i).(replaySubjectValue).Value)
 	}
 	sink.Complete()
-	return Done(ctx)
+	ctx.Unsubscribe(Complete)
+	return ctx, ctx.Cancel
 }

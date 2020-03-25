@@ -8,10 +8,10 @@ type dematerializeObservable struct {
 	Source Observable
 }
 
-func (obs dematerializeObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx, cancel := context.WithCancel(ctx)
+func (obs dematerializeObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
+	ctx := NewContext(parent)
 
-	sink = Finally(sink, cancel)
+	sink = DoAtLast(sink, ctx.AtLast)
 
 	var observer Observer
 	observer = func(t Notification) {
@@ -35,7 +35,7 @@ func (obs dematerializeObservable) Subscribe(ctx context.Context, sink Observer)
 	}
 	obs.Source.Subscribe(ctx, observer.Notify)
 
-	return ctx, cancel
+	return ctx, ctx.Cancel
 }
 
 // Dematerialize converts an Observable of Notification objects into the

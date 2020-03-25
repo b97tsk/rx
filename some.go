@@ -9,10 +9,10 @@ type someObservable struct {
 	Predicate func(interface{}, int) bool
 }
 
-func (obs someObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx, cancel := context.WithCancel(ctx)
+func (obs someObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
+	ctx := NewContext(parent)
 
-	sink = Finally(sink, cancel)
+	sink = DoAtLast(sink, ctx.AtLast)
 
 	var (
 		sourceIndex = -1
@@ -41,7 +41,7 @@ func (obs someObservable) Subscribe(ctx context.Context, sink Observer) (context
 
 	obs.Source.Subscribe(ctx, observer.Notify)
 
-	return ctx, cancel
+	return ctx, ctx.Cancel
 }
 
 // Some creates an Observable that emits whether or not any item of the source

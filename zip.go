@@ -15,11 +15,11 @@ type zipValue struct {
 	Notification
 }
 
-func (obs zipObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx, cancel := context.WithCancel(ctx)
+func (obs zipObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
+	ctx := NewContext(parent)
 	done := ctx.Done()
 
-	sink = Finally(sink, cancel)
+	sink = DoAtLast(sink, ctx.AtLast)
 
 	length := len(obs.Observables)
 	q := make(chan zipValue, length)
@@ -99,7 +99,7 @@ func (obs zipObservable) Subscribe(ctx context.Context, sink Observer) (context.
 		})
 	}
 
-	return ctx, cancel
+	return ctx, ctx.Cancel
 }
 
 // Zip combines multiple Observables to create an Observable that emits the
