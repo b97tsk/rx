@@ -11,11 +11,11 @@ import (
 // not subscribe the source, instead, it subscribes to a local Subject, which
 // means that it can be called many times with different Observers.
 type ConnectableObservable struct {
+	Observable
 	*connectableObservable
 }
 
 type connectableObservable struct {
-	Observable
 	mux            sync.Mutex
 	source         Observable
 	subjectFactory func() Subject
@@ -25,17 +25,18 @@ type connectableObservable struct {
 	refCount       int
 }
 
-func newConnectableObservable(source Observable, subjectFactory func() Subject) *connectableObservable {
+// NewConnectableObservable creates a new ConnectableObservable.
+func NewConnectableObservable(source Observable, subjectFactory func() Subject) ConnectableObservable {
 	connectable := connectableObservable{
 		source:         source,
 		subjectFactory: subjectFactory,
 	}
-	connectable.Observable = Observable(
+	return ConnectableObservable{
 		func(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 			return connectable.getSubject().Subscribe(ctx, sink)
 		},
-	)
-	return &connectable
+		&connectable,
+	}
 }
 
 func (obs *connectableObservable) getSubjectLocked() Subject {
@@ -182,7 +183,7 @@ func (obs ConnectableObservable) RefCount() Observable {
 // that waits until its Connect method is called before it begins emitting
 // items to those Observers that have subscribed to it.
 func (obs Observable) Multicast(subjectFactory func() Subject) ConnectableObservable {
-	return ConnectableObservable{newConnectableObservable(obs, subjectFactory)}
+	return NewConnectableObservable(obs, subjectFactory)
 }
 
 // Publish is like Multicast, but it uses only one subject.
