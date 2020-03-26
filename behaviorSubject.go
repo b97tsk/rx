@@ -2,6 +2,7 @@ package rx
 
 import (
 	"context"
+	"sync"
 	"sync/atomic"
 )
 
@@ -10,7 +11,7 @@ import (
 // "current value" from the BehaviorSubject.
 type BehaviorSubject struct {
 	Subject
-	lock      chan struct{}
+	mux       sync.Mutex
 	observers observerList
 	cws       contextWaitService
 	err       error
@@ -22,8 +23,6 @@ func NewBehaviorSubject(val interface{}) *BehaviorSubject {
 	s := new(BehaviorSubject)
 	s.Observable = s.subscribe
 	s.Observer = s.notify
-	s.lock = make(chan struct{}, 1)
-	s.lock <- struct{}{}
 	s.val.Store(behaviorSubjectValue{val})
 	return s
 }
@@ -38,55 +37,58 @@ func (s *BehaviorSubject) Value() interface{} {
 }
 
 func (s *BehaviorSubject) notify(t Notification) {
-	if _, ok := <-s.lock; ok {
-		switch {
-		case t.HasValue:
-			observers, releaseRef := s.observers.AddRef()
+	s.mux.Lock()
+	switch {
+	case s.err != nil:
+		s.mux.Unlock()
 
-			s.val.Store(behaviorSubjectValue{t.Value})
+	case t.HasValue:
+		observers, releaseRef := s.observers.AddRef()
+		s.val.Store(behaviorSubjectValue{t.Value})
+		s.mux.Unlock()
 
-			s.lock <- struct{}{}
+		for _, sink := range observers {
+			sink.Notify(t)
+		}
 
-			for _, sink := range observers {
-				sink.Notify(t)
-			}
+		releaseRef()
 
-			releaseRef()
-
-		case t.HasError:
-			observers := s.observers.Swap(nil)
+	default:
+		observers := s.observers.Swap(nil)
+		if t.HasError {
 			s.err = t.Error
+		} else {
+			s.err = Complete
+		}
+		s.mux.Unlock()
 
-			close(s.lock)
-
-			for _, sink := range observers {
-				sink.Notify(t)
-			}
-
-		default:
-			observers := s.observers.Swap(nil)
-
-			close(s.lock)
-
-			for _, sink := range observers {
-				sink.Notify(t)
-			}
+		for _, sink := range observers {
+			sink.Notify(t)
 		}
 	}
 }
 
 func (s *BehaviorSubject) subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
+	s.mux.Lock()
+
 	ctx := NewContext(parent)
 
-	if _, ok := <-s.lock; ok {
+	if err := s.err; err != nil {
+		if err != Complete {
+			sink.Error(err)
+		} else {
+			sink.Next(s.Value())
+			sink.Complete()
+		}
+		ctx.Unsubscribe(err)
+	} else {
 		observer := Mutex(DoAtLast(sink, ctx.AtLast))
 		s.observers.Append(&observer)
 
 		finalize := func() {
-			if _, ok := <-s.lock; ok {
-				s.observers.Remove(&observer)
-				s.lock <- struct{}{}
-			}
+			s.mux.Lock()
+			s.observers.Remove(&observer)
+			s.mux.Unlock()
 		}
 
 		for s.cws == nil || !s.cws.Submit(ctx, finalize) {
@@ -94,19 +96,8 @@ func (s *BehaviorSubject) subscribe(parent context.Context, sink Observer) (cont
 		}
 
 		sink.Next(s.Value())
-
-		s.lock <- struct{}{}
-		return ctx, ctx.Cancel
 	}
 
-	if s.err != nil {
-		sink.Error(s.err)
-		ctx.Unsubscribe(s.err)
-	} else {
-		sink.Next(s.Value())
-		sink.Complete()
-		ctx.Unsubscribe(Complete)
-	}
-
+	s.mux.Unlock()
 	return ctx, ctx.Cancel
 }

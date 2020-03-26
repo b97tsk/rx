@@ -2,6 +2,7 @@ package rx
 
 import (
 	"context"
+	"sync"
 )
 
 // Subject is a special type of Observable that allows values to be multicasted
@@ -14,8 +15,6 @@ type Subject struct {
 // NewSubject creates a new Subject.
 func NewSubject() Subject {
 	s := new(subject)
-	s.lock = make(chan struct{}, 1)
-	s.lock <- struct{}{}
 	return Subject{
 		Observable: s.subscribe,
 		Observer:   s.notify,
@@ -23,77 +22,71 @@ func NewSubject() Subject {
 }
 
 type subject struct {
-	lock      chan struct{}
+	mux       sync.Mutex
 	observers observerList
 	cws       contextWaitService
 	err       error
 }
 
 func (s *subject) notify(t Notification) {
-	if _, ok := <-s.lock; ok {
-		switch {
-		case t.HasValue:
-			observers, releaseRef := s.observers.AddRef()
+	s.mux.Lock()
+	switch {
+	case s.err != nil:
+		s.mux.Unlock()
 
-			s.lock <- struct{}{}
+	case t.HasValue:
+		observers, releaseRef := s.observers.AddRef()
 
-			for _, sink := range observers {
-				sink.Notify(t)
-			}
+		s.mux.Unlock()
 
-			releaseRef()
+		for _, sink := range observers {
+			sink.Notify(t)
+		}
 
-		case t.HasError:
-			observers := s.observers.Swap(nil)
+		releaseRef()
+
+	default:
+		observers := s.observers.Swap(nil)
+		if t.HasError {
 			s.err = t.Error
+		} else {
+			s.err = Complete
+		}
+		s.mux.Unlock()
 
-			close(s.lock)
-
-			for _, sink := range observers {
-				sink.Notify(t)
-			}
-
-		default:
-			observers := s.observers.Swap(nil)
-
-			close(s.lock)
-
-			for _, sink := range observers {
-				sink.Notify(t)
-			}
+		for _, sink := range observers {
+			sink.Notify(t)
 		}
 	}
 }
 
 func (s *subject) subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
+	s.mux.Lock()
+
 	ctx := NewContext(parent)
 
-	if _, ok := <-s.lock; ok {
+	if err := s.err; err != nil {
+		if err != Complete {
+			sink.Error(err)
+		} else {
+			sink.Complete()
+		}
+		ctx.Unsubscribe(err)
+	} else {
 		observer := Mutex(DoAtLast(sink, ctx.AtLast))
 		s.observers.Append(&observer)
 
 		finalize := func() {
-			if _, ok := <-s.lock; ok {
-				s.observers.Remove(&observer)
-				s.lock <- struct{}{}
-			}
+			s.mux.Lock()
+			s.observers.Remove(&observer)
+			s.mux.Unlock()
 		}
 
 		for s.cws == nil || !s.cws.Submit(ctx, finalize) {
 			s.cws = newContextWaitService()
 		}
-
-		s.lock <- struct{}{}
-		return ctx, ctx.Cancel
 	}
 
-	if s.err != nil {
-		sink.Error(s.err)
-		ctx.Unsubscribe(s.err)
-	} else {
-		sink.Complete()
-		ctx.Unsubscribe(Complete)
-	}
-
+	s.mux.Unlock()
 	return ctx, ctx.Cancel
 }

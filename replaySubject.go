@@ -2,6 +2,7 @@ package rx
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/b97tsk/rx/x/queue"
@@ -12,13 +13,13 @@ import (
 // existing subscribers.
 type ReplaySubject struct {
 	Subject
-	BufferSize int
-	WindowTime time.Duration
-	lock       chan struct{}
+	mux        sync.Mutex
 	observers  observerList
 	cws        contextWaitService
 	err        error
 	buffer     queue.Queue
+	BufferSize int
+	WindowTime time.Duration
 }
 
 // NewReplaySubject creates a new ReplaySubject.
@@ -29,8 +30,6 @@ func NewReplaySubject(bufferSize int, windowTime time.Duration) *ReplaySubject {
 	}
 	s.Observable = s.subscribe
 	s.Observer = s.notify
-	s.lock = make(chan struct{}, 1)
-	s.lock <- struct{}{}
 	return s
 }
 
@@ -57,60 +56,72 @@ func (s *ReplaySubject) trimBuffer() {
 }
 
 func (s *ReplaySubject) notify(t Notification) {
-	if _, ok := <-s.lock; ok {
-		switch {
-		case t.HasValue:
-			observers, releaseRef := s.observers.AddRef()
+	s.mux.Lock()
+	switch {
+	case s.err != nil:
+		s.mux.Unlock()
 
-			var deadline time.Time
-			if s.WindowTime > 0 {
-				deadline = time.Now().Add(s.WindowTime)
-			}
-			s.buffer.PushBack(replaySubjectValue{deadline, t.Value})
-			s.trimBuffer()
+	case t.HasValue:
+		observers, releaseRef := s.observers.AddRef()
 
-			s.lock <- struct{}{}
+		var deadline time.Time
+		if s.WindowTime > 0 {
+			deadline = time.Now().Add(s.WindowTime)
+		}
+		s.buffer.PushBack(replaySubjectValue{deadline, t.Value})
+		s.trimBuffer()
 
-			for _, sink := range observers {
-				sink.Notify(t)
-			}
+		s.mux.Unlock()
 
-			releaseRef()
+		for _, sink := range observers {
+			sink.Notify(t)
+		}
 
-		case t.HasError:
-			observers := s.observers.Swap(nil)
+		releaseRef()
+
+	default:
+		observers := s.observers.Swap(nil)
+		if t.HasError {
 			s.err = t.Error
+		} else {
+			s.err = Complete
+		}
+		s.mux.Unlock()
 
-			close(s.lock)
-
-			for _, sink := range observers {
-				sink.Notify(t)
-			}
-
-		default:
-			observers := s.observers.Swap(nil)
-
-			close(s.lock)
-
-			for _, sink := range observers {
-				sink.Notify(t)
-			}
+		for _, sink := range observers {
+			sink.Notify(t)
 		}
 	}
 }
 
 func (s *ReplaySubject) subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
+	s.mux.Lock()
+
 	ctx := NewContext(parent)
 
-	if _, ok := <-s.lock; ok {
+	if err := s.err; err != nil {
+		if err != Complete {
+			sink.Error(err)
+		} else {
+			s.trimBuffer()
+			for i, j := 0, s.buffer.Len(); i < j; i++ {
+				if ctx.Err() != nil {
+					s.mux.Unlock()
+					return ctx, ctx.Cancel
+				}
+				sink.Next(s.buffer.At(i).(replaySubjectValue).Value)
+			}
+			sink.Complete()
+		}
+		ctx.Unsubscribe(err)
+	} else {
 		observer := Mutex(DoAtLast(sink, ctx.AtLast))
 		s.observers.Append(&observer)
 
 		finalize := func() {
-			if _, ok := <-s.lock; ok {
-				s.observers.Remove(&observer)
-				s.lock <- struct{}{}
-			}
+			s.mux.Lock()
+			s.observers.Remove(&observer)
+			s.mux.Unlock()
 		}
 
 		for s.cws == nil || !s.cws.Submit(ctx, finalize) {
@@ -125,26 +136,8 @@ func (s *ReplaySubject) subscribe(parent context.Context, sink Observer) (contex
 			}
 			sink.Next(s.buffer.At(i).(replaySubjectValue).Value)
 		}
-
-		s.lock <- struct{}{}
-		return ctx, ctx.Cancel
 	}
 
-	if s.err != nil {
-		sink.Error(s.err)
-		ctx.Unsubscribe(s.err)
-		return ctx, ctx.Cancel
-	}
-
-	s.trimBuffer()
-
-	for i, j := 0, s.buffer.Len(); i < j; i++ {
-		if ctx.Err() != nil {
-			return ctx, ctx.Cancel
-		}
-		sink.Next(s.buffer.At(i).(replaySubjectValue).Value)
-	}
-	sink.Complete()
-	ctx.Unsubscribe(Complete)
+	s.mux.Unlock()
 	return ctx, ctx.Cancel
 }
