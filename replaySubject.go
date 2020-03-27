@@ -12,6 +12,10 @@ import (
 // immediately to any new subscribers in addition to emitting new values to
 // existing subscribers.
 type ReplaySubject struct {
+	*replaySubject
+}
+
+type replaySubject struct {
 	Subject
 	mux        sync.Mutex
 	observers  observerList
@@ -22,23 +26,28 @@ type ReplaySubject struct {
 	WindowTime time.Duration
 }
 
-// NewReplaySubject creates a new ReplaySubject.
-func NewReplaySubject(bufferSize int, windowTime time.Duration) *ReplaySubject {
-	s := &ReplaySubject{
-		BufferSize: bufferSize,
-		WindowTime: windowTime,
-	}
-	s.Observable = s.subscribe
-	s.Observer = s.notify
-	return s
-}
-
 type replaySubjectValue struct {
 	Deadline time.Time
 	Value    interface{}
 }
 
-func (s *ReplaySubject) trimBuffer() {
+// NewReplaySubject creates a new ReplaySubject.
+func NewReplaySubject(bufferSize int, windowTime time.Duration) ReplaySubject {
+	s := &replaySubject{
+		BufferSize: bufferSize,
+		WindowTime: windowTime,
+	}
+	s.Observable = s.subscribe
+	s.Observer = s.notify
+	return ReplaySubject{s}
+}
+
+// Exists reports if this ReplaySubject is ready to use.
+func (s ReplaySubject) Exists() bool {
+	return s.replaySubject != nil
+}
+
+func (s *replaySubject) trimBuffer() {
 	if s.BufferSize > 0 {
 		for s.buffer.Len() > s.BufferSize {
 			s.buffer.PopFront()
@@ -55,7 +64,7 @@ func (s *ReplaySubject) trimBuffer() {
 	}
 }
 
-func (s *ReplaySubject) notify(t Notification) {
+func (s *replaySubject) notify(t Notification) {
 	s.mux.Lock()
 	switch {
 	case s.err != nil:
@@ -94,7 +103,7 @@ func (s *ReplaySubject) notify(t Notification) {
 	}
 }
 
-func (s *ReplaySubject) subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
+func (s *replaySubject) subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	s.mux.Lock()
 
 	ctx := NewContext(parent)
