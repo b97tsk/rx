@@ -10,6 +10,10 @@ import (
 // whenever a new Observer subscribes, it will immediately receive the
 // "current value" from the BehaviorSubject.
 type BehaviorSubject struct {
+	*behaviorSubject
+}
+
+type behaviorSubject struct {
 	Subject
 	mux       sync.Mutex
 	observers observerList
@@ -18,25 +22,34 @@ type BehaviorSubject struct {
 	val       atomic.Value
 }
 
-// NewBehaviorSubject creates a new BehaviorSubject.
-func NewBehaviorSubject(val interface{}) *BehaviorSubject {
-	s := new(BehaviorSubject)
-	s.Observable = s.subscribe
-	s.Observer = s.notify
-	s.val.Store(behaviorSubjectValue{val})
-	return s
-}
-
 type behaviorSubjectValue struct {
 	Value interface{}
 }
 
+// NewBehaviorSubject creates a new BehaviorSubject.
+func NewBehaviorSubject(val interface{}) BehaviorSubject {
+	s := new(behaviorSubject)
+	s.Observable = s.subscribe
+	s.Observer = s.notify
+	s.val.Store(behaviorSubjectValue{val})
+	return BehaviorSubject{s}
+}
+
+// Exists reports if this BehaviorSubject is ready to use.
+func (s BehaviorSubject) Exists() bool {
+	return s.behaviorSubject != nil
+}
+
 // Value returns the latest value stored in this BehaviorSubject.
-func (s *BehaviorSubject) Value() interface{} {
+func (s BehaviorSubject) Value() interface{} {
+	return s.getValue()
+}
+
+func (s *behaviorSubject) getValue() interface{} {
 	return s.val.Load().(behaviorSubjectValue).Value
 }
 
-func (s *BehaviorSubject) notify(t Notification) {
+func (s *behaviorSubject) notify(t Notification) {
 	s.mux.Lock()
 	switch {
 	case s.err != nil:
@@ -68,7 +81,7 @@ func (s *BehaviorSubject) notify(t Notification) {
 	}
 }
 
-func (s *BehaviorSubject) subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
+func (s *behaviorSubject) subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	s.mux.Lock()
 
 	ctx := NewContext(parent)
@@ -77,7 +90,7 @@ func (s *BehaviorSubject) subscribe(parent context.Context, sink Observer) (cont
 		if err != Complete {
 			sink.Error(err)
 		} else {
-			sink.Next(s.Value())
+			sink.Next(s.getValue())
 			sink.Complete()
 		}
 		ctx.Unsubscribe(err)
@@ -95,7 +108,7 @@ func (s *BehaviorSubject) subscribe(parent context.Context, sink Observer) (cont
 			s.cws = newContextWaitService()
 		}
 
-		sink.Next(s.Value())
+		sink.Next(s.getValue())
 	}
 
 	s.mux.Unlock()
