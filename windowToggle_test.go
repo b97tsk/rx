@@ -15,7 +15,7 @@ func TestOperators_WindowToggle(t *testing.T) {
 		}
 		return Throw(ErrNotObservable)
 	}
-	subscribe(
+	subscribeN(
 		t,
 		[]Observable{
 			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
@@ -87,12 +87,14 @@ func TestOperators_WindowToggle(t *testing.T) {
 				toString,
 			),
 		},
-		"[B]", "[C]", "[D]", "[E]", "[F]", "[G]", Complete,
-		"[B C]", "[C D]", "[D E]", "[E F]", "[F G]", "[G]", Complete,
-		"[C]", "[E]", "[G]", Complete,
-		"[C]", "[E]", "[G]", errTest,
-		"[C]", "[E]", errTest,
-		"[C]", "[E]", Complete,
-		"[C]", errTest,
+		[][]interface{}{
+			{"[B]", "[C]", "[D]", "[E]", "[F]", "[G]", Complete},
+			{"[B C]", "[C D]", "[D E]", "[E F]", "[F G]", "[G]", Complete},
+			{"[C]", "[E]", "[G]", Complete},
+			{"[C]", "[E]", "[G]", errTest},
+			{"[C]", "[E]", errTest},
+			{"[C]", "[E]", Complete},
+			{"[C]", errTest},
+		},
 	)
 }

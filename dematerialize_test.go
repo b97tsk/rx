@@ -7,7 +7,7 @@ import (
 )
 
 func TestOperators_Dematerialize(t *testing.T) {
-	subscribe(
+	subscribeN(
 		t,
 		[]Observable{
 			Empty().Pipe(operators.Materialize(), operators.Dematerialize()),
@@ -15,12 +15,14 @@ func TestOperators_Dematerialize(t *testing.T) {
 			Just("A", "B", "C").Pipe(operators.Materialize(), operators.Dematerialize()),
 			Concat(Just("A", "B", "C"), Throw(errTest)).Pipe(operators.Materialize(), operators.Dematerialize()),
 		},
-		Complete,
-		errTest,
-		"A", "B", "C", Complete,
-		"A", "B", "C", errTest,
+		[][]interface{}{
+			{Complete},
+			{errTest},
+			{"A", "B", "C", Complete},
+			{"A", "B", "C", errTest},
+		},
 	)
-	subscribe(
+	subscribeN(
 		t,
 		[]Observable{
 			Empty().Pipe(operators.Dematerialize()),
@@ -28,9 +30,11 @@ func TestOperators_Dematerialize(t *testing.T) {
 			Just("A", "B", "C").Pipe(operators.Dematerialize()),
 			Concat(Just("A", "B", "C"), Throw(errTest)).Pipe(operators.Dematerialize()),
 		},
-		Complete,
-		errTest,
-		ErrNotNotification,
-		ErrNotNotification,
+		[][]interface{}{
+			{Complete},
+			{errTest},
+			{ErrNotNotification},
+			{ErrNotNotification},
+		},
 	)
 }

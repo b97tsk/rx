@@ -7,7 +7,7 @@ import (
 )
 
 func TestOperators_CongestingMergeAll(t *testing.T) {
-	subscribe(
+	subscribeN(
 		t,
 		[]Observable{
 			Just(
@@ -21,7 +21,9 @@ func TestOperators_CongestingMergeAll(t *testing.T) {
 				Just("E", "F").Pipe(addLatencyToValue(1, 3)),
 			).Pipe(CongestingMergeConfigure{ProjectToObservable, 1}.Use()),
 		},
-		"E", "C", "A", "F", "D", "B", Complete,
-		"A", "B", "C", "D", "E", "F", Complete,
+		[][]interface{}{
+			{"E", "C", "A", "F", "D", "B", Complete},
+			{"A", "B", "C", "D", "E", "F", Complete},
+		},
 	)
 }

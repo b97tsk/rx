@@ -7,7 +7,7 @@ import (
 )
 
 func TestInterval(t *testing.T) {
-	subscribe(
+	subscribeN(
 		t,
 		[]Observable{
 			CombineLatest(
@@ -19,7 +19,9 @@ func TestInterval(t *testing.T) {
 				Timer(step(1), step(2)).Pipe(operators.Take(3)),
 			).Pipe(toString),
 		},
-		"[0 2]", "[1 2]", "[2 2]", Complete,
-		"[0 0]", "[0 1]", "[1 1]", "[1 2]", "[2 2]", Complete,
+		[][]interface{}{
+			{"[0 2]", "[1 2]", "[2 2]", Complete},
+			{"[0 0]", "[0 1]", "[1 1]", "[1 2]", "[2 2]", Complete},
+		},
 	)
 }

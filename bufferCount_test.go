@@ -7,7 +7,7 @@ import (
 )
 
 func TestOperators_BufferCount(t *testing.T) {
-	subscribe(
+	subscribeN(
 		t,
 		[]Observable{
 			Just("A", "B", "C", "D", "E", "F", "G").Pipe(operators.BufferCount(2), toString),
@@ -16,10 +16,12 @@ func TestOperators_BufferCount(t *testing.T) {
 			Just("A", "B", "C", "D", "E", "F", "G").Pipe(BufferCountConfigure{3, 2}.Use(), toString),
 			Just("A", "B", "C", "D", "E", "F", "G").Pipe(BufferCountConfigure{3, 4}.Use(), toString),
 		},
-		"[A B]", "[C D]", "[E F]", "[G]", Complete,
-		"[A B C]", "[D E F]", "[G]", Complete,
-		"[A B C]", "[B C D]", "[C D E]", "[D E F]", "[E F G]", "[F G]", "[G]", Complete,
-		"[A B C]", "[C D E]", "[E F G]", "[G]", Complete,
-		"[A B C]", "[E F G]", Complete,
+		[][]interface{}{
+			{"[A B]", "[C D]", "[E F]", "[G]", Complete},
+			{"[A B C]", "[D E F]", "[G]", Complete},
+			{"[A B C]", "[B C D]", "[C D E]", "[D E F]", "[E F G]", "[F G]", "[G]", Complete},
+			{"[A B C]", "[C D E]", "[E F G]", "[G]", Complete},
+			{"[A B C]", "[E F G]", Complete},
+		},
 	)
 }

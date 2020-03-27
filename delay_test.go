@@ -7,7 +7,7 @@ import (
 )
 
 func TestOperators_Delay(t *testing.T) {
-	subscribe(
+	subscribeN(
 		t,
 		[]Observable{
 			Range(1, 5).Pipe(operators.Delay(step(3))),
@@ -16,7 +16,9 @@ func TestOperators_Delay(t *testing.T) {
 				operators.Delay(step(1)),
 			),
 		},
-		1, 2, 3, 4, Complete,
-		1, 2, 3, 4, errTest,
+		[][]interface{}{
+			{1, 2, 3, 4, Complete},
+			{1, 2, 3, 4, errTest},
+		},
 	)
 }

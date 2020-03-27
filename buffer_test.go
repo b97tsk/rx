@@ -7,7 +7,7 @@ import (
 )
 
 func TestOperators_Buffer(t *testing.T) {
-	subscribe(
+	subscribeN(
 		t,
 		[]Observable{
 			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
@@ -36,10 +36,12 @@ func TestOperators_Buffer(t *testing.T) {
 				toString,
 			),
 		},
-		"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", Complete,
-		"[A B]", "[C D]", "[E F]", Complete,
-		"[A B C]", "[D E F]", Complete,
-		"[A B C D]", Complete,
-		errTest,
+		[][]interface{}{
+			{"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", Complete},
+			{"[A B]", "[C D]", "[E F]", Complete},
+			{"[A B C]", "[D E F]", Complete},
+			{"[A B C D]", Complete},
+			{errTest},
+		},
 	)
 }

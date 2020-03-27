@@ -7,7 +7,7 @@ import (
 )
 
 func TestOperators_ForkJoin(t *testing.T) {
-	subscribe(
+	subscribeN(
 		t,
 		[]Observable{
 			ForkJoin(
@@ -28,8 +28,10 @@ func TestOperators_ForkJoin(t *testing.T) {
 				Throw(errTest).Pipe(delaySubscription(5)),
 			).Pipe(toString),
 		},
-		"[C 4 8]", Complete,
-		Complete,
-		errTest,
+		[][]interface{}{
+			{"[C 4 8]", Complete},
+			{Complete},
+			{errTest},
+		},
 	)
 }

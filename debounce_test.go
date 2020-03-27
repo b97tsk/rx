@@ -7,7 +7,7 @@ import (
 )
 
 func TestOperators_Debounce(t *testing.T) {
-	subscribe(
+	subscribeN(
 		t,
 		[]Observable{
 			Just("A", "B", "C").Pipe(
@@ -23,7 +23,9 @@ func TestOperators_Debounce(t *testing.T) {
 				}),
 			),
 		},
-		"C", Complete,
-		"A", "B", "C", Complete,
+		[][]interface{}{
+			{"C", Complete},
+			{"A", "B", "C", Complete},
+		},
 	)
 }

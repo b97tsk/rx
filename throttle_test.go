@@ -7,7 +7,7 @@ import (
 )
 
 func TestOperators_Throttle(t *testing.T) {
-	subscribe(
+	subscribeN(
 		t,
 		[]Observable{
 			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
@@ -43,9 +43,11 @@ func TestOperators_Throttle(t *testing.T) {
 				}.Use(),
 			),
 		},
-		"A", "C", "E", "G", Complete,
-		"A", errTest,
-		"C", "E", "G", Complete,
-		"A", "C", "E", "G", Complete,
+		[][]interface{}{
+			{"A", "C", "E", "G", Complete},
+			{"A", errTest},
+			{"C", "E", "G", Complete},
+			{"A", "C", "E", "G", Complete},
+		},
 	)
 }

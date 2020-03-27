@@ -12,15 +12,17 @@ func TestOperators_SkipWhile(t *testing.T) {
 			return val.(int) < 5
 		},
 	)
-	subscribe(
+	subscribeN(
 		t,
 		[]Observable{
 			Just(1, 2, 3, 4, 5, 4, 3, 2, 1).Pipe(skipLessThan5),
 			Concat(Range(1, 9), Throw(errTest)).Pipe(skipLessThan5),
 			Concat(Range(1, 5), Throw(errTest)).Pipe(skipLessThan5),
 		},
-		5, 4, 3, 2, 1, Complete,
-		5, 6, 7, 8, errTest,
-		errTest,
+		[][]interface{}{
+			{5, 4, 3, 2, 1, Complete},
+			{5, 6, 7, 8, errTest},
+			{errTest},
+		},
 	)
 }

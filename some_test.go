@@ -12,7 +12,7 @@ func TestOperators_Some(t *testing.T) {
 			return val.(int) > 4
 		},
 	)
-	subscribe(
+	subscribeN(
 		t,
 		[]Observable{
 			Range(1, 9).Pipe(someGreaterThan4),
@@ -21,10 +21,12 @@ func TestOperators_Some(t *testing.T) {
 			Concat(Range(1, 9), Throw(errTest)).Pipe(someGreaterThan4),
 			Concat(Range(1, 5), Throw(errTest)).Pipe(someGreaterThan4),
 		},
-		true, Complete,
-		false, Complete,
-		false, Complete,
-		true, Complete,
-		errTest,
+		[][]interface{}{
+			{true, Complete},
+			{false, Complete},
+			{false, Complete},
+			{true, Complete},
+			{errTest},
+		},
 	)
 }

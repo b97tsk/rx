@@ -59,8 +59,16 @@ func delaySubscription(n int) Operator {
 	}
 }
 
-func subscribe(t *testing.T, observables []Observable, output ...interface{}) {
-	for _, source := range observables {
+func subscribe(t *testing.T, obs Observable, output ...interface{}) {
+	subscribeN(t, []Observable{obs}, [][]interface{}{output})
+}
+
+func subscribeN(t *testing.T, observables []Observable, outputs [][]interface{}) {
+	if len(observables) != len(outputs) {
+		panic("subscribeN: len(observables) != len(outputs)")
+	}
+	for i, source := range observables {
+		output := outputs[i]
 		source.BlockingSubscribe(
 			context.Background(),
 			func(x Notification) {
@@ -105,11 +113,11 @@ func subscribe(t *testing.T, observables []Observable, output ...interface{}) {
 				}
 			},
 		)
-	}
-	if len(output) > 0 {
-		for _, expected := range output {
-			t.Logf("expect %v, but got Nothing", expected)
+		if len(output) > 0 {
+			for _, expected := range output {
+				t.Logf("expect %v, but got Nothing", expected)
+			}
+			t.Fail()
 		}
-		t.Fail()
 	}
 }

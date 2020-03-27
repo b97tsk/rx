@@ -7,7 +7,7 @@ import (
 )
 
 func TestOperators_Exhaust(t *testing.T) {
-	subscribe(
+	subscribeN(
 		t,
 		[]Observable{
 			Just(
@@ -29,8 +29,10 @@ func TestOperators_Exhaust(t *testing.T) {
 				Throw(errTest),
 			).Pipe(addLatencyToValue(0, 5), operators.Exhaust()),
 		},
-		"A", "B", "C", "D", "I", "J", "K", "L", Complete,
-		"A", "B", "C", "D", "I", "J", "K", "L", Complete,
-		"A", "B", "C", "D", "I", "J", "K", "L", errTest,
+		[][]interface{}{
+			{"A", "B", "C", "D", "I", "J", "K", "L", Complete},
+			{"A", "B", "C", "D", "I", "J", "K", "L", Complete},
+			{"A", "B", "C", "D", "I", "J", "K", "L", errTest},
+		},
 	)
 }

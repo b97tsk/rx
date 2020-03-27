@@ -120,14 +120,12 @@ func TestOperators_Share(t *testing.T) {
 		)
 		subscribe(
 			t,
-			[]Observable{
-				Merge(
-					obs,
-					obs.Pipe(delaySubscription(4)),
-					obs.Pipe(delaySubscription(8)),
-					obs.Pipe(delaySubscription(13)),
-				),
-			},
+			Merge(
+				obs,
+				obs.Pipe(delaySubscription(4)),
+				obs.Pipe(delaySubscription(8)),
+				obs.Pipe(delaySubscription(13)),
+			),
 			0, 1, 1, 2, 2, 2, 3, 3, 3, 0, 1, 2, 3, Complete,
 		)
 	})
@@ -138,14 +136,12 @@ func TestOperators_Share(t *testing.T) {
 		)
 		subscribe(
 			t,
-			[]Observable{
-				Merge(
-					obs,
-					obs.Pipe(delaySubscription(4)),
-					obs.Pipe(delaySubscription(8)),
-					obs.Pipe(delaySubscription(19)),
-				),
-			},
+			Merge(
+				obs,
+				obs.Pipe(delaySubscription(4)),
+				obs.Pipe(delaySubscription(8)),
+				obs.Pipe(delaySubscription(19)),
+			),
 			0, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 5, 0, 1, 2, 3, Complete,
 		)
 	})
@@ -159,14 +155,12 @@ func TestOperators_ShareReplay(t *testing.T) {
 		)
 		subscribe(
 			t,
-			[]Observable{
-				Merge(
-					obs,
-					obs.Pipe(delaySubscription(4)),
-					obs.Pipe(delaySubscription(8)),
-					obs.Pipe(delaySubscription(13)),
-				),
-			},
+			Merge(
+				obs,
+				obs.Pipe(delaySubscription(4)),
+				obs.Pipe(delaySubscription(8)),
+				obs.Pipe(delaySubscription(13)),
+			),
 			0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 0, 1, 2, 3, Complete,
 		)
 	})
@@ -177,14 +171,12 @@ func TestOperators_ShareReplay(t *testing.T) {
 		)
 		subscribe(
 			t,
-			[]Observable{
-				Merge(
-					obs,
-					obs.Pipe(delaySubscription(4)),
-					obs.Pipe(delaySubscription(8)),
-					obs.Pipe(delaySubscription(16)),
-				),
-			},
+			Merge(
+				obs,
+				obs.Pipe(delaySubscription(4)),
+				obs.Pipe(delaySubscription(8)),
+				obs.Pipe(delaySubscription(16)),
+			),
 			0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 0, 1, 2, 3, Complete,
 		)
 	})

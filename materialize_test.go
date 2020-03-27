@@ -7,7 +7,7 @@ import (
 )
 
 func TestOperators_Materialize(t *testing.T) {
-	subscribe(
+	subscribeN(
 		t,
 		[]Observable{
 			Empty().Pipe(operators.Materialize(), operators.Count()),
@@ -15,9 +15,11 @@ func TestOperators_Materialize(t *testing.T) {
 			Just("A", "B", "C").Pipe(operators.Materialize(), operators.Count()),
 			Concat(Just("A", "B", "C"), Throw(errTest)).Pipe(operators.Materialize(), operators.Count()),
 		},
-		1, Complete,
-		1, Complete,
-		4, Complete,
-		4, Complete,
+		[][]interface{}{
+			{1, Complete},
+			{1, Complete},
+			{4, Complete},
+			{4, Complete},
+		},
 	)
 }

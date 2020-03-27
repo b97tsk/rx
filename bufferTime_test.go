@@ -7,7 +7,7 @@ import (
 )
 
 func TestOperators_BufferTime(t *testing.T) {
-	subscribe(
+	subscribeN(
 		t,
 		[]Observable{
 			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
@@ -26,12 +26,14 @@ func TestOperators_BufferTime(t *testing.T) {
 				toString,
 			),
 		},
-		"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", "[G]", Complete,
-		"[A B]", "[C D]", "[E F]", "[G]", Complete,
-		"[A B C]", "[D E F]", "[G]", Complete,
+		[][]interface{}{
+			{"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", "[G]", Complete},
+			{"[A B]", "[C D]", "[E F]", "[G]", Complete},
+			{"[A B C]", "[D E F]", "[G]", Complete},
+		},
 	)
 	t.Log("----------")
-	subscribe(
+	subscribeN(
 		t,
 		[]Observable{
 			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
@@ -55,13 +57,15 @@ func TestOperators_BufferTime(t *testing.T) {
 				toString,
 			),
 		},
-		"[A B C D]", "[E F G]", Complete,
-		"[A B C]", "[D E F]", "[G]", Complete,
-		"[A B]", "[C D]", "[E F]", "[G]", Complete,
-		"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", "[G]", "[]", Complete,
+		[][]interface{}{
+			{"[A B C D]", "[E F G]", Complete},
+			{"[A B C]", "[D E F]", "[G]", Complete},
+			{"[A B]", "[C D]", "[E F]", "[G]", Complete},
+			{"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", "[G]", "[]", Complete},
+		},
 	)
 	t.Log("----------")
-	subscribe(
+	subscribeN(
 		t,
 		[]Observable{
 			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
@@ -80,8 +84,10 @@ func TestOperators_BufferTime(t *testing.T) {
 				toString,
 			),
 		},
-		"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", "[G]", Complete,
-		"[A]", "[C]", "[E]", "[G]", Complete,
-		"[A B]", "[B C]", "[C D]", "[D E]", "[E F]", "[F G]", "[G]", Complete,
+		[][]interface{}{
+			{"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", "[G]", Complete},
+			{"[A]", "[C]", "[E]", "[G]", Complete},
+			{"[A B]", "[B C]", "[C D]", "[D E]", "[E F]", "[F G]", "[G]", Complete},
+		},
 	)
 }

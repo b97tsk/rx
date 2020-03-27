@@ -19,14 +19,17 @@ func TestOperators_CongestingZipAll(t *testing.T) {
 	for i, obs := range observables {
 		observables[i] = obs.Pipe(operators.CongestingZipAll(), toString)
 	}
-	subscribe(
-		t, observables[:],
-		"[A 1]", "[B 2]", Complete,
-		"[A 1]", "[B 2]", "[C 3]", Complete,
-		"[A 1]", "[B 2]", "[C 3]", Complete,
-		"[A 1]", "[B 2]", Complete,
-		"[A 1]", "[B 2]", "[C 3]", Complete,
-		"[A 1]", "[B 2]", "[C 3]", errTest,
+	subscribeN(
+		t,
+		observables[:],
+		[][]interface{}{
+			{"[A 1]", "[B 2]", Complete},
+			{"[A 1]", "[B 2]", "[C 3]", Complete},
+			{"[A 1]", "[B 2]", "[C 3]", Complete},
+			{"[A 1]", "[B 2]", Complete},
+			{"[A 1]", "[B 2]", "[C 3]", Complete},
+			{"[A 1]", "[B 2]", "[C 3]", errTest},
+		},
 	)
-	subscribe(t, []Observable{CongestingZip()}, Complete)
+	subscribe(t, CongestingZip(), Complete)
 }

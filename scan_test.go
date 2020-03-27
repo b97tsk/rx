@@ -18,7 +18,7 @@ func TestOperators_Scan(t *testing.T) {
 		return acc.(int) + val.(int)
 	}
 
-	subscribe(
+	subscribeN(
 		t,
 		[]Observable{
 			Range(1, 7).Pipe(operators.Scan(max)),
@@ -29,12 +29,14 @@ func TestOperators_Scan(t *testing.T) {
 			Empty().Pipe(operators.Scan(sum)),
 			Throw(errTest).Pipe(operators.Scan(sum)),
 		},
-		1, 2, 3, 4, 5, 6, Complete,
-		42, Complete,
-		Complete,
-		1, 3, 6, 10, 15, 21, Complete,
-		42, Complete,
-		Complete,
-		errTest,
+		[][]interface{}{
+			{1, 2, 3, 4, 5, 6, Complete},
+			{42, Complete},
+			{Complete},
+			{1, 3, 6, 10, 15, 21, Complete},
+			{42, Complete},
+			{Complete},
+			{errTest},
+		},
 	)
 }

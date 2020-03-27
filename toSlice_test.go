@@ -20,11 +20,14 @@ func TestOperators_ToSlice(t *testing.T) {
 			toString,
 		)
 	}
-	subscribe(
-		t, observables[:],
-		"[A B C]", Complete,
-		"[A]", Complete,
-		"[]", Complete,
-		errTest,
+	subscribeN(
+		t,
+		observables[:],
+		[][]interface{}{
+			{"[A B C]", Complete},
+			{"[A]", Complete},
+			{"[]", Complete},
+			{errTest},
+		},
 	)
 }

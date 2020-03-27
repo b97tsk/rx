@@ -12,7 +12,7 @@ func TestOperators_FindIndex(t *testing.T) {
 			return val == "D"
 		},
 	)
-	subscribe(
+	subscribeN(
 		t,
 		[]Observable{
 			Just("A", "B", "C", "D", "E").Pipe(findIndex),
@@ -20,9 +20,11 @@ func TestOperators_FindIndex(t *testing.T) {
 			Concat(Just("A", "B", "C", "D", "E"), Throw(errTest)).Pipe(findIndex),
 			Concat(Just("A", "B", "C"), Throw(errTest)).Pipe(findIndex),
 		},
-		3, Complete,
-		Complete,
-		3, Complete,
-		errTest,
+		[][]interface{}{
+			{3, Complete},
+			{Complete},
+			{3, Complete},
+			{errTest},
+		},
 	)
 }

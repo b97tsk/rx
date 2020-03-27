@@ -12,7 +12,7 @@ func TestOperators_RepeatWhen(t *testing.T) {
 		repeatTwice = operators.Take(1)
 	)
 
-	subscribe(
+	subscribeN(
 		t,
 		[]Observable{
 			Range(1, 4).Pipe(operators.RepeatWhen(repeatOnce)),
@@ -20,9 +20,11 @@ func TestOperators_RepeatWhen(t *testing.T) {
 			Concat(Range(1, 4), Throw(errTest)).Pipe(operators.RepeatWhen(repeatOnce)),
 			Concat(Range(1, 4), Throw(errTest)).Pipe(operators.RepeatWhen(repeatTwice)),
 		},
-		1, 2, 3, Complete,
-		1, 2, 3, 1, 2, 3, Complete,
-		1, 2, 3, errTest,
-		1, 2, 3, errTest,
+		[][]interface{}{
+			{1, 2, 3, Complete},
+			{1, 2, 3, 1, 2, 3, Complete},
+			{1, 2, 3, errTest},
+			{1, 2, 3, errTest},
+		},
 	)
 }

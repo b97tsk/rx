@@ -12,7 +12,7 @@ func TestOperators_Find(t *testing.T) {
 			return val.(int) == 5
 		},
 	)
-	subscribe(
+	subscribeN(
 		t,
 		[]Observable{
 			Just(1, 2, 3, 4, 5, 4, 3, 2, 1).Pipe(findFive),
@@ -21,10 +21,12 @@ func TestOperators_Find(t *testing.T) {
 			Concat(Range(1, 9), Throw(errTest)).Pipe(findFive),
 			Concat(Range(1, 5), Throw(errTest)).Pipe(findFive),
 		},
-		5, Complete,
-		5, Complete,
-		Complete,
-		5, Complete,
-		errTest,
+		[][]interface{}{
+			{5, Complete},
+			{5, Complete},
+			{Complete},
+			{5, Complete},
+			{errTest},
+		},
 	)
 }

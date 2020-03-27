@@ -16,7 +16,7 @@ func TestOperators_Reduce(t *testing.T) {
 	sum := func(seed, val interface{}, idx int) interface{} {
 		return seed.(int) + val.(int)
 	}
-	subscribe(
+	subscribeN(
 		t,
 		[]Observable{
 			Range(1, 7).Pipe(operators.Reduce(max)),
@@ -27,13 +27,15 @@ func TestOperators_Reduce(t *testing.T) {
 			Empty().Pipe(operators.Reduce(sum)),
 			Throw(errTest).Pipe(operators.Reduce(sum)),
 		},
-		6, Complete,
-		42, Complete,
-		Complete,
-		21, Complete,
-		42, Complete,
-		Complete,
-		errTest,
+		[][]interface{}{
+			{6, Complete},
+			{42, Complete},
+			{Complete},
+			{21, Complete},
+			{42, Complete},
+			{Complete},
+			{errTest},
+		},
 	)
 }
 
@@ -47,7 +49,7 @@ func TestOperators_Fold(t *testing.T) {
 	sum := func(seed, val interface{}, idx int) interface{} {
 		return seed.(int) + val.(int)
 	}
-	subscribe(
+	subscribeN(
 		t,
 		[]Observable{
 			Range(1, 7).Pipe(operators.Fold(-1, max)),
@@ -58,12 +60,14 @@ func TestOperators_Fold(t *testing.T) {
 			Empty().Pipe(operators.Fold(-1, sum)),
 			Throw(errTest).Pipe(operators.Fold(-1, sum)),
 		},
-		6, Complete,
-		42, Complete,
-		-1, Complete,
-		20, Complete,
-		41, Complete,
-		-1, Complete,
-		errTest,
+		[][]interface{}{
+			{6, Complete},
+			{42, Complete},
+			{-1, Complete},
+			{20, Complete},
+			{41, Complete},
+			{-1, Complete},
+			{errTest},
+		},
 	)
 }

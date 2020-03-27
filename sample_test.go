@@ -7,7 +7,7 @@ import (
 )
 
 func TestOperators_Sample(t *testing.T) {
-	subscribe(
+	subscribeN(
 		t,
 		[]Observable{
 			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
@@ -24,7 +24,9 @@ func TestOperators_Sample(t *testing.T) {
 				),
 			),
 		},
-		"B", "D", "F", Complete,
-		"B", "D", "F", errTest,
+		[][]interface{}{
+			{"B", "D", "F", Complete},
+			{"B", "D", "F", errTest},
+		},
 	)
 }

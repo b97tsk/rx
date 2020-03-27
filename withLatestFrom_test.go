@@ -24,11 +24,14 @@ func TestOperators_WithLatestFrom(t *testing.T) {
 				toString,
 			)
 		}
-		subscribe(
-			t, observables[:],
-			"[A 1]", "[B 2]", Complete,
-			"[A 1]", "[B 2]", "[C 3]", Complete,
-			"[A 1]", "[B 2]", "[C 3]", "[D 3]", Complete,
+		subscribeN(
+			t,
+			observables[:],
+			[][]interface{}{
+				{"[A 1]", "[B 2]", Complete},
+				{"[A 1]", "[B 2]", "[C 3]", Complete},
+				{"[A 1]", "[B 2]", "[C 3]", "[D 3]", Complete},
+			},
 		)
 	}
 
@@ -40,11 +43,14 @@ func TestOperators_WithLatestFrom(t *testing.T) {
 				toString,
 			)
 		}
-		subscribe(
-			t, observables[:],
-			"[A 1]", "[B 2]", Complete,
-			"[A 1]", "[B 2]", "[C 3]", Complete,
-			"[A 1]", "[B 2]", "[C 3]", errTest,
+		subscribeN(
+			t,
+			observables[:],
+			[][]interface{}{
+				{"[A 1]", "[B 2]", Complete},
+				{"[A 1]", "[B 2]", "[C 3]", Complete},
+				{"[A 1]", "[B 2]", "[C 3]", errTest},
+			},
 		)
 	}
 }

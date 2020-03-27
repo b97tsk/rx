@@ -16,13 +16,15 @@ func TestCreate(t *testing.T) {
 			sink.Next("C") // WARNING: buggy!
 		},
 	)
-	subscribe(
+	subscribeN(
 		t,
 		[]Observable{
 			obs,
 			obs.Pipe(operators.Mutex()), // Mutex gets rid of the extra "C".
 		},
-		"A", "B", Complete, "C",
-		"A", "B", Complete,
+		[][]interface{}{
+			{"A", "B", Complete, "C"},
+			{"A", "B", Complete},
+		},
 	)
 }

@@ -7,15 +7,17 @@ import (
 )
 
 func TestOperators_Count(t *testing.T) {
-	subscribe(
+	subscribeN(
 		t,
 		[]Observable{
 			Empty().Pipe(operators.Count()),
 			Range(1, 9).Pipe(operators.Count()),
 			Concat(Range(1, 9), Throw(errTest)).Pipe(operators.Count()),
 		},
-		0, Complete,
-		8, Complete,
-		errTest,
+		[][]interface{}{
+			{0, Complete},
+			{8, Complete},
+			{errTest},
+		},
 	)
 }

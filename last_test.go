@@ -7,7 +7,7 @@ import (
 )
 
 func TestOperators_Last(t *testing.T) {
-	subscribe(
+	subscribeN(
 		t,
 		[]Observable{
 			Empty().Pipe(operators.Last()),
@@ -17,11 +17,13 @@ func TestOperators_Last(t *testing.T) {
 			Concat(Just("A"), Throw(errTest)).Pipe(operators.Last()),
 			Concat(Just("A", "B"), Throw(errTest)).Pipe(operators.Last()),
 		},
-		ErrEmpty,
-		errTest,
-		"A", Complete,
-		"B", Complete,
-		errTest,
-		errTest,
+		[][]interface{}{
+			{ErrEmpty},
+			{errTest},
+			{"A", Complete},
+			{"B", Complete},
+			{errTest},
+			{errTest},
+		},
 	)
 }

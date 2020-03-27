@@ -7,7 +7,7 @@ import (
 )
 
 func TestOperators_EndWith(t *testing.T) {
-	subscribe(
+	subscribeN(
 		t,
 		[]Observable{
 			Just("A", "B", "C").Pipe(operators.EndWith("D", "E")),
@@ -15,9 +15,11 @@ func TestOperators_EndWith(t *testing.T) {
 			Throw(errTest).Pipe(operators.EndWith("D", "E")),
 			Throw(errTest).Pipe(operators.EndWith()),
 		},
-		"A", "B", "C", "D", "E", Complete,
-		"D", "E", Complete,
-		errTest,
-		errTest,
+		[][]interface{}{
+			{"A", "B", "C", "D", "E", Complete},
+			{"D", "E", Complete},
+			{errTest},
+			{errTest},
+		},
 	)
 }

@@ -9,7 +9,7 @@ import (
 func TestOperators_SkipUntil(t *testing.T) {
 	addLatency := addLatencyToValue(0, 2)
 	delay := delaySubscription(3)
-	subscribe(
+	subscribeN(
 		t,
 		[]Observable{
 			Just("A", "B", "C").Pipe(addLatency, operators.SkipUntil(Just(42))),
@@ -17,20 +17,24 @@ func TestOperators_SkipUntil(t *testing.T) {
 			Just("A", "B", "C").Pipe(addLatency, operators.SkipUntil(Throw(errTest))),
 			Just("A", "B", "C").Pipe(addLatency, operators.SkipUntil(Never())),
 		},
-		"A", "B", "C", Complete,
-		Complete,
-		errTest,
-		Complete,
+		[][]interface{}{
+			{"A", "B", "C", Complete},
+			{Complete},
+			{errTest},
+			{Complete},
+		},
 	)
-	subscribe(
+	subscribeN(
 		t,
 		[]Observable{
 			Just("A", "B", "C").Pipe(addLatency, operators.SkipUntil(Just(42).Pipe(delay))),
 			Just("A", "B", "C").Pipe(addLatency, operators.SkipUntil(Empty().Pipe(delay))),
 			Just("A", "B", "C").Pipe(addLatency, operators.SkipUntil(Throw(errTest).Pipe(delay))),
 		},
-		"C", Complete,
-		Complete,
-		errTest,
+		[][]interface{}{
+			{"C", Complete},
+			{Complete},
+			{errTest},
+		},
 	)
 }

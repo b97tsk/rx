@@ -12,13 +12,15 @@ func TestOperators_Catch(t *testing.T) {
 			return Just("D", "E")
 		},
 	)
-	subscribe(
+	subscribeN(
 		t,
 		[]Observable{
 			Just("A", "B", "C").Pipe(op),
 			Concat(Just("A", "B", "C"), Throw(errTest)).Pipe(op),
 		},
-		"A", "B", "C", Complete,
-		"A", "B", "C", "D", "E", Complete,
+		[][]interface{}{
+			{"A", "B", "C", Complete},
+			{"A", "B", "C", "D", "E", Complete},
+		},
 	)
 }

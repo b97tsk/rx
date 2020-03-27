@@ -7,13 +7,15 @@ import (
 )
 
 func TestOperators_Timeout(t *testing.T) {
-	subscribe(
+	subscribeN(
 		t,
 		[]Observable{
 			Just("A", "B", "C").Pipe(addLatencyToValue(1, 1), operators.Timeout(step(2))),
 			Just("A", "B", "C").Pipe(addLatencyToValue(1, 3), operators.Timeout(step(2))),
 		},
-		"A", "B", "C", Complete,
-		"A", ErrTimeout,
+		[][]interface{}{
+			{"A", "B", "C", Complete},
+			{"A", ErrTimeout},
+		},
 	)
 }

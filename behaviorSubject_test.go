@@ -21,16 +21,14 @@ func TestBehaviorSubject(t *testing.T) {
 
 		subscribe(
 			t,
-			[]Observable{
-				Zip(
-					subject.Observable,
-					subject.Pipe(operators.Scan(sum)),
-				).Pipe(toString),
-			},
+			Zip(
+				subject.Observable,
+				subject.Pipe(operators.Scan(sum)),
+			).Pipe(toString),
 			"[0 0]", "[3 3]", "[4 7]", "[5 12]", Complete,
 		)
 
-		subscribe(t, []Observable{subject.Observable}, 5, Complete)
+		subscribe(t, subject.Observable, 5, Complete)
 	})
 
 	t.Run("Error", func(t *testing.T) {
@@ -42,15 +40,13 @@ func TestBehaviorSubject(t *testing.T) {
 
 		subscribe(
 			t,
-			[]Observable{
-				Zip(
-					subject.Observable,
-					subject.Pipe(operators.Scan(sum)),
-				).Pipe(toString),
-			},
+			Zip(
+				subject.Observable,
+				subject.Pipe(operators.Scan(sum)),
+			).Pipe(toString),
 			"[0 0]", "[3 3]", "[4 7]", "[5 12]", errTest,
 		)
 
-		subscribe(t, []Observable{subject.Observable}, errTest)
+		subscribe(t, subject.Observable, errTest)
 	})
 }

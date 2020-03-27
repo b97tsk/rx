@@ -24,11 +24,14 @@ func TestOperators_ToObservables(t *testing.T) {
 			),
 		)
 	}
-	subscribe(
-		t, observables[:],
-		ErrNotObservable,
-		"A", "B", "C", Complete,
-		Complete,
-		errTest,
+	subscribeN(
+		t,
+		observables[:],
+		[][]interface{}{
+			{ErrNotObservable},
+			{"A", "B", "C", Complete},
+			{Complete},
+			{errTest},
+		},
 	)
 }

@@ -9,9 +9,7 @@ import (
 func TestOperators_Distinct(t *testing.T) {
 	subscribe(
 		t,
-		[]Observable{
-			Just("A", "B", "B", "A", "C", "C", "A").Pipe(operators.Distinct()),
-		},
+		Just("A", "B", "B", "A", "C", "C", "A").Pipe(operators.Distinct()),
 		"A", "B", "C", Complete,
 	)
 }

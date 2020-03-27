@@ -12,7 +12,7 @@ func TestOperators_Every(t *testing.T) {
 			return val.(int) < 5
 		},
 	)
-	subscribe(
+	subscribeN(
 		t,
 		[]Observable{
 			Range(1, 9).Pipe(everyLessThan5),
@@ -21,10 +21,12 @@ func TestOperators_Every(t *testing.T) {
 			Concat(Range(1, 9), Throw(errTest)).Pipe(everyLessThan5),
 			Concat(Range(1, 5), Throw(errTest)).Pipe(everyLessThan5),
 		},
-		false, Complete,
-		true, Complete,
-		true, Complete,
-		false, Complete,
-		errTest,
+		[][]interface{}{
+			{false, Complete},
+			{true, Complete},
+			{true, Complete},
+			{false, Complete},
+			{errTest},
+		},
 	)
 }

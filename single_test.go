@@ -7,7 +7,7 @@ import (
 )
 
 func TestOperators_Single(t *testing.T) {
-	subscribe(
+	subscribeN(
 		t,
 		[]Observable{
 			Just("A", "B").Pipe(operators.Single()),
@@ -15,9 +15,11 @@ func TestOperators_Single(t *testing.T) {
 			Empty().Pipe(operators.Single()),
 			Throw(errTest).Pipe(operators.Single()),
 		},
-		ErrNotSingle,
-		"A", Complete,
-		ErrEmpty,
-		errTest,
+		[][]interface{}{
+			{ErrNotSingle},
+			{"A", Complete},
+			{ErrEmpty},
+			{errTest},
+		},
 	)
 }

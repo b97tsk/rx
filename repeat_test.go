@@ -7,7 +7,7 @@ import (
 )
 
 func TestOperators_Repeat(t *testing.T) {
-	subscribe(
+	subscribeN(
 		t,
 		[]Observable{
 			Range(1, 4).Pipe(operators.Repeat(0)),
@@ -17,11 +17,13 @@ func TestOperators_Repeat(t *testing.T) {
 			Concat(Range(1, 4), Throw(errTest)).Pipe(operators.Repeat(1)),
 			Concat(Range(1, 4), Throw(errTest)).Pipe(operators.Repeat(2)),
 		},
-		Complete,
-		1, 2, 3, Complete,
-		1, 2, 3, 1, 2, 3, Complete,
-		Complete,
-		1, 2, 3, errTest,
-		1, 2, 3, errTest,
+		[][]interface{}{
+			{Complete},
+			{1, 2, 3, Complete},
+			{1, 2, 3, 1, 2, 3, Complete},
+			{Complete},
+			{1, 2, 3, errTest},
+			{1, 2, 3, errTest},
+		},
 	)
 }

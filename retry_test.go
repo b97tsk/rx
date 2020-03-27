@@ -7,7 +7,7 @@ import (
 )
 
 func TestOperators_Retry(t *testing.T) {
-	subscribe(
+	subscribeN(
 		t,
 		[]Observable{
 			Range(1, 4).Pipe(operators.Retry(0)),
@@ -17,11 +17,13 @@ func TestOperators_Retry(t *testing.T) {
 			Concat(Range(1, 4), Throw(errTest)).Pipe(operators.Retry(1)),
 			Concat(Range(1, 4), Throw(errTest)).Pipe(operators.Retry(2)),
 		},
-		1, 2, 3, Complete,
-		1, 2, 3, Complete,
-		1, 2, 3, Complete,
-		1, 2, 3, errTest,
-		1, 2, 3, 1, 2, 3, errTest,
-		1, 2, 3, 1, 2, 3, 1, 2, 3, errTest,
+		[][]interface{}{
+			{1, 2, 3, Complete},
+			{1, 2, 3, Complete},
+			{1, 2, 3, Complete},
+			{1, 2, 3, errTest},
+			{1, 2, 3, 1, 2, 3, errTest},
+			{1, 2, 3, 1, 2, 3, 1, 2, 3, errTest},
+		},
 	)
 }

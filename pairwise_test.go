@@ -8,7 +8,7 @@ import (
 
 func TestOperators_Pairwise(t *testing.T) {
 	op := Pipe(operators.Pairwise(), toString)
-	subscribe(
+	subscribeN(
 		t,
 		[]Observable{
 			Empty().Pipe(op),
@@ -18,11 +18,13 @@ func TestOperators_Pairwise(t *testing.T) {
 			Just("A", "B", "C", "D").Pipe(op),
 			Concat(Just("A", "B", "C", "D"), Throw(errTest)).Pipe(op),
 		},
-		Complete,
-		Complete,
-		"[A B]", Complete,
-		"[A B]", "[B C]", Complete,
-		"[A B]", "[B C]", "[C D]", Complete,
-		"[A B]", "[B C]", "[C D]", errTest,
+		[][]interface{}{
+			{Complete},
+			{Complete},
+			{"[A B]", Complete},
+			{"[A B]", "[B C]", Complete},
+			{"[A B]", "[B C]", "[C D]", Complete},
+			{"[A B]", "[B C]", "[C D]", errTest},
+		},
 	)
 }

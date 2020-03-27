@@ -7,7 +7,7 @@ import (
 )
 
 func TestOperators_DebounceTime(t *testing.T) {
-	subscribe(
+	subscribeN(
 		t,
 		[]Observable{
 			Just("A", "B", "C").Pipe(
@@ -19,7 +19,9 @@ func TestOperators_DebounceTime(t *testing.T) {
 				operators.DebounceTime(step(2)),
 			),
 		},
-		"C", Complete,
-		"A", "B", "C", Complete,
+		[][]interface{}{
+			{"C", Complete},
+			{"A", "B", "C", Complete},
+		},
 	)
 }

@@ -13,7 +13,7 @@ func TestOperators_RetryWhen(t *testing.T) {
 		retryTwice = operators.Take(2)
 	)
 
-	subscribe(
+	subscribeN(
 		t,
 		[]Observable{
 			Range(1, 4).Pipe(operators.RetryWhen(retryNever)),
@@ -23,11 +23,13 @@ func TestOperators_RetryWhen(t *testing.T) {
 			Concat(Range(1, 4), Throw(errTest)).Pipe(operators.RetryWhen(retryOnce)),
 			Concat(Range(1, 4), Throw(errTest)).Pipe(operators.RetryWhen(retryTwice)),
 		},
-		1, 2, 3, Complete,
-		1, 2, 3, Complete,
-		1, 2, 3, Complete,
-		1, 2, 3, errTest,
-		1, 2, 3, 1, 2, 3, errTest,
-		1, 2, 3, 1, 2, 3, 1, 2, 3, errTest,
+		[][]interface{}{
+			{1, 2, 3, Complete},
+			{1, 2, 3, Complete},
+			{1, 2, 3, Complete},
+			{1, 2, 3, errTest},
+			{1, 2, 3, 1, 2, 3, errTest},
+			{1, 2, 3, 1, 2, 3, 1, 2, 3, errTest},
+		},
 	)
 }

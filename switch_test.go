@@ -7,7 +7,7 @@ import (
 )
 
 func TestOperators_Switch(t *testing.T) {
-	subscribe(
+	subscribeN(
 		t,
 		[]Observable{
 			Just(
@@ -28,8 +28,10 @@ func TestOperators_Switch(t *testing.T) {
 				Throw(errTest),
 			).Pipe(addLatencyToValue(0, 5), operators.Switch()),
 		},
-		"A", "B", "C", "E", "F", "I", "J", "K", "L", Complete,
-		"A", "B", "C", "E", "F", "I", "J", "K", Complete,
-		"A", "B", "C", "E", "F", "I", "J", "K", errTest,
+		[][]interface{}{
+			{"A", "B", "C", "E", "F", "I", "J", "K", "L", Complete},
+			{"A", "B", "C", "E", "F", "I", "J", "K", Complete},
+			{"A", "B", "C", "E", "F", "I", "J", "K", errTest},
+		},
 	)
 }

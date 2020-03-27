@@ -7,7 +7,7 @@ import (
 )
 
 func TestOperators_TakeLast(t *testing.T) {
-	subscribe(
+	subscribeN(
 		t,
 		[]Observable{
 			Range(1, 9).Pipe(operators.TakeLast(0)),
@@ -15,12 +15,14 @@ func TestOperators_TakeLast(t *testing.T) {
 			Range(1, 3).Pipe(operators.TakeLast(3)),
 			Range(1, 1).Pipe(operators.TakeLast(3)),
 		},
-		Complete,
-		6, 7, 8, Complete,
-		1, 2, Complete,
-		Complete,
+		[][]interface{}{
+			{Complete},
+			{6, 7, 8, Complete},
+			{1, 2, Complete},
+			{Complete},
+		},
 	)
-	subscribe(
+	subscribeN(
 		t,
 		[]Observable{
 			Concat(Range(1, 9), Throw(errTest)).Pipe(operators.TakeLast(0)),
@@ -28,9 +30,11 @@ func TestOperators_TakeLast(t *testing.T) {
 			Concat(Range(1, 3), Throw(errTest)).Pipe(operators.TakeLast(3)),
 			Concat(Range(1, 1), Throw(errTest)).Pipe(operators.TakeLast(3)),
 		},
-		Complete,
-		errTest,
-		errTest,
-		errTest,
+		[][]interface{}{
+			{Complete},
+			{errTest},
+			{errTest},
+			{errTest},
+		},
 	)
 }

@@ -7,7 +7,7 @@ import (
 )
 
 func TestOperators_IsEmpty(t *testing.T) {
-	subscribe(
+	subscribeN(
 		t,
 		[]Observable{
 			Just("A", "B").Pipe(operators.IsEmpty()),
@@ -15,9 +15,11 @@ func TestOperators_IsEmpty(t *testing.T) {
 			Empty().Pipe(operators.IsEmpty()),
 			Throw(errTest).Pipe(operators.IsEmpty()),
 		},
-		false, Complete,
-		false, Complete,
-		true, Complete,
-		errTest,
+		[][]interface{}{
+			{false, Complete},
+			{false, Complete},
+			{true, Complete},
+			{errTest},
+		},
 	)
 }
