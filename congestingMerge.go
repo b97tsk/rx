@@ -13,7 +13,8 @@ type CongestingMergeConfigure struct {
 // Use creates an Operator from this configure.
 func (configure CongestingMergeConfigure) Use() Operator {
 	return func(source Observable) Observable {
-		return congestingMergeObservable{source, configure}.Subscribe
+		obs := congestingMergeObservable{source, configure}
+		return Create(obs.Subscribe)
 	}
 }
 
@@ -22,11 +23,9 @@ type congestingMergeObservable struct {
 	CongestingMergeConfigure
 }
 
-func (obs congestingMergeObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx := NewContext(parent)
+func (obs congestingMergeObservable) Subscribe(ctx context.Context, sink Observer) {
 	done := ctx.Done()
-
-	sink = Mutex(DoAtLast(sink, ctx.AtLast))
+	sink = Mutex(sink)
 
 	completeSignal := make(chan struct{}, 1)
 
@@ -103,8 +102,6 @@ func (obs congestingMergeObservable) Subscribe(parent context.Context, sink Obse
 			sink(t)
 		}
 	})
-
-	return ctx, ctx.Cancel
 }
 
 // CongestingMerge creates an output Observable which concurrently emits all

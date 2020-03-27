@@ -14,7 +14,8 @@ type TimeoutConfigure struct {
 // Use creates an Operator from this configure.
 func (configure TimeoutConfigure) Use() Operator {
 	return func(source Observable) Observable {
-		return timeoutObservable{source, configure}.Subscribe
+		obs := timeoutObservable{source, configure}
+		return Create(obs.Subscribe)
 	}
 }
 
@@ -23,11 +24,8 @@ type timeoutObservable struct {
 	TimeoutConfigure
 }
 
-func (obs timeoutObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx := NewContext(parent)
+func (obs timeoutObservable) Subscribe(ctx context.Context, sink Observer) {
 	childCtx, childCancel := context.WithCancel(ctx)
-
-	sink = DoAtLast(sink, ctx.AtLast)
 
 	type X struct{}
 	cx := make(chan X, 1)
@@ -63,8 +61,6 @@ func (obs timeoutObservable) Subscribe(parent context.Context, sink Observer) (c
 			}
 		}
 	})
-
-	return ctx, ctx.Cancel
 }
 
 // Timeout creates an Observable that mirrors the source Observable or notify

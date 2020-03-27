@@ -9,10 +9,8 @@ type takeUntilObservable struct {
 	Notifier Observable
 }
 
-func (obs takeUntilObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx := NewContext(parent)
-
-	sink = Mutex(DoAtLast(sink, ctx.AtLast))
+func (obs takeUntilObservable) Subscribe(ctx context.Context, sink Observer) {
+	sink = Mutex(sink)
 
 	obs.Notifier.Subscribe(ctx, func(t Notification) {
 		switch {
@@ -24,12 +22,10 @@ func (obs takeUntilObservable) Subscribe(parent context.Context, sink Observer) 
 	})
 
 	if ctx.Err() != nil {
-		return ctx, ctx.Cancel
+		return
 	}
 
 	obs.Source.Subscribe(ctx, sink)
-
-	return ctx, ctx.Cancel
 }
 
 // TakeUntil creates an Observable that emits the values emitted by the source
@@ -39,6 +35,7 @@ func (obs takeUntilObservable) Subscribe(parent context.Context, sink Observer) 
 // something. Then, it completes.
 func (Operators) TakeUntil(notifier Observable) Operator {
 	return func(source Observable) Observable {
-		return takeUntilObservable{source, notifier}.Subscribe
+		obs := takeUntilObservable{source, notifier}
+		return Create(obs.Subscribe)
 	}
 }

@@ -11,11 +11,8 @@ type congestObservable struct {
 	BufferSize int
 }
 
-func (obs congestObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx := NewContext(parent)
+func (obs congestObservable) Subscribe(ctx context.Context, sink Observer) {
 	done := ctx.Done()
-
-	sink = DoAtLast(sink, ctx.AtLast)
 
 	c := make(chan Notification)
 	go func() {
@@ -69,8 +66,6 @@ func (obs congestObservable) Subscribe(parent context.Context, sink Observer) (c
 		case q <- t:
 		}
 	})
-
-	return ctx, ctx.Cancel
 }
 
 // Congest creates an Observable that mirrors the source Observable, caches
@@ -81,6 +76,7 @@ func (Operators) Congest(bufferSize int) Operator {
 		if bufferSize < 1 {
 			return source
 		}
-		return congestObservable{source, bufferSize}.Subscribe
+		obs := congestObservable{source, bufferSize}
+		return Create(obs.Subscribe)
 	}
 }

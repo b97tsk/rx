@@ -29,7 +29,7 @@ type behaviorSubjectValue struct {
 // NewBehaviorSubject creates a new BehaviorSubject.
 func NewBehaviorSubject(val interface{}) BehaviorSubject {
 	s := new(behaviorSubject)
-	s.Observable = s.subscribe
+	s.Observable = Create(s.subscribe)
 	s.Observer = s.notify
 	s.val.Store(behaviorSubjectValue{val})
 	return BehaviorSubject{s}
@@ -81,10 +81,8 @@ func (s *behaviorSubject) notify(t Notification) {
 	}
 }
 
-func (s *behaviorSubject) subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
+func (s *behaviorSubject) subscribe(ctx context.Context, sink Observer) {
 	s.mux.Lock()
-
-	ctx := NewContext(parent)
 
 	if err := s.err; err != nil {
 		if err != Complete {
@@ -93,9 +91,8 @@ func (s *behaviorSubject) subscribe(parent context.Context, sink Observer) (cont
 			sink.Next(s.getValue())
 			sink.Complete()
 		}
-		ctx.Unsubscribe(err)
 	} else {
-		observer := Mutex(DoAtLast(sink, ctx.AtLast))
+		observer := Mutex(sink)
 		s.observers.Append(&observer)
 
 		finalize := func() {
@@ -112,5 +109,4 @@ func (s *behaviorSubject) subscribe(parent context.Context, sink Observer) (cont
 	}
 
 	s.mux.Unlock()
-	return ctx, ctx.Cancel
 }

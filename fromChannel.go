@@ -8,23 +8,21 @@ type fromChannelObservable struct {
 	Chan <-chan interface{}
 }
 
-func (obs fromChannelObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx := NewContext(parent)
+func (obs fromChannelObservable) Subscribe(ctx context.Context, sink Observer) {
 	for {
 		select {
 		case <-ctx.Done():
-			return ctx, ctx.Cancel
+			return
 		case val, ok := <-obs.Chan:
 			if !ok {
 				sink.Complete()
-				ctx.Unsubscribe(Complete)
-				return ctx, ctx.Cancel
+				return
 			}
 			sink.Next(val)
 			// Check if ctx is canceled before next loop, such that
 			// Take(1) would exactly take one from the channel.
 			if ctx.Err() != nil {
-				return ctx, ctx.Cancel
+				return
 			}
 		}
 	}
@@ -33,5 +31,6 @@ func (obs fromChannelObservable) Subscribe(parent context.Context, sink Observer
 // FromChannel creates an Observable that emits values from a channel, and
 // completes when the channel closes.
 func FromChannel(c <-chan interface{}) Observable {
-	return fromChannelObservable{c}.Subscribe
+	obs := fromChannelObservable{c}
+	return Create(obs.Subscribe)
 }

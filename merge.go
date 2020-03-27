@@ -15,7 +15,8 @@ type MergeConfigure struct {
 // Use creates an Operator from this configure.
 func (configure MergeConfigure) Use() Operator {
 	return func(source Observable) Observable {
-		return mergeObservable{source, configure}.Subscribe
+		obs := mergeObservable{source, configure}
+		return Create(obs.Subscribe)
 	}
 }
 
@@ -24,10 +25,8 @@ type mergeObservable struct {
 	MergeConfigure
 }
 
-func (obs mergeObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx := NewContext(parent)
-
-	sink = Mutex(DoAtLast(sink, ctx.AtLast))
+func (obs mergeObservable) Subscribe(ctx context.Context, sink Observer) {
+	sink = Mutex(sink)
 
 	type X struct {
 		Index           int
@@ -90,8 +89,6 @@ func (obs mergeObservable) Subscribe(parent context.Context, sink Observer) (con
 			cx <- x
 		}
 	})
-
-	return ctx, ctx.Cancel
 }
 
 // Merge creates an output Observable which concurrently emits all values from

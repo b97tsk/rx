@@ -9,11 +9,7 @@ type delayWhenObservable struct {
 	DurationSelector func(interface{}, int) Observable
 }
 
-func (obs delayWhenObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx := NewContext(parent)
-
-	sink = DoAtLast(sink, ctx.AtLast)
-
+func (obs delayWhenObservable) Subscribe(ctx context.Context, sink Observer) {
 	type X struct {
 		Index       int
 		ActiveCount int
@@ -81,8 +77,6 @@ func (obs delayWhenObservable) Subscribe(parent context.Context, sink Observer) 
 			}
 		}
 	})
-
-	return ctx, ctx.Cancel
 }
 
 // DelayWhen creates an Observable that delays the emission of items from
@@ -93,6 +87,7 @@ func (obs delayWhenObservable) Subscribe(parent context.Context, sink Observer) 
 // a second Observable.
 func (Operators) DelayWhen(durationSelector func(interface{}, int) Observable) Operator {
 	return func(source Observable) Observable {
-		return delayWhenObservable{source, durationSelector}.Subscribe
+		obs := delayWhenObservable{source, durationSelector}
+		return Create(obs.Subscribe)
 	}
 }

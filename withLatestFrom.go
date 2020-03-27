@@ -13,11 +13,8 @@ type withLatestFromValue struct {
 	Notification
 }
 
-func (obs withLatestFromObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx := NewContext(parent)
+func (obs withLatestFromObservable) Subscribe(ctx context.Context, sink Observer) {
 	done := ctx.Done()
-
-	sink = DoAtLast(sink, ctx.AtLast)
 
 	length := len(obs.Observables)
 	q := make(chan withLatestFromValue, length)
@@ -82,8 +79,6 @@ func (obs withLatestFromObservable) Subscribe(parent context.Context, sink Obser
 			}
 		})
 	}
-
-	return ctx, ctx.Cancel
 }
 
 // WithLatestFrom combines the source Observable with other Observables to
@@ -96,6 +91,7 @@ func (obs withLatestFromObservable) Subscribe(parent context.Context, sink Obser
 func (Operators) WithLatestFrom(observables ...Observable) Operator {
 	return func(source Observable) Observable {
 		observables = append([]Observable{source}, observables...)
-		return withLatestFromObservable{observables}.Subscribe
+		obs := withLatestFromObservable{observables}
+		return Create(obs.Subscribe)
 	}
 }

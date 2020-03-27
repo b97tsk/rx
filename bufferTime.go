@@ -15,7 +15,8 @@ type BufferTimeConfigure struct {
 // Use creates an Operator from this configure.
 func (configure BufferTimeConfigure) Use() Operator {
 	return func(source Observable) Observable {
-		return bufferTimeObservable{source, configure}.Subscribe
+		obs := bufferTimeObservable{source, configure}
+		return Create(obs.Subscribe)
 	}
 }
 
@@ -29,11 +30,7 @@ type bufferTimeContext struct {
 	Buffer []interface{}
 }
 
-func (obs bufferTimeObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx := NewContext(parent)
-
-	sink = DoAtLast(sink, ctx.AtLast)
-
+func (obs bufferTimeObservable) Subscribe(ctx context.Context, sink Observer) {
 	type X struct {
 		Contexts []*bufferTimeContext
 	}
@@ -119,8 +116,6 @@ func (obs bufferTimeObservable) Subscribe(parent context.Context, sink Observer)
 			}
 		}
 	})
-
-	return ctx, ctx.Cancel
 }
 
 // BufferTime buffers the source Observable values for a specific time period.

@@ -8,11 +8,7 @@ type singleObservable struct {
 	Source Observable
 }
 
-func (obs singleObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx := NewContext(parent)
-
-	sink = DoAtLast(sink, ctx.AtLast)
-
+func (obs singleObservable) Subscribe(ctx context.Context, sink Observer) {
 	var (
 		value    interface{}
 		hasValue bool
@@ -42,8 +38,6 @@ func (obs singleObservable) Subscribe(parent context.Context, sink Observer) (co
 	}
 
 	obs.Source.Subscribe(ctx, observer.Notify)
-
-	return ctx, ctx.Cancel
 }
 
 // Single creates an Observable that emits the single item emitted by the
@@ -51,6 +45,7 @@ func (obs singleObservable) Subscribe(parent context.Context, sink Observer) (co
 // notify of an ErrNotSingle or ErrEmpty respectively.
 func (Operators) Single() Operator {
 	return func(source Observable) Observable {
-		return singleObservable{source}.Subscribe
+		obs := singleObservable{source}
+		return Create(obs.Subscribe)
 	}
 }

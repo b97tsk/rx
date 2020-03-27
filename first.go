@@ -8,11 +8,7 @@ type firstObservable struct {
 	Source Observable
 }
 
-func (obs firstObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx := NewContext(parent)
-
-	sink = DoAtLast(sink, ctx.AtLast)
-
+func (obs firstObservable) Subscribe(ctx context.Context, sink Observer) {
 	var observer Observer
 	observer = func(t Notification) {
 		switch {
@@ -27,14 +23,13 @@ func (obs firstObservable) Subscribe(parent context.Context, sink Observer) (con
 		}
 	}
 	obs.Source.Subscribe(ctx, observer.Notify)
-
-	return ctx, ctx.Cancel
 }
 
 // First creates an Observable that emits only the first value (or the first
 // value that meets some condition) emitted by the source Observable.
 func (Operators) First() Operator {
 	return func(source Observable) Observable {
-		return firstObservable{source}.Subscribe
+		obs := firstObservable{source}
+		return Create(obs.Subscribe)
 	}
 }

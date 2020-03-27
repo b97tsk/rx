@@ -9,11 +9,7 @@ type sampleObservable struct {
 	Notifier Observable
 }
 
-func (obs sampleObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx := NewContext(parent)
-
-	sink = DoAtLast(sink, ctx.AtLast)
-
+func (obs sampleObservable) Subscribe(ctx context.Context, sink Observer) {
 	type X struct {
 		LatestValue    interface{}
 		HasLatestValue bool
@@ -37,7 +33,7 @@ func (obs sampleObservable) Subscribe(parent context.Context, sink Observer) (co
 	})
 
 	if ctx.Err() != nil {
-		return ctx, ctx.Cancel
+		return
 	}
 
 	obs.Source.Subscribe(ctx, func(t Notification) {
@@ -53,8 +49,6 @@ func (obs sampleObservable) Subscribe(parent context.Context, sink Observer) (co
 			}
 		}
 	})
-
-	return ctx, ctx.Cancel
 }
 
 // Sample creates an Observable that emits the most recently emitted value from
@@ -64,6 +58,7 @@ func (obs sampleObservable) Subscribe(parent context.Context, sink Observer) (co
 // something.
 func (Operators) Sample(notifier Observable) Operator {
 	return func(source Observable) Observable {
-		return sampleObservable{source, notifier}.Subscribe
+		obs := sampleObservable{source, notifier}
+		return Create(obs.Subscribe)
 	}
 }

@@ -9,11 +9,7 @@ type windowObservable struct {
 	WindowBoundaries Observable
 }
 
-func (obs windowObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx := NewContext(parent)
-
-	sink = DoAtLast(sink, ctx.AtLast)
-
+func (obs windowObservable) Subscribe(ctx context.Context, sink Observer) {
 	type X struct {
 		Window Subject
 	}
@@ -39,7 +35,7 @@ func (obs windowObservable) Subscribe(parent context.Context, sink Observer) (co
 	})
 
 	if ctx.Err() != nil {
-		return ctx, ctx.Cancel
+		return
 	}
 
 	obs.Source.Subscribe(ctx, func(t Notification) {
@@ -55,8 +51,6 @@ func (obs windowObservable) Subscribe(parent context.Context, sink Observer) (co
 			}
 		}
 	})
-
-	return ctx, ctx.Cancel
 }
 
 // Window branches out the source Observable values as a nested Observable
@@ -65,6 +59,7 @@ func (obs windowObservable) Subscribe(parent context.Context, sink Observer) (co
 // It's like Buffer, but emits a nested Observable instead of a slice.
 func (Operators) Window(windowBoundaries Observable) Operator {
 	return func(source Observable) Observable {
-		return windowObservable{source, windowBoundaries}.Subscribe
+		obs := windowObservable{source, windowBoundaries}
+		return Create(obs.Subscribe)
 	}
 }

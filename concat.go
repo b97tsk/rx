@@ -11,10 +11,8 @@ type concatObservable struct {
 	Project func(interface{}, int) Observable
 }
 
-func (obs concatObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx := NewContext(parent)
-
-	sink = Mutex(DoAtLast(sink, ctx.AtLast))
+func (obs concatObservable) Subscribe(ctx context.Context, sink Observer) {
+	sink = Mutex(sink)
 
 	type X struct {
 		Index       int
@@ -80,8 +78,6 @@ func (obs concatObservable) Subscribe(parent context.Context, sink Observer) (co
 			cx <- x
 		}
 	})
-
-	return ctx, ctx.Cancel
 }
 
 // Concat creates an output Observable which sequentially emits all values
@@ -110,7 +106,8 @@ func (Operators) ConcatAll() Operator {
 // Observables using ConcatAll.
 func (Operators) ConcatMap(project func(interface{}, int) Observable) Operator {
 	return func(source Observable) Observable {
-		return concatObservable{source, project}.Subscribe
+		obs := concatObservable{source, project}
+		return Create(obs.Subscribe)
 	}
 }
 

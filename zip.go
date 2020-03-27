@@ -15,11 +15,8 @@ type zipValue struct {
 	Notification
 }
 
-func (obs zipObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx := NewContext(parent)
+func (obs zipObservable) Subscribe(ctx context.Context, sink Observer) {
 	done := ctx.Done()
-
-	sink = DoAtLast(sink, ctx.AtLast)
 
 	length := len(obs.Observables)
 	q := make(chan zipValue, length)
@@ -98,8 +95,6 @@ func (obs zipObservable) Subscribe(parent context.Context, sink Observer) (conte
 			}
 		})
 	}
-
-	return ctx, ctx.Cancel
 }
 
 // Zip combines multiple Observables to create an Observable that emits the
@@ -108,7 +103,8 @@ func Zip(observables ...Observable) Observable {
 	if len(observables) == 0 {
 		return Empty()
 	}
-	return zipObservable{observables}.Subscribe
+	obs := zipObservable{observables}
+	return Create(obs.Subscribe)
 }
 
 // ZipAll converts a higher-order Observable into a first-order Observable by

@@ -11,10 +11,8 @@ type retryWhenObservable struct {
 	Notifier func(Observable) Observable
 }
 
-func (obs retryWhenObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx := NewContext(parent)
-
-	sink = Mutex(DoAtLast(sink, ctx.AtLast))
+func (obs retryWhenObservable) Subscribe(ctx context.Context, sink Observer) {
+	sink = Mutex(sink)
 
 	var (
 		activeCount    = atomic.Uint32(2)
@@ -90,8 +88,6 @@ func (obs retryWhenObservable) Subscribe(parent context.Context, sink Observer) 
 	}
 
 	avoidRecursive.Do(subscribe)
-
-	return ctx, ctx.Cancel
 }
 
 // RetryWhen creates an Observable that mirrors the source Observable with
@@ -102,6 +98,7 @@ func (obs retryWhenObservable) Subscribe(parent context.Context, sink Observer) 
 // the child subscription.
 func (Operators) RetryWhen(notifier func(Observable) Observable) Operator {
 	return func(source Observable) Observable {
-		return retryWhenObservable{source, notifier}.Subscribe
+		obs := retryWhenObservable{source, notifier}
+		return Create(obs.Subscribe)
 	}
 }

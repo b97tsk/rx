@@ -16,7 +16,8 @@ type MergeScanConfigure struct {
 // Use creates an Operator from this configure.
 func (configure MergeScanConfigure) Use() Operator {
 	return func(source Observable) Observable {
-		return mergeScanObservable{source, configure}.Subscribe
+		obs := mergeScanObservable{source, configure}
+		return Create(obs.Subscribe)
 	}
 }
 
@@ -25,10 +26,8 @@ type mergeScanObservable struct {
 	MergeScanConfigure
 }
 
-func (obs mergeScanObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx := NewContext(parent)
-
-	sink = Mutex(DoAtLast(sink, ctx.AtLast))
+func (obs mergeScanObservable) Subscribe(ctx context.Context, sink Observer) {
+	sink = Mutex(sink)
 
 	type X struct {
 		ActiveCount     int
@@ -105,8 +104,6 @@ func (obs mergeScanObservable) Subscribe(parent context.Context, sink Observer) 
 			cx <- x
 		}
 	})
-
-	return ctx, ctx.Cancel
 }
 
 // MergeScan applies an accumulator function over the source Observable where

@@ -9,11 +9,7 @@ type bufferWhenObservable struct {
 	ClosingSelector func() Observable
 }
 
-func (obs bufferWhenObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx := NewContext(parent)
-
-	sink = DoAtLast(sink, ctx.AtLast)
-
+func (obs bufferWhenObservable) Subscribe(ctx context.Context, sink Observer) {
 	type X struct {
 		Buffers []interface{}
 	}
@@ -56,7 +52,7 @@ func (obs bufferWhenObservable) Subscribe(parent context.Context, sink Observer)
 	avoidRecursive.Do(openBuffer)
 
 	if ctx.Err() != nil {
-		return ctx, ctx.Cancel
+		return
 	}
 
 	obs.Source.Subscribe(ctx, func(t Notification) {
@@ -72,8 +68,6 @@ func (obs bufferWhenObservable) Subscribe(parent context.Context, sink Observer)
 			}
 		}
 	})
-
-	return ctx, ctx.Cancel
 }
 
 // BufferWhen buffers the source Observable values, using a factory function
@@ -88,6 +82,7 @@ func (obs bufferWhenObservable) Subscribe(parent context.Context, sink Observer)
 // soon as they are subscribed to.
 func (Operators) BufferWhen(closingSelector func() Observable) Operator {
 	return func(source Observable) Observable {
-		return bufferWhenObservable{source, closingSelector}.Subscribe
+		obs := bufferWhenObservable{source, closingSelector}
+		return Create(obs.Subscribe)
 	}
 }

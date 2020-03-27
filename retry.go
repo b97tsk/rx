@@ -9,11 +9,7 @@ type retryObservable struct {
 	Count  int
 }
 
-func (obs retryObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx := NewContext(parent)
-
-	sink = DoAtLast(sink, ctx.AtLast)
-
+func (obs retryObservable) Subscribe(ctx context.Context, sink Observer) {
 	var (
 		count          = obs.Count
 		observer       Observer
@@ -43,8 +39,6 @@ func (obs retryObservable) Subscribe(parent context.Context, sink Observer) (con
 	}
 
 	avoidRecursive.Do(subscribe)
-
-	return ctx, ctx.Cancel
 }
 
 // Retry creates an Observable that mirrors the source Observable with the
@@ -56,6 +50,7 @@ func (Operators) Retry(count int) Operator {
 		if count == 0 {
 			return source
 		}
-		return retryObservable{source, count}.Subscribe
+		obs := retryObservable{source, count}
+		return Create(obs.Subscribe)
 	}
 }

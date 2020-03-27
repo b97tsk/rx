@@ -14,7 +14,8 @@ type ThrottleConfigure struct {
 // Use creates an Operator from this configure.
 func (configure ThrottleConfigure) Use() Operator {
 	return func(source Observable) Observable {
-		return throttleObservable{source, configure}.Subscribe
+		obs := throttleObservable{source, configure}
+		return Create(obs.Subscribe)
 	}
 }
 
@@ -23,11 +24,7 @@ type throttleObservable struct {
 	ThrottleConfigure
 }
 
-func (obs throttleObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx := NewContext(parent)
-
-	sink = DoAtLast(sink, ctx.AtLast)
-
+func (obs throttleObservable) Subscribe(ctx context.Context, sink Observer) {
 	type X struct {
 		TrailingValue    interface{}
 		HasTrailingValue bool
@@ -92,8 +89,6 @@ func (obs throttleObservable) Subscribe(parent context.Context, sink Observer) (
 			}
 		}
 	})
-
-	return ctx, ctx.Cancel
 }
 
 // Throttle creates an Observable that emits a value from the source

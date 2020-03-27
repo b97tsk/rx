@@ -12,11 +12,7 @@ type observeOnObservable struct {
 	Duration time.Duration
 }
 
-func (obs observeOnObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx := NewContext(parent)
-
-	sink = DoAtLast(sink, ctx.AtLast)
-
+func (obs observeOnObservable) Subscribe(ctx context.Context, sink Observer) {
 	type X struct {
 		Queue queue.Queue
 	}
@@ -41,14 +37,13 @@ func (obs observeOnObservable) Subscribe(parent context.Context, sink Observer) 
 			cx <- x
 		}
 	})
-
-	return ctx, ctx.Cancel
 }
 
 // ObserveOn creates an Observable that emits each notification from the source
 // Observable after waits for the duration to elapse.
 func (Operators) ObserveOn(d time.Duration) Operator {
 	return func(source Observable) Observable {
-		return observeOnObservable{source, d}.Subscribe
+		obs := observeOnObservable{source, d}
+		return Create(obs.Subscribe)
 	}
 }

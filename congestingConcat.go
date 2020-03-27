@@ -9,11 +9,7 @@ type congestingConcatObservable struct {
 	Project func(interface{}, int) Observable
 }
 
-func (obs congestingConcatObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx := NewContext(parent)
-
-	sink = DoAtLast(sink, ctx.AtLast)
-
+func (obs congestingConcatObservable) Subscribe(ctx context.Context, sink Observer) {
 	var (
 		sourceIndex = -1
 		observer    Observer
@@ -48,8 +44,6 @@ func (obs congestingConcatObservable) Subscribe(parent context.Context, sink Obs
 	}
 
 	obs.Source.Subscribe(ctx, observer.Notify)
-
-	return ctx, ctx.Cancel
 }
 
 // CongestingConcat creates an output Observable which concurrently emits all
@@ -81,7 +75,8 @@ func (Operators) CongestingConcatAll() Operator {
 // It's like ConcatMap, but it congests the source.
 func (Operators) CongestingConcatMap(project func(interface{}, int) Observable) Operator {
 	return func(source Observable) Observable {
-		return congestingConcatObservable{source, project}.Subscribe
+		obs := congestingConcatObservable{source, project}
+		return Create(obs.Subscribe)
 	}
 }
 

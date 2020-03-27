@@ -9,11 +9,7 @@ type takeObservable struct {
 	Count  int
 }
 
-func (obs takeObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx := NewContext(parent)
-
-	sink = DoAtLast(sink, ctx.AtLast)
-
+func (obs takeObservable) Subscribe(ctx context.Context, sink Observer) {
 	var (
 		count    = obs.Count
 		observer Observer
@@ -36,8 +32,6 @@ func (obs takeObservable) Subscribe(parent context.Context, sink Observer) (cont
 	}
 
 	obs.Source.Subscribe(ctx, observer.Notify)
-
-	return ctx, ctx.Cancel
 }
 
 // Take creates an Observable that emits only the first count values emitted
@@ -49,6 +43,7 @@ func (Operators) Take(count int) Operator {
 		if count <= 0 {
 			return Empty()
 		}
-		return takeObservable{source, count}.Subscribe
+		obs := takeObservable{source, count}
+		return Create(obs.Subscribe)
 	}
 }

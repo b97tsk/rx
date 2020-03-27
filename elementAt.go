@@ -11,11 +11,7 @@ type elementAtObservable struct {
 	HasDefault bool
 }
 
-func (obs elementAtObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx := NewContext(parent)
-
-	sink = DoAtLast(sink, ctx.AtLast)
-
+func (obs elementAtObservable) Subscribe(ctx context.Context, sink Observer) {
 	var (
 		index    = obs.Index
 		observer Observer
@@ -43,8 +39,6 @@ func (obs elementAtObservable) Subscribe(parent context.Context, sink Observer) 
 	}
 
 	obs.Source.Subscribe(ctx, observer.Notify)
-
-	return ctx, ctx.Cancel
 }
 
 // ElementAt creates an Observable that emits the single value at the specified
@@ -52,10 +46,11 @@ func (obs elementAtObservable) Subscribe(parent context.Context, sink Observer) 
 // specified index is out of range, notifies error ErrOutOfRange.
 func (Operators) ElementAt(index int) Operator {
 	return func(source Observable) Observable {
-		return elementAtObservable{
+		obs := elementAtObservable{
 			Source: source,
 			Index:  index,
-		}.Subscribe
+		}
+		return Create(obs.Subscribe)
 	}
 }
 
@@ -64,11 +59,12 @@ func (Operators) ElementAt(index int) Operator {
 // the specified index is out of range, emits the provided default value.
 func (Operators) ElementAtOrDefault(index int, defaultValue interface{}) Operator {
 	return func(source Observable) Observable {
-		return elementAtObservable{
+		obs := elementAtObservable{
 			Source:     source,
 			Index:      index,
 			Default:    defaultValue,
 			HasDefault: true,
-		}.Subscribe
+		}
+		return Create(obs.Subscribe)
 	}
 }

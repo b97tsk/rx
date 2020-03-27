@@ -8,11 +8,8 @@ type congestingZipObservable struct {
 	Observables []Observable
 }
 
-func (obs congestingZipObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx := NewContext(parent)
+func (obs congestingZipObservable) Subscribe(ctx context.Context, sink Observer) {
 	done := ctx.Done()
-
-	sink = DoAtLast(sink, ctx.AtLast)
 
 	length := len(obs.Observables)
 	channels := make([]chan Notification, length)
@@ -53,8 +50,6 @@ func (obs congestingZipObservable) Subscribe(parent context.Context, sink Observ
 			}
 		})
 	}
-
-	return ctx, ctx.Cancel
 }
 
 // CongestingZip combines multiple Observables to create an Observable that
@@ -65,7 +60,8 @@ func CongestingZip(observables ...Observable) Observable {
 	if len(observables) == 0 {
 		return Empty()
 	}
-	return congestingZipObservable{observables}.Subscribe
+	obs := congestingZipObservable{observables}
+	return Create(obs.Subscribe)
 }
 
 // CongestingZipAll converts a higher-order Observable into a first-order

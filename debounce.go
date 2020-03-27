@@ -9,11 +9,7 @@ type debounceObservable struct {
 	DurationSelector func(interface{}) Observable
 }
 
-func (obs debounceObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx := NewContext(parent)
-
-	sink = DoAtLast(sink, ctx.AtLast)
-
+func (obs debounceObservable) Subscribe(ctx context.Context, sink Observer) {
 	type X struct {
 		LatestValue    interface{}
 		HasLatestValue bool
@@ -75,8 +71,6 @@ func (obs debounceObservable) Subscribe(parent context.Context, sink Observer) (
 			}
 		}
 	})
-
-	return ctx, ctx.Cancel
 }
 
 // Debounce creates an Observable that emits a value from the source Observable
@@ -87,6 +81,7 @@ func (obs debounceObservable) Subscribe(parent context.Context, sink Observer) (
 // by a second Observable.
 func (Operators) Debounce(durationSelector func(interface{}) Observable) Operator {
 	return func(source Observable) Observable {
-		return debounceObservable{source, durationSelector}.Subscribe
+		obs := debounceObservable{source, durationSelector}
+		return Create(obs.Subscribe)
 	}
 }

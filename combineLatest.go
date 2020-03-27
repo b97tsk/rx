@@ -13,11 +13,8 @@ type combineLatestValue struct {
 	Notification
 }
 
-func (obs combineLatestObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx := NewContext(parent)
+func (obs combineLatestObservable) Subscribe(ctx context.Context, sink Observer) {
 	done := ctx.Done()
-
-	sink = DoAtLast(sink, ctx.AtLast)
 
 	length := len(obs.Observables)
 	q := make(chan combineLatestValue, length)
@@ -81,8 +78,6 @@ func (obs combineLatestObservable) Subscribe(parent context.Context, sink Observ
 			}
 		})
 	}
-
-	return ctx, ctx.Cancel
 }
 
 // CombineLatest combines multiple Observables to create an Observable that
@@ -95,7 +90,8 @@ func CombineLatest(observables ...Observable) Observable {
 	if len(observables) == 0 {
 		return Empty()
 	}
-	return combineLatestObservable{observables}.Subscribe
+	obs := combineLatestObservable{observables}
+	return Create(obs.Subscribe)
 }
 
 // CombineAll converts a higher-order Observable into a first-order Observable

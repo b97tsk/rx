@@ -37,7 +37,7 @@ func NewReplaySubject(bufferSize int, windowTime time.Duration) ReplaySubject {
 		BufferSize: bufferSize,
 		WindowTime: windowTime,
 	}
-	s.Observable = s.subscribe
+	s.Observable = Create(s.subscribe)
 	s.Observer = s.notify
 	return ReplaySubject{s}
 }
@@ -103,10 +103,8 @@ func (s *replaySubject) notify(t Notification) {
 	}
 }
 
-func (s *replaySubject) subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
+func (s *replaySubject) subscribe(ctx context.Context, sink Observer) {
 	s.mux.Lock()
-
-	ctx := NewContext(parent)
 
 	if err := s.err; err != nil {
 		if err != Complete {
@@ -116,15 +114,14 @@ func (s *replaySubject) subscribe(parent context.Context, sink Observer) (contex
 			for i, j := 0, s.buffer.Len(); i < j; i++ {
 				if ctx.Err() != nil {
 					s.mux.Unlock()
-					return ctx, ctx.Cancel
+					return
 				}
 				sink.Next(s.buffer.At(i).(replaySubjectValue).Value)
 			}
 			sink.Complete()
 		}
-		ctx.Unsubscribe(err)
 	} else {
-		observer := Mutex(DoAtLast(sink, ctx.AtLast))
+		observer := Mutex(sink)
 		s.observers.Append(&observer)
 
 		finalize := func() {
@@ -148,5 +145,4 @@ func (s *replaySubject) subscribe(parent context.Context, sink Observer) (contex
 	}
 
 	s.mux.Unlock()
-	return ctx, ctx.Cancel
 }

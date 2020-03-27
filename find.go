@@ -9,11 +9,7 @@ type findObservable struct {
 	Predicate func(interface{}, int) bool
 }
 
-func (obs findObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx := NewContext(parent)
-
-	sink = DoAtLast(sink, ctx.AtLast)
-
+func (obs findObservable) Subscribe(ctx context.Context, sink Observer) {
 	var (
 		sourceIndex = -1
 		observer    Observer
@@ -36,14 +32,13 @@ func (obs findObservable) Subscribe(parent context.Context, sink Observer) (cont
 	}
 
 	obs.Source.Subscribe(ctx, observer.Notify)
-
-	return ctx, ctx.Cancel
 }
 
 // Find creates an Observable that emits only the first value emitted by the
 // source Observable that meets some condition.
 func (Operators) Find(predicate func(interface{}, int) bool) Operator {
 	return func(source Observable) Observable {
-		return findObservable{source, predicate}.Subscribe
+		obs := findObservable{source, predicate}
+		return Create(obs.Subscribe)
 	}
 }

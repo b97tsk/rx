@@ -9,10 +9,8 @@ type switchMapObservable struct {
 	Project func(interface{}, int) Observable
 }
 
-func (obs switchMapObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx := NewContext(parent)
-
-	sink = Mutex(DoAtLast(sink, ctx.AtLast))
+func (obs switchMapObservable) Subscribe(ctx context.Context, sink Observer) {
+	sink = Mutex(sink)
 
 	type X struct {
 		Index           int
@@ -71,8 +69,6 @@ func (obs switchMapObservable) Subscribe(parent context.Context, sink Observer) 
 			cx <- x
 		}
 	})
-
-	return ctx, ctx.Cancel
 }
 
 // Switch converts a higher-order Observable into a first-order Observable by
@@ -92,7 +88,8 @@ func (Operators) Switch() Operator {
 // Observables using Switch.
 func (Operators) SwitchMap(project func(interface{}, int) Observable) Operator {
 	return func(source Observable) Observable {
-		return switchMapObservable{source, project}.Subscribe
+		obs := switchMapObservable{source, project}
+		return Create(obs.Subscribe)
 	}
 }
 

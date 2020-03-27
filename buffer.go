@@ -9,11 +9,7 @@ type bufferObservable struct {
 	ClosingNotifier Observable
 }
 
-func (obs bufferObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx := NewContext(parent)
-
-	sink = DoAtLast(sink, ctx.AtLast)
-
+func (obs bufferObservable) Subscribe(ctx context.Context, sink Observer) {
 	type X struct {
 		Buffers []interface{}
 	}
@@ -35,7 +31,7 @@ func (obs bufferObservable) Subscribe(parent context.Context, sink Observer) (co
 	})
 
 	if ctx.Err() != nil {
-		return ctx, ctx.Cancel
+		return
 	}
 
 	obs.Source.Subscribe(ctx, func(t Notification) {
@@ -50,8 +46,6 @@ func (obs bufferObservable) Subscribe(parent context.Context, sink Observer) (co
 			}
 		}
 	})
-
-	return ctx, ctx.Cancel
 }
 
 // Buffer buffers the source Observable values until closingNotifier emits.
@@ -60,6 +54,7 @@ func (obs bufferObservable) Subscribe(parent context.Context, sink Observer) (co
 // only when another Observable emits.
 func (Operators) Buffer(closingNotifier Observable) Operator {
 	return func(source Observable) Observable {
-		return bufferObservable{source, closingNotifier}.Subscribe
+		obs := bufferObservable{source, closingNotifier}
+		return Create(obs.Subscribe)
 	}
 }

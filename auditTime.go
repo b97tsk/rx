@@ -10,11 +10,7 @@ type auditTimeObservable struct {
 	Duration time.Duration
 }
 
-func (obs auditTimeObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx := NewContext(parent)
-
-	sink = DoAtLast(sink, ctx.AtLast)
-
+func (obs auditTimeObservable) Subscribe(ctx context.Context, sink Observer) {
 	type X struct {
 		LatestValue interface{}
 		Scheduled   bool
@@ -48,8 +44,6 @@ func (obs auditTimeObservable) Subscribe(parent context.Context, sink Observer) 
 			}
 		}
 	})
-
-	return ctx, ctx.Cancel
 }
 
 // AuditTime ignores source values for a duration, then emits the most recent
@@ -59,6 +53,7 @@ func (obs auditTimeObservable) Subscribe(parent context.Context, sink Observer) 
 // duration, and then it emits the most recent value from the source.
 func (Operators) AuditTime(duration time.Duration) Operator {
 	return func(source Observable) Observable {
-		return auditTimeObservable{source, duration}.Subscribe
+		obs := auditTimeObservable{source, duration}
+		return Create(obs.Subscribe)
 	}
 }

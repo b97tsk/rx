@@ -16,7 +16,7 @@ type Subject struct {
 func NewSubject() Subject {
 	s := new(subject)
 	return Subject{
-		Observable: s.subscribe,
+		Observable: Create(s.subscribe),
 		Observer:   s.notify,
 	}
 }
@@ -60,10 +60,8 @@ func (s *subject) notify(t Notification) {
 	}
 }
 
-func (s *subject) subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
+func (s *subject) subscribe(ctx context.Context, sink Observer) {
 	s.mux.Lock()
-
-	ctx := NewContext(parent)
 
 	if err := s.err; err != nil {
 		if err != Complete {
@@ -71,9 +69,8 @@ func (s *subject) subscribe(parent context.Context, sink Observer) (context.Cont
 		} else {
 			sink.Complete()
 		}
-		ctx.Unsubscribe(err)
 	} else {
-		observer := Mutex(DoAtLast(sink, ctx.AtLast))
+		observer := Mutex(sink)
 		s.observers.Append(&observer)
 
 		finalize := func() {
@@ -88,5 +85,4 @@ func (s *subject) subscribe(parent context.Context, sink Observer) (context.Cont
 	}
 
 	s.mux.Unlock()
-	return ctx, ctx.Cancel
 }

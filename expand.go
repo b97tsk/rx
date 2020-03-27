@@ -15,7 +15,8 @@ type ExpandConfigure struct {
 // Use creates an Operator from this configure.
 func (configure ExpandConfigure) Use() Operator {
 	return func(source Observable) Observable {
-		return expandObservable{source, configure}.Subscribe
+		obs := expandObservable{source, configure}
+		return Create(obs.Subscribe)
 	}
 }
 
@@ -24,10 +25,8 @@ type expandObservable struct {
 	ExpandConfigure
 }
 
-func (obs expandObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx := NewContext(parent)
-
-	sink = Mutex(DoAtLast(sink, ctx.AtLast))
+func (obs expandObservable) Subscribe(ctx context.Context, sink Observer) {
+	sink = Mutex(sink)
 
 	type X struct {
 		Index           int
@@ -102,8 +101,6 @@ func (obs expandObservable) Subscribe(parent context.Context, sink Observer) (co
 			cx <- x
 		}
 	})
-
-	return ctx, ctx.Cancel
 }
 
 // Expand recursively projects each source value to an Observable which is

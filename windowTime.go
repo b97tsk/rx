@@ -15,7 +15,8 @@ type WindowTimeConfigure struct {
 // Use creates an Operator from this configure.
 func (configure WindowTimeConfigure) Use() Operator {
 	return func(source Observable) Observable {
-		return windowTimeObservable{source, configure}.Subscribe
+		obs := windowTimeObservable{source, configure}
+		return Create(obs.Subscribe)
 	}
 }
 
@@ -30,11 +31,7 @@ type windowTimeContext struct {
 	Size   int
 }
 
-func (obs windowTimeObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx := NewContext(parent)
-
-	sink = DoAtLast(sink, ctx.AtLast)
-
+func (obs windowTimeObservable) Subscribe(ctx context.Context, sink Observer) {
 	type X struct {
 		Contexts []*windowTimeContext
 	}
@@ -118,8 +115,6 @@ func (obs windowTimeObservable) Subscribe(parent context.Context, sink Observer)
 			}
 		}
 	})
-
-	return ctx, ctx.Cancel
 }
 
 // WindowTime branches out the source Observable values as a nested Observable

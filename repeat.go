@@ -9,11 +9,7 @@ type repeatObservable struct {
 	Count  int
 }
 
-func (obs repeatObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx := NewContext(parent)
-
-	sink = DoAtLast(sink, ctx.AtLast)
-
+func (obs repeatObservable) Subscribe(ctx context.Context, sink Observer) {
 	var (
 		count          = obs.Count
 		observer       Observer
@@ -41,8 +37,6 @@ func (obs repeatObservable) Subscribe(parent context.Context, sink Observer) (co
 	}
 
 	avoidRecursive.Do(subscribe)
-
-	return ctx, ctx.Cancel
 }
 
 // Repeat creates an Observable that repeats the stream of items emitted by the
@@ -58,6 +52,7 @@ func (Operators) Repeat(count int) Operator {
 		if count > 0 {
 			count--
 		}
-		return repeatObservable{source, count}.Subscribe
+		obs := repeatObservable{source, count}
+		return Create(obs.Subscribe)
 	}
 }

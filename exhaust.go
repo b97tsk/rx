@@ -11,10 +11,8 @@ type exhaustMapObservable struct {
 	Project func(interface{}, int) Observable
 }
 
-func (obs exhaustMapObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx := NewContext(parent)
-
-	sink = Mutex(DoAtLast(sink, ctx.AtLast))
+func (obs exhaustMapObservable) Subscribe(ctx context.Context, sink Observer) {
+	sink = Mutex(sink)
 
 	var (
 		sourceIndex = -1
@@ -55,8 +53,6 @@ func (obs exhaustMapObservable) Subscribe(parent context.Context, sink Observer)
 			sink(t)
 		}
 	})
-
-	return ctx, ctx.Cancel
 }
 
 // Exhaust converts a higher-order Observable into a first-order Observable
@@ -77,6 +73,7 @@ func (Operators) Exhaust() Operator {
 // inner Observables using Exhaust.
 func (Operators) ExhaustMap(project func(interface{}, int) Observable) Operator {
 	return func(source Observable) Observable {
-		return exhaustMapObservable{source, project}.Subscribe
+		obs := exhaustMapObservable{source, project}
+		return Create(obs.Subscribe)
 	}
 }

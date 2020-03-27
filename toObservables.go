@@ -12,7 +12,8 @@ type ToObservablesConfigure struct {
 // Use creates an Operator from this configure.
 func (configure ToObservablesConfigure) Use() Operator {
 	return func(source Observable) Observable {
-		return toObservablesObservable{source, configure}.Subscribe
+		obs := toObservablesObservable{source, configure}
+		return Create(obs.Subscribe)
 	}
 }
 
@@ -21,11 +22,7 @@ type toObservablesObservable struct {
 	ToObservablesConfigure
 }
 
-func (obs toObservablesObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx := NewContext(parent)
-
-	sink = DoAtLast(sink, ctx.AtLast)
-
+func (obs toObservablesObservable) Subscribe(ctx context.Context, sink Observer) {
 	var (
 		observables []Observable
 		observer    Observer
@@ -54,8 +51,6 @@ func (obs toObservablesObservable) Subscribe(parent context.Context, sink Observ
 	}
 
 	obs.Source.Subscribe(ctx, observer.Notify)
-
-	return ctx, ctx.Cancel
 }
 
 // ToObservables creates an Observable that collects all the Observables the

@@ -17,11 +17,7 @@ type delayValue struct {
 	Notification
 }
 
-func (obs delayObservable) Subscribe(parent context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx := NewContext(parent)
-
-	sink = DoAtLast(sink, ctx.AtLast)
-
+func (obs delayObservable) Subscribe(ctx context.Context, sink Observer) {
 	type X struct {
 		Queue     queue.Queue
 		Scheduled bool
@@ -84,14 +80,13 @@ func (obs delayObservable) Subscribe(parent context.Context, sink Observer) (con
 		}
 		cx <- x
 	})
-
-	return ctx, ctx.Cancel
 }
 
 // Delay delays the emission of items from the source Observable by a given
 // timeout.
 func (Operators) Delay(timeout time.Duration) Operator {
 	return func(source Observable) Observable {
-		return delayObservable{source, timeout}.Subscribe
+		obs := delayObservable{source, timeout}
+		return Create(obs.Subscribe)
 	}
 }
