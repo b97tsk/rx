@@ -24,8 +24,16 @@ func Create(subscribe func(context.Context, Observer)) Observable {
 	return func(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 		ctx, cancel := context.WithCancel(ctx)
 		k := &kontext{Context: ctx, cancel: cancel}
-		sink = DoAtLast(sink, k.atLast)
-		subscribe(k, sink)
+		subscribe(k, func(t Notification) {
+			sink(t)
+			switch {
+			case t.HasValue:
+			case t.HasError:
+				k.unsubscribe(t.Error)
+			default:
+				k.unsubscribe(Complete)
+			}
+		})
 		return k, cancel
 	}
 }
@@ -35,17 +43,6 @@ type kontext struct {
 	mux    sync.Mutex
 	err    error
 	cancel context.CancelFunc
-}
-
-func (c *kontext) atLast(t Notification) {
-	switch {
-	case t.HasValue:
-		panic("kontext: atLast() called with a NEXT notification")
-	case t.HasError:
-		c.unsubscribe(t.Error)
-	default:
-		c.unsubscribe(Complete)
-	}
 }
 
 func (c *kontext) unsubscribe(err error) {
