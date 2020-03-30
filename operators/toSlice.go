@@ -1,16 +1,18 @@
-package rx
+package operators
 
 import (
 	"context"
+
+	"github.com/b97tsk/rx"
 )
 
 // ToSlice creates an Observable that collects all the values the source emits,
 // then emits them as a slice when the source completes.
-func (Operators) ToSlice() Operator {
-	return func(source Observable) Observable {
-		return func(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
+func ToSlice() rx.Operator {
+	return func(source rx.Observable) rx.Observable {
+		return func(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
 			var values []interface{}
-			return source.Subscribe(ctx, func(t Notification) {
+			return source.Subscribe(ctx, func(t rx.Notification) {
 				switch {
 				case t.HasValue:
 					values = append(values, t.Value)

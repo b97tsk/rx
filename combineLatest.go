@@ -93,12 +93,3 @@ func CombineLatest(observables ...Observable) Observable {
 	obs := combineLatestObservable{observables}
 	return Create(obs.Subscribe)
 }
-
-// CombineAll converts a higher-order Observable into a first-order Observable
-// by waiting for the outer Observable to complete, then applying CombineLatest.
-//
-// CombineAll flattens an Observable-of-Observables by applying CombineLatest
-// when the Observable-of-Observables completes.
-func (Operators) CombineAll() Operator {
-	return ToObservablesConfigure{CombineLatest}.Use()
-}

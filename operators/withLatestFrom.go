@@ -1,19 +1,21 @@
-package rx
+package operators
 
 import (
 	"context"
+
+	"github.com/b97tsk/rx"
 )
 
 type withLatestFromObservable struct {
-	Observables []Observable
+	Observables []rx.Observable
 }
 
 type withLatestFromValue struct {
 	Index int
-	Notification
+	rx.Notification
 }
 
-func (obs withLatestFromObservable) Subscribe(ctx context.Context, sink Observer) {
+func (obs withLatestFromObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	done := ctx.Done()
 
 	length := len(obs.Observables)
@@ -72,7 +74,7 @@ func (obs withLatestFromObservable) Subscribe(ctx context.Context, sink Observer
 
 	for index, obs := range obs.Observables {
 		index := index
-		go obs.Subscribe(ctx, func(t Notification) {
+		go obs.Subscribe(ctx, func(t rx.Notification) {
 			select {
 			case <-done:
 			case q <- withLatestFromValue{index, t}:
@@ -88,10 +90,10 @@ func (obs withLatestFromObservable) Subscribe(ctx context.Context, sink Observer
 // To ensure output slice has always the same length, WithLatestFrom will
 // actually wait for all input Observables to emit at least once, before it
 // starts emitting results.
-func (Operators) WithLatestFrom(observables ...Observable) Operator {
-	return func(source Observable) Observable {
-		observables = append([]Observable{source}, observables...)
+func WithLatestFrom(observables ...rx.Observable) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
+		observables = append([]rx.Observable{source}, observables...)
 		obs := withLatestFromObservable{observables}
-		return Create(obs.Subscribe)
+		return rx.Create(obs.Subscribe)
 	}
 }

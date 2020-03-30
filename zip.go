@@ -106,12 +106,3 @@ func Zip(observables ...Observable) Observable {
 	obs := zipObservable{observables}
 	return Create(obs.Subscribe)
 }
-
-// ZipAll converts a higher-order Observable into a first-order Observable by
-// waiting for the outer Observable to complete, then applying Zip.
-//
-// ZipAll flattens an Observable-of-Observables by applying Zip when the
-// Observable-of-Observables completes.
-func (Operators) ZipAll() Operator {
-	return ToObservablesConfigure{Zip}.Use()
-}

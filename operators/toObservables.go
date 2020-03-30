@@ -1,41 +1,43 @@
-package rx
+package operators
 
 import (
 	"context"
+
+	"github.com/b97tsk/rx"
 )
 
 // A ToObservablesConfigure is a configure for ToObservables.
 type ToObservablesConfigure struct {
-	Flat func(observables ...Observable) Observable
+	Flat func(observables ...rx.Observable) rx.Observable
 }
 
 // Use creates an Operator from this configure.
-func (configure ToObservablesConfigure) Use() Operator {
-	return func(source Observable) Observable {
+func (configure ToObservablesConfigure) Use() rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		obs := toObservablesObservable{source, configure}
-		return Create(obs.Subscribe)
+		return rx.Create(obs.Subscribe)
 	}
 }
 
 type toObservablesObservable struct {
-	Source Observable
+	Source rx.Observable
 	ToObservablesConfigure
 }
 
-func (obs toObservablesObservable) Subscribe(ctx context.Context, sink Observer) {
+func (obs toObservablesObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	var (
-		observables []Observable
-		observer    Observer
+		observables []rx.Observable
+		observer    rx.Observer
 	)
 
-	observer = func(t Notification) {
+	observer = func(t rx.Notification) {
 		switch {
 		case t.HasValue:
-			if obs, ok := t.Value.(Observable); ok {
+			if obs, ok := t.Value.(rx.Observable); ok {
 				observables = append(observables, obs)
 			} else {
-				observer = NopObserver
-				sink.Error(ErrNotObservable)
+				observer = rx.NopObserver
+				sink.Error(rx.ErrNotObservable)
 			}
 		case t.HasError:
 			sink(t)
@@ -56,6 +58,6 @@ func (obs toObservablesObservable) Subscribe(ctx context.Context, sink Observer)
 // ToObservables creates an Observable that collects all the Observables the
 // source emits, then emits them as a slice of Observable when the source
 // completes.
-func (Operators) ToObservables() Operator {
+func ToObservables() rx.Operator {
 	return ToObservablesConfigure{}.Use()
 }
