@@ -1,19 +1,20 @@
-package rx
+package operators
 
 import (
 	"context"
 
+	"github.com/b97tsk/rx"
 	"github.com/b97tsk/rx/x/queue"
 )
 
 type takeLastObservable struct {
-	Source Observable
+	Source rx.Observable
 	Count  int
 }
 
-func (obs takeLastObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
+func (obs takeLastObservable) Subscribe(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
 	var queue queue.Queue
-	return obs.Source.Subscribe(ctx, func(t Notification) {
+	return obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		switch {
 		case t.HasValue:
 			if queue.Len() == obs.Count {
@@ -39,10 +40,10 @@ func (obs takeLastObservable) Subscribe(ctx context.Context, sink Observer) (con
 //
 // TakeLast remembers the latest count values, then emits those only when the
 // source completes.
-func (Operators) TakeLast(count int) Operator {
-	return func(source Observable) Observable {
+func TakeLast(count int) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		if count <= 0 {
-			return Empty()
+			return rx.Empty()
 		}
 		return takeLastObservable{source, count}.Subscribe
 	}

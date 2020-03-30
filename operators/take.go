@@ -1,28 +1,30 @@
-package rx
+package operators
 
 import (
 	"context"
+
+	"github.com/b97tsk/rx"
 )
 
 type takeObservable struct {
-	Source Observable
+	Source rx.Observable
 	Count  int
 }
 
-func (obs takeObservable) Subscribe(ctx context.Context, sink Observer) {
+func (obs takeObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	var (
 		count    = obs.Count
-		observer Observer
+		observer rx.Observer
 	)
 
-	observer = func(t Notification) {
+	observer = func(t rx.Notification) {
 		switch {
 		case t.HasValue:
 			if count > 1 {
 				count--
 				sink(t)
 			} else {
-				observer = NopObserver
+				observer = rx.NopObserver
 				sink(t)
 				sink.Complete()
 			}
@@ -38,12 +40,12 @@ func (obs takeObservable) Subscribe(ctx context.Context, sink Observer) {
 // by the source Observable.
 //
 // Take takes the first count values from the source, then completes.
-func (Operators) Take(count int) Operator {
-	return func(source Observable) Observable {
+func Take(count int) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		if count <= 0 {
-			return Empty()
+			return rx.Empty()
 		}
 		obs := takeObservable{source, count}
-		return Create(obs.Subscribe)
+		return rx.Create(obs.Subscribe)
 	}
 }

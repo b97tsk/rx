@@ -1,18 +1,20 @@
-package rx
+package operators
 
 import (
 	"context"
+
+	"github.com/b97tsk/rx"
 )
 
 type takeUntilObservable struct {
-	Source   Observable
-	Notifier Observable
+	Source   rx.Observable
+	Notifier rx.Observable
 }
 
-func (obs takeUntilObservable) Subscribe(ctx context.Context, sink Observer) {
-	sink = Mutex(sink)
+func (obs takeUntilObservable) Subscribe(ctx context.Context, sink rx.Observer) {
+	sink = rx.Mutex(sink)
 
-	obs.Notifier.Subscribe(ctx, func(t Notification) {
+	obs.Notifier.Subscribe(ctx, func(t rx.Notification) {
 		switch {
 		case t.HasValue:
 			sink.Complete()
@@ -33,9 +35,9 @@ func (obs takeUntilObservable) Subscribe(ctx context.Context, sink Observer) {
 //
 // TakeUntil lets values pass until a second Observable, notifier, emits
 // something. Then, it completes.
-func (Operators) TakeUntil(notifier Observable) Operator {
-	return func(source Observable) Observable {
+func TakeUntil(notifier rx.Observable) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		obs := takeUntilObservable{source, notifier}
-		return Create(obs.Subscribe)
+		return rx.Create(obs.Subscribe)
 	}
 }

@@ -1,21 +1,23 @@
-package rx
+package operators
 
 import (
 	"context"
+
+	"github.com/b97tsk/rx"
 )
 
 type takeWhileObservable struct {
-	Source    Observable
+	Source    rx.Observable
 	Predicate func(interface{}, int) bool
 }
 
-func (obs takeWhileObservable) Subscribe(ctx context.Context, sink Observer) {
+func (obs takeWhileObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	var (
 		sourceIndex = -1
-		observer    Observer
+		observer    rx.Observer
 	)
 
-	observer = func(t Notification) {
+	observer = func(t rx.Notification) {
 		switch {
 		case t.HasValue:
 			sourceIndex++
@@ -25,7 +27,7 @@ func (obs takeWhileObservable) Subscribe(ctx context.Context, sink Observer) {
 				break
 			}
 
-			observer = NopObserver
+			observer = rx.NopObserver
 			sink.Complete()
 
 		default:
@@ -42,9 +44,9 @@ func (obs takeWhileObservable) Subscribe(ctx context.Context, sink Observer) {
 //
 // TakeWhile takes values from the source only while they pass the condition
 // given. When the first value does not satisfy, it completes.
-func (Operators) TakeWhile(predicate func(interface{}, int) bool) Operator {
-	return func(source Observable) Observable {
+func TakeWhile(predicate func(interface{}, int) bool) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		obs := takeWhileObservable{source, predicate}
-		return Create(obs.Subscribe)
+		return rx.Create(obs.Subscribe)
 	}
 }

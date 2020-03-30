@@ -1,30 +1,32 @@
-package rx
+package operators
 
 import (
 	"context"
 	"time"
+
+	"github.com/b97tsk/rx"
 )
 
 // A TimeoutConfigure is a configure for Timeout.
 type TimeoutConfigure struct {
 	Duration   time.Duration
-	Observable Observable
+	Observable rx.Observable
 }
 
 // Use creates an Operator from this configure.
-func (configure TimeoutConfigure) Use() Operator {
-	return func(source Observable) Observable {
+func (configure TimeoutConfigure) Use() rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		obs := timeoutObservable{source, configure}
-		return Create(obs.Subscribe)
+		return rx.Create(obs.Subscribe)
 	}
 }
 
 type timeoutObservable struct {
-	Source Observable
+	Source rx.Observable
 	TimeoutConfigure
 }
 
-func (obs timeoutObservable) Subscribe(ctx context.Context, sink Observer) {
+func (obs timeoutObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	childCtx, childCancel := context.WithCancel(ctx)
 
 	type X struct{}
@@ -48,7 +50,7 @@ func (obs timeoutObservable) Subscribe(ctx context.Context, sink Observer) {
 
 	doSchedule()
 
-	obs.Source.Subscribe(childCtx, func(t Notification) {
+	obs.Source.Subscribe(childCtx, func(t rx.Notification) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
@@ -65,6 +67,6 @@ func (obs timeoutObservable) Subscribe(ctx context.Context, sink Observer) {
 
 // Timeout creates an Observable that mirrors the source Observable or notify
 // of an ErrTimeout if the source does not emit a value in given time span.
-func (Operators) Timeout(timeout time.Duration) Operator {
-	return TimeoutConfigure{timeout, Throw(ErrTimeout)}.Use()
+func Timeout(timeout time.Duration) rx.Operator {
+	return TimeoutConfigure{timeout, rx.Throw(rx.ErrTimeout)}.Use()
 }
