@@ -1,31 +1,33 @@
-package rx
+package operators
 
 import (
 	"context"
+
+	"github.com/b97tsk/rx"
 )
 
 // A CongestingMergeConfigure is a configure for CongestingMerge.
 type CongestingMergeConfigure struct {
-	Project    func(interface{}, int) Observable
+	Project    func(interface{}, int) rx.Observable
 	Concurrent int
 }
 
 // Use creates an Operator from this configure.
-func (configure CongestingMergeConfigure) Use() Operator {
-	return func(source Observable) Observable {
+func (configure CongestingMergeConfigure) Use() rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		obs := congestingMergeObservable{source, configure}
-		return Create(obs.Subscribe)
+		return rx.Create(obs.Subscribe)
 	}
 }
 
 type congestingMergeObservable struct {
-	Source Observable
+	Source rx.Observable
 	CongestingMergeConfigure
 }
 
-func (obs congestingMergeObservable) Subscribe(ctx context.Context, sink Observer) {
+func (obs congestingMergeObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	done := ctx.Done()
-	sink = Mutex(sink)
+	sink = rx.Mutex(sink)
 
 	completeSignal := make(chan struct{}, 1)
 
@@ -36,7 +38,7 @@ func (obs congestingMergeObservable) Subscribe(ctx context.Context, sink Observe
 	cx := make(chan *X, 1)
 	cx <- &X{}
 
-	obs.Source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		switch {
 		case t.HasValue:
 			x := <-cx
@@ -62,7 +64,7 @@ func (obs congestingMergeObservable) Subscribe(ctx context.Context, sink Observe
 
 			cx <- x
 
-			obs.Subscribe(ctx, func(t Notification) {
+			obs.Subscribe(ctx, func(t rx.Notification) {
 				switch {
 				case t.HasValue || t.HasError:
 					sink(t)
@@ -104,24 +106,13 @@ func (obs congestingMergeObservable) Subscribe(ctx context.Context, sink Observe
 	})
 }
 
-// CongestingMerge creates an output Observable which concurrently emits all
-// values from every given input Observable.
-//
-// CongestingMerge flattens multiple Observables together by blending their
-// values into one Observable.
-//
-// It's like Merge, but it may congest the source due to concurrent limit.
-func CongestingMerge(observables ...Observable) Observable {
-	return FromObservables(observables...).Pipe(operators.CongestingMergeAll())
-}
-
 // CongestingMergeAll converts a higher-order Observable into a first-order
 // Observable which concurrently delivers all values that are emitted on the
 // inner Observables.
 //
 // It's like MergeAll, but it may congest the source due to concurrent limit.
-func (Operators) CongestingMergeAll() Operator {
-	return operators.CongestingMergeMap(ProjectToObservable)
+func CongestingMergeAll() rx.Operator {
+	return CongestingMergeMap(rx.ProjectToObservable)
 }
 
 // CongestingMergeMap creates an Observable that projects each source value to
@@ -131,7 +122,7 @@ func (Operators) CongestingMergeAll() Operator {
 // these inner Observables using CongestingMergeAll.
 //
 // It's like MergeMap, but it may congest the source due to concurrent limit.
-func (Operators) CongestingMergeMap(project func(interface{}, int) Observable) Operator {
+func CongestingMergeMap(project func(interface{}, int) rx.Observable) rx.Operator {
 	return CongestingMergeConfigure{project, -1}.Use()
 }
 
@@ -143,6 +134,6 @@ func (Operators) CongestingMergeMap(project func(interface{}, int) Observable) O
 // Observable.
 //
 // It's like MergeMapTo, but it may congest the source due to concurrent limit.
-func (Operators) CongestingMergeMapTo(inner Observable) Operator {
-	return operators.CongestingMergeMap(func(interface{}, int) Observable { return inner })
+func CongestingMergeMapTo(inner rx.Observable) rx.Operator {
+	return CongestingMergeMap(func(interface{}, int) rx.Observable { return inner })
 }

@@ -1,21 +1,23 @@
-package rx
+package operators
 
 import (
 	"context"
+
+	"github.com/b97tsk/rx"
 )
 
 type congestingConcatObservable struct {
-	Source  Observable
-	Project func(interface{}, int) Observable
+	Source  rx.Observable
+	Project func(interface{}, int) rx.Observable
 }
 
-func (obs congestingConcatObservable) Subscribe(ctx context.Context, sink Observer) {
+func (obs congestingConcatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	var (
 		sourceIndex = -1
-		observer    Observer
+		observer    rx.Observer
 	)
 
-	observer = func(t Notification) {
+	observer = func(t rx.Notification) {
 		switch {
 		case t.HasValue:
 			sourceIndex++
@@ -24,12 +26,12 @@ func (obs congestingConcatObservable) Subscribe(ctx context.Context, sink Observ
 
 			obs := obs.Project(sourceValue, sourceIndex)
 
-			childCtx, _ := obs.Subscribe(ctx, func(t Notification) {
+			childCtx, _ := obs.Subscribe(ctx, func(t rx.Notification) {
 				switch {
 				case t.HasValue:
 					sink(t)
 				case t.HasError:
-					observer = NopObserver
+					observer = rx.NopObserver
 					sink(t)
 				default:
 					// do nothing
@@ -46,24 +48,13 @@ func (obs congestingConcatObservable) Subscribe(ctx context.Context, sink Observ
 	obs.Source.Subscribe(ctx, observer.Notify)
 }
 
-// CongestingConcat creates an output Observable which concurrently emits all
-// values from every given input Observable.
-//
-// CongestingConcat flattens multiple Observables together by blending their
-// values into one Observable.
-//
-// It's like Concat, but it congests the source.
-func CongestingConcat(observables ...Observable) Observable {
-	return FromObservables(observables...).Pipe(operators.CongestingConcatAll())
-}
-
 // CongestingConcatAll converts a higher-order Observable into a first-order
 // Observable which concurrently delivers all values that are emitted on the
 // inner Observables.
 //
 // It's like ConcatAll, but it congests the source.
-func (Operators) CongestingConcatAll() Operator {
-	return operators.CongestingConcatMap(ProjectToObservable)
+func CongestingConcatAll() rx.Operator {
+	return CongestingConcatMap(rx.ProjectToObservable)
 }
 
 // CongestingConcatMap creates an Observable that projects each source value to
@@ -73,10 +64,10 @@ func (Operators) CongestingConcatAll() Operator {
 // these inner Observables using CongestingConcatAll.
 //
 // It's like ConcatMap, but it congests the source.
-func (Operators) CongestingConcatMap(project func(interface{}, int) Observable) Operator {
-	return func(source Observable) Observable {
+func CongestingConcatMap(project func(interface{}, int) rx.Observable) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		obs := congestingConcatObservable{source, project}
-		return Create(obs.Subscribe)
+		return rx.Create(obs.Subscribe)
 	}
 }
 
@@ -88,6 +79,6 @@ func (Operators) CongestingConcatMap(project func(interface{}, int) Observable) 
 // Observable.
 //
 // It's like ConcatMapTo, but it congests the source.
-func (Operators) CongestingConcatMapTo(inner Observable) Operator {
-	return operators.CongestingConcatMap(func(interface{}, int) Observable { return inner })
+func CongestingConcatMapTo(inner rx.Observable) rx.Operator {
+	return CongestingConcatMap(func(interface{}, int) rx.Observable { return inner })
 }
