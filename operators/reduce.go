@@ -1,23 +1,25 @@
-package rx
+package operators
 
 import (
 	"context"
+
+	"github.com/b97tsk/rx"
 )
 
 type reduceObservable struct {
-	Source      Observable
+	Source      rx.Observable
 	Accumulator func(interface{}, interface{}, int) interface{}
 	Seed        interface{}
 	HasSeed     bool
 }
 
-func (obs reduceObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
+func (obs reduceObservable) Subscribe(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
 	var (
 		seed        = obs.Seed
 		hasSeed     = obs.HasSeed
 		sourceIndex = -1
 	)
-	return obs.Source.Subscribe(ctx, func(t Notification) {
+	return obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		switch {
 		case t.HasValue:
 			sourceIndex++
@@ -46,8 +48,8 @@ func (obs reduceObservable) Subscribe(ctx context.Context, sink Observer) (conte
 // completes.
 //
 // It's like Fold, but no need to specify an initial value.
-func (Operators) Reduce(accumulator func(interface{}, interface{}, int) interface{}) Operator {
-	return func(source Observable) Observable {
+func Reduce(accumulator func(interface{}, interface{}, int) interface{}) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		return reduceObservable{
 			Source:      source,
 			Accumulator: accumulator,
@@ -60,8 +62,8 @@ func (Operators) Reduce(accumulator func(interface{}, interface{}, int) interfac
 // completes, given an initial value.
 //
 // It's like Reduce, but you could specify an initial value.
-func (Operators) Fold(initialValue interface{}, accumulator func(interface{}, interface{}, int) interface{}) Operator {
-	return func(source Observable) Observable {
+func Fold(initialValue interface{}, accumulator func(interface{}, interface{}, int) interface{}) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		return reduceObservable{
 			Source:      source,
 			Accumulator: accumulator,

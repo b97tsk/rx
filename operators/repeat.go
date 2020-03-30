@@ -1,18 +1,20 @@
-package rx
+package operators
 
 import (
 	"context"
+
+	"github.com/b97tsk/rx"
 )
 
 type repeatObservable struct {
-	Source Observable
+	Source rx.Observable
 	Count  int
 }
 
-func (obs repeatObservable) Subscribe(ctx context.Context, sink Observer) {
+func (obs repeatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	var (
 		count          = obs.Count
-		observer       Observer
+		observer       rx.Observer
 		avoidRecursive avoidRecursiveCalls
 	)
 
@@ -20,7 +22,7 @@ func (obs repeatObservable) Subscribe(ctx context.Context, sink Observer) {
 		obs.Source.Subscribe(ctx, observer)
 	}
 
-	observer = func(t Notification) {
+	observer = func(t rx.Notification) {
 		switch {
 		case t.HasValue || t.HasError:
 			sink(t)
@@ -41,10 +43,10 @@ func (obs repeatObservable) Subscribe(ctx context.Context, sink Observer) {
 
 // Repeat creates an Observable that repeats the stream of items emitted by the
 // source Observable at most count times.
-func (Operators) Repeat(count int) Operator {
-	return func(source Observable) Observable {
+func Repeat(count int) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		if count == 0 {
-			return Empty()
+			return rx.Empty()
 		}
 		if count == 1 {
 			return source
@@ -53,6 +55,6 @@ func (Operators) Repeat(count int) Operator {
 			count--
 		}
 		obs := repeatObservable{source, count}
-		return Create(obs.Subscribe)
+		return rx.Create(obs.Subscribe)
 	}
 }

@@ -1,18 +1,20 @@
-package rx
+package operators
 
 import (
 	"context"
+
+	"github.com/b97tsk/rx"
 )
 
 type retryObservable struct {
-	Source Observable
+	Source rx.Observable
 	Count  int
 }
 
-func (obs retryObservable) Subscribe(ctx context.Context, sink Observer) {
+func (obs retryObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	var (
 		count          = obs.Count
-		observer       Observer
+		observer       rx.Observer
 		avoidRecursive avoidRecursiveCalls
 	)
 
@@ -20,7 +22,7 @@ func (obs retryObservable) Subscribe(ctx context.Context, sink Observer) {
 		obs.Source.Subscribe(ctx, observer)
 	}
 
-	observer = func(t Notification) {
+	observer = func(t rx.Notification) {
 		switch {
 		case t.HasValue:
 			sink(t)
@@ -45,12 +47,12 @@ func (obs retryObservable) Subscribe(ctx context.Context, sink Observer) {
 // exception of ERROR emission. If the source Observable errors, this
 // operator will resubscribe to the source Observable for a maximum of count
 // resubscriptions rather than propagating the ERROR emission.
-func (Operators) Retry(count int) Operator {
-	return func(source Observable) Observable {
+func Retry(count int) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		if count == 0 {
 			return source
 		}
 		obs := retryObservable{source, count}
-		return Create(obs.Subscribe)
+		return rx.Create(obs.Subscribe)
 	}
 }

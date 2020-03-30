@@ -1,23 +1,24 @@
-package rx
+package operators
 
 import (
 	"context"
 
+	"github.com/b97tsk/rx"
 	"github.com/b97tsk/rx/x/atomic"
 )
 
 type repeatWhenObservable struct {
-	Source   Observable
-	Notifier func(Observable) Observable
+	Source   rx.Observable
+	Notifier func(rx.Observable) rx.Observable
 }
 
-func (obs repeatWhenObservable) Subscribe(ctx context.Context, sink Observer) {
-	sink = Mutex(sink)
+func (obs repeatWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) {
+	sink = rx.Mutex(sink)
 
 	var (
 		activeCount    = atomic.Uint32(2)
-		subject        Subject
-		createSubject  func() Subject
+		subject        rx.Subject
+		createSubject  func() rx.Subject
 		avoidRecursive avoidRecursiveCalls
 	)
 
@@ -34,7 +35,7 @@ func (obs repeatWhenObservable) Subscribe(ctx context.Context, sink Observer) {
 		cx <- X{}
 		cxCurrent = cx
 		sourceCtx, sourceCancel = context.WithCancel(ctx)
-		obs.Source.Subscribe(sourceCtx, func(t Notification) {
+		obs.Source.Subscribe(sourceCtx, func(t rx.Notification) {
 			if x, ok := <-cx; ok {
 				switch {
 				case t.HasValue || t.HasError:
@@ -56,10 +57,10 @@ func (obs repeatWhenObservable) Subscribe(ctx context.Context, sink Observer) {
 		})
 	}
 
-	createSubject = func() Subject {
-		subject := NewSubject()
+	createSubject = func() rx.Subject {
+		subject := rx.NewSubject()
 		obs := obs.Notifier(subject.Observable)
-		obs.Subscribe(ctx, func(t Notification) {
+		obs.Subscribe(ctx, func(t rx.Notification) {
 			switch {
 			case t.HasValue:
 				sourceCancel()
@@ -91,9 +92,9 @@ func (obs repeatWhenObservable) Subscribe(ctx context.Context, sink Observer) {
 // that Observable emits a value, this operator will resubscribe to the source
 // Observable. Otherwise, this operator will emit a COMPLETE on the child
 // subscription.
-func (Operators) RepeatWhen(notifier func(Observable) Observable) Operator {
-	return func(source Observable) Observable {
+func RepeatWhen(notifier func(rx.Observable) rx.Observable) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		obs := repeatWhenObservable{source, notifier}
-		return Create(obs.Subscribe)
+		return rx.Create(obs.Subscribe)
 	}
 }
