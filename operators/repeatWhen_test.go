@@ -3,28 +3,30 @@ package operators_test
 import (
 	"testing"
 
-	. "github.com/b97tsk/rx"
+	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/operators"
+	. "github.com/b97tsk/rx/testing"
 )
 
-func TestOperators_RepeatWhen(t *testing.T) {
+func TestRepeatWhen(t *testing.T) {
 	var (
 		repeatOnce  = operators.Take(0)
 		repeatTwice = operators.Take(1)
 	)
 
-	subscribeN(
+	SubscribeN(
 		t,
-		[]Observable{
-			Range(1, 4).Pipe(operators.RepeatWhen(repeatOnce)),
-			Range(1, 4).Pipe(operators.RepeatWhen(repeatTwice)),
-			Concat(Range(1, 4), Throw(errTest)).Pipe(operators.RepeatWhen(repeatOnce)),
-			Concat(Range(1, 4), Throw(errTest)).Pipe(operators.RepeatWhen(repeatTwice)),
+		[]rx.Observable{
+			rx.Range(1, 4).Pipe(operators.RepeatWhen(repeatOnce)),
+			rx.Range(1, 4).Pipe(operators.RepeatWhen(repeatTwice)),
+			rx.Concat(rx.Range(1, 4), rx.Throw(ErrTest)).Pipe(operators.RepeatWhen(repeatOnce)),
+			rx.Concat(rx.Range(1, 4), rx.Throw(ErrTest)).Pipe(operators.RepeatWhen(repeatTwice)),
 		},
 		[][]interface{}{
-			{1, 2, 3, Complete},
-			{1, 2, 3, 1, 2, 3, Complete},
-			{1, 2, 3, errTest},
-			{1, 2, 3, errTest},
+			{1, 2, 3, rx.Complete},
+			{1, 2, 3, 1, 2, 3, rx.Complete},
+			{1, 2, 3, ErrTest},
+			{1, 2, 3, ErrTest},
 		},
 	)
 }

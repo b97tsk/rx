@@ -3,58 +3,60 @@ package operators_test
 import (
 	"testing"
 
-	. "github.com/b97tsk/rx"
+	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/operators"
+	. "github.com/b97tsk/rx/testing"
 )
 
-func TestOperators_WindowWhen(t *testing.T) {
-	toSlice := func(val interface{}, idx int) Observable {
-		if obs, ok := val.(Observable); ok {
+func TestWindowWhen(t *testing.T) {
+	toSlice := func(val interface{}, idx int) rx.Observable {
+		if obs, ok := val.(rx.Observable); ok {
 			return obs.Pipe(
 				operators.ToSlice(),
 			)
 		}
-		return Throw(ErrNotObservable)
+		return rx.Throw(rx.ErrNotObservable)
 	}
-	subscribeN(
+	SubscribeN(
 		t,
-		[]Observable{
-			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
-				addLatencyToValue(1, 2),
-				operators.WindowWhen(func() Observable { return Interval(step(2)) }),
+		[]rx.Observable{
+			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+				AddLatencyToValues(1, 2),
+				operators.WindowWhen(func() rx.Observable { return rx.Interval(Step(2)) }),
 				operators.MergeMap(toSlice),
-				toString,
+				ToString(),
 			),
-			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
-				addLatencyToValue(1, 2),
-				operators.WindowWhen(func() Observable { return Interval(step(4)) }),
+			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+				AddLatencyToValues(1, 2),
+				operators.WindowWhen(func() rx.Observable { return rx.Interval(Step(4)) }),
 				operators.MergeMap(toSlice),
-				toString,
+				ToString(),
 			),
-			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
-				addLatencyToValue(1, 2),
-				operators.WindowWhen(func() Observable { return Interval(step(6)) }),
+			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+				AddLatencyToValues(1, 2),
+				operators.WindowWhen(func() rx.Observable { return rx.Interval(Step(6)) }),
 				operators.MergeMap(toSlice),
-				toString,
+				ToString(),
 			),
-			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
-				addLatencyToValue(1, 2),
-				operators.WindowWhen(func() Observable { return Interval(step(8)) }),
+			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+				AddLatencyToValues(1, 2),
+				operators.WindowWhen(func() rx.Observable { return rx.Interval(Step(8)) }),
 				operators.MergeMap(toSlice),
-				toString,
+				ToString(),
 			),
-			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
-				addLatencyToValue(1, 2),
-				operators.WindowWhen(func() Observable { return Throw(errTest) }),
+			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+				AddLatencyToValues(1, 2),
+				operators.WindowWhen(func() rx.Observable { return rx.Throw(ErrTest) }),
 				operators.MergeMap(toSlice),
-				toString,
+				ToString(),
 			),
 		},
 		[][]interface{}{
-			{"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", "[G]", Complete},
-			{"[A B]", "[C D]", "[E F]", "[G]", Complete},
-			{"[A B C]", "[D E F]", "[G]", Complete},
-			{"[A B C D]", "[E F G]", Complete},
-			{errTest},
+			{"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", "[G]", rx.Complete},
+			{"[A B]", "[C D]", "[E F]", "[G]", rx.Complete},
+			{"[A B C]", "[D E F]", "[G]", rx.Complete},
+			{"[A B C D]", "[E F G]", rx.Complete},
+			{ErrTest},
 		},
 	)
 }

@@ -3,22 +3,24 @@ package operators_test
 import (
 	"testing"
 
-	. "github.com/b97tsk/rx"
+	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/operators"
+	. "github.com/b97tsk/rx/testing"
 )
 
-func TestOperators_Delay(t *testing.T) {
-	subscribeN(
+func TestDelay(t *testing.T) {
+	SubscribeN(
 		t,
-		[]Observable{
-			Range(1, 5).Pipe(operators.Delay(step(3))),
-			Concat(Range(1, 5), Throw(errTest)).Pipe(
-				addLatencyToNotification(0, 3),
-				operators.Delay(step(1)),
+		[]rx.Observable{
+			rx.Range(1, 5).Pipe(operators.Delay(Step(3))),
+			rx.Concat(rx.Range(1, 5), rx.Throw(ErrTest)).Pipe(
+				AddLatencyToNotifications(0, 3),
+				operators.Delay(Step(1)),
 			),
 		},
 		[][]interface{}{
-			{1, 2, 3, 4, Complete},
-			{1, 2, 3, 4, errTest},
+			{1, 2, 3, 4, rx.Complete},
+			{1, 2, 3, 4, ErrTest},
 		},
 	)
 }

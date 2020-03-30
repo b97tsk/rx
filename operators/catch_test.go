@@ -3,24 +3,26 @@ package operators_test
 import (
 	"testing"
 
-	. "github.com/b97tsk/rx"
+	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/operators"
+	. "github.com/b97tsk/rx/testing"
 )
 
-func TestOperators_Catch(t *testing.T) {
+func TestCatch(t *testing.T) {
 	op := operators.Catch(
-		func(error) Observable {
-			return Just("D", "E")
+		func(error) rx.Observable {
+			return rx.Just("D", "E")
 		},
 	)
-	subscribeN(
+	SubscribeN(
 		t,
-		[]Observable{
-			Just("A", "B", "C").Pipe(op),
-			Concat(Just("A", "B", "C"), Throw(errTest)).Pipe(op),
+		[]rx.Observable{
+			rx.Just("A", "B", "C").Pipe(op),
+			rx.Concat(rx.Just("A", "B", "C"), rx.Throw(ErrTest)).Pipe(op),
 		},
 		[][]interface{}{
-			{"A", "B", "C", Complete},
-			{"A", "B", "C", "D", "E", Complete},
+			{"A", "B", "C", rx.Complete},
+			{"A", "B", "C", "D", "E", rx.Complete},
 		},
 	)
 }

@@ -3,17 +3,19 @@ package operators_test
 import (
 	"testing"
 
-	. "github.com/b97tsk/rx"
+	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/operators"
+	. "github.com/b97tsk/rx/testing"
 )
 
-func TestOperators_Congest(t *testing.T) {
-	subscribe(
+func TestCongest(t *testing.T) {
+	Subscribe(
 		t,
-		Range(1, 9).Pipe(
-			addLatencyToValue(1, 1),
+		rx.Range(1, 9).Pipe(
+			AddLatencyToValues(1, 1),
 			operators.Congest(3),
-			addLatencyToValue(3, 4),
+			AddLatencyToValues(3, 4),
 		),
-		1, 2, 3, 4, 5, 6, 7, 8, Complete,
+		1, 2, 3, 4, 5, 6, 7, 8, rx.Complete,
 	)
 }

@@ -3,28 +3,30 @@ package operators_test
 import (
 	"testing"
 
-	. "github.com/b97tsk/rx"
+	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/operators"
+	. "github.com/b97tsk/rx/testing"
 )
 
-func TestOperators_Pairwise(t *testing.T) {
-	op := Pipe(operators.Pairwise(), toString)
-	subscribeN(
+func TestPairwise(t *testing.T) {
+	op := rx.Pipe(operators.Pairwise(), ToString())
+	SubscribeN(
 		t,
-		[]Observable{
-			Empty().Pipe(op),
-			Just("A").Pipe(op),
-			Just("A", "B").Pipe(op),
-			Just("A", "B", "C").Pipe(op),
-			Just("A", "B", "C", "D").Pipe(op),
-			Concat(Just("A", "B", "C", "D"), Throw(errTest)).Pipe(op),
+		[]rx.Observable{
+			rx.Empty().Pipe(op),
+			rx.Just("A").Pipe(op),
+			rx.Just("A", "B").Pipe(op),
+			rx.Just("A", "B", "C").Pipe(op),
+			rx.Just("A", "B", "C", "D").Pipe(op),
+			rx.Concat(rx.Just("A", "B", "C", "D"), rx.Throw(ErrTest)).Pipe(op),
 		},
 		[][]interface{}{
-			{Complete},
-			{Complete},
-			{"[A B]", Complete},
-			{"[A B]", "[B C]", Complete},
-			{"[A B]", "[B C]", "[C D]", Complete},
-			{"[A B]", "[B C]", "[C D]", errTest},
+			{rx.Complete},
+			{rx.Complete},
+			{"[A B]", rx.Complete},
+			{"[A B]", "[B C]", rx.Complete},
+			{"[A B]", "[B C]", "[C D]", rx.Complete},
+			{"[A B]", "[B C]", "[C D]", ErrTest},
 		},
 	)
 }

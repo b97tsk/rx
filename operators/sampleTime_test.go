@@ -3,16 +3,18 @@ package operators_test
 import (
 	"testing"
 
-	. "github.com/b97tsk/rx"
+	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/operators"
+	. "github.com/b97tsk/rx/testing"
 )
 
-func TestOperators_SampleTime(t *testing.T) {
-	subscribe(
+func TestSampleTime(t *testing.T) {
+	Subscribe(
 		t,
-		Just("A", "B", "C", "D", "E", "F", "G").Pipe(
-			addLatencyToValue(1, 2),
-			operators.SampleTime(step(4)),
+		rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+			AddLatencyToValues(1, 2),
+			operators.SampleTime(Step(4)),
 		),
-		"B", "D", "F", Complete,
+		"B", "D", "F", rx.Complete,
 	)
 }

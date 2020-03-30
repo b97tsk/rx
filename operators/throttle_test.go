@@ -3,40 +3,42 @@ package operators_test
 import (
 	"testing"
 
-	. "github.com/b97tsk/rx"
+	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/operators"
+	. "github.com/b97tsk/rx/testing"
 )
 
-func TestOperators_Throttle(t *testing.T) {
-	subscribeN(
+func TestThrottle(t *testing.T) {
+	SubscribeN(
 		t,
-		[]Observable{
-			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
-				addLatencyToValue(0, 2),
-				operators.Throttle(func(interface{}) Observable {
-					return Interval(step(3))
+		[]rx.Observable{
+			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+				AddLatencyToValues(0, 2),
+				operators.Throttle(func(interface{}) rx.Observable {
+					return rx.Interval(Step(3))
 				}),
 			),
-			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
-				addLatencyToValue(0, 2),
-				operators.Throttle(func(interface{}) Observable {
-					return Throw(errTest)
+			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+				AddLatencyToValues(0, 2),
+				operators.Throttle(func(interface{}) rx.Observable {
+					return rx.Throw(ErrTest)
 				}),
 			),
-			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
-				addLatencyToValue(0, 4),
-				ThrottleConfigure{
-					DurationSelector: func(interface{}) Observable {
-						return Interval(step(9))
+			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+				AddLatencyToValues(0, 4),
+				operators.ThrottleConfigure{
+					DurationSelector: func(interface{}) rx.Observable {
+						return rx.Interval(Step(9))
 					},
 					Leading:  false,
 					Trailing: true,
 				}.Use(),
 			),
-			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
-				addLatencyToValue(0, 4),
-				ThrottleConfigure{
-					DurationSelector: func(interface{}) Observable {
-						return Interval(step(9))
+			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+				AddLatencyToValues(0, 4),
+				operators.ThrottleConfigure{
+					DurationSelector: func(interface{}) rx.Observable {
+						return rx.Interval(Step(9))
 					},
 					Leading:  true,
 					Trailing: true,
@@ -44,10 +46,10 @@ func TestOperators_Throttle(t *testing.T) {
 			),
 		},
 		[][]interface{}{
-			{"A", "C", "E", "G", Complete},
-			{"A", errTest},
-			{"C", "E", "G", Complete},
-			{"A", "C", "E", "G", Complete},
+			{"A", "C", "E", "G", rx.Complete},
+			{"A", ErrTest},
+			{"C", "E", "G", rx.Complete},
+			{"A", "C", "E", "G", rx.Complete},
 		},
 	)
 }

@@ -3,19 +3,21 @@ package operators_test
 import (
 	"testing"
 
-	. "github.com/b97tsk/rx"
+	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/operators"
+	. "github.com/b97tsk/rx/testing"
 )
 
-func TestOperators_Timeout(t *testing.T) {
-	subscribeN(
+func TestTimeout(t *testing.T) {
+	SubscribeN(
 		t,
-		[]Observable{
-			Just("A", "B", "C").Pipe(addLatencyToValue(1, 1), operators.Timeout(step(2))),
-			Just("A", "B", "C").Pipe(addLatencyToValue(1, 3), operators.Timeout(step(2))),
+		[]rx.Observable{
+			rx.Just("A", "B", "C").Pipe(AddLatencyToValues(1, 1), operators.Timeout(Step(2))),
+			rx.Just("A", "B", "C").Pipe(AddLatencyToValues(1, 3), operators.Timeout(Step(2))),
 		},
 		[][]interface{}{
-			{"A", "B", "C", Complete},
-			{"A", ErrTimeout},
+			{"A", "B", "C", rx.Complete},
+			{"A", rx.ErrTimeout},
 		},
 	)
 }

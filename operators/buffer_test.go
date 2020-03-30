@@ -3,45 +3,47 @@ package operators_test
 import (
 	"testing"
 
-	. "github.com/b97tsk/rx"
+	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/operators"
+	. "github.com/b97tsk/rx/testing"
 )
 
-func TestOperators_Buffer(t *testing.T) {
-	subscribeN(
+func TestBuffer(t *testing.T) {
+	SubscribeN(
 		t,
-		[]Observable{
-			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
-				addLatencyToValue(1, 2),
-				operators.Buffer(Interval(step(2))),
-				toString,
+		[]rx.Observable{
+			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+				AddLatencyToValues(1, 2),
+				operators.Buffer(rx.Interval(Step(2))),
+				ToString(),
 			),
-			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
-				addLatencyToValue(1, 2),
-				operators.Buffer(Interval(step(4))),
-				toString,
+			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+				AddLatencyToValues(1, 2),
+				operators.Buffer(rx.Interval(Step(4))),
+				ToString(),
 			),
-			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
-				addLatencyToValue(1, 2),
-				operators.Buffer(Interval(step(6))),
-				toString,
+			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+				AddLatencyToValues(1, 2),
+				operators.Buffer(rx.Interval(Step(6))),
+				ToString(),
 			),
-			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
-				addLatencyToValue(1, 2),
-				operators.Buffer(Interval(step(8))),
-				toString,
+			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+				AddLatencyToValues(1, 2),
+				operators.Buffer(rx.Interval(Step(8))),
+				ToString(),
 			),
-			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
-				addLatencyToValue(1, 2),
-				operators.Buffer(Throw(errTest)),
-				toString,
+			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+				AddLatencyToValues(1, 2),
+				operators.Buffer(rx.Throw(ErrTest)),
+				ToString(),
 			),
 		},
 		[][]interface{}{
-			{"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", Complete},
-			{"[A B]", "[C D]", "[E F]", Complete},
-			{"[A B C]", "[D E F]", Complete},
-			{"[A B C D]", Complete},
-			{errTest},
+			{"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", rx.Complete},
+			{"[A B]", "[C D]", "[E F]", rx.Complete},
+			{"[A B C]", "[D E F]", rx.Complete},
+			{"[A B C D]", rx.Complete},
+			{ErrTest},
 		},
 	)
 }

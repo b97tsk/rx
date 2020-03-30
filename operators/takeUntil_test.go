@@ -3,38 +3,40 @@ package operators_test
 import (
 	"testing"
 
-	. "github.com/b97tsk/rx"
+	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/operators"
+	. "github.com/b97tsk/rx/testing"
 )
 
-func TestOperators_TakeUntil(t *testing.T) {
-	addLatency := addLatencyToValue(0, 2)
-	delay := delaySubscription(3)
-	subscribeN(
+func TestTakeUntil(t *testing.T) {
+	addLatency := AddLatencyToValues(0, 2)
+	delay := DelaySubscription(3)
+	SubscribeN(
 		t,
-		[]Observable{
-			Just("A", "B", "C").Pipe(addLatency, operators.TakeUntil(Just(42))),
-			Just("A", "B", "C").Pipe(addLatency, operators.TakeUntil(Empty())),
-			Just("A", "B", "C").Pipe(addLatency, operators.TakeUntil(Throw(errTest))),
-			Just("A", "B", "C").Pipe(addLatency, operators.TakeUntil(Never())),
+		[]rx.Observable{
+			rx.Just("A", "B", "C").Pipe(addLatency, operators.TakeUntil(rx.Just(42))),
+			rx.Just("A", "B", "C").Pipe(addLatency, operators.TakeUntil(rx.Empty())),
+			rx.Just("A", "B", "C").Pipe(addLatency, operators.TakeUntil(rx.Throw(ErrTest))),
+			rx.Just("A", "B", "C").Pipe(addLatency, operators.TakeUntil(rx.Never())),
 		},
 		[][]interface{}{
-			{Complete},
-			{Complete},
-			{errTest},
-			{"A", "B", "C", Complete},
+			{rx.Complete},
+			{rx.Complete},
+			{ErrTest},
+			{"A", "B", "C", rx.Complete},
 		},
 	)
-	subscribeN(
+	SubscribeN(
 		t,
-		[]Observable{
-			Just("A", "B", "C").Pipe(addLatency, operators.TakeUntil(Just(42).Pipe(delay))),
-			Just("A", "B", "C").Pipe(addLatency, operators.TakeUntil(Empty().Pipe(delay))),
-			Just("A", "B", "C").Pipe(addLatency, operators.TakeUntil(Throw(errTest).Pipe(delay))),
+		[]rx.Observable{
+			rx.Just("A", "B", "C").Pipe(addLatency, operators.TakeUntil(rx.Just(42).Pipe(delay))),
+			rx.Just("A", "B", "C").Pipe(addLatency, operators.TakeUntil(rx.Empty().Pipe(delay))),
+			rx.Just("A", "B", "C").Pipe(addLatency, operators.TakeUntil(rx.Throw(ErrTest).Pipe(delay))),
 		},
 		[][]interface{}{
-			{"A", "B", Complete},
-			{"A", "B", Complete},
-			{"A", "B", errTest},
+			{"A", "B", rx.Complete},
+			{"A", "B", rx.Complete},
+			{"A", "B", ErrTest},
 		},
 	)
 }

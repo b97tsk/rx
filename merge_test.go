@@ -3,17 +3,18 @@ package rx_test
 import (
 	"testing"
 
-	. "github.com/b97tsk/rx"
+	"github.com/b97tsk/rx"
+	. "github.com/b97tsk/rx/testing"
 )
 
 func TestMerge(t *testing.T) {
-	subscribe(
+	Subscribe(
 		t,
-		Merge(
-			Just("A", "B").Pipe(addLatencyToValue(3, 5)),
-			Just("C", "D").Pipe(addLatencyToValue(2, 4)),
-			Just("E", "F").Pipe(addLatencyToValue(1, 3)),
+		rx.Merge(
+			rx.Just("A", "B").Pipe(AddLatencyToValues(3, 5)),
+			rx.Just("C", "D").Pipe(AddLatencyToValues(2, 4)),
+			rx.Just("E", "F").Pipe(AddLatencyToValues(1, 3)),
 		),
-		"E", "C", "A", "F", "D", "B", Complete,
+		"E", "C", "A", "F", "D", "B", rx.Complete,
 	)
 }

@@ -3,38 +3,40 @@ package operators_test
 import (
 	"testing"
 
-	. "github.com/b97tsk/rx"
+	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/operators"
+	. "github.com/b97tsk/rx/testing"
 )
 
-func TestOperators_SkipUntil(t *testing.T) {
-	addLatency := addLatencyToValue(0, 2)
-	delay := delaySubscription(3)
-	subscribeN(
+func TestSkipUntil(t *testing.T) {
+	addLatency := AddLatencyToValues(0, 2)
+	delay := DelaySubscription(3)
+	SubscribeN(
 		t,
-		[]Observable{
-			Just("A", "B", "C").Pipe(addLatency, operators.SkipUntil(Just(42))),
-			Just("A", "B", "C").Pipe(addLatency, operators.SkipUntil(Empty())),
-			Just("A", "B", "C").Pipe(addLatency, operators.SkipUntil(Throw(errTest))),
-			Just("A", "B", "C").Pipe(addLatency, operators.SkipUntil(Never())),
+		[]rx.Observable{
+			rx.Just("A", "B", "C").Pipe(addLatency, operators.SkipUntil(rx.Just(42))),
+			rx.Just("A", "B", "C").Pipe(addLatency, operators.SkipUntil(rx.Empty())),
+			rx.Just("A", "B", "C").Pipe(addLatency, operators.SkipUntil(rx.Throw(ErrTest))),
+			rx.Just("A", "B", "C").Pipe(addLatency, operators.SkipUntil(rx.Never())),
 		},
 		[][]interface{}{
-			{"A", "B", "C", Complete},
-			{Complete},
-			{errTest},
-			{Complete},
+			{"A", "B", "C", rx.Complete},
+			{rx.Complete},
+			{ErrTest},
+			{rx.Complete},
 		},
 	)
-	subscribeN(
+	SubscribeN(
 		t,
-		[]Observable{
-			Just("A", "B", "C").Pipe(addLatency, operators.SkipUntil(Just(42).Pipe(delay))),
-			Just("A", "B", "C").Pipe(addLatency, operators.SkipUntil(Empty().Pipe(delay))),
-			Just("A", "B", "C").Pipe(addLatency, operators.SkipUntil(Throw(errTest).Pipe(delay))),
+		[]rx.Observable{
+			rx.Just("A", "B", "C").Pipe(addLatency, operators.SkipUntil(rx.Just(42).Pipe(delay))),
+			rx.Just("A", "B", "C").Pipe(addLatency, operators.SkipUntil(rx.Empty().Pipe(delay))),
+			rx.Just("A", "B", "C").Pipe(addLatency, operators.SkipUntil(rx.Throw(ErrTest).Pipe(delay))),
 		},
 		[][]interface{}{
-			{"C", Complete},
-			{Complete},
-			{errTest},
+			{"C", rx.Complete},
+			{rx.Complete},
+			{ErrTest},
 		},
 	)
 }

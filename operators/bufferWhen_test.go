@@ -3,45 +3,47 @@ package operators_test
 import (
 	"testing"
 
-	. "github.com/b97tsk/rx"
+	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/operators"
+	. "github.com/b97tsk/rx/testing"
 )
 
-func TestOperators_BufferWhen(t *testing.T) {
-	subscribeN(
+func TestBufferWhen(t *testing.T) {
+	SubscribeN(
 		t,
-		[]Observable{
-			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
-				addLatencyToValue(1, 2),
-				operators.BufferWhen(func() Observable { return Interval(step(2)) }),
-				toString,
+		[]rx.Observable{
+			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+				AddLatencyToValues(1, 2),
+				operators.BufferWhen(func() rx.Observable { return rx.Interval(Step(2)) }),
+				ToString(),
 			),
-			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
-				addLatencyToValue(1, 2),
-				operators.BufferWhen(func() Observable { return Interval(step(4)) }),
-				toString,
+			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+				AddLatencyToValues(1, 2),
+				operators.BufferWhen(func() rx.Observable { return rx.Interval(Step(4)) }),
+				ToString(),
 			),
-			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
-				addLatencyToValue(1, 2),
-				operators.BufferWhen(func() Observable { return Interval(step(6)) }),
-				toString,
+			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+				AddLatencyToValues(1, 2),
+				operators.BufferWhen(func() rx.Observable { return rx.Interval(Step(6)) }),
+				ToString(),
 			),
-			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
-				addLatencyToValue(1, 2),
-				operators.BufferWhen(func() Observable { return Interval(step(8)) }),
-				toString,
+			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+				AddLatencyToValues(1, 2),
+				operators.BufferWhen(func() rx.Observable { return rx.Interval(Step(8)) }),
+				ToString(),
 			),
-			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
-				addLatencyToValue(1, 2),
-				operators.BufferWhen(func() Observable { return Throw(errTest) }),
-				toString,
+			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+				AddLatencyToValues(1, 2),
+				operators.BufferWhen(func() rx.Observable { return rx.Throw(ErrTest) }),
+				ToString(),
 			),
 		},
 		[][]interface{}{
-			{"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", "[G]", Complete},
-			{"[A B]", "[C D]", "[E F]", "[G]", Complete},
-			{"[A B C]", "[D E F]", "[G]", Complete},
-			{"[A B C D]", "[E F G]", Complete},
-			{errTest},
+			{"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", "[G]", rx.Complete},
+			{"[A B]", "[C D]", "[E F]", "[G]", rx.Complete},
+			{"[A B C]", "[D E F]", "[G]", rx.Complete},
+			{"[A B C D]", "[E F G]", rx.Complete},
+			{ErrTest},
 		},
 	)
 }

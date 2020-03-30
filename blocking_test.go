@@ -4,23 +4,25 @@ import (
 	"context"
 	"testing"
 
-	. "github.com/b97tsk/rx"
+	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/operators"
+	. "github.com/b97tsk/rx/testing"
 )
 
 func TestObservable_BlockingFirst(t *testing.T) {
 	tests := [...]struct {
-		obs Observable
+		obs rx.Observable
 		val interface{}
 		err error
 	}{
-		{Empty(), nil, ErrEmpty},
-		{Throw(errTest), nil, errTest},
-		{Just("A"), "A", nil},
-		{Just("A", "B"), "A", nil},
-		{Just("A", "B").Pipe(operators.Go()), "A", nil},
-		{Never(), nil, context.DeadlineExceeded},
+		{rx.Empty(), nil, rx.ErrEmpty},
+		{rx.Throw(ErrTest), nil, ErrTest},
+		{rx.Just("A"), "A", nil},
+		{rx.Just("A", "B"), "A", nil},
+		{rx.Just("A", "B").Pipe(operators.Go()), "A", nil},
+		{rx.Never(), nil, context.DeadlineExceeded},
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), step(1))
+	ctx, cancel := context.WithTimeout(context.Background(), Step(1))
 	for _, x := range tests {
 		val, err := x.obs.BlockingFirst(ctx)
 		if val != x.val || err != x.err {
@@ -32,18 +34,18 @@ func TestObservable_BlockingFirst(t *testing.T) {
 
 func TestObservable_BlockingLast(t *testing.T) {
 	tests := [...]struct {
-		obs Observable
+		obs rx.Observable
 		val interface{}
 		err error
 	}{
-		{Empty(), nil, ErrEmpty},
-		{Throw(errTest), nil, errTest},
-		{Just("A"), "A", nil},
-		{Just("A", "B"), "B", nil},
-		{Just("A", "B").Pipe(operators.Go()), "B", nil},
-		{Never(), nil, context.DeadlineExceeded},
+		{rx.Empty(), nil, rx.ErrEmpty},
+		{rx.Throw(ErrTest), nil, ErrTest},
+		{rx.Just("A"), "A", nil},
+		{rx.Just("A", "B"), "B", nil},
+		{rx.Just("A", "B").Pipe(operators.Go()), "B", nil},
+		{rx.Never(), nil, context.DeadlineExceeded},
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), step(1))
+	ctx, cancel := context.WithTimeout(context.Background(), Step(1))
 	for _, x := range tests {
 		val, err := x.obs.BlockingLast(ctx)
 		if val != x.val || err != x.err {
@@ -55,18 +57,18 @@ func TestObservable_BlockingLast(t *testing.T) {
 
 func TestObservable_BlockingSingle(t *testing.T) {
 	tests := [...]struct {
-		obs Observable
+		obs rx.Observable
 		val interface{}
 		err error
 	}{
-		{Empty(), nil, ErrEmpty},
-		{Throw(errTest), nil, errTest},
-		{Just("A"), "A", nil},
-		{Just("A", "B"), nil, ErrNotSingle},
-		{Just("A", "B").Pipe(operators.Go()), nil, ErrNotSingle},
-		{Never(), nil, context.DeadlineExceeded},
+		{rx.Empty(), nil, rx.ErrEmpty},
+		{rx.Throw(ErrTest), nil, ErrTest},
+		{rx.Just("A"), "A", nil},
+		{rx.Just("A", "B"), nil, rx.ErrNotSingle},
+		{rx.Just("A", "B").Pipe(operators.Go()), nil, rx.ErrNotSingle},
+		{rx.Never(), nil, context.DeadlineExceeded},
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), step(1))
+	ctx, cancel := context.WithTimeout(context.Background(), Step(1))
 	for _, x := range tests {
 		val, err := x.obs.BlockingSingle(ctx)
 		if val != x.val || err != x.err {
@@ -78,19 +80,19 @@ func TestObservable_BlockingSingle(t *testing.T) {
 
 func TestObservable_BlockingSubscribe(t *testing.T) {
 	tests := [...]struct {
-		obs Observable
+		obs rx.Observable
 		err error
 	}{
-		{Empty(), nil},
-		{Throw(errTest), errTest},
-		{Just("A"), nil},
-		{Just("A", "B"), nil},
-		{Just("A", "B").Pipe(operators.Go()), nil},
-		{Never(), context.DeadlineExceeded},
+		{rx.Empty(), nil},
+		{rx.Throw(ErrTest), ErrTest},
+		{rx.Just("A"), nil},
+		{rx.Just("A", "B"), nil},
+		{rx.Just("A", "B").Pipe(operators.Go()), nil},
+		{rx.Never(), context.DeadlineExceeded},
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), step(1))
+	ctx, cancel := context.WithTimeout(context.Background(), Step(1))
 	for _, x := range tests {
-		err := x.obs.BlockingSubscribe(ctx, NopObserver)
+		err := x.obs.BlockingSubscribe(ctx, rx.NopObserver)
 		if err != x.err {
 			t.Fail()
 		}

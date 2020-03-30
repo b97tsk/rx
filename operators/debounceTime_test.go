@@ -3,25 +3,27 @@ package operators_test
 import (
 	"testing"
 
-	. "github.com/b97tsk/rx"
+	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/operators"
+	. "github.com/b97tsk/rx/testing"
 )
 
-func TestOperators_DebounceTime(t *testing.T) {
-	subscribeN(
+func TestDebounceTime(t *testing.T) {
+	SubscribeN(
 		t,
-		[]Observable{
-			Just("A", "B", "C").Pipe(
-				addLatencyToValue(1, 2),
-				operators.DebounceTime(step(3)),
+		[]rx.Observable{
+			rx.Just("A", "B", "C").Pipe(
+				AddLatencyToValues(1, 2),
+				operators.DebounceTime(Step(3)),
 			),
-			Just("A", "B", "C").Pipe(
-				addLatencyToValue(1, 3),
-				operators.DebounceTime(step(2)),
+			rx.Just("A", "B", "C").Pipe(
+				AddLatencyToValues(1, 3),
+				operators.DebounceTime(Step(2)),
 			),
 		},
 		[][]interface{}{
-			{"C", Complete},
-			{"A", "B", "C", Complete},
+			{"C", rx.Complete},
+			{"A", "B", "C", rx.Complete},
 		},
 	)
 }

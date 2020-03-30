@@ -3,91 +3,93 @@ package operators_test
 import (
 	"testing"
 
-	. "github.com/b97tsk/rx"
+	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/operators"
+	. "github.com/b97tsk/rx/testing"
 )
 
-func TestOperators_BufferTime(t *testing.T) {
-	subscribeN(
+func TestBufferTime(t *testing.T) {
+	SubscribeN(
 		t,
-		[]Observable{
-			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
-				addLatencyToValue(1, 2),
-				operators.BufferTime(step(2)),
-				toString,
+		[]rx.Observable{
+			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+				AddLatencyToValues(1, 2),
+				operators.BufferTime(Step(2)),
+				ToString(),
 			),
-			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
-				addLatencyToValue(1, 2),
-				operators.BufferTime(step(4)),
-				toString,
+			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+				AddLatencyToValues(1, 2),
+				operators.BufferTime(Step(4)),
+				ToString(),
 			),
-			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
-				addLatencyToValue(1, 2),
-				operators.BufferTime(step(6)),
-				toString,
+			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+				AddLatencyToValues(1, 2),
+				operators.BufferTime(Step(6)),
+				ToString(),
 			),
 		},
 		[][]interface{}{
-			{"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", "[G]", Complete},
-			{"[A B]", "[C D]", "[E F]", "[G]", Complete},
-			{"[A B C]", "[D E F]", "[G]", Complete},
+			{"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", "[G]", rx.Complete},
+			{"[A B]", "[C D]", "[E F]", "[G]", rx.Complete},
+			{"[A B C]", "[D E F]", "[G]", rx.Complete},
 		},
 	)
 	t.Log("----------")
-	subscribeN(
+	SubscribeN(
 		t,
-		[]Observable{
-			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
-				addLatencyToValue(1, 2),
-				BufferTimeConfigure{step(8), 0, 0}.Use(),
-				toString,
+		[]rx.Observable{
+			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+				AddLatencyToValues(1, 2),
+				operators.BufferTimeConfigure{Step(8), 0, 0}.Use(),
+				ToString(),
 			),
-			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
-				addLatencyToValue(1, 2),
-				BufferTimeConfigure{step(8), 0, 3}.Use(),
-				toString,
+			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+				AddLatencyToValues(1, 2),
+				operators.BufferTimeConfigure{Step(8), 0, 3}.Use(),
+				ToString(),
 			),
-			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
-				addLatencyToValue(1, 2),
-				BufferTimeConfigure{step(8), 0, 2}.Use(),
-				toString,
+			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+				AddLatencyToValues(1, 2),
+				operators.BufferTimeConfigure{Step(8), 0, 2}.Use(),
+				ToString(),
 			),
-			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
-				addLatencyToValue(1, 2),
-				BufferTimeConfigure{step(8), 0, 1}.Use(),
-				toString,
+			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+				AddLatencyToValues(1, 2),
+				operators.BufferTimeConfigure{Step(8), 0, 1}.Use(),
+				ToString(),
 			),
 		},
 		[][]interface{}{
-			{"[A B C D]", "[E F G]", Complete},
-			{"[A B C]", "[D E F]", "[G]", Complete},
-			{"[A B]", "[C D]", "[E F]", "[G]", Complete},
-			{"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", "[G]", "[]", Complete},
+			{"[A B C D]", "[E F G]", rx.Complete},
+			{"[A B C]", "[D E F]", "[G]", rx.Complete},
+			{"[A B]", "[C D]", "[E F]", "[G]", rx.Complete},
+			{"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", "[G]", "[]", rx.Complete},
 		},
 	)
 	t.Log("----------")
-	subscribeN(
+	SubscribeN(
 		t,
-		[]Observable{
-			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
-				addLatencyToValue(1, 2),
-				BufferTimeConfigure{step(2), step(2), 0}.Use(),
-				toString,
+		[]rx.Observable{
+			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+				AddLatencyToValues(1, 2),
+				operators.BufferTimeConfigure{Step(2), Step(2), 0}.Use(),
+				ToString(),
 			),
-			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
-				addLatencyToValue(1, 2),
-				BufferTimeConfigure{step(2), step(4), 0}.Use(),
-				toString,
+			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+				AddLatencyToValues(1, 2),
+				operators.BufferTimeConfigure{Step(2), Step(4), 0}.Use(),
+				ToString(),
 			),
-			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
-				addLatencyToValue(1, 2),
-				BufferTimeConfigure{step(4), step(2), 0}.Use(),
-				toString,
+			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+				AddLatencyToValues(1, 2),
+				operators.BufferTimeConfigure{Step(4), Step(2), 0}.Use(),
+				ToString(),
 			),
 		},
 		[][]interface{}{
-			{"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", "[G]", Complete},
-			{"[A]", "[C]", "[E]", "[G]", Complete},
-			{"[A B]", "[B C]", "[C D]", "[D E]", "[E F]", "[F G]", "[G]", Complete},
+			{"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", "[G]", rx.Complete},
+			{"[A]", "[C]", "[E]", "[G]", rx.Complete},
+			{"[A B]", "[B C]", "[C D]", "[D E]", "[E F]", "[F G]", "[G]", rx.Complete},
 		},
 	)
 }

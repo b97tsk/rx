@@ -3,23 +3,25 @@ package operators_test
 import (
 	"testing"
 
-	. "github.com/b97tsk/rx"
+	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/operators"
+	. "github.com/b97tsk/rx/testing"
 )
 
-func TestOperators_StartWith(t *testing.T) {
-	subscribeN(
+func TestStartWith(t *testing.T) {
+	SubscribeN(
 		t,
-		[]Observable{
-			Just("D", "E").Pipe(operators.StartWith("A", "B", "C")),
-			Empty().Pipe(operators.StartWith("A", "B", "C")),
-			Throw(errTest).Pipe(operators.StartWith("A", "B", "C")),
-			Throw(errTest).Pipe(operators.StartWith()),
+		[]rx.Observable{
+			rx.Just("D", "E").Pipe(operators.StartWith("A", "B", "C")),
+			rx.Empty().Pipe(operators.StartWith("A", "B", "C")),
+			rx.Throw(ErrTest).Pipe(operators.StartWith("A", "B", "C")),
+			rx.Throw(ErrTest).Pipe(operators.StartWith()),
 		},
 		[][]interface{}{
-			{"A", "B", "C", "D", "E", Complete},
-			{"A", "B", "C", Complete},
-			{"A", "B", "C", errTest},
-			{errTest},
+			{"A", "B", "C", "D", "E", rx.Complete},
+			{"A", "B", "C", rx.Complete},
+			{"A", "B", "C", ErrTest},
+			{ErrTest},
 		},
 	)
 }

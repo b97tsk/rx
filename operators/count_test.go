@@ -3,21 +3,23 @@ package operators_test
 import (
 	"testing"
 
-	. "github.com/b97tsk/rx"
+	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/operators"
+	. "github.com/b97tsk/rx/testing"
 )
 
-func TestOperators_Count(t *testing.T) {
-	subscribeN(
+func TestCount(t *testing.T) {
+	SubscribeN(
 		t,
-		[]Observable{
-			Empty().Pipe(operators.Count()),
-			Range(1, 9).Pipe(operators.Count()),
-			Concat(Range(1, 9), Throw(errTest)).Pipe(operators.Count()),
+		[]rx.Observable{
+			rx.Empty().Pipe(operators.Count()),
+			rx.Range(1, 9).Pipe(operators.Count()),
+			rx.Concat(rx.Range(1, 9), rx.Throw(ErrTest)).Pipe(operators.Count()),
 		},
 		[][]interface{}{
-			{0, Complete},
-			{8, Complete},
-			{errTest},
+			{0, rx.Complete},
+			{8, rx.Complete},
+			{ErrTest},
 		},
 	)
 }

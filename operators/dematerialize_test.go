@@ -3,38 +3,40 @@ package operators_test
 import (
 	"testing"
 
-	. "github.com/b97tsk/rx"
+	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/operators"
+	. "github.com/b97tsk/rx/testing"
 )
 
-func TestOperators_Dematerialize(t *testing.T) {
-	subscribeN(
+func TestDematerialize(t *testing.T) {
+	SubscribeN(
 		t,
-		[]Observable{
-			Empty().Pipe(operators.Materialize(), operators.Dematerialize()),
-			Throw(errTest).Pipe(operators.Materialize(), operators.Dematerialize()),
-			Just("A", "B", "C").Pipe(operators.Materialize(), operators.Dematerialize()),
-			Concat(Just("A", "B", "C"), Throw(errTest)).Pipe(operators.Materialize(), operators.Dematerialize()),
+		[]rx.Observable{
+			rx.Empty().Pipe(operators.Materialize(), operators.Dematerialize()),
+			rx.Throw(ErrTest).Pipe(operators.Materialize(), operators.Dematerialize()),
+			rx.Just("A", "B", "C").Pipe(operators.Materialize(), operators.Dematerialize()),
+			rx.Concat(rx.Just("A", "B", "C"), rx.Throw(ErrTest)).Pipe(operators.Materialize(), operators.Dematerialize()),
 		},
 		[][]interface{}{
-			{Complete},
-			{errTest},
-			{"A", "B", "C", Complete},
-			{"A", "B", "C", errTest},
+			{rx.Complete},
+			{ErrTest},
+			{"A", "B", "C", rx.Complete},
+			{"A", "B", "C", ErrTest},
 		},
 	)
-	subscribeN(
+	SubscribeN(
 		t,
-		[]Observable{
-			Empty().Pipe(operators.Dematerialize()),
-			Throw(errTest).Pipe(operators.Dematerialize()),
-			Just("A", "B", "C").Pipe(operators.Dematerialize()),
-			Concat(Just("A", "B", "C"), Throw(errTest)).Pipe(operators.Dematerialize()),
+		[]rx.Observable{
+			rx.Empty().Pipe(operators.Dematerialize()),
+			rx.Throw(ErrTest).Pipe(operators.Dematerialize()),
+			rx.Just("A", "B", "C").Pipe(operators.Dematerialize()),
+			rx.Concat(rx.Just("A", "B", "C"), rx.Throw(ErrTest)).Pipe(operators.Dematerialize()),
 		},
 		[][]interface{}{
-			{Complete},
-			{errTest},
-			{ErrNotNotification},
-			{ErrNotNotification},
+			{rx.Complete},
+			{ErrTest},
+			{rx.ErrNotNotification},
+			{rx.ErrNotNotification},
 		},
 	)
 }

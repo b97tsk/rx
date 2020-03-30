@@ -3,7 +3,9 @@ package rx_test
 import (
 	"testing"
 
-	. "github.com/b97tsk/rx"
+	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/operators"
+	. "github.com/b97tsk/rx/testing"
 )
 
 func TestFromChannel(t *testing.T) {
@@ -15,7 +17,7 @@ func TestFromChannel(t *testing.T) {
 			c <- "C"
 			close(c)
 		}()
-		subscribe(t, FromChannel(c), "A", "B", "C", Complete)
+		Subscribe(t, rx.FromChannel(c), "A", "B", "C", rx.Complete)
 	})
 	t.Run("#2", func(t *testing.T) {
 		c := make(chan interface{})
@@ -25,15 +27,15 @@ func TestFromChannel(t *testing.T) {
 			c <- "C"
 			close(c)
 		}()
-		subscribeN(
+		SubscribeN(
 			t,
-			[]Observable{
-				FromChannel(c).Pipe(operators.Take(1)),
-				FromChannel(c).Pipe(operators.Take(2)),
+			[]rx.Observable{
+				rx.FromChannel(c).Pipe(operators.Take(1)),
+				rx.FromChannel(c).Pipe(operators.Take(2)),
 			},
 			[][]interface{}{
-				{"A", Complete},
-				{"B", "C", Complete},
+				{"A", rx.Complete},
+				{"B", "C", rx.Complete},
 			},
 		)
 	})

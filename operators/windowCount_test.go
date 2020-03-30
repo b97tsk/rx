@@ -3,58 +3,60 @@ package operators_test
 import (
 	"testing"
 
-	. "github.com/b97tsk/rx"
+	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/operators"
+	. "github.com/b97tsk/rx/testing"
 )
 
-func TestOperators_WindowCount(t *testing.T) {
-	toSlice := func(val interface{}, idx int) Observable {
-		if obs, ok := val.(Observable); ok {
+func TestWindowCount(t *testing.T) {
+	toSlice := func(val interface{}, idx int) rx.Observable {
+		if obs, ok := val.(rx.Observable); ok {
 			return obs.Pipe(
 				operators.ToSlice(),
 			)
 		}
-		return Throw(ErrNotObservable)
+		return rx.Throw(rx.ErrNotObservable)
 	}
-	subscribeN(
+	SubscribeN(
 		t,
-		[]Observable{
-			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
-				addLatencyToValue(1, 2),
+		[]rx.Observable{
+			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+				AddLatencyToValues(1, 2),
 				operators.WindowCount(2),
 				operators.MergeMap(toSlice),
-				toString,
+				ToString(),
 			),
-			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
-				addLatencyToValue(1, 2),
+			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+				AddLatencyToValues(1, 2),
 				operators.WindowCount(3),
 				operators.MergeMap(toSlice),
-				toString,
+				ToString(),
 			),
-			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
-				addLatencyToValue(1, 2),
-				WindowCountConfigure{3, 1}.Use(),
+			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+				AddLatencyToValues(1, 2),
+				operators.WindowCountConfigure{3, 1}.Use(),
 				operators.MergeMap(toSlice),
-				toString,
+				ToString(),
 			),
-			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
-				addLatencyToValue(1, 2),
-				WindowCountConfigure{3, 2}.Use(),
+			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+				AddLatencyToValues(1, 2),
+				operators.WindowCountConfigure{3, 2}.Use(),
 				operators.MergeMap(toSlice),
-				toString,
+				ToString(),
 			),
-			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
-				addLatencyToValue(1, 2),
-				WindowCountConfigure{3, 4}.Use(),
+			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+				AddLatencyToValues(1, 2),
+				operators.WindowCountConfigure{3, 4}.Use(),
 				operators.MergeMap(toSlice),
-				toString,
+				ToString(),
 			),
 		},
 		[][]interface{}{
-			{"[A B]", "[C D]", "[E F]", "[G]", Complete},
-			{"[A B C]", "[D E F]", "[G]", Complete},
-			{"[A B C]", "[B C D]", "[C D E]", "[D E F]", "[E F G]", "[F G]", "[G]", "[]", Complete},
-			{"[A B C]", "[C D E]", "[E F G]", "[G]", Complete},
-			{"[A B C]", "[E F G]", "[]", Complete},
+			{"[A B]", "[C D]", "[E F]", "[G]", rx.Complete},
+			{"[A B C]", "[D E F]", "[G]", rx.Complete},
+			{"[A B C]", "[B C D]", "[C D E]", "[D E F]", "[E F G]", "[F G]", "[G]", "[]", rx.Complete},
+			{"[A B C]", "[C D E]", "[E F G]", "[G]", rx.Complete},
+			{"[A B C]", "[E F G]", "[]", rx.Complete},
 		},
 	)
 }

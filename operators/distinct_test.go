@@ -3,13 +3,15 @@ package operators_test
 import (
 	"testing"
 
-	. "github.com/b97tsk/rx"
+	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/operators"
+	. "github.com/b97tsk/rx/testing"
 )
 
-func TestOperators_Distinct(t *testing.T) {
-	subscribe(
+func TestDistinct(t *testing.T) {
+	Subscribe(
 		t,
-		Just("A", "B", "B", "A", "C", "C", "A").Pipe(operators.Distinct()),
-		"A", "B", "C", Complete,
+		rx.Just("A", "B", "B", "A", "C", "C", "A").Pipe(operators.Distinct()),
+		"A", "B", "C", rx.Complete,
 	)
 }

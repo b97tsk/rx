@@ -3,43 +3,45 @@ package operators_test
 import (
 	"testing"
 
-	. "github.com/b97tsk/rx"
+	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/operators"
+	. "github.com/b97tsk/rx/testing"
 )
 
-func TestOperators_ElementAt(t *testing.T) {
+func TestElementAt(t *testing.T) {
 	findFifth := operators.ElementAt(4)
-	subscribeN(
+	SubscribeN(
 		t,
-		[]Observable{
-			Range(1, 9).Pipe(findFifth),
-			Range(1, 5).Pipe(findFifth),
-			Concat(Range(1, 9), Throw(errTest)).Pipe(findFifth),
-			Concat(Range(1, 5), Throw(errTest)).Pipe(findFifth),
+		[]rx.Observable{
+			rx.Range(1, 9).Pipe(findFifth),
+			rx.Range(1, 5).Pipe(findFifth),
+			rx.Concat(rx.Range(1, 9), rx.Throw(ErrTest)).Pipe(findFifth),
+			rx.Concat(rx.Range(1, 5), rx.Throw(ErrTest)).Pipe(findFifth),
 		},
 		[][]interface{}{
-			{5, Complete},
-			{ErrOutOfRange},
-			{5, Complete},
-			{errTest},
+			{5, rx.Complete},
+			{rx.ErrOutOfRange},
+			{5, rx.Complete},
+			{ErrTest},
 		},
 	)
 }
 
-func TestOperators_ElementAtOrDefault(t *testing.T) {
+func TestElementAtOrDefault(t *testing.T) {
 	findFifth := operators.ElementAtOrDefault(4, 404)
-	subscribeN(
+	SubscribeN(
 		t,
-		[]Observable{
-			Range(1, 9).Pipe(findFifth),
-			Range(1, 5).Pipe(findFifth),
-			Concat(Range(1, 9), Throw(errTest)).Pipe(findFifth),
-			Concat(Range(1, 5), Throw(errTest)).Pipe(findFifth),
+		[]rx.Observable{
+			rx.Range(1, 9).Pipe(findFifth),
+			rx.Range(1, 5).Pipe(findFifth),
+			rx.Concat(rx.Range(1, 9), rx.Throw(ErrTest)).Pipe(findFifth),
+			rx.Concat(rx.Range(1, 5), rx.Throw(ErrTest)).Pipe(findFifth),
 		},
 		[][]interface{}{
-			{5, Complete},
-			{404, Complete},
-			{5, Complete},
-			{errTest},
+			{5, rx.Complete},
+			{404, rx.Complete},
+			{5, rx.Complete},
+			{ErrTest},
 		},
 	)
 }

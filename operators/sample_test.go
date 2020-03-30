@@ -3,30 +3,32 @@ package operators_test
 import (
 	"testing"
 
-	. "github.com/b97tsk/rx"
+	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/operators"
+	. "github.com/b97tsk/rx/testing"
 )
 
-func TestOperators_Sample(t *testing.T) {
-	subscribeN(
+func TestSample(t *testing.T) {
+	SubscribeN(
 		t,
-		[]Observable{
-			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
-				addLatencyToValue(1, 2),
-				operators.Sample(Interval(step(4))),
+		[]rx.Observable{
+			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+				AddLatencyToValues(1, 2),
+				operators.Sample(rx.Interval(Step(4))),
 			),
-			Just("A", "B", "C", "D", "E", "F", "G").Pipe(
-				addLatencyToValue(1, 2),
+			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+				AddLatencyToValues(1, 2),
 				operators.Sample(
-					Concat(
-						Interval(step(4)).Pipe(operators.Take(3)),
-						Throw(errTest),
+					rx.Concat(
+						rx.Interval(Step(4)).Pipe(operators.Take(3)),
+						rx.Throw(ErrTest),
 					),
 				),
 			),
 		},
 		[][]interface{}{
-			{"B", "D", "F", Complete},
-			{"B", "D", "F", errTest},
+			{"B", "D", "F", rx.Complete},
+			{"B", "D", "F", ErrTest},
 		},
 	)
 }

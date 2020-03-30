@@ -3,21 +3,23 @@ package operators_test
 import (
 	"testing"
 
-	. "github.com/b97tsk/rx"
+	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/operators"
+	. "github.com/b97tsk/rx/testing"
 )
 
-func TestOperators_IgnoreElements(t *testing.T) {
-	subscribeN(
+func TestIgnoreElements(t *testing.T) {
+	SubscribeN(
 		t,
-		[]Observable{
-			Empty().Pipe(operators.IgnoreElements()),
-			Just("A", "B", "C").Pipe(operators.IgnoreElements()),
-			Concat(Just("A", "B", "C"), Throw(errTest)).Pipe(operators.IgnoreElements()),
+		[]rx.Observable{
+			rx.Empty().Pipe(operators.IgnoreElements()),
+			rx.Just("A", "B", "C").Pipe(operators.IgnoreElements()),
+			rx.Concat(rx.Just("A", "B", "C"), rx.Throw(ErrTest)).Pipe(operators.IgnoreElements()),
 		},
 		[][]interface{}{
-			{Complete},
-			{Complete},
-			{errTest},
+			{rx.Complete},
+			{rx.Complete},
+			{ErrTest},
 		},
 	)
 }

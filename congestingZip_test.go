@@ -3,33 +3,34 @@ package rx_test
 import (
 	"testing"
 
-	. "github.com/b97tsk/rx"
+	"github.com/b97tsk/rx"
+	. "github.com/b97tsk/rx/testing"
 )
 
 func TestCongestingZip(t *testing.T) {
-	delay := delaySubscription(1)
-	observables := [...]Observable{
-		CongestingZip(Just("A", "B"), Range(1, 4)),
-		CongestingZip(Just("A", "B", "C"), Range(1, 4)),
-		CongestingZip(Just("A", "B", "C", "D"), Range(1, 4)),
-		CongestingZip(Just("A", "B"), Concat(Range(1, 4), Throw(errTest)).Pipe(delay)),
-		CongestingZip(Just("A", "B", "C"), Concat(Range(1, 4), Throw(errTest)).Pipe(delay)),
-		CongestingZip(Just("A", "B", "C", "D"), Concat(Range(1, 4), Throw(errTest)).Pipe(delay)),
+	delay := DelaySubscription(1)
+	observables := [...]rx.Observable{
+		rx.CongestingZip(rx.Just("A", "B"), rx.Range(1, 4)),
+		rx.CongestingZip(rx.Just("A", "B", "C"), rx.Range(1, 4)),
+		rx.CongestingZip(rx.Just("A", "B", "C", "D"), rx.Range(1, 4)),
+		rx.CongestingZip(rx.Just("A", "B"), rx.Concat(rx.Range(1, 4), rx.Throw(ErrTest)).Pipe(delay)),
+		rx.CongestingZip(rx.Just("A", "B", "C"), rx.Concat(rx.Range(1, 4), rx.Throw(ErrTest)).Pipe(delay)),
+		rx.CongestingZip(rx.Just("A", "B", "C", "D"), rx.Concat(rx.Range(1, 4), rx.Throw(ErrTest)).Pipe(delay)),
 	}
 	for i, obs := range observables {
-		observables[i] = obs.Pipe(toString)
+		observables[i] = obs.Pipe(ToString())
 	}
-	subscribeN(
+	SubscribeN(
 		t,
 		observables[:],
 		[][]interface{}{
-			{"[A 1]", "[B 2]", Complete},
-			{"[A 1]", "[B 2]", "[C 3]", Complete},
-			{"[A 1]", "[B 2]", "[C 3]", Complete},
-			{"[A 1]", "[B 2]", Complete},
-			{"[A 1]", "[B 2]", "[C 3]", Complete},
-			{"[A 1]", "[B 2]", "[C 3]", errTest},
+			{"[A 1]", "[B 2]", rx.Complete},
+			{"[A 1]", "[B 2]", "[C 3]", rx.Complete},
+			{"[A 1]", "[B 2]", "[C 3]", rx.Complete},
+			{"[A 1]", "[B 2]", rx.Complete},
+			{"[A 1]", "[B 2]", "[C 3]", rx.Complete},
+			{"[A 1]", "[B 2]", "[C 3]", ErrTest},
 		},
 	)
-	subscribe(t, CongestingZip(), Complete)
+	Subscribe(t, rx.CongestingZip(), rx.Complete)
 }

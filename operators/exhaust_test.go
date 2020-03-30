@@ -3,36 +3,38 @@ package operators_test
 import (
 	"testing"
 
-	. "github.com/b97tsk/rx"
+	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/operators"
+	. "github.com/b97tsk/rx/testing"
 )
 
-func TestOperators_Exhaust(t *testing.T) {
-	subscribeN(
+func TestExhaust(t *testing.T) {
+	SubscribeN(
 		t,
-		[]Observable{
-			Just(
-				Just("A", "B", "C", "D").Pipe(addLatencyToValue(0, 2)),
-				Just("E", "F", "G", "H").Pipe(addLatencyToValue(0, 3)),
-				Just("I", "J", "K", "L").Pipe(addLatencyToValue(0, 2)),
-			).Pipe(addLatencyToValue(0, 5), operators.Exhaust()),
-			Just(
-				Just("A", "B", "C", "D").Pipe(addLatencyToValue(0, 2)),
-				Just("E", "F", "G", "H").Pipe(addLatencyToValue(0, 3)),
-				Just("I", "J", "K", "L").Pipe(addLatencyToValue(0, 2)),
-				Throw(errTest),
-			).Pipe(addLatencyToValue(0, 5), operators.Exhaust()),
-			Just(
-				Just("A", "B", "C", "D").Pipe(addLatencyToValue(0, 2)),
-				Just("E", "F", "G", "H").Pipe(addLatencyToValue(0, 3)),
-				Just("I", "J", "K", "L").Pipe(addLatencyToValue(0, 2)),
-				Throw(errTest),
-				Throw(errTest),
-			).Pipe(addLatencyToValue(0, 5), operators.Exhaust()),
+		[]rx.Observable{
+			rx.Just(
+				rx.Just("A", "B", "C", "D").Pipe(AddLatencyToValues(0, 2)),
+				rx.Just("E", "F", "G", "H").Pipe(AddLatencyToValues(0, 3)),
+				rx.Just("I", "J", "K", "L").Pipe(AddLatencyToValues(0, 2)),
+			).Pipe(AddLatencyToValues(0, 5), operators.Exhaust()),
+			rx.Just(
+				rx.Just("A", "B", "C", "D").Pipe(AddLatencyToValues(0, 2)),
+				rx.Just("E", "F", "G", "H").Pipe(AddLatencyToValues(0, 3)),
+				rx.Just("I", "J", "K", "L").Pipe(AddLatencyToValues(0, 2)),
+				rx.Throw(ErrTest),
+			).Pipe(AddLatencyToValues(0, 5), operators.Exhaust()),
+			rx.Just(
+				rx.Just("A", "B", "C", "D").Pipe(AddLatencyToValues(0, 2)),
+				rx.Just("E", "F", "G", "H").Pipe(AddLatencyToValues(0, 3)),
+				rx.Just("I", "J", "K", "L").Pipe(AddLatencyToValues(0, 2)),
+				rx.Throw(ErrTest),
+				rx.Throw(ErrTest),
+			).Pipe(AddLatencyToValues(0, 5), operators.Exhaust()),
 		},
 		[][]interface{}{
-			{"A", "B", "C", "D", "I", "J", "K", "L", Complete},
-			{"A", "B", "C", "D", "I", "J", "K", "L", Complete},
-			{"A", "B", "C", "D", "I", "J", "K", "L", errTest},
+			{"A", "B", "C", "D", "I", "J", "K", "L", rx.Complete},
+			{"A", "B", "C", "D", "I", "J", "K", "L", rx.Complete},
+			{"A", "B", "C", "D", "I", "J", "K", "L", ErrTest},
 		},
 	)
 }

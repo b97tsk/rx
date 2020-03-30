@@ -3,26 +3,28 @@ package operators_test
 import (
 	"testing"
 
-	. "github.com/b97tsk/rx"
+	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/operators"
+	. "github.com/b97tsk/rx/testing"
 )
 
-func TestOperators_GroupBy(t *testing.T) {
-	subscribe(
+func TestGroupBy(t *testing.T) {
+	Subscribe(
 		t,
-		Just("A", "B", "B", "A", "C", "C", "D", "A").Pipe(
-			addLatencyToValue(0, 1),
+		rx.Just("A", "B", "B", "A", "C", "C", "D", "A").Pipe(
+			AddLatencyToValues(0, 1),
 			operators.GroupBy(
 				func(val interface{}) interface{} {
 					return val
 				},
-				func() Subject {
-					return NewReplaySubject(0, 0).Subject
+				func() rx.Subject {
+					return rx.NewReplaySubject(0, 0).Subject
 				},
 			),
 			operators.MergeMap(
-				func(val interface{}, idx int) Observable {
-					group := val.(GroupedObservable)
-					delay := step(int([]rune(group.Key.(string))[0] - 'A'))
+				func(val interface{}, idx int) rx.Observable {
+					group := val.(rx.GroupedObservable)
+					delay := Step(int([]rune(group.Key.(string))[0] - 'A'))
 					return group.Pipe(
 						operators.Count(),
 						operators.Map(
@@ -34,8 +36,8 @@ func TestOperators_GroupBy(t *testing.T) {
 					)
 				},
 			),
-			toString,
+			ToString(),
 		),
-		"[A 3]", "[B 2]", "[C 2]", "[D 1]", Complete,
+		"[A 3]", "[B 2]", "[C 2]", "[D 1]", rx.Complete,
 	)
 }

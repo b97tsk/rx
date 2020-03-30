@@ -3,27 +3,29 @@ package operators_test
 import (
 	"testing"
 
-	. "github.com/b97tsk/rx"
+	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/operators"
+	. "github.com/b97tsk/rx/testing"
 )
 
-func TestOperators_First(t *testing.T) {
-	subscribeN(
+func TestFirst(t *testing.T) {
+	SubscribeN(
 		t,
-		[]Observable{
-			Empty().Pipe(operators.First()),
-			Throw(errTest).Pipe(operators.First()),
-			Just("A").Pipe(operators.First()),
-			Just("A", "B").Pipe(operators.First()),
-			Concat(Just("A"), Throw(errTest)).Pipe(operators.First()),
-			Concat(Just("A", "B"), Throw(errTest)).Pipe(operators.First()),
+		[]rx.Observable{
+			rx.Empty().Pipe(operators.First()),
+			rx.Throw(ErrTest).Pipe(operators.First()),
+			rx.Just("A").Pipe(operators.First()),
+			rx.Just("A", "B").Pipe(operators.First()),
+			rx.Concat(rx.Just("A"), rx.Throw(ErrTest)).Pipe(operators.First()),
+			rx.Concat(rx.Just("A", "B"), rx.Throw(ErrTest)).Pipe(operators.First()),
 		},
 		[][]interface{}{
-			{ErrEmpty},
-			{errTest},
-			{"A", Complete},
-			{"A", Complete},
-			{"A", Complete},
-			{"A", Complete},
+			{rx.ErrEmpty},
+			{ErrTest},
+			{"A", rx.Complete},
+			{"A", rx.Complete},
+			{"A", rx.Complete},
+			{"A", rx.Complete},
 		},
 	)
 }

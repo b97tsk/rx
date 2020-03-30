@@ -4,7 +4,9 @@ import (
 	"context"
 	"testing"
 
-	. "github.com/b97tsk/rx"
+	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/operators"
+	. "github.com/b97tsk/rx/testing"
 )
 
 func TestSubject(t *testing.T) {
@@ -13,40 +15,40 @@ func TestSubject(t *testing.T) {
 	}
 
 	t.Run("Complete", func(t *testing.T) {
-		subject := NewSubject()
+		subject := rx.NewSubject()
 
-		Just(3, 4, 5).Pipe(
-			addLatencyToValue(1, 1),
+		rx.Just(3, 4, 5).Pipe(
+			AddLatencyToValues(1, 1),
 		).Subscribe(context.Background(), subject.Observer)
 
-		subscribe(
+		Subscribe(
 			t,
-			Zip(
+			rx.Zip(
 				subject.Observable,
 				subject.Pipe(operators.Scan(sum)),
-			).Pipe(toString),
-			"[3 3]", "[4 7]", "[5 12]", Complete,
+			).Pipe(ToString()),
+			"[3 3]", "[4 7]", "[5 12]", rx.Complete,
 		)
 
-		subscribe(t, subject.Observable, Complete)
+		Subscribe(t, subject.Observable, rx.Complete)
 	})
 
 	t.Run("Error", func(t *testing.T) {
-		subject := NewSubject()
+		subject := rx.NewSubject()
 
-		Concat(Just(3, 4, 5), Throw(errTest)).Pipe(
-			addLatencyToNotification(1, 1),
+		rx.Concat(rx.Just(3, 4, 5), rx.Throw(ErrTest)).Pipe(
+			AddLatencyToNotifications(1, 1),
 		).Subscribe(context.Background(), subject.Observer)
 
-		subscribe(
+		Subscribe(
 			t,
-			Zip(
+			rx.Zip(
 				subject.Observable,
 				subject.Pipe(operators.Scan(sum)),
-			).Pipe(toString),
-			"[3 3]", "[4 7]", "[5 12]", errTest,
+			).Pipe(ToString()),
+			"[3 3]", "[4 7]", "[5 12]", ErrTest,
 		)
 
-		subscribe(t, subject.Observable, errTest)
+		Subscribe(t, subject.Observable, ErrTest)
 	})
 }

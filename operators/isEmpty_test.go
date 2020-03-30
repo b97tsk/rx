@@ -3,23 +3,25 @@ package operators_test
 import (
 	"testing"
 
-	. "github.com/b97tsk/rx"
+	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/operators"
+	. "github.com/b97tsk/rx/testing"
 )
 
-func TestOperators_IsEmpty(t *testing.T) {
-	subscribeN(
+func TestIsEmpty(t *testing.T) {
+	SubscribeN(
 		t,
-		[]Observable{
-			Just("A", "B").Pipe(operators.IsEmpty()),
-			Just("A").Pipe(operators.IsEmpty()),
-			Empty().Pipe(operators.IsEmpty()),
-			Throw(errTest).Pipe(operators.IsEmpty()),
+		[]rx.Observable{
+			rx.Just("A", "B").Pipe(operators.IsEmpty()),
+			rx.Just("A").Pipe(operators.IsEmpty()),
+			rx.Empty().Pipe(operators.IsEmpty()),
+			rx.Throw(ErrTest).Pipe(operators.IsEmpty()),
 		},
 		[][]interface{}{
-			{false, Complete},
-			{false, Complete},
-			{true, Complete},
-			{errTest},
+			{false, rx.Complete},
+			{false, rx.Complete},
+			{true, rx.Complete},
+			{ErrTest},
 		},
 	)
 }

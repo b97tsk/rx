@@ -4,12 +4,14 @@ import (
 	"context"
 	"testing"
 
-	. "github.com/b97tsk/rx"
+	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/operators"
+	. "github.com/b97tsk/rx/testing"
 )
 
 func TestObservable_Publish(t *testing.T) {
-	obs := Interval(step(1)).Publish()
-	ctx, _ := Zip(
+	obs := rx.Interval(Step(1)).Publish()
+	ctx, _ := rx.Zip(
 		obs.Pipe(operators.Take(4)),
 		obs.Pipe(operators.Skip(4), operators.Take(4)),
 	).Pipe(
@@ -20,8 +22,8 @@ func TestObservable_Publish(t *testing.T) {
 			},
 		),
 		operators.ToSlice(),
-		toString,
-	).Subscribe(context.Background(), func(x Notification) {
+		ToString(),
+	).Subscribe(context.Background(), func(x rx.Notification) {
 		switch {
 		case x.HasValue:
 			if x.Value != "[0 5 12 21]" {
@@ -43,8 +45,8 @@ func TestObservable_Publish(t *testing.T) {
 }
 
 func TestObservable_PublishBehavior(t *testing.T) {
-	obs := Interval(step(1)).PublishBehavior(-1)
-	ctx, _ := Zip(
+	obs := rx.Interval(Step(1)).PublishBehavior(-1)
+	ctx, _ := rx.Zip(
 		obs.Pipe(operators.Take(4)),
 		obs.Pipe(operators.Skip(4), operators.Take(4)),
 	).Pipe(
@@ -55,8 +57,8 @@ func TestObservable_PublishBehavior(t *testing.T) {
 			},
 		),
 		operators.ToSlice(),
-		toString,
-	).Subscribe(context.Background(), func(x Notification) {
+		ToString(),
+	).Subscribe(context.Background(), func(x rx.Notification) {
 		switch {
 		case x.HasValue:
 			if x.Value != "[-3 0 5 12]" {
@@ -78,10 +80,10 @@ func TestObservable_PublishBehavior(t *testing.T) {
 }
 
 func TestObservable_PublishReplay(t *testing.T) {
-	obs := Interval(step(2)).PublishReplay(2, 0)
-	ctx, _ := Zip(
+	obs := rx.Interval(Step(2)).PublishReplay(2, 0)
+	ctx, _ := rx.Zip(
 		obs.Pipe(operators.Take(4)),
-		obs.Pipe(operators.Skip(4), operators.Take(4), delaySubscription(7)),
+		obs.Pipe(operators.Skip(4), operators.Take(4), DelaySubscription(7)),
 	).Pipe(
 		operators.Map(
 			func(val interface{}, idx int) interface{} {
@@ -90,8 +92,8 @@ func TestObservable_PublishReplay(t *testing.T) {
 			},
 		),
 		operators.ToSlice(),
-		toString,
-	).Subscribe(context.Background(), func(x Notification) {
+		ToString(),
+	).Subscribe(context.Background(), func(x rx.Notification) {
 		switch {
 		case x.HasValue:
 			if x.Value != "[0 6 14 24]" {

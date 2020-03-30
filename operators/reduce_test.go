@@ -3,10 +3,12 @@ package operators_test
 import (
 	"testing"
 
-	. "github.com/b97tsk/rx"
+	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/operators"
+	. "github.com/b97tsk/rx/testing"
 )
 
-func TestOperators_Reduce(t *testing.T) {
+func TestReduce(t *testing.T) {
 	max := func(seed, val interface{}, idx int) interface{} {
 		if seed.(int) > val.(int) {
 			return seed
@@ -16,30 +18,30 @@ func TestOperators_Reduce(t *testing.T) {
 	sum := func(seed, val interface{}, idx int) interface{} {
 		return seed.(int) + val.(int)
 	}
-	subscribeN(
+	SubscribeN(
 		t,
-		[]Observable{
-			Range(1, 7).Pipe(operators.Reduce(max)),
-			Just(42).Pipe(operators.Reduce(max)),
-			Empty().Pipe(operators.Reduce(max)),
-			Range(1, 7).Pipe(operators.Reduce(sum)),
-			Just(42).Pipe(operators.Reduce(sum)),
-			Empty().Pipe(operators.Reduce(sum)),
-			Throw(errTest).Pipe(operators.Reduce(sum)),
+		[]rx.Observable{
+			rx.Range(1, 7).Pipe(operators.Reduce(max)),
+			rx.Just(42).Pipe(operators.Reduce(max)),
+			rx.Empty().Pipe(operators.Reduce(max)),
+			rx.Range(1, 7).Pipe(operators.Reduce(sum)),
+			rx.Just(42).Pipe(operators.Reduce(sum)),
+			rx.Empty().Pipe(operators.Reduce(sum)),
+			rx.Throw(ErrTest).Pipe(operators.Reduce(sum)),
 		},
 		[][]interface{}{
-			{6, Complete},
-			{42, Complete},
-			{Complete},
-			{21, Complete},
-			{42, Complete},
-			{Complete},
-			{errTest},
+			{6, rx.Complete},
+			{42, rx.Complete},
+			{rx.Complete},
+			{21, rx.Complete},
+			{42, rx.Complete},
+			{rx.Complete},
+			{ErrTest},
 		},
 	)
 }
 
-func TestOperators_Fold(t *testing.T) {
+func TestFold(t *testing.T) {
 	max := func(seed, val interface{}, idx int) interface{} {
 		if seed.(int) > val.(int) {
 			return seed
@@ -49,25 +51,25 @@ func TestOperators_Fold(t *testing.T) {
 	sum := func(seed, val interface{}, idx int) interface{} {
 		return seed.(int) + val.(int)
 	}
-	subscribeN(
+	SubscribeN(
 		t,
-		[]Observable{
-			Range(1, 7).Pipe(operators.Fold(-1, max)),
-			Just(42).Pipe(operators.Fold(-1, max)),
-			Empty().Pipe(operators.Fold(-1, max)),
-			Range(1, 7).Pipe(operators.Fold(-1, sum)),
-			Just(42).Pipe(operators.Fold(-1, sum)),
-			Empty().Pipe(operators.Fold(-1, sum)),
-			Throw(errTest).Pipe(operators.Fold(-1, sum)),
+		[]rx.Observable{
+			rx.Range(1, 7).Pipe(operators.Fold(-1, max)),
+			rx.Just(42).Pipe(operators.Fold(-1, max)),
+			rx.Empty().Pipe(operators.Fold(-1, max)),
+			rx.Range(1, 7).Pipe(operators.Fold(-1, sum)),
+			rx.Just(42).Pipe(operators.Fold(-1, sum)),
+			rx.Empty().Pipe(operators.Fold(-1, sum)),
+			rx.Throw(ErrTest).Pipe(operators.Fold(-1, sum)),
 		},
 		[][]interface{}{
-			{6, Complete},
-			{42, Complete},
-			{-1, Complete},
-			{20, Complete},
-			{41, Complete},
-			{-1, Complete},
-			{errTest},
+			{6, rx.Complete},
+			{42, rx.Complete},
+			{-1, rx.Complete},
+			{20, rx.Complete},
+			{41, rx.Complete},
+			{-1, rx.Complete},
+			{ErrTest},
 		},
 	)
 }

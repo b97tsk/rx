@@ -5,11 +5,10 @@ import (
 	"fmt"
 
 	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/operators"
 )
 
 func Example() {
-	var operators rx.Operators
-
 	// Create an observable and apply some operators.
 	obs := rx.Range(1, 10).Pipe(
 		operators.Filter(

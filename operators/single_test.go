@@ -3,23 +3,25 @@ package operators_test
 import (
 	"testing"
 
-	. "github.com/b97tsk/rx"
+	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/operators"
+	. "github.com/b97tsk/rx/testing"
 )
 
-func TestOperators_Single(t *testing.T) {
-	subscribeN(
+func TestSingle(t *testing.T) {
+	SubscribeN(
 		t,
-		[]Observable{
-			Just("A", "B").Pipe(operators.Single()),
-			Just("A").Pipe(operators.Single()),
-			Empty().Pipe(operators.Single()),
-			Throw(errTest).Pipe(operators.Single()),
+		[]rx.Observable{
+			rx.Just("A", "B").Pipe(operators.Single()),
+			rx.Just("A").Pipe(operators.Single()),
+			rx.Empty().Pipe(operators.Single()),
+			rx.Throw(ErrTest).Pipe(operators.Single()),
 		},
 		[][]interface{}{
-			{ErrNotSingle},
-			{"A", Complete},
-			{ErrEmpty},
-			{errTest},
+			{rx.ErrNotSingle},
+			{"A", rx.Complete},
+			{rx.ErrEmpty},
+			{ErrTest},
 		},
 	)
 }

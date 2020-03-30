@@ -3,23 +3,25 @@ package operators_test
 import (
 	"testing"
 
-	. "github.com/b97tsk/rx"
+	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/operators"
+	. "github.com/b97tsk/rx/testing"
 )
 
-func TestOperators_Materialize(t *testing.T) {
-	subscribeN(
+func TestMaterialize(t *testing.T) {
+	SubscribeN(
 		t,
-		[]Observable{
-			Empty().Pipe(operators.Materialize(), operators.Count()),
-			Throw(errTest).Pipe(operators.Materialize(), operators.Count()),
-			Just("A", "B", "C").Pipe(operators.Materialize(), operators.Count()),
-			Concat(Just("A", "B", "C"), Throw(errTest)).Pipe(operators.Materialize(), operators.Count()),
+		[]rx.Observable{
+			rx.Empty().Pipe(operators.Materialize(), operators.Count()),
+			rx.Throw(ErrTest).Pipe(operators.Materialize(), operators.Count()),
+			rx.Just("A", "B", "C").Pipe(operators.Materialize(), operators.Count()),
+			rx.Concat(rx.Just("A", "B", "C"), rx.Throw(ErrTest)).Pipe(operators.Materialize(), operators.Count()),
 		},
 		[][]interface{}{
-			{1, Complete},
-			{1, Complete},
-			{4, Complete},
-			{4, Complete},
+			{1, rx.Complete},
+			{1, rx.Complete},
+			{4, rx.Complete},
+			{4, rx.Complete},
 		},
 	)
 }

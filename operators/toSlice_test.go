@@ -3,31 +3,33 @@ package operators_test
 import (
 	"testing"
 
-	. "github.com/b97tsk/rx"
+	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/operators"
+	. "github.com/b97tsk/rx/testing"
 )
 
-func TestOperators_ToSlice(t *testing.T) {
-	observables := [...]Observable{
-		Just("A", "B", "C"),
-		Just("A"),
-		Empty(),
-		Throw(errTest),
+func TestToSlice(t *testing.T) {
+	observables := [...]rx.Observable{
+		rx.Just("A", "B", "C"),
+		rx.Just("A"),
+		rx.Empty(),
+		rx.Throw(ErrTest),
 	}
 	for i, obs := range observables {
 		observables[i] = obs.Pipe(
 			operators.ToSlice(),
 			operators.Single(),
-			toString,
+			ToString(),
 		)
 	}
-	subscribeN(
+	SubscribeN(
 		t,
 		observables[:],
 		[][]interface{}{
-			{"[A B C]", Complete},
-			{"[A]", Complete},
-			{"[]", Complete},
-			{errTest},
+			{"[A B C]", rx.Complete},
+			{"[A]", rx.Complete},
+			{"[]", rx.Complete},
+			{ErrTest},
 		},
 	)
 }

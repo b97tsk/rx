@@ -3,120 +3,122 @@ package operators_test
 import (
 	"testing"
 
-	. "github.com/b97tsk/rx"
+	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/operators"
+	. "github.com/b97tsk/rx/testing"
 )
 
-func TestOperators_Do(t *testing.T) {
+func TestDo(t *testing.T) {
 	n := 0
-	op := operators.Do(func(Notification) { n++ })
-	obs := Defer(func() Observable { return Just(n) })
-	subscribeN(
+	op := operators.Do(func(rx.Notification) { n++ })
+	obs := rx.Defer(func() rx.Observable { return rx.Just(n) })
+	SubscribeN(
 		t,
-		[]Observable{
-			Concat(Empty().Pipe(op), obs),
-			Concat(Just("A").Pipe(op), obs),
-			Concat(Just("A", "B").Pipe(op), obs),
-			Concat(Concat(Just("A", "B"), Throw(errTest)).Pipe(op), obs),
+		[]rx.Observable{
+			rx.Concat(rx.Empty().Pipe(op), obs),
+			rx.Concat(rx.Just("A").Pipe(op), obs),
+			rx.Concat(rx.Just("A", "B").Pipe(op), obs),
+			rx.Concat(rx.Concat(rx.Just("A", "B"), rx.Throw(ErrTest)).Pipe(op), obs),
 			obs,
 		},
 		[][]interface{}{
-			{1, Complete},
-			{"A", 3, Complete},
-			{"A", "B", 6, Complete},
-			{"A", "B", errTest},
-			{9, Complete},
+			{1, rx.Complete},
+			{"A", 3, rx.Complete},
+			{"A", "B", 6, rx.Complete},
+			{"A", "B", ErrTest},
+			{9, rx.Complete},
 		},
 	)
 }
 
-func TestOperators_DoOnNext(t *testing.T) {
+func TestDoOnNext(t *testing.T) {
 	n := 0
 	op := operators.DoOnNext(func(interface{}) { n++ })
-	obs := Defer(func() Observable { return Just(n) })
-	subscribeN(
+	obs := rx.Defer(func() rx.Observable { return rx.Just(n) })
+	SubscribeN(
 		t,
-		[]Observable{
-			Concat(Empty().Pipe(op), obs),
-			Concat(Just("A").Pipe(op), obs),
-			Concat(Just("A", "B").Pipe(op), obs),
-			Concat(Concat(Just("A", "B"), Throw(errTest)).Pipe(op), obs),
+		[]rx.Observable{
+			rx.Concat(rx.Empty().Pipe(op), obs),
+			rx.Concat(rx.Just("A").Pipe(op), obs),
+			rx.Concat(rx.Just("A", "B").Pipe(op), obs),
+			rx.Concat(rx.Concat(rx.Just("A", "B"), rx.Throw(ErrTest)).Pipe(op), obs),
 			obs,
 		},
 		[][]interface{}{
-			{0, Complete},
-			{"A", 1, Complete},
-			{"A", "B", 3, Complete},
-			{"A", "B", errTest},
-			{5, Complete},
+			{0, rx.Complete},
+			{"A", 1, rx.Complete},
+			{"A", "B", 3, rx.Complete},
+			{"A", "B", ErrTest},
+			{5, rx.Complete},
 		},
 	)
 }
 
-func TestOperators_DoOnError(t *testing.T) {
+func TestDoOnError(t *testing.T) {
 	n := 0
 	op := operators.DoOnError(func(error) { n++ })
-	obs := Defer(func() Observable { return Just(n) })
-	subscribeN(
+	obs := rx.Defer(func() rx.Observable { return rx.Just(n) })
+	SubscribeN(
 		t,
-		[]Observable{
-			Concat(Empty().Pipe(op), obs),
-			Concat(Just("A").Pipe(op), obs),
-			Concat(Just("A", "B").Pipe(op), obs),
-			Concat(Concat(Just("A", "B"), Throw(errTest)).Pipe(op), obs),
+		[]rx.Observable{
+			rx.Concat(rx.Empty().Pipe(op), obs),
+			rx.Concat(rx.Just("A").Pipe(op), obs),
+			rx.Concat(rx.Just("A", "B").Pipe(op), obs),
+			rx.Concat(rx.Concat(rx.Just("A", "B"), rx.Throw(ErrTest)).Pipe(op), obs),
 			obs,
 		},
 		[][]interface{}{
-			{0, Complete},
-			{"A", 0, Complete},
-			{"A", "B", 0, Complete},
-			{"A", "B", errTest},
-			{1, Complete},
+			{0, rx.Complete},
+			{"A", 0, rx.Complete},
+			{"A", "B", 0, rx.Complete},
+			{"A", "B", ErrTest},
+			{1, rx.Complete},
 		},
 	)
 }
 
-func TestOperators_DoOnComplete(t *testing.T) {
+func TestDoOnComplete(t *testing.T) {
 	n := 0
 	op := operators.DoOnComplete(func() { n++ })
-	obs := Defer(func() Observable { return Just(n) })
-	subscribeN(
+	obs := rx.Defer(func() rx.Observable { return rx.Just(n) })
+	SubscribeN(
 		t,
-		[]Observable{
-			Concat(Empty().Pipe(op), obs),
-			Concat(Just("A").Pipe(op), obs),
-			Concat(Just("A", "B").Pipe(op), obs),
-			Concat(Concat(Just("A", "B"), Throw(errTest)).Pipe(op), obs),
+		[]rx.Observable{
+			rx.Concat(rx.Empty().Pipe(op), obs),
+			rx.Concat(rx.Just("A").Pipe(op), obs),
+			rx.Concat(rx.Just("A", "B").Pipe(op), obs),
+			rx.Concat(rx.Concat(rx.Just("A", "B"), rx.Throw(ErrTest)).Pipe(op), obs),
 			obs,
 		},
 		[][]interface{}{
-			{1, Complete},
-			{"A", 2, Complete},
-			{"A", "B", 3, Complete},
-			{"A", "B", errTest},
-			{3, Complete},
+			{1, rx.Complete},
+			{"A", 2, rx.Complete},
+			{"A", "B", 3, rx.Complete},
+			{"A", "B", ErrTest},
+			{3, rx.Complete},
 		},
 	)
 }
 
-func TestOperators_DoAtLast(t *testing.T) {
+func TestDoAtLast(t *testing.T) {
 	n := 0
-	op := operators.DoAtLast(func(Notification) { n++ })
-	obs := Defer(func() Observable { return Just(n) })
-	subscribeN(
+	op := operators.DoAtLast(func(rx.Notification) { n++ })
+	obs := rx.Defer(func() rx.Observable { return rx.Just(n) })
+	SubscribeN(
 		t,
-		[]Observable{
-			Concat(Empty().Pipe(op), obs),
-			Concat(Just("A").Pipe(op), obs),
-			Concat(Just("A", "B").Pipe(op), obs),
-			Concat(Concat(Just("A", "B"), Throw(errTest)).Pipe(op), obs),
+		[]rx.Observable{
+			rx.Concat(rx.Empty().Pipe(op), obs),
+			rx.Concat(rx.Just("A").Pipe(op), obs),
+			rx.Concat(rx.Just("A", "B").Pipe(op), obs),
+			rx.Concat(rx.Concat(rx.Just("A", "B"), rx.Throw(ErrTest)).Pipe(op), obs),
 			obs,
 		},
 		[][]interface{}{
-			{1, Complete},
-			{"A", 2, Complete},
-			{"A", "B", 3, Complete},
-			{"A", "B", errTest},
-			{4, Complete},
+			{1, rx.Complete},
+			{"A", 2, rx.Complete},
+			{"A", "B", 3, rx.Complete},
+			{"A", "B", ErrTest},
+			{4, rx.Complete},
 		},
 	)
 }
