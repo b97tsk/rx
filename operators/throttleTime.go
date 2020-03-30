@@ -1,8 +1,10 @@
-package rx
+package operators
 
 import (
 	"context"
 	"time"
+
+	"github.com/b97tsk/rx"
 )
 
 // A ThrottleTimeConfigure is a configure for ThrottleTime.
@@ -13,19 +15,19 @@ type ThrottleTimeConfigure struct {
 }
 
 // Use creates an Operator from this configure.
-func (configure ThrottleTimeConfigure) Use() Operator {
-	return func(source Observable) Observable {
+func (configure ThrottleTimeConfigure) Use() rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		obs := throttleTimeObservable{source, configure}
-		return Create(obs.Subscribe)
+		return rx.Create(obs.Subscribe)
 	}
 }
 
 type throttleTimeObservable struct {
-	Source Observable
+	Source rx.Observable
 	ThrottleTimeConfigure
 }
 
-func (obs throttleTimeObservable) Subscribe(ctx context.Context, sink Observer) {
+func (obs throttleTimeObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	type X struct {
 		TrailingValue    interface{}
 		HasTrailingValue bool
@@ -53,7 +55,7 @@ func (obs throttleTimeObservable) Subscribe(ctx context.Context, sink Observer) 
 		})
 	}
 
-	obs.Source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
@@ -85,7 +87,7 @@ func (obs throttleTimeObservable) Subscribe(ctx context.Context, sink Observer) 
 //
 // ThrottleTime lets a value pass, then ignores source values for the next
 // duration time.
-func (Operators) ThrottleTime(duration time.Duration) Operator {
+func ThrottleTime(duration time.Duration) rx.Operator {
 	return ThrottleTimeConfigure{
 		Duration: duration,
 		Leading:  true,

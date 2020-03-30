@@ -1,16 +1,18 @@
-package rx
+package operators
 
 import (
 	"context"
 	"time"
+
+	"github.com/b97tsk/rx"
 )
 
 type auditTimeObservable struct {
-	Source   Observable
+	Source   rx.Observable
 	Duration time.Duration
 }
 
-func (obs auditTimeObservable) Subscribe(ctx context.Context, sink Observer) {
+func (obs auditTimeObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	type X struct {
 		LatestValue interface{}
 		Scheduled   bool
@@ -18,7 +20,7 @@ func (obs auditTimeObservable) Subscribe(ctx context.Context, sink Observer) {
 	cx := make(chan *X, 1)
 	cx <- &X{}
 
-	obs.Source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
@@ -51,9 +53,9 @@ func (obs auditTimeObservable) Subscribe(ctx context.Context, sink Observer) {
 //
 // When it sees a source values, it ignores that plus the next ones for a
 // duration, and then it emits the most recent value from the source.
-func (Operators) AuditTime(duration time.Duration) Operator {
-	return func(source Observable) Observable {
+func AuditTime(duration time.Duration) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		obs := auditTimeObservable{source, duration}
-		return Create(obs.Subscribe)
+		return rx.Create(obs.Subscribe)
 	}
 }

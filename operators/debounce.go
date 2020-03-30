@@ -1,15 +1,17 @@
-package rx
+package operators
 
 import (
 	"context"
+
+	"github.com/b97tsk/rx"
 )
 
 type debounceObservable struct {
-	Source           Observable
-	DurationSelector func(interface{}) Observable
+	Source           rx.Observable
+	DurationSelector func(interface{}) rx.Observable
 }
 
-func (obs debounceObservable) Subscribe(ctx context.Context, sink Observer) {
+func (obs debounceObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	type X struct {
 		LatestValue    interface{}
 		HasLatestValue bool
@@ -22,7 +24,7 @@ func (obs debounceObservable) Subscribe(ctx context.Context, sink Observer) {
 		scheduleCancel context.CancelFunc
 	)
 
-	obs.Source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
@@ -37,9 +39,9 @@ func (obs debounceObservable) Subscribe(ctx context.Context, sink Observer) {
 
 				scheduleCtx, scheduleCancel = context.WithCancel(ctx)
 
-				var observer Observer
-				observer = func(t Notification) {
-					observer = NopObserver
+				var observer rx.Observer
+				observer = func(t rx.Notification) {
+					observer = rx.NopObserver
 					scheduleCancel()
 					if x, ok := <-cx; ok {
 						if t.HasError {
@@ -79,9 +81,9 @@ func (obs debounceObservable) Subscribe(ctx context.Context, sink Observer) {
 //
 // It's like DebounceTime, but the time span of emission silence is determined
 // by a second Observable.
-func (Operators) Debounce(durationSelector func(interface{}) Observable) Operator {
-	return func(source Observable) Observable {
+func Debounce(durationSelector func(interface{}) rx.Observable) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		obs := debounceObservable{source, durationSelector}
-		return Create(obs.Subscribe)
+		return rx.Create(obs.Subscribe)
 	}
 }

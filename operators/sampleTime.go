@@ -1,16 +1,18 @@
-package rx
+package operators
 
 import (
 	"context"
 	"time"
+
+	"github.com/b97tsk/rx"
 )
 
 type sampleTimeObservable struct {
-	Source   Observable
+	Source   rx.Observable
 	Duration time.Duration
 }
 
-func (obs sampleTimeObservable) Subscribe(ctx context.Context, sink Observer) {
+func (obs sampleTimeObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	type X struct {
 		LatestValue    interface{}
 		HasLatestValue bool
@@ -28,7 +30,7 @@ func (obs sampleTimeObservable) Subscribe(ctx context.Context, sink Observer) {
 		}
 	})
 
-	obs.Source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
@@ -45,9 +47,9 @@ func (obs sampleTimeObservable) Subscribe(ctx context.Context, sink Observer) {
 
 // SampleTime creates an Observable that emits the most recently emitted value
 // from the source Observable within periodic time intervals.
-func (Operators) SampleTime(interval time.Duration) Operator {
-	return func(source Observable) Observable {
+func SampleTime(interval time.Duration) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		obs := sampleTimeObservable{source, interval}
-		return Create(obs.Subscribe)
+		return rx.Create(obs.Subscribe)
 	}
 }

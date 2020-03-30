@@ -1,16 +1,18 @@
-package rx
+package operators
 
 import (
 	"context"
 	"time"
+
+	"github.com/b97tsk/rx"
 )
 
 type debounceTimeObservable struct {
-	Source   Observable
+	Source   rx.Observable
 	Duration time.Duration
 }
 
-func (obs debounceTimeObservable) Subscribe(ctx context.Context, sink Observer) {
+func (obs debounceTimeObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	type X struct {
 		LatestValue    interface{}
 		HasLatestValue bool
@@ -20,7 +22,7 @@ func (obs debounceTimeObservable) Subscribe(ctx context.Context, sink Observer) 
 
 	var scheduleCancel context.CancelFunc
 
-	obs.Source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
@@ -64,9 +66,9 @@ func (obs debounceTimeObservable) Subscribe(ctx context.Context, sink Observer) 
 //
 // It's like Delay, but passes only the most recent value from each burst of
 // emissions.
-func (Operators) DebounceTime(duration time.Duration) Operator {
-	return func(source Observable) Observable {
+func DebounceTime(duration time.Duration) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		obs := debounceTimeObservable{source, duration}
-		return Create(obs.Subscribe)
+		return rx.Create(obs.Subscribe)
 	}
 }

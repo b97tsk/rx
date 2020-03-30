@@ -1,30 +1,32 @@
-package rx
+package operators
 
 import (
 	"context"
+
+	"github.com/b97tsk/rx"
 )
 
 // A ThrottleConfigure is a configure for Throttle.
 type ThrottleConfigure struct {
-	DurationSelector func(interface{}) Observable
+	DurationSelector func(interface{}) rx.Observable
 	Leading          bool
 	Trailing         bool
 }
 
 // Use creates an Operator from this configure.
-func (configure ThrottleConfigure) Use() Operator {
-	return func(source Observable) Observable {
+func (configure ThrottleConfigure) Use() rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		obs := throttleObservable{source, configure}
-		return Create(obs.Subscribe)
+		return rx.Create(obs.Subscribe)
 	}
 }
 
 type throttleObservable struct {
-	Source Observable
+	Source rx.Observable
 	ThrottleConfigure
 }
 
-func (obs throttleObservable) Subscribe(ctx context.Context, sink Observer) {
+func (obs throttleObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	type X struct {
 		TrailingValue    interface{}
 		HasTrailingValue bool
@@ -41,9 +43,9 @@ func (obs throttleObservable) Subscribe(ctx context.Context, sink Observer) {
 		ctx, cancel := context.WithCancel(ctx)
 		throttleCtx = ctx
 
-		var observer Observer
-		observer = func(t Notification) {
-			observer = NopObserver
+		var observer rx.Observer
+		observer = func(t rx.Notification) {
+			observer = rx.NopObserver
 			defer cancel()
 			if obs.Trailing || t.HasError {
 				if x, ok := <-cx; ok {
@@ -65,7 +67,7 @@ func (obs throttleObservable) Subscribe(ctx context.Context, sink Observer) {
 		go obs.Subscribe(throttleCtx, observer.Notify)
 	}
 
-	obs.Source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
@@ -97,7 +99,7 @@ func (obs throttleObservable) Subscribe(ctx context.Context, sink Observer) {
 //
 // It's like ThrottleTime, but the silencing duration is determined by a second
 // Observable.
-func (Operators) Throttle(durationSelector func(interface{}) Observable) Operator {
+func Throttle(durationSelector func(interface{}) rx.Observable) rx.Operator {
 	return ThrottleConfigure{
 		DurationSelector: durationSelector,
 		Leading:          true,

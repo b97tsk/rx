@@ -1,15 +1,17 @@
-package rx
+package operators
 
 import (
 	"context"
+
+	"github.com/b97tsk/rx"
 )
 
 type sampleObservable struct {
-	Source   Observable
-	Notifier Observable
+	Source   rx.Observable
+	Notifier rx.Observable
 }
 
-func (obs sampleObservable) Subscribe(ctx context.Context, sink Observer) {
+func (obs sampleObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	type X struct {
 		LatestValue    interface{}
 		HasLatestValue bool
@@ -17,7 +19,7 @@ func (obs sampleObservable) Subscribe(ctx context.Context, sink Observer) {
 	cx := make(chan *X, 1)
 	cx <- &X{}
 
-	obs.Notifier.Subscribe(ctx, func(t Notification) {
+	obs.Notifier.Subscribe(ctx, func(t rx.Notification) {
 		if x, ok := <-cx; ok {
 			if t.HasError {
 				close(cx)
@@ -36,7 +38,7 @@ func (obs sampleObservable) Subscribe(ctx context.Context, sink Observer) {
 		return
 	}
 
-	obs.Source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
@@ -56,9 +58,9 @@ func (obs sampleObservable) Subscribe(ctx context.Context, sink Observer) {
 //
 // It's like SampleTime, but samples whenever the notifier Observable emits
 // something.
-func (Operators) Sample(notifier Observable) Operator {
-	return func(source Observable) Observable {
+func Sample(notifier rx.Observable) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		obs := sampleObservable{source, notifier}
-		return Create(obs.Subscribe)
+		return rx.Create(obs.Subscribe)
 	}
 }
