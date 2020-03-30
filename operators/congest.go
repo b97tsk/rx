@@ -1,20 +1,21 @@
-package rx
+package operators
 
 import (
 	"context"
 
+	"github.com/b97tsk/rx"
 	"github.com/b97tsk/rx/x/queue"
 )
 
 type congestObservable struct {
-	Source     Observable
+	Source     rx.Observable
 	BufferSize int
 }
 
-func (obs congestObservable) Subscribe(ctx context.Context, sink Observer) {
+func (obs congestObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	done := ctx.Done()
 
-	c := make(chan Notification)
+	c := make(chan rx.Notification)
 	go func() {
 		for {
 			select {
@@ -32,14 +33,14 @@ func (obs congestObservable) Subscribe(ctx context.Context, sink Observer) {
 		}
 	}()
 
-	q := make(chan Notification)
+	q := make(chan rx.Notification)
 	go func() {
 		var queue queue.Queue
 		for {
 			var (
-				in       <-chan Notification
-				out      chan<- Notification
-				outValue Notification
+				in       <-chan rx.Notification
+				out      chan<- rx.Notification
+				outValue rx.Notification
 			)
 			length := queue.Len()
 			if length < obs.BufferSize {
@@ -47,7 +48,7 @@ func (obs congestObservable) Subscribe(ctx context.Context, sink Observer) {
 			}
 			if length > 0 {
 				out = c
-				outValue = queue.Front().(Notification)
+				outValue = queue.Front().(rx.Notification)
 			}
 			select {
 			case <-done:
@@ -60,7 +61,7 @@ func (obs congestObservable) Subscribe(ctx context.Context, sink Observer) {
 		}
 	}()
 
-	obs.Source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		select {
 		case <-done:
 		case q <- t:
@@ -71,12 +72,12 @@ func (obs congestObservable) Subscribe(ctx context.Context, sink Observer) {
 // Congest creates an Observable that mirrors the source Observable, caches
 // emissions if the source emits too fast, and congests the source if the cache
 // is full.
-func (Operators) Congest(bufferSize int) Operator {
-	return func(source Observable) Observable {
+func Congest(bufferSize int) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		if bufferSize < 1 {
 			return source
 		}
 		obs := congestObservable{source, bufferSize}
-		return Create(obs.Subscribe)
+		return rx.Create(obs.Subscribe)
 	}
 }

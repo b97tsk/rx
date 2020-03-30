@@ -1,16 +1,18 @@
-package rx
+package operators
 
 import (
 	"context"
+
+	"github.com/b97tsk/rx"
 )
 
 // Count creates an Observable that counts the number of NEXT emissions on
 // the source and emits that number when the source completes.
-func (Operators) Count() Operator {
-	return func(source Observable) Observable {
-		return func(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
+func Count() rx.Operator {
+	return func(source rx.Observable) rx.Observable {
+		return func(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
 			var count int
-			return source.Subscribe(ctx, func(t Notification) {
+			return source.Subscribe(ctx, func(t rx.Notification) {
 				switch {
 				case t.HasValue:
 					count++

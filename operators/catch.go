@@ -1,16 +1,18 @@
-package rx
+package operators
 
 import (
 	"context"
+
+	"github.com/b97tsk/rx"
 )
 
 // Catch catches errors on the Observable to be handled by returning a new
 // Observable.
-func (Operators) Catch(selector func(error) Observable) Operator {
-	return func(source Observable) Observable {
-		return Create(
-			func(ctx context.Context, sink Observer) {
-				source.Subscribe(ctx, func(t Notification) {
+func Catch(selector func(error) rx.Observable) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
+		return rx.Create(
+			func(ctx context.Context, sink rx.Observer) {
+				source.Subscribe(ctx, func(t rx.Notification) {
 					switch {
 					case t.HasValue:
 						sink(t)
