@@ -1,25 +1,26 @@
-package rx
+package operators
 
 import (
 	"context"
 
+	"github.com/b97tsk/rx"
 	"github.com/b97tsk/rx/x/atomic"
 )
 
 type exhaustMapObservable struct {
-	Source  Observable
-	Project func(interface{}, int) Observable
+	Source  rx.Observable
+	Project func(interface{}, int) rx.Observable
 }
 
-func (obs exhaustMapObservable) Subscribe(ctx context.Context, sink Observer) {
-	sink = Mutex(sink)
+func (obs exhaustMapObservable) Subscribe(ctx context.Context, sink rx.Observer) {
+	sink = rx.Mutex(sink)
 
 	var (
 		sourceIndex = -1
 		activeCount = atomic.Uint32(1)
 	)
 
-	obs.Source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		switch {
 		case t.HasValue:
 			if !activeCount.Cas(1, 2) {
@@ -31,7 +32,7 @@ func (obs exhaustMapObservable) Subscribe(ctx context.Context, sink Observer) {
 			sourceValue := t.Value
 
 			obs := obs.Project(sourceValue, sourceIndex)
-			obs.Subscribe(ctx, func(t Notification) {
+			obs.Subscribe(ctx, func(t rx.Notification) {
 				switch {
 				case t.HasValue || t.HasError:
 					sink(t)
@@ -61,8 +62,8 @@ func (obs exhaustMapObservable) Subscribe(ctx context.Context, sink Observer) {
 //
 // Exhaust flattens an Observable-of-Observables by dropping the next inner
 // Observables while the current inner is still executing.
-func (Operators) Exhaust() Operator {
-	return operators.ExhaustMap(ProjectToObservable)
+func Exhaust() rx.Operator {
+	return ExhaustMap(rx.ProjectToObservable)
 }
 
 // ExhaustMap creates an Observable that projects each source value to an
@@ -71,9 +72,9 @@ func (Operators) Exhaust() Operator {
 //
 // ExhaustMap maps each value to an Observable, then flattens all of these
 // inner Observables using Exhaust.
-func (Operators) ExhaustMap(project func(interface{}, int) Observable) Operator {
-	return func(source Observable) Observable {
+func ExhaustMap(project func(interface{}, int) rx.Observable) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		obs := exhaustMapObservable{source, project}
-		return Create(obs.Subscribe)
+		return rx.Create(obs.Subscribe)
 	}
 }

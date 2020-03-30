@@ -1,32 +1,33 @@
-package rx
+package operators
 
 import (
 	"context"
 
+	"github.com/b97tsk/rx"
 	"github.com/b97tsk/rx/x/queue"
 )
 
 // An ExpandConfigure is a configure for Expand.
 type ExpandConfigure struct {
-	Project    func(interface{}, int) Observable
+	Project    func(interface{}, int) rx.Observable
 	Concurrent int
 }
 
 // Use creates an Operator from this configure.
-func (configure ExpandConfigure) Use() Operator {
-	return func(source Observable) Observable {
+func (configure ExpandConfigure) Use() rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		obs := expandObservable{source, configure}
-		return Create(obs.Subscribe)
+		return rx.Create(obs.Subscribe)
 	}
 }
 
 type expandObservable struct {
-	Source Observable
+	Source rx.Observable
 	ExpandConfigure
 }
 
-func (obs expandObservable) Subscribe(ctx context.Context, sink Observer) {
-	sink = Mutex(sink)
+func (obs expandObservable) Subscribe(ctx context.Context, sink rx.Observer) {
+	sink = rx.Mutex(sink)
 
 	type X struct {
 		Index           int
@@ -49,7 +50,7 @@ func (obs expandObservable) Subscribe(ctx context.Context, sink Observer) {
 		// calls obs.Project synchronously
 		obs1 := obs.Project(sourceValue, sourceIndex)
 
-		go obs1.Subscribe(ctx, func(t Notification) {
+		go obs1.Subscribe(ctx, func(t rx.Notification) {
 			switch {
 			case t.HasValue:
 				x := <-cx
@@ -78,7 +79,7 @@ func (obs expandObservable) Subscribe(ctx context.Context, sink Observer) {
 		})
 	}
 
-	obs.Source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		switch {
 		case t.HasValue:
 			x := <-cx
@@ -108,6 +109,6 @@ func (obs expandObservable) Subscribe(ctx context.Context, sink Observer) {
 //
 // It's similar to MergeMap, but applies the projection function to every
 // source value as well as every output value. It's recursive.
-func (Operators) Expand(project func(interface{}, int) Observable) Operator {
+func Expand(project func(interface{}, int) rx.Observable) rx.Operator {
 	return ExpandConfigure{project, -1}.Use()
 }

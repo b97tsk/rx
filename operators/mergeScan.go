@@ -1,33 +1,34 @@
-package rx
+package operators
 
 import (
 	"context"
 
+	"github.com/b97tsk/rx"
 	"github.com/b97tsk/rx/x/queue"
 )
 
 // A MergeScanConfigure is a configure for MergeScan.
 type MergeScanConfigure struct {
-	Accumulator func(interface{}, interface{}) Observable
+	Accumulator func(interface{}, interface{}) rx.Observable
 	Seed        interface{}
 	Concurrent  int
 }
 
 // Use creates an Operator from this configure.
-func (configure MergeScanConfigure) Use() Operator {
-	return func(source Observable) Observable {
+func (configure MergeScanConfigure) Use() rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		obs := mergeScanObservable{source, configure}
-		return Create(obs.Subscribe)
+		return rx.Create(obs.Subscribe)
 	}
 }
 
 type mergeScanObservable struct {
-	Source Observable
+	Source rx.Observable
 	MergeScanConfigure
 }
 
-func (obs mergeScanObservable) Subscribe(ctx context.Context, sink Observer) {
-	sink = Mutex(sink)
+func (obs mergeScanObservable) Subscribe(ctx context.Context, sink rx.Observer) {
+	sink = rx.Mutex(sink)
 
 	type X struct {
 		ActiveCount     int
@@ -47,7 +48,7 @@ func (obs mergeScanObservable) Subscribe(ctx context.Context, sink Observer) {
 		// calls obs.Accumulator synchronously
 		obs := obs.Accumulator(x.Seed, sourceValue)
 
-		go obs.Subscribe(ctx, func(t Notification) {
+		go obs.Subscribe(ctx, func(t rx.Notification) {
 			switch {
 			case t.HasValue:
 				x := <-cx
@@ -78,7 +79,7 @@ func (obs mergeScanObservable) Subscribe(ctx context.Context, sink Observer) {
 		})
 	}
 
-	obs.Source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		switch {
 		case t.HasValue:
 			x := <-cx
@@ -112,6 +113,6 @@ func (obs mergeScanObservable) Subscribe(ctx context.Context, sink Observer) {
 //
 // It's like Scan, but the Observables returned by the accumulator are merged
 // into the outer Observable.
-func (Operators) MergeScan(accumulator func(interface{}, interface{}) Observable, seed interface{}) Operator {
+func MergeScan(accumulator func(interface{}, interface{}) rx.Observable, seed interface{}) rx.Operator {
 	return MergeScanConfigure{accumulator, seed, -1}.Use()
 }

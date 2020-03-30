@@ -1,16 +1,18 @@
-package rx
+package operators
 
 import (
 	"context"
+
+	"github.com/b97tsk/rx"
 )
 
 type switchMapObservable struct {
-	Source  Observable
-	Project func(interface{}, int) Observable
+	Source  rx.Observable
+	Project func(interface{}, int) rx.Observable
 }
 
-func (obs switchMapObservable) Subscribe(ctx context.Context, sink Observer) {
-	sink = Mutex(sink)
+func (obs switchMapObservable) Subscribe(ctx context.Context, sink rx.Observer) {
+	sink = rx.Mutex(sink)
 
 	type X struct {
 		Index           int
@@ -22,7 +24,7 @@ func (obs switchMapObservable) Subscribe(ctx context.Context, sink Observer) {
 
 	var childCancel context.CancelFunc
 
-	obs.Source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		switch {
 		case t.HasValue:
 			x := <-cx
@@ -41,7 +43,7 @@ func (obs switchMapObservable) Subscribe(ctx context.Context, sink Observer) {
 
 			obs := obs.Project(sourceValue, sourceIndex)
 
-			_, childCancel = obs.Subscribe(ctx, func(t Notification) {
+			_, childCancel = obs.Subscribe(ctx, func(t rx.Notification) {
 				switch {
 				case t.HasValue || t.HasError:
 					sink(t)
@@ -76,8 +78,8 @@ func (obs switchMapObservable) Subscribe(ctx context.Context, sink Observer) {
 //
 // Switch flattens an Observable-of-Observables by dropping the previous inner
 // Observable once a new one appears.
-func (Operators) Switch() Operator {
-	return operators.SwitchMap(ProjectToObservable)
+func Switch() rx.Operator {
+	return SwitchMap(rx.ProjectToObservable)
 }
 
 // SwitchMap creates an Observable that projects each source value to an
@@ -86,10 +88,10 @@ func (Operators) Switch() Operator {
 //
 // SwitchMap maps each value to an Observable, then flattens all of these inner
 // Observables using Switch.
-func (Operators) SwitchMap(project func(interface{}, int) Observable) Operator {
-	return func(source Observable) Observable {
+func SwitchMap(project func(interface{}, int) rx.Observable) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		obs := switchMapObservable{source, project}
-		return Create(obs.Subscribe)
+		return rx.Create(obs.Subscribe)
 	}
 }
 
@@ -98,6 +100,6 @@ func (Operators) SwitchMap(project func(interface{}, int) Observable) Operator {
 // Observable.
 //
 // It's like SwitchMap, but maps each value always to the same inner Observable.
-func (Operators) SwitchMapTo(inner Observable) Operator {
-	return operators.SwitchMap(func(interface{}, int) Observable { return inner })
+func SwitchMapTo(inner rx.Observable) rx.Operator {
+	return SwitchMap(func(interface{}, int) rx.Observable { return inner })
 }

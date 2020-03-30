@@ -1,4 +1,4 @@
-package rx_test
+package operators_test
 
 import (
 	"testing"
@@ -6,7 +6,7 @@ import (
 	. "github.com/b97tsk/rx"
 )
 
-func TestOperators_Switch(t *testing.T) {
+func TestOperators_Exhaust(t *testing.T) {
 	subscribeN(
 		t,
 		[]Observable{
@@ -14,24 +14,25 @@ func TestOperators_Switch(t *testing.T) {
 				Just("A", "B", "C", "D").Pipe(addLatencyToValue(0, 2)),
 				Just("E", "F", "G", "H").Pipe(addLatencyToValue(0, 3)),
 				Just("I", "J", "K", "L").Pipe(addLatencyToValue(0, 2)),
-			).Pipe(addLatencyToValue(0, 5), operators.Switch()),
-			Just(
-				Just("A", "B", "C", "D").Pipe(addLatencyToValue(0, 2)),
-				Just("E", "F", "G", "H").Pipe(addLatencyToValue(0, 3)),
-				Just("I", "J", "K", "L").Pipe(addLatencyToValue(0, 2)),
-				Empty(),
-			).Pipe(addLatencyToValue(0, 5), operators.Switch()),
+			).Pipe(addLatencyToValue(0, 5), operators.Exhaust()),
 			Just(
 				Just("A", "B", "C", "D").Pipe(addLatencyToValue(0, 2)),
 				Just("E", "F", "G", "H").Pipe(addLatencyToValue(0, 3)),
 				Just("I", "J", "K", "L").Pipe(addLatencyToValue(0, 2)),
 				Throw(errTest),
-			).Pipe(addLatencyToValue(0, 5), operators.Switch()),
+			).Pipe(addLatencyToValue(0, 5), operators.Exhaust()),
+			Just(
+				Just("A", "B", "C", "D").Pipe(addLatencyToValue(0, 2)),
+				Just("E", "F", "G", "H").Pipe(addLatencyToValue(0, 3)),
+				Just("I", "J", "K", "L").Pipe(addLatencyToValue(0, 2)),
+				Throw(errTest),
+				Throw(errTest),
+			).Pipe(addLatencyToValue(0, 5), operators.Exhaust()),
 		},
 		[][]interface{}{
-			{"A", "B", "C", "E", "F", "I", "J", "K", "L", Complete},
-			{"A", "B", "C", "E", "F", "I", "J", "K", Complete},
-			{"A", "B", "C", "E", "F", "I", "J", "K", errTest},
+			{"A", "B", "C", "D", "I", "J", "K", "L", Complete},
+			{"A", "B", "C", "D", "I", "J", "K", "L", Complete},
+			{"A", "B", "C", "D", "I", "J", "K", "L", errTest},
 		},
 	)
 }
