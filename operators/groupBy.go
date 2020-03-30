@@ -1,24 +1,20 @@
-package rx
+package operators
 
 import (
 	"context"
+
+	"github.com/b97tsk/rx"
 )
 
-// GroupedObservable is an Observable type used by GroupBy.
-type GroupedObservable struct {
-	Observable
-	Key interface{}
-}
-
 type groupByObservable struct {
-	Source         Observable
+	Source         rx.Observable
 	KeySelector    func(interface{}) interface{}
-	SubjectFactory func() Subject
+	SubjectFactory func() rx.Subject
 }
 
-func (obs groupByObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	var groups = make(map[interface{}]Subject)
-	return obs.Source.Subscribe(ctx, func(t Notification) {
+func (obs groupByObservable) Subscribe(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
+	var groups = make(map[interface{}]rx.Subject)
+	return obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		switch {
 		case t.HasValue:
 			key := obs.KeySelector(t.Value)
@@ -26,7 +22,7 @@ func (obs groupByObservable) Subscribe(ctx context.Context, sink Observer) (cont
 			if !exists {
 				group = obs.SubjectFactory()
 				groups[key] = group
-				sink.Next(GroupedObservable{group.Observable, key})
+				sink.Next(rx.GroupedObservable{group.Observable, key})
 			}
 			t.Observe(group.Observer)
 
@@ -42,8 +38,8 @@ func (obs groupByObservable) Subscribe(ctx context.Context, sink Observer) (cont
 // GroupBy creates an Observable that groups the items emitted by the source
 // Observable according to a specified criterion, and emits these grouped
 // items as GroupedObservables, one GroupedObservable per group.
-func (Operators) GroupBy(keySelector func(interface{}) interface{}, subjectFactory func() Subject) Operator {
-	return func(source Observable) Observable {
+func GroupBy(keySelector func(interface{}) interface{}, subjectFactory func() rx.Subject) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		return groupByObservable{source, keySelector, subjectFactory}.Subscribe
 	}
 }

@@ -1,27 +1,29 @@
-package rx
+package operators
 
 import (
 	"context"
+
+	"github.com/b97tsk/rx"
 )
 
 type findIndexObservable struct {
-	Source    Observable
+	Source    rx.Observable
 	Predicate func(interface{}, int) bool
 }
 
-func (obs findIndexObservable) Subscribe(ctx context.Context, sink Observer) {
+func (obs findIndexObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	var (
 		sourceIndex = -1
-		observer    Observer
+		observer    rx.Observer
 	)
 
-	observer = func(t Notification) {
+	observer = func(t rx.Notification) {
 		switch {
 		case t.HasValue:
 			sourceIndex++
 
 			if obs.Predicate(t.Value, sourceIndex) {
-				observer = NopObserver
+				observer = rx.NopObserver
 				sink.Next(sourceIndex)
 				sink.Complete()
 			}
@@ -36,9 +38,9 @@ func (obs findIndexObservable) Subscribe(ctx context.Context, sink Observer) {
 
 // FindIndex creates an Observable that emits only the index of the first value
 // emitted by the source Observable that meets some condition.
-func (Operators) FindIndex(predicate func(interface{}, int) bool) Operator {
-	return func(source Observable) Observable {
+func FindIndex(predicate func(interface{}, int) bool) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		obs := findIndexObservable{source, predicate}
-		return Create(obs.Subscribe)
+		return rx.Create(obs.Subscribe)
 	}
 }
