@@ -1,13 +1,15 @@
-package rx
+package operators
 
 import (
 	"context"
+
+	"github.com/b97tsk/rx"
 )
 
 type bufferToggleObservable struct {
-	Source          Observable
-	Openings        Observable
-	ClosingSelector func(interface{}) Observable
+	Source          rx.Observable
+	Openings        rx.Observable
+	ClosingSelector func(interface{}) rx.Observable
 }
 
 type bufferToggleContext struct {
@@ -15,14 +17,14 @@ type bufferToggleContext struct {
 	Buffer []interface{}
 }
 
-func (obs bufferToggleObservable) Subscribe(ctx context.Context, sink Observer) {
+func (obs bufferToggleObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	type X struct {
 		Contexts []*bufferToggleContext
 	}
 	cx := make(chan *X, 1)
 	cx <- &X{}
 
-	obs.Openings.Subscribe(ctx, func(t Notification) {
+	obs.Openings.Subscribe(ctx, func(t rx.Notification) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
@@ -32,9 +34,9 @@ func (obs bufferToggleObservable) Subscribe(ctx context.Context, sink Observer) 
 
 				cx <- x
 
-				var observer Observer
-				observer = func(t Notification) {
-					observer = NopObserver
+				var observer rx.Observer
+				observer = func(t rx.Notification) {
+					observer = rx.NopObserver
 					cancel()
 					if x, ok := <-cx; ok {
 						if t.HasError {
@@ -73,7 +75,7 @@ func (obs bufferToggleObservable) Subscribe(ctx context.Context, sink Observer) 
 		return
 	}
 
-	obs.Source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
@@ -108,9 +110,9 @@ func (obs bufferToggleObservable) Subscribe(ctx context.Context, sink Observer) 
 // BufferToggle collects values from the past as a slice, starts collecting
 // only when opening emits, and calls the closingSelector function to get an
 // Observable that tells when to close the buffer.
-func (Operators) BufferToggle(openings Observable, closingSelector func(interface{}) Observable) Operator {
-	return func(source Observable) Observable {
+func BufferToggle(openings rx.Observable, closingSelector func(interface{}) rx.Observable) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		obs := bufferToggleObservable{source, openings, closingSelector}
-		return Create(obs.Subscribe)
+		return rx.Create(obs.Subscribe)
 	}
 }

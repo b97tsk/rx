@@ -1,19 +1,21 @@
-package rx
+package operators
 
 import (
 	"context"
+
+	"github.com/b97tsk/rx"
 )
 
 type windowWhenObservable struct {
-	Source          Observable
-	ClosingSelector func() Observable
+	Source          rx.Observable
+	ClosingSelector func() rx.Observable
 }
 
-func (obs windowWhenObservable) Subscribe(ctx context.Context, sink Observer) {
+func (obs windowWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	type X struct {
-		Window Subject
+		Window rx.Subject
 	}
-	window := NewSubject()
+	window := rx.NewSubject()
 	cx := make(chan *X, 1)
 	cx <- &X{window}
 	sink.Next(window.Observable)
@@ -30,9 +32,9 @@ func (obs windowWhenObservable) Subscribe(ctx context.Context, sink Observer) {
 
 		ctx, cancel := context.WithCancel(ctx)
 
-		var observer Observer
-		observer = func(t Notification) {
-			observer = NopObserver
+		var observer rx.Observer
+		observer = func(t rx.Notification) {
+			observer = rx.NopObserver
 			cancel()
 			if x, ok := <-cx; ok {
 				if t.HasError {
@@ -42,7 +44,7 @@ func (obs windowWhenObservable) Subscribe(ctx context.Context, sink Observer) {
 					return
 				}
 				x.Window.Complete()
-				x.Window = NewSubject()
+				x.Window = rx.NewSubject()
 				sink.Next(x.Window.Observable)
 				cx <- x
 				avoidRecursive.Do(openWindow)
@@ -59,7 +61,7 @@ func (obs windowWhenObservable) Subscribe(ctx context.Context, sink Observer) {
 		return
 	}
 
-	obs.Source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
@@ -79,9 +81,9 @@ func (obs windowWhenObservable) Subscribe(ctx context.Context, sink Observer) {
 // a new window.
 //
 // It's like BufferWhen, but emits a nested Observable instead of a slice.
-func (Operators) WindowWhen(closingSelector func() Observable) Operator {
-	return func(source Observable) Observable {
+func WindowWhen(closingSelector func() rx.Observable) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		obs := windowWhenObservable{source, closingSelector}
-		return Create(obs.Subscribe)
+		return rx.Create(obs.Subscribe)
 	}
 }

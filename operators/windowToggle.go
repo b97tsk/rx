@@ -1,51 +1,53 @@
-package rx
+package operators
 
 import (
 	"context"
+
+	"github.com/b97tsk/rx"
 )
 
 type windowToggleObservable struct {
-	Source          Observable
-	Openings        Observable
-	ClosingSelector func(interface{}) Observable
+	Source          rx.Observable
+	Openings        rx.Observable
+	ClosingSelector func(interface{}) rx.Observable
 }
 
 type windowToggleContext struct {
 	Cancel context.CancelFunc
-	Window Subject
+	Window rx.Subject
 }
 
-func (obs windowToggleObservable) Subscribe(ctx context.Context, sink Observer) {
+func (obs windowToggleObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	type X struct {
 		Contexts []*windowToggleContext
 	}
 	cx := make(chan *X, 1)
 	cx <- &X{}
 
-	cleanupContexts := func(x *X, t Notification) {
+	cleanupContexts := func(x *X, t rx.Notification) {
 		for _, c := range x.Contexts {
 			c.Cancel()
 			t.Observe(c.Window.Observer)
 		}
 	}
 
-	obs.Openings.Subscribe(ctx, func(t Notification) {
+	obs.Openings.Subscribe(ctx, func(t rx.Notification) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
 				ctx, cancel := context.WithCancel(ctx)
 				newContext := &windowToggleContext{
 					Cancel: cancel,
-					Window: NewSubject(),
+					Window: rx.NewSubject(),
 				}
 				x.Contexts = append(x.Contexts, newContext)
 				sink.Next(newContext.Window.Observable)
 
 				cx <- x
 
-				var observer Observer
-				observer = func(t Notification) {
-					observer = NopObserver
+				var observer rx.Observer
+				observer = func(t rx.Notification) {
+					observer = rx.NopObserver
 					cancel()
 					if x, ok := <-cx; ok {
 						if t.HasError {
@@ -86,7 +88,7 @@ func (obs windowToggleObservable) Subscribe(ctx context.Context, sink Observer) 
 		return
 	}
 
-	obs.Source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
@@ -110,9 +112,9 @@ func (obs windowToggleObservable) Subscribe(ctx context.Context, sink Observer) 
 // the output of closingSelector emits.
 //
 // It's like BufferToggle, but emits a nested Observable instead of a slice.
-func (Operators) WindowToggle(openings Observable, closingSelector func(interface{}) Observable) Operator {
-	return func(source Observable) Observable {
+func WindowToggle(openings rx.Observable, closingSelector func(interface{}) rx.Observable) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		obs := windowToggleObservable{source, openings, closingSelector}
-		return Create(obs.Subscribe)
+		return rx.Create(obs.Subscribe)
 	}
 }

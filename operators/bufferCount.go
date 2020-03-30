@@ -1,7 +1,9 @@
-package rx
+package operators
 
 import (
 	"context"
+
+	"github.com/b97tsk/rx"
 )
 
 // A BufferCountConfigure is a configure for BufferCount.
@@ -11,18 +13,18 @@ type BufferCountConfigure struct {
 }
 
 // Use creates an Operator from this configure.
-func (configure BufferCountConfigure) Use() Operator {
-	return func(source Observable) Observable {
+func (configure BufferCountConfigure) Use() rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		return bufferCountObservable{source, configure}.Subscribe
 	}
 }
 
 type bufferCountObservable struct {
-	Source Observable
+	Source rx.Observable
 	BufferCountConfigure
 }
 
-func (obs bufferCountObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
+func (obs bufferCountObservable) Subscribe(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
 	var (
 		buffer    = make([]interface{}, 0, obs.BufferSize)
 		skipCount int
@@ -30,7 +32,7 @@ func (obs bufferCountObservable) Subscribe(ctx context.Context, sink Observer) (
 	if obs.StartBufferEvery == 0 {
 		obs.StartBufferEvery = obs.BufferSize
 	}
-	return obs.Source.Subscribe(ctx, func(t Notification) {
+	return obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		switch {
 		case t.HasValue:
 			if skipCount > 0 {
@@ -72,6 +74,6 @@ func (obs bufferCountObservable) Subscribe(ctx context.Context, sink Observer) (
 //
 // BufferCount collects values from the past as a slice, and emits that slice
 // only when its size reaches bufferSize.
-func (Operators) BufferCount(bufferSize int) Operator {
+func BufferCount(bufferSize int) rx.Operator {
 	return BufferCountConfigure{BufferSize: bufferSize}.Use()
 }

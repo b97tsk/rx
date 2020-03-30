@@ -1,15 +1,17 @@
-package rx
+package operators
 
 import (
 	"context"
+
+	"github.com/b97tsk/rx"
 )
 
 type bufferWhenObservable struct {
-	Source          Observable
-	ClosingSelector func() Observable
+	Source          rx.Observable
+	ClosingSelector func() rx.Observable
 }
 
-func (obs bufferWhenObservable) Subscribe(ctx context.Context, sink Observer) {
+func (obs bufferWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	type X struct {
 		Buffers []interface{}
 	}
@@ -28,9 +30,9 @@ func (obs bufferWhenObservable) Subscribe(ctx context.Context, sink Observer) {
 
 		ctx, cancel := context.WithCancel(ctx)
 
-		var observer Observer
-		observer = func(t Notification) {
-			observer = NopObserver
+		var observer rx.Observer
+		observer = func(t rx.Notification) {
+			observer = rx.NopObserver
 			cancel()
 			if x, ok := <-cx; ok {
 				if t.HasError {
@@ -55,7 +57,7 @@ func (obs bufferWhenObservable) Subscribe(ctx context.Context, sink Observer) {
 		return
 	}
 
-	obs.Source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
@@ -80,9 +82,9 @@ func (obs bufferWhenObservable) Subscribe(ctx context.Context, sink Observer) {
 //
 // Dead loop could happen if closing Observables emit a value or complete as
 // soon as they are subscribed to.
-func (Operators) BufferWhen(closingSelector func() Observable) Operator {
-	return func(source Observable) Observable {
+func BufferWhen(closingSelector func() rx.Observable) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		obs := bufferWhenObservable{source, closingSelector}
-		return Create(obs.Subscribe)
+		return rx.Create(obs.Subscribe)
 	}
 }

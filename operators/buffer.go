@@ -1,22 +1,24 @@
-package rx
+package operators
 
 import (
 	"context"
+
+	"github.com/b97tsk/rx"
 )
 
 type bufferObservable struct {
-	Source          Observable
-	ClosingNotifier Observable
+	Source          rx.Observable
+	ClosingNotifier rx.Observable
 }
 
-func (obs bufferObservable) Subscribe(ctx context.Context, sink Observer) {
+func (obs bufferObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	type X struct {
 		Buffers []interface{}
 	}
 	cx := make(chan *X, 1)
 	cx <- &X{}
 
-	obs.ClosingNotifier.Subscribe(ctx, func(t Notification) {
+	obs.ClosingNotifier.Subscribe(ctx, func(t rx.Notification) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
@@ -34,7 +36,7 @@ func (obs bufferObservable) Subscribe(ctx context.Context, sink Observer) {
 		return
 	}
 
-	obs.Source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
@@ -52,9 +54,9 @@ func (obs bufferObservable) Subscribe(ctx context.Context, sink Observer) {
 //
 // Buffer collects values from the past as a slice, and emits that slice
 // only when another Observable emits.
-func (Operators) Buffer(closingNotifier Observable) Operator {
-	return func(source Observable) Observable {
+func Buffer(closingNotifier rx.Observable) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		obs := bufferObservable{source, closingNotifier}
-		return Create(obs.Subscribe)
+		return rx.Create(obs.Subscribe)
 	}
 }

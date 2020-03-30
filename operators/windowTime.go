@@ -1,8 +1,10 @@
-package rx
+package operators
 
 import (
 	"context"
 	"time"
+
+	"github.com/b97tsk/rx"
 )
 
 // A WindowTimeConfigure is a configure for WindowTime.
@@ -13,25 +15,25 @@ type WindowTimeConfigure struct {
 }
 
 // Use creates an Operator from this configure.
-func (configure WindowTimeConfigure) Use() Operator {
-	return func(source Observable) Observable {
+func (configure WindowTimeConfigure) Use() rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		obs := windowTimeObservable{source, configure}
-		return Create(obs.Subscribe)
+		return rx.Create(obs.Subscribe)
 	}
 }
 
 type windowTimeObservable struct {
-	Source Observable
+	Source rx.Observable
 	WindowTimeConfigure
 }
 
 type windowTimeContext struct {
 	Cancel context.CancelFunc
-	Window Subject
+	Window rx.Subject
 	Size   int
 }
 
-func (obs windowTimeObservable) Subscribe(ctx context.Context, sink Observer) {
+func (obs windowTimeObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	type X struct {
 		Contexts []*windowTimeContext
 	}
@@ -44,7 +46,7 @@ func (obs windowTimeObservable) Subscribe(ctx context.Context, sink Observer) {
 		ctx, cancel := context.WithCancel(ctx)
 		newContext := &windowTimeContext{
 			Cancel: cancel,
-			Window: NewSubject(),
+			Window: rx.NewSubject(),
 		}
 		x.Contexts = append(x.Contexts, newContext)
 		scheduleOnce(ctx, obs.TimeSpan, func() {
@@ -86,7 +88,7 @@ func (obs windowTimeObservable) Subscribe(ctx context.Context, sink Observer) {
 		schedule(ctx, obs.CreationInterval, openContext)
 	}
 
-	obs.Source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
@@ -121,6 +123,6 @@ func (obs windowTimeObservable) Subscribe(ctx context.Context, sink Observer) {
 // periodically in time.
 //
 // It's like BufferTime, but emits a nested Observable instead of a slice.
-func (Operators) WindowTime(timeSpan time.Duration) Operator {
+func WindowTime(timeSpan time.Duration) rx.Operator {
 	return WindowTimeConfigure{TimeSpan: timeSpan}.Use()
 }

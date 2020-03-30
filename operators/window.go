@@ -1,29 +1,31 @@
-package rx
+package operators
 
 import (
 	"context"
+
+	"github.com/b97tsk/rx"
 )
 
 type windowObservable struct {
-	Source           Observable
-	WindowBoundaries Observable
+	Source           rx.Observable
+	WindowBoundaries rx.Observable
 }
 
-func (obs windowObservable) Subscribe(ctx context.Context, sink Observer) {
+func (obs windowObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	type X struct {
-		Window Subject
+		Window rx.Subject
 	}
-	window := NewSubject()
+	window := rx.NewSubject()
 	cx := make(chan *X, 1)
 	cx <- &X{window}
 	sink.Next(window.Observable)
 
-	obs.WindowBoundaries.Subscribe(ctx, func(t Notification) {
+	obs.WindowBoundaries.Subscribe(ctx, func(t rx.Notification) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
 				x.Window.Complete()
-				x.Window = NewSubject()
+				x.Window = rx.NewSubject()
 				sink.Next(x.Window.Observable)
 				cx <- x
 			default:
@@ -38,7 +40,7 @@ func (obs windowObservable) Subscribe(ctx context.Context, sink Observer) {
 		return
 	}
 
-	obs.Source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
@@ -57,9 +59,9 @@ func (obs windowObservable) Subscribe(ctx context.Context, sink Observer) {
 // whenever windowBoundaries emits.
 //
 // It's like Buffer, but emits a nested Observable instead of a slice.
-func (Operators) Window(windowBoundaries Observable) Operator {
-	return func(source Observable) Observable {
+func Window(windowBoundaries rx.Observable) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		obs := windowObservable{source, windowBoundaries}
-		return Create(obs.Subscribe)
+		return rx.Create(obs.Subscribe)
 	}
 }

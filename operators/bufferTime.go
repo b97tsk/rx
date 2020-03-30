@@ -1,8 +1,10 @@
-package rx
+package operators
 
 import (
 	"context"
 	"time"
+
+	"github.com/b97tsk/rx"
 )
 
 // A BufferTimeConfigure is a configure for BufferTime.
@@ -13,15 +15,15 @@ type BufferTimeConfigure struct {
 }
 
 // Use creates an Operator from this configure.
-func (configure BufferTimeConfigure) Use() Operator {
-	return func(source Observable) Observable {
+func (configure BufferTimeConfigure) Use() rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		obs := bufferTimeObservable{source, configure}
-		return Create(obs.Subscribe)
+		return rx.Create(obs.Subscribe)
 	}
 }
 
 type bufferTimeObservable struct {
-	Source Observable
+	Source rx.Observable
 	BufferTimeConfigure
 }
 
@@ -30,7 +32,7 @@ type bufferTimeContext struct {
 	Buffer []interface{}
 }
 
-func (obs bufferTimeObservable) Subscribe(ctx context.Context, sink Observer) {
+func (obs bufferTimeObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	type X struct {
 		Contexts []*bufferTimeContext
 	}
@@ -81,7 +83,7 @@ func (obs bufferTimeObservable) Subscribe(ctx context.Context, sink Observer) {
 		schedule(ctx, obs.CreationInterval, openContext)
 	}
 
-	obs.Source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
@@ -122,6 +124,6 @@ func (obs bufferTimeObservable) Subscribe(ctx context.Context, sink Observer) {
 //
 // BufferTime collects values from the past as a slice, and emits those slices
 // periodically in time.
-func (Operators) BufferTime(timeSpan time.Duration) Operator {
+func BufferTime(timeSpan time.Duration) rx.Operator {
 	return BufferTimeConfigure{TimeSpan: timeSpan}.Use()
 }
