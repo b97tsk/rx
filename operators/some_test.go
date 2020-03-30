@@ -1,4 +1,4 @@
-package rx_test
+package operators_test
 
 import (
 	"testing"

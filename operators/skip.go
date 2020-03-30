@@ -1,21 +1,23 @@
-package rx
+package operators
 
 import (
 	"context"
+
+	"github.com/b97tsk/rx"
 )
 
 type skipObservable struct {
-	Source Observable
+	Source rx.Observable
 	Count  int
 }
 
-func (obs skipObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
+func (obs skipObservable) Subscribe(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
 	var (
 		count    = obs.Count
-		observer Observer
+		observer rx.Observer
 	)
 
-	observer = func(t Notification) {
+	observer = func(t rx.Notification) {
 		switch {
 		case t.HasValue:
 			if count > 1 {
@@ -33,8 +35,8 @@ func (obs skipObservable) Subscribe(ctx context.Context, sink Observer) (context
 
 // Skip creates an Observable that skips the first count items emitted by the
 // source Observable.
-func (Operators) Skip(count int) Operator {
-	return func(source Observable) Observable {
+func Skip(count int) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		if count <= 0 {
 			return source
 		}

@@ -1,7 +1,9 @@
-package rx
+package operators
 
 import (
 	"context"
+
+	"github.com/b97tsk/rx"
 )
 
 // A ScanConfigure is a configure for Scan.
@@ -12,24 +14,24 @@ type ScanConfigure struct {
 }
 
 // Use creates an Operator from this configure.
-func (configure ScanConfigure) Use() Operator {
-	return func(source Observable) Observable {
+func (configure ScanConfigure) Use() rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		return scanObservable{source, configure}.Subscribe
 	}
 }
 
 type scanObservable struct {
-	Source Observable
+	Source rx.Observable
 	ScanConfigure
 }
 
-func (obs scanObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
+func (obs scanObservable) Subscribe(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
 	var (
 		seed        = obs.Seed
 		hasSeed     = obs.HasSeed
 		sourceIndex = -1
 	)
-	return obs.Source.Subscribe(ctx, func(t Notification) {
+	return obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		switch {
 		case t.HasValue:
 			sourceIndex++
@@ -55,6 +57,6 @@ func (obs scanObservable) Subscribe(ctx context.Context, sink Observer) (context
 //
 // It's like Reduce, but emits the current accumulation whenever the source
 // emits a value.
-func (Operators) Scan(accumulator func(interface{}, interface{}, int) interface{}) Operator {
+func Scan(accumulator func(interface{}, interface{}, int) interface{}) rx.Operator {
 	return ScanConfigure{Accumulator: accumulator}.Use()
 }

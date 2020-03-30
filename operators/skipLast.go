@@ -1,22 +1,24 @@
-package rx
+package operators
 
 import (
 	"context"
+
+	"github.com/b97tsk/rx"
 )
 
 type skipLastObservable struct {
-	Source Observable
+	Source rx.Observable
 	Count  int
 }
 
-func (obs skipLastObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
+func (obs skipLastObservable) Subscribe(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
 	var (
 		buffer     = make([]interface{}, obs.Count)
 		bufferSize = obs.Count
 		index      int
 		count      int
 	)
-	return obs.Source.Subscribe(ctx, func(t Notification) {
+	return obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		switch {
 		case t.HasValue:
 			if count < bufferSize {
@@ -34,8 +36,8 @@ func (obs skipLastObservable) Subscribe(ctx context.Context, sink Observer) (con
 
 // SkipLast creates an Observable that skip the last count values emitted by
 // the source Observable.
-func (Operators) SkipLast(count int) Operator {
-	return func(source Observable) Observable {
+func SkipLast(count int) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		if count <= 0 {
 			return source
 		}

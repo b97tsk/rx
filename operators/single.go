@@ -1,26 +1,28 @@
-package rx
+package operators
 
 import (
 	"context"
+
+	"github.com/b97tsk/rx"
 )
 
 type singleObservable struct {
-	Source Observable
+	Source rx.Observable
 }
 
-func (obs singleObservable) Subscribe(ctx context.Context, sink Observer) {
+func (obs singleObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	var (
 		value    interface{}
 		hasValue bool
-		observer Observer
+		observer rx.Observer
 	)
 
-	observer = func(t Notification) {
+	observer = func(t rx.Notification) {
 		switch {
 		case t.HasValue:
 			if hasValue {
-				observer = NopObserver
-				sink.Error(ErrNotSingle)
+				observer = rx.NopObserver
+				sink.Error(rx.ErrNotSingle)
 			} else {
 				value = t.Value
 				hasValue = true
@@ -32,7 +34,7 @@ func (obs singleObservable) Subscribe(ctx context.Context, sink Observer) {
 				sink.Next(value)
 				sink.Complete()
 			} else {
-				sink.Error(ErrEmpty)
+				sink.Error(rx.ErrEmpty)
 			}
 		}
 	}
@@ -43,9 +45,9 @@ func (obs singleObservable) Subscribe(ctx context.Context, sink Observer) {
 // Single creates an Observable that emits the single item emitted by the
 // source Observable. If the source emits more than one item or no items,
 // notify of an ErrNotSingle or ErrEmpty respectively.
-func (Operators) Single() Operator {
-	return func(source Observable) Observable {
+func Single() rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		obs := singleObservable{source}
-		return Create(obs.Subscribe)
+		return rx.Create(obs.Subscribe)
 	}
 }

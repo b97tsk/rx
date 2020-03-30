@@ -1,21 +1,23 @@
-package rx
+package operators
 
 import (
 	"context"
+
+	"github.com/b97tsk/rx"
 )
 
 type skipWhileObservable struct {
-	Source    Observable
+	Source    rx.Observable
 	Predicate func(interface{}, int) bool
 }
 
-func (obs skipWhileObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
+func (obs skipWhileObservable) Subscribe(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
 	var (
 		sourceIndex = -1
-		observer    Observer
+		observer    rx.Observer
 	)
 
-	observer = func(t Notification) {
+	observer = func(t rx.Notification) {
 		switch {
 		case t.HasValue:
 			sourceIndex++
@@ -36,8 +38,8 @@ func (obs skipWhileObservable) Subscribe(ctx context.Context, sink Observer) (co
 // SkipWhile creates an Observable that skips all items emitted by the source
 // Observable as long as a specified condition holds true, but emits all
 // further source items as soon as the condition becomes false.
-func (Operators) SkipWhile(predicate func(interface{}, int) bool) Operator {
-	return func(source Observable) Observable {
+func SkipWhile(predicate func(interface{}, int) bool) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		return skipWhileObservable{source, predicate}.Subscribe
 	}
 }
