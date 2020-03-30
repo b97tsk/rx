@@ -1,19 +1,21 @@
-package rx
+package operators
 
 import (
 	"context"
+
+	"github.com/b97tsk/rx"
 )
 
 // Last creates an Observable that emits only the last item emitted by the
 // source Observable.
-func (Operators) Last() Operator {
-	return func(source Observable) Observable {
-		return func(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
+func Last() rx.Operator {
+	return func(source rx.Observable) rx.Observable {
+		return func(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
 			var (
 				lastValue    interface{}
 				hasLastValue bool
 			)
-			return source.Subscribe(ctx, func(t Notification) {
+			return source.Subscribe(ctx, func(t rx.Notification) {
 				switch {
 				case t.HasValue:
 					lastValue = t.Value
@@ -25,7 +27,7 @@ func (Operators) Last() Operator {
 						sink.Next(lastValue)
 						sink.Complete()
 					} else {
-						sink.Error(ErrEmpty)
+						sink.Error(rx.ErrEmpty)
 					}
 				}
 			})

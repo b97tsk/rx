@@ -1,16 +1,18 @@
-package rx
+package operators
 
 import (
 	"context"
+
+	"github.com/b97tsk/rx"
 )
 
 // Map creates an Observable that applies a given project function to each
 // value emitted by the source Observable, then emits the resulting values.
-func (Operators) Map(project func(interface{}, int) interface{}) Operator {
-	return func(source Observable) Observable {
-		return func(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
+func Map(project func(interface{}, int) interface{}) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
+		return func(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
 			var sourceIndex = -1
-			return source.Subscribe(ctx, func(t Notification) {
+			return source.Subscribe(ctx, func(t rx.Notification) {
 				switch {
 				case t.HasValue:
 					sourceIndex++
@@ -28,10 +30,10 @@ func (Operators) Map(project func(interface{}, int) interface{}) Operator {
 //
 // It's like Map, but it maps every source value to the same output value
 // every time.
-func (Operators) MapTo(value interface{}) Operator {
-	return func(source Observable) Observable {
-		return func(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
-			return source.Subscribe(ctx, func(t Notification) {
+func MapTo(value interface{}) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
+		return func(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
+			return source.Subscribe(ctx, func(t rx.Notification) {
 				switch {
 				case t.HasValue:
 					sink.Next(value)
