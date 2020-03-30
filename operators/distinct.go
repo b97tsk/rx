@@ -1,7 +1,9 @@
-package rx
+package operators
 
 import (
 	"context"
+
+	"github.com/b97tsk/rx"
 )
 
 // A DistinctConfigure is a configure for Distinct.
@@ -10,20 +12,20 @@ type DistinctConfigure struct {
 }
 
 // Use creates an Operator from this configure.
-func (configure DistinctConfigure) Use() Operator {
-	return func(source Observable) Observable {
+func (configure DistinctConfigure) Use() rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		return distinctObservable{source, configure}.Subscribe
 	}
 }
 
 type distinctObservable struct {
-	Source Observable
+	Source rx.Observable
 	DistinctConfigure
 }
 
-func (obs distinctObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
+func (obs distinctObservable) Subscribe(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
 	var keys = make(map[interface{}]struct{})
-	return obs.Source.Subscribe(ctx, func(t Notification) {
+	return obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		if t.HasValue {
 			key := obs.KeySelector(t.Value)
 			if _, exists := keys[key]; exists {
@@ -43,7 +45,7 @@ func (obs distinctObservable) Subscribe(ctx context.Context, sink Observer) (con
 // previously projected values. If a keySelector function is not provided, it
 // will use each value from the source Observable directly with an equality
 // check against previous values.
-func (Operators) Distinct() Operator {
+func Distinct() rx.Operator {
 	return DistinctConfigure{
 		KeySelector: func(val interface{}) interface{} { return val },
 	}.Use()

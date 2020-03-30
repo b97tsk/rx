@@ -1,15 +1,17 @@
-package rx
+package operators
 
 import (
 	"context"
+
+	"github.com/b97tsk/rx"
 )
 
 type delayWhenObservable struct {
-	Source           Observable
-	DurationSelector func(interface{}, int) Observable
+	Source           rx.Observable
+	DurationSelector func(interface{}, int) rx.Observable
 }
 
-func (obs delayWhenObservable) Subscribe(ctx context.Context, sink Observer) {
+func (obs delayWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	type X struct {
 		Index       int
 		ActiveCount int
@@ -17,7 +19,7 @@ func (obs delayWhenObservable) Subscribe(ctx context.Context, sink Observer) {
 	cx := make(chan *X, 1)
 	cx <- &X{ActiveCount: 1}
 
-	obs.Source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
@@ -30,9 +32,9 @@ func (obs delayWhenObservable) Subscribe(ctx context.Context, sink Observer) {
 
 				scheduleCtx, scheduleCancel := context.WithCancel(ctx)
 
-				var observer Observer
-				observer = func(t Notification) {
-					observer = NopObserver
+				var observer rx.Observer
+				observer = func(t rx.Notification) {
+					observer = rx.NopObserver
 					scheduleCancel()
 					if x, ok := <-cx; ok {
 						x.ActiveCount--
@@ -85,9 +87,9 @@ func (obs delayWhenObservable) Subscribe(ctx context.Context, sink Observer) {
 //
 // It's like Delay, but the time span of the delay duration is determined by
 // a second Observable.
-func (Operators) DelayWhen(durationSelector func(interface{}, int) Observable) Operator {
-	return func(source Observable) Observable {
+func DelayWhen(durationSelector func(interface{}, int) rx.Observable) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		obs := delayWhenObservable{source, durationSelector}
-		return Create(obs.Subscribe)
+		return rx.Create(obs.Subscribe)
 	}
 }

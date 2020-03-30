@@ -1,23 +1,24 @@
-package rx
+package operators
 
 import (
 	"context"
 	"time"
 
+	"github.com/b97tsk/rx"
 	"github.com/b97tsk/rx/x/queue"
 )
 
 type delayObservable struct {
-	Source   Observable
+	Source   rx.Observable
 	Duration time.Duration
 }
 
 type delayValue struct {
 	Time time.Time
-	Notification
+	rx.Notification
 }
 
-func (obs delayObservable) Subscribe(ctx context.Context, sink Observer) {
+func (obs delayObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	type X struct {
 		Queue     queue.Queue
 		Scheduled bool
@@ -49,7 +50,7 @@ func (obs delayObservable) Subscribe(ctx context.Context, sink Observer) {
 		})
 	}
 
-	obs.Source.Subscribe(ctx, func(t Notification) {
+	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		x := <-cx
 		switch {
 		case t.HasValue:
@@ -84,9 +85,9 @@ func (obs delayObservable) Subscribe(ctx context.Context, sink Observer) {
 
 // Delay delays the emission of items from the source Observable by a given
 // timeout.
-func (Operators) Delay(timeout time.Duration) Operator {
-	return func(source Observable) Observable {
+func Delay(timeout time.Duration) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		obs := delayObservable{source, timeout}
-		return Create(obs.Subscribe)
+		return rx.Create(obs.Subscribe)
 	}
 }
