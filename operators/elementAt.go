@@ -1,28 +1,30 @@
-package rx
+package operators
 
 import (
 	"context"
+
+	"github.com/b97tsk/rx"
 )
 
 type elementAtObservable struct {
-	Source     Observable
+	Source     rx.Observable
 	Index      int
 	Default    interface{}
 	HasDefault bool
 }
 
-func (obs elementAtObservable) Subscribe(ctx context.Context, sink Observer) {
+func (obs elementAtObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	var (
 		index    = obs.Index
-		observer Observer
+		observer rx.Observer
 	)
 
-	observer = func(t Notification) {
+	observer = func(t rx.Notification) {
 		switch {
 		case t.HasValue:
 			index--
 			if index == -1 {
-				observer = NopObserver
+				observer = rx.NopObserver
 				sink(t)
 				sink.Complete()
 			}
@@ -33,7 +35,7 @@ func (obs elementAtObservable) Subscribe(ctx context.Context, sink Observer) {
 				sink.Next(obs.Default)
 				sink.Complete()
 			} else {
-				sink.Error(ErrOutOfRange)
+				sink.Error(rx.ErrOutOfRange)
 			}
 		}
 	}
@@ -44,27 +46,27 @@ func (obs elementAtObservable) Subscribe(ctx context.Context, sink Observer) {
 // ElementAt creates an Observable that emits the single value at the specified
 // index in a sequence of emissions from the source Observable, if the
 // specified index is out of range, notifies error ErrOutOfRange.
-func (Operators) ElementAt(index int) Operator {
-	return func(source Observable) Observable {
+func ElementAt(index int) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		obs := elementAtObservable{
 			Source: source,
 			Index:  index,
 		}
-		return Create(obs.Subscribe)
+		return rx.Create(obs.Subscribe)
 	}
 }
 
 // ElementAtOrDefault creates an Observable that emits the single value at the
 // specified index in a sequence of emissions from the source Observable, if
 // the specified index is out of range, emits the provided default value.
-func (Operators) ElementAtOrDefault(index int, defaultValue interface{}) Operator {
-	return func(source Observable) Observable {
+func ElementAtOrDefault(index int, defaultValue interface{}) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		obs := elementAtObservable{
 			Source:     source,
 			Index:      index,
 			Default:    defaultValue,
 			HasDefault: true,
 		}
-		return Create(obs.Subscribe)
+		return rx.Create(obs.Subscribe)
 	}
 }

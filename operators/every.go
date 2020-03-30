@@ -1,27 +1,29 @@
-package rx
+package operators
 
 import (
 	"context"
+
+	"github.com/b97tsk/rx"
 )
 
 type everyObservable struct {
-	Source    Observable
+	Source    rx.Observable
 	Predicate func(interface{}, int) bool
 }
 
-func (obs everyObservable) Subscribe(ctx context.Context, sink Observer) {
+func (obs everyObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	var (
 		sourceIndex = -1
-		observer    Observer
+		observer    rx.Observer
 	)
 
-	observer = func(t Notification) {
+	observer = func(t rx.Notification) {
 		switch {
 		case t.HasValue:
 			sourceIndex++
 
 			if !obs.Predicate(t.Value, sourceIndex) {
-				observer = NopObserver
+				observer = rx.NopObserver
 				sink.Next(false)
 				sink.Complete()
 			}
@@ -42,9 +44,9 @@ func (obs everyObservable) Subscribe(ctx context.Context, sink Observer) {
 // satisfies the condition specified.
 //
 // Every emits true or false, then completes.
-func (Operators) Every(predicate func(interface{}, int) bool) Operator {
-	return func(source Observable) Observable {
+func Every(predicate func(interface{}, int) bool) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
 		obs := everyObservable{source, predicate}
-		return Create(obs.Subscribe)
+		return rx.Create(obs.Subscribe)
 	}
 }
