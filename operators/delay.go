@@ -6,6 +6,7 @@ import (
 
 	"github.com/b97tsk/rx"
 	"github.com/b97tsk/rx/x/queue"
+	"github.com/b97tsk/rx/x/schedule"
 )
 
 type delayObservable struct {
@@ -29,7 +30,7 @@ func (obs delayObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	var doSchedule func(time.Duration)
 
 	doSchedule = func(timeout time.Duration) {
-		scheduleOnce(ctx, timeout, func() {
+		schedule.ScheduleOnce(ctx, timeout, func() {
 			x := <-cx
 			x.Scheduled = false
 			for x.Queue.Len() > 0 {

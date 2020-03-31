@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/x/schedule"
 )
 
 type sampleTimeObservable struct {
@@ -20,7 +21,7 @@ func (obs sampleTimeObservable) Subscribe(ctx context.Context, sink rx.Observer)
 	cx := make(chan *X, 1)
 	cx <- &X{}
 
-	schedule(ctx, obs.Duration, func() {
+	schedule.Schedule(ctx, obs.Duration, func() {
 		if x, ok := <-cx; ok {
 			if x.HasLatestValue {
 				sink.Next(x.LatestValue)

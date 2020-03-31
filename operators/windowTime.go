@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/x/schedule"
 )
 
 // A WindowTimeConfigure is a configure for WindowTime.
@@ -49,7 +50,7 @@ func (obs windowTimeObservable) Subscribe(ctx context.Context, sink rx.Observer)
 			Window: rx.NewSubject(),
 		}
 		x.Contexts = append(x.Contexts, newContext)
-		scheduleOnce(ctx, obs.TimeSpan, func() {
+		schedule.ScheduleOnce(ctx, obs.TimeSpan, func() {
 			closeContext(newContext)
 		})
 		sink.Next(newContext.Window.Observable)
@@ -85,7 +86,7 @@ func (obs windowTimeObservable) Subscribe(ctx context.Context, sink rx.Observer)
 	openContext()
 
 	if obs.CreationInterval > 0 {
-		schedule(ctx, obs.CreationInterval, openContext)
+		schedule.Schedule(ctx, obs.CreationInterval, openContext)
 	}
 
 	obs.Source.Subscribe(ctx, func(t rx.Notification) {

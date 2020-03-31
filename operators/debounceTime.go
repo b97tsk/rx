@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/x/schedule"
 )
 
 type debounceTimeObservable struct {
@@ -35,7 +36,7 @@ func (obs debounceTimeObservable) Subscribe(ctx context.Context, sink rx.Observe
 					scheduleCancel()
 				}
 
-				_, scheduleCancel = scheduleOnce(ctx, obs.Duration, func() {
+				_, scheduleCancel = schedule.ScheduleOnce(ctx, obs.Duration, func() {
 					if x, ok := <-cx; ok {
 						if x.HasLatestValue {
 							sink.Next(x.LatestValue)

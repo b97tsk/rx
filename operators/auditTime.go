@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/x/schedule"
 )
 
 type auditTimeObservable struct {
@@ -31,7 +32,7 @@ func (obs auditTimeObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 				cx <- x
 
 				if shouldSchedule {
-					scheduleOnce(ctx, obs.Duration, func() {
+					schedule.ScheduleOnce(ctx, obs.Duration, func() {
 						if x, ok := <-cx; ok {
 							sink.Next(x.LatestValue)
 							x.Scheduled = false

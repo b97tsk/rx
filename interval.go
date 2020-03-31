@@ -3,6 +3,8 @@ package rx
 import (
 	"context"
 	"time"
+
+	"github.com/b97tsk/rx/x/schedule"
 )
 
 type intervalObservable struct {
@@ -14,10 +16,10 @@ func (obs intervalObservable) Subscribe(ctx context.Context, sink Observer) (con
 	ctx, cancel := context.WithCancel(ctx)
 
 	if obs.InitialDelay != obs.Period {
-		scheduleOnce(ctx, obs.InitialDelay, func() {
+		schedule.ScheduleOnce(ctx, obs.InitialDelay, func() {
 			index := 0
 			wait := make(chan struct{})
-			schedule(ctx, obs.Period, func() {
+			schedule.Schedule(ctx, obs.Period, func() {
 				<-wait
 				sink.Next(index)
 				index++
@@ -28,7 +30,7 @@ func (obs intervalObservable) Subscribe(ctx context.Context, sink Observer) (con
 		})
 	} else {
 		index := 0
-		schedule(ctx, obs.Period, func() {
+		schedule.Schedule(ctx, obs.Period, func() {
 			sink.Next(index)
 			index++
 		})

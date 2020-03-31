@@ -1,11 +1,12 @@
-package rx
+package schedule
 
 import (
 	"context"
 	"time"
 )
 
-func schedule(ctx context.Context, period time.Duration, work func()) (context.Context, context.CancelFunc) {
+// Schedule schedules to call a specific function periodly.
+func Schedule(ctx context.Context, period time.Duration, work func()) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 
@@ -46,7 +47,8 @@ func schedule(ctx context.Context, period time.Duration, work func()) (context.C
 	return ctx, cancel
 }
 
-func scheduleOnce(ctx context.Context, delay time.Duration, work func()) (context.Context, context.CancelFunc) {
+// ScheduleOnce schedules to call a specific function after a specific time span has passed.
+func ScheduleOnce(ctx context.Context, delay time.Duration, work func()) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 

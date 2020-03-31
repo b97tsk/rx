@@ -6,6 +6,7 @@ import (
 
 	"github.com/b97tsk/rx"
 	"github.com/b97tsk/rx/x/queue"
+	"github.com/b97tsk/rx/x/schedule"
 )
 
 type observeOnObservable struct {
@@ -23,7 +24,7 @@ func (obs observeOnObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		if x, ok := <-cx; ok {
 			x.Queue.PushBack(t)
-			scheduleOnce(ctx, obs.Duration, func() {
+			schedule.ScheduleOnce(ctx, obs.Duration, func() {
 				if x, ok := <-cx; ok {
 					switch t := x.Queue.PopFront().(rx.Notification); {
 					case t.HasValue:
