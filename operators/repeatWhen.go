@@ -5,6 +5,7 @@ import (
 
 	"github.com/b97tsk/rx"
 	"github.com/b97tsk/rx/x/atomic"
+	"github.com/b97tsk/rx/x/misc"
 )
 
 type repeatWhenObservable struct {
@@ -19,7 +20,7 @@ func (obs repeatWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 		activeCount    = atomic.Uint32(2)
 		subject        rx.Subject
 		createSubject  func() rx.Subject
-		avoidRecursive avoidRecursiveCalls
+		avoidRecursive misc.AvoidRecursive
 	)
 
 	type X struct{}

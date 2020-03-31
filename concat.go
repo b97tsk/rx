@@ -3,6 +3,7 @@ package rx
 import (
 	"context"
 
+	"github.com/b97tsk/rx/x/misc"
 	"github.com/b97tsk/rx/x/queue"
 )
 
@@ -25,7 +26,7 @@ func (obs concatObservable) Subscribe(ctx context.Context, sink Observer) {
 	var doNextLocked func(*X)
 
 	doNextLocked = func(x *X) {
-		var avoidRecursive avoidRecursiveCalls
+		var avoidRecursive misc.AvoidRecursive
 		avoidRecursive.Do(func() {
 			if x.Buffer.Len() == 0 {
 				x.ActiveCount--

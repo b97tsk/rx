@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/x/misc"
 )
 
 type bufferWhenObservable struct {
@@ -20,7 +21,7 @@ func (obs bufferWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 
 	var (
 		openBuffer     func()
-		avoidRecursive avoidRecursiveCalls
+		avoidRecursive misc.AvoidRecursive
 	)
 
 	openBuffer = func() {

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/x/misc"
 )
 
 type windowWhenObservable struct {
@@ -22,7 +23,7 @@ func (obs windowWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 
 	var (
 		openWindow     func()
-		avoidRecursive avoidRecursiveCalls
+		avoidRecursive misc.AvoidRecursive
 	)
 
 	openWindow = func() {

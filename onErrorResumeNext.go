@@ -2,6 +2,8 @@ package rx
 
 import (
 	"context"
+
+	"github.com/b97tsk/rx/x/misc"
 )
 
 type onErrorResumeNextObservable struct {
@@ -11,7 +13,7 @@ type onErrorResumeNextObservable struct {
 func (obs onErrorResumeNextObservable) Subscribe(ctx context.Context, sink Observer) {
 	var (
 		observer       Observer
-		avoidRecursive avoidRecursiveCalls
+		avoidRecursive misc.AvoidRecursive
 	)
 
 	remainder := obs.Observables

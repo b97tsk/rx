@@ -5,6 +5,7 @@ import (
 
 	"github.com/b97tsk/rx"
 	"github.com/b97tsk/rx/x/atomic"
+	"github.com/b97tsk/rx/x/misc"
 )
 
 type retryWhenObservable struct {
@@ -20,7 +21,7 @@ func (obs retryWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 		lastError      error
 		subject        rx.Subject
 		createSubject  func() rx.Subject
-		avoidRecursive avoidRecursiveCalls
+		avoidRecursive misc.AvoidRecursive
 	)
 
 	type X struct{}

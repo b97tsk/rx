@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/x/misc"
 )
 
 type retryObservable struct {
@@ -15,7 +16,7 @@ func (obs retryObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	var (
 		count          = obs.Count
 		observer       rx.Observer
-		avoidRecursive avoidRecursiveCalls
+		avoidRecursive misc.AvoidRecursive
 	)
 
 	subscribe := func() {
