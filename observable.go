@@ -21,7 +21,7 @@ func (obs Observable) Pipe(operators ...Operator) Observable {
 // Subscribe invokes an execution of an Observable.
 func (obs Observable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 	if obs == nil {
-		obs = Empty()
+		obs = empty
 	}
 	return obs(ctx, sink)
 }
