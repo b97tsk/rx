@@ -2,17 +2,14 @@ package rx
 
 import (
 	"context"
-	"sync"
+	"errors"
+	"sync/atomic"
 )
 
+var errComplete = errors.New("complete")
+
 // Complete is a special error that represents a complete subscription.
-var Complete error = new(complete)
-
-type complete int
-
-func (*complete) Error() string {
-	return "complete"
-}
+var Complete = errComplete
 
 // Create creates a new Observable, that will execute the specified function
 // when an Observer subscribes to it.
@@ -23,15 +20,17 @@ func (*complete) Error() string {
 func Create(subscribe func(context.Context, Observer)) Observable {
 	return func(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 		ctx, cancel := context.WithCancel(ctx)
-		k := &kontext{Context: ctx, cancel: cancel}
+		k := &kontext{Context: ctx}
 		subscribe(k, func(t Notification) {
 			sink(t)
 			switch {
 			case t.HasValue:
 			case t.HasError:
-				k.unsubscribe(t.Error)
+				k.err.Store(t.Error)
+				cancel()
 			default:
-				k.unsubscribe(Complete)
+				k.err.Store(Complete)
+				cancel()
 			}
 		})
 		return k, cancel
@@ -40,25 +39,12 @@ func Create(subscribe func(context.Context, Observer)) Observable {
 
 type kontext struct {
 	context.Context
-	mux    sync.Mutex
-	err    error
-	cancel context.CancelFunc
-}
-
-func (c *kontext) unsubscribe(err error) {
-	c.mux.Lock()
-	c.err = err
-	c.cancel()
-	c.mux.Unlock()
+	err atomic.Value
 }
 
 func (c *kontext) Err() error {
-	c.mux.Lock()
-	err := c.err
-	if err == nil {
-		err = c.Context.Err()
-		c.err = err
+	if err := c.err.Load(); err != nil {
+		return err.(error)
 	}
-	c.mux.Unlock()
-	return err
+	return c.Context.Err()
 }
