@@ -23,7 +23,7 @@ func (obs someObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 			sourceIndex++
 
 			if obs.Predicate(t.Value, sourceIndex) {
-				observer = rx.NopObserver
+				observer = rx.Noop
 				sink.Next(true)
 				sink.Complete()
 			}

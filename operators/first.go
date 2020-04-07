@@ -15,7 +15,7 @@ func (obs firstObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	observer = func(t rx.Notification) {
 		switch {
 		case t.HasValue:
-			observer = rx.NopObserver
+			observer = rx.Noop
 			sink(t)
 			sink.Complete()
 		case t.HasError:

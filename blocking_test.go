@@ -92,7 +92,7 @@ func TestObservable_BlockingSubscribe(t *testing.T) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), Step(1))
 	for _, x := range tests {
-		err := x.obs.BlockingSubscribe(ctx, rx.NopObserver)
+		err := x.obs.BlockingSubscribe(ctx, rx.Noop)
 		if err != x.err {
 			t.Fail()
 		}

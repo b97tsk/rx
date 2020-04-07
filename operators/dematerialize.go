@@ -20,11 +20,11 @@ func (obs dematerializeObservable) Subscribe(ctx context.Context, sink rx.Observ
 				case t.HasValue:
 					sink(t)
 				default:
-					observer = rx.NopObserver
+					observer = rx.Noop
 					sink(t)
 				}
 			} else {
-				observer = rx.NopObserver
+				observer = rx.Noop
 				sink.Error(rx.ErrNotNotification)
 			}
 		default:

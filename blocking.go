@@ -14,7 +14,7 @@ func (obs Observable) BlockingFirst(ctx context.Context) (interface{}, error) {
 	)
 	ctx, cancel := context.WithCancel(ctx)
 	observer = func(t Notification) {
-		observer = NopObserver
+		observer = Noop
 		switch {
 		case t.HasValue || t.HasError:
 			result = t
@@ -75,7 +75,7 @@ func (obs Observable) BlockingSingle(ctx context.Context) (interface{}, error) {
 		switch {
 		case t.HasValue:
 			if result.HasValue {
-				observer = NopObserver
+				observer = Noop
 				result = Notification{Error: ErrNotSingle, HasError: true}
 				cancel()
 			} else {

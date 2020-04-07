@@ -31,7 +31,7 @@ func (obs congestingConcatObservable) Subscribe(ctx context.Context, sink rx.Obs
 				case t.HasValue:
 					sink(t)
 				case t.HasError:
-					observer = rx.NopObserver
+					observer = rx.Noop
 					sink(t)
 				default:
 					// do nothing

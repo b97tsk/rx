@@ -36,7 +36,7 @@ func (obs toObservablesObservable) Subscribe(ctx context.Context, sink rx.Observ
 			if obs, ok := t.Value.(rx.Observable); ok {
 				observables = append(observables, obs)
 			} else {
-				observer = rx.NopObserver
+				observer = rx.Noop
 				sink.Error(rx.ErrNotObservable)
 			}
 		case t.HasError:

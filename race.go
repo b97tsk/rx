@@ -44,7 +44,7 @@ func (obs raceObservable) Subscribe(ctx context.Context, sink Observer) {
 				sink(t)
 				return
 			}
-			observer = NopObserver
+			observer = Noop
 			cancel()
 		}
 

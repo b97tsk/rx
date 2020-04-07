@@ -34,7 +34,7 @@ func (obs auditObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 
 					var observer rx.Observer
 					observer = func(t rx.Notification) {
-						observer = rx.NopObserver
+						observer = rx.Noop
 						scheduleCancel()
 						if x, ok := <-cx; ok {
 							if t.HasError {

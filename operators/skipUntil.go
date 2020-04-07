@@ -27,7 +27,7 @@ func (obs skipUntilObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 			switch {
 			case t.HasValue:
 				noSkipping.Store(1)
-				observer = rx.NopObserver
+				observer = rx.Noop
 				cancel()
 			case t.HasError:
 				sink(t)

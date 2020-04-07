@@ -27,7 +27,7 @@ func (obs takeWhileObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 				break
 			}
 
-			observer = rx.NopObserver
+			observer = rx.Noop
 			sink.Complete()
 
 		default:

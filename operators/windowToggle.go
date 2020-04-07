@@ -47,7 +47,7 @@ func (obs windowToggleObservable) Subscribe(ctx context.Context, sink rx.Observe
 
 				var observer rx.Observer
 				observer = func(t rx.Notification) {
-					observer = rx.NopObserver
+					observer = rx.Noop
 					cancel()
 					if x, ok := <-cx; ok {
 						if t.HasError {

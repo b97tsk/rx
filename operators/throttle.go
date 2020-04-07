@@ -45,7 +45,7 @@ func (obs throttleObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 
 		var observer rx.Observer
 		observer = func(t rx.Notification) {
-			observer = rx.NopObserver
+			observer = rx.Noop
 			defer cancel()
 			if obs.Trailing || t.HasError {
 				if x, ok := <-cx; ok {

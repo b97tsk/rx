@@ -21,7 +21,7 @@ func (obs singleObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		switch {
 		case t.HasValue:
 			if hasValue {
-				observer = rx.NopObserver
+				observer = rx.Noop
 				sink.Error(rx.ErrNotSingle)
 			} else {
 				value = t.Value

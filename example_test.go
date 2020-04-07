@@ -38,7 +38,7 @@ func Example() {
 	// To Subscribe to an observable, you call its Subscribe method with
 	// a context and an observer as parameters, and you get another context
 	// and a cancel function in return.
-	ctx, cancel := obs.Subscribe(context.Background(), rx.NopObserver)
+	ctx, cancel := obs.Subscribe(context.Background(), rx.Noop)
 
 	// The returned context will be cancelled when the subscription completes.
 	// Since this example has no goroutines involved, it must have already done.

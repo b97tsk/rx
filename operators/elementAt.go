@@ -24,7 +24,7 @@ func (obs elementAtObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 		case t.HasValue:
 			index--
 			if index == -1 {
-				observer = rx.NopObserver
+				observer = rx.Noop
 				sink(t)
 				sink.Complete()
 			}

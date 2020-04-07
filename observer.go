@@ -20,10 +20,12 @@ func (sink Observer) Complete() {
 
 // Notify passes a notification to this Observer. Note that the receiver
 // is a pointer to an Observer, this is useful in some cases when you need
-// to change the receiver from one to another Observer.
+// to change the receiver from one to another Observer, given that
+// `sink.Notify` gives you an Observer that is equivalent to
+// `func(t Notification) { (*sink)(t) }`.
 func (sink *Observer) Notify(t Notification) {
 	(*sink)(t)
 }
 
-// NopObserver is an Observer that does nothing.
-var NopObserver Observer = func(Notification) {}
+// Noop gives you an Observer that does nothing.
+func Noop(Notification) {}

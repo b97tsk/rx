@@ -24,7 +24,7 @@ func (obs takeObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 				count--
 				sink(t)
 			} else {
-				observer = rx.NopObserver
+				observer = rx.Noop
 				sink(t)
 				sink.Complete()
 			}
