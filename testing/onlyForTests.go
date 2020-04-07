@@ -46,7 +46,7 @@ func AddLatencyToNotifications(initialDelay, period int) rx.Operator {
 
 func DelaySubscription(n int) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
-		return source.Pipe(operators.SubscribeOn(Step(n)))
+		return rx.Concat(rx.Empty().Pipe(operators.Delay(Step(n))), source)
 	}
 }
 
