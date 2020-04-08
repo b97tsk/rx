@@ -48,17 +48,17 @@ func (s ReplaySubject) Exists() bool {
 }
 
 func (s *replaySubject) trimBuffer() {
-	if s.BufferSize > 0 {
-		for s.buffer.Len() > s.BufferSize {
-			s.buffer.PopFront()
-		}
-	}
 	if s.WindowTime > 0 {
 		now := time.Now()
 		for s.buffer.Len() > 0 {
 			if s.buffer.Front().(replaySubjectValue).Deadline.After(now) {
 				break
 			}
+			s.buffer.PopFront()
+		}
+	}
+	if s.BufferSize > 0 {
+		for s.buffer.Len() > s.BufferSize {
 			s.buffer.PopFront()
 		}
 	}
@@ -92,6 +92,7 @@ func (s *replaySubject) notify(t Notification) {
 		observers := s.observers.Swap(nil)
 		if t.HasError {
 			s.err = t.Error
+			s.buffer.Init()
 		} else {
 			s.err = Complete
 		}
