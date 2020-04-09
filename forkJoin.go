@@ -22,7 +22,6 @@ func (obs forkJoinObservable) Subscribe(ctx context.Context, sink Observer) {
 	go func() {
 		values := make([]interface{}, length)
 		hasValues := make([]bool, length)
-		hasValuesCount := 0
 		completeCount := 0
 		for {
 			select {
@@ -33,11 +32,7 @@ func (obs forkJoinObservable) Subscribe(ctx context.Context, sink Observer) {
 				switch {
 				case t.HasValue:
 					values[index] = t.Value
-
-					if !hasValues[index] {
-						hasValues[index] = true
-						hasValuesCount++
-					}
+					hasValues[index] = true
 
 				case t.HasError:
 					sink(t.Notification)
