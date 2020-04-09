@@ -12,14 +12,11 @@ import (
 func TestReplaySubject(t *testing.T) {
 	t.Run("#1", func(t *testing.T) {
 		subject := rx.NewReplaySubject(3, 0)
-		subscribeThenComplete := rx.Observable(
-			func(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
-				ctx, cancel := context.WithCancel(ctx)
-				defer cancel()
+		subscribeThenComplete := rx.Create(
+			func(ctx context.Context, sink rx.Observer) {
 				sink = rx.Mutex(sink)
 				subject.Subscribe(ctx, sink)
 				sink.Complete()
-				return ctx, cancel
 			},
 		)
 		subject.Next("A")
@@ -35,14 +32,11 @@ func TestReplaySubject(t *testing.T) {
 	})
 	t.Run("#2", func(t *testing.T) {
 		subject := rx.NewReplaySubject(0, Step(5))
-		subscribeThenComplete := rx.Observable(
-			func(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
-				ctx, cancel := context.WithCancel(ctx)
-				defer cancel()
+		subscribeThenComplete := rx.Create(
+			func(ctx context.Context, sink rx.Observer) {
 				sink = rx.Mutex(sink)
 				subject.Subscribe(ctx, sink)
 				sink.Complete()
-				return ctx, cancel
 			},
 		)
 		subject.Next("A")
