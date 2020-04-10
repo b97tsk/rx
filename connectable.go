@@ -150,29 +150,9 @@ func (obs *connectableObservable) connect(addRef bool) (context.Context, context
 	}
 }
 
-func (obs *connectableObservable) connectAddRef() (context.Context, context.CancelFunc) {
-	return obs.connect(true)
-}
-
 // Connect invokes an execution of an ConnectableObservable.
 func (obs ConnectableObservable) Connect() (context.Context, context.CancelFunc) {
 	return obs.connect(false)
-}
-
-type refCountObservable struct {
-	Connectable ConnectableObservable
-}
-
-func (obs refCountObservable) Subscribe(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
-	ctx, cancel := obs.Connectable.Subscribe(ctx, sink)
-	_, releaseRef := obs.Connectable.connectAddRef()
-
-	go func() {
-		<-ctx.Done()
-		releaseRef()
-	}()
-
-	return ctx, cancel
 }
 
 // RefCount creates an Observable that keeps track of how many subscribers
@@ -181,7 +161,15 @@ func (obs refCountObservable) Subscribe(ctx context.Context, sink Observer) (con
 // of subscribers decreases from 1 to 0 will it be fully unsubscribed, stopping
 // further execution.
 func (obs ConnectableObservable) RefCount() Observable {
-	return refCountObservable{obs}.Subscribe
+	return func(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
+		ctx, cancel := obs.Subscribe(ctx, sink)
+		_, releaseRef := obs.connect(true)
+		go func() {
+			<-ctx.Done()
+			releaseRef()
+		}()
+		return ctx, cancel
+	}
 }
 
 // Multicast returns a ConnectableObservable, which is a variety of Observable
