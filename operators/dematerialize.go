@@ -6,39 +6,36 @@ import (
 	"github.com/b97tsk/rx"
 )
 
-type dematerializeObservable struct {
-	Source rx.Observable
-}
-
-func (obs dematerializeObservable) Subscribe(ctx context.Context, sink rx.Observer) {
-	var observer rx.Observer
-	observer = func(t rx.Notification) {
-		switch {
-		case t.HasValue:
-			if t, ok := t.Value.(rx.Notification); ok {
+func dematerialize(source rx.Observable) rx.Observable {
+	return rx.Create(
+		func(ctx context.Context, sink rx.Observer) {
+			var observer rx.Observer
+			observer = func(t rx.Notification) {
 				switch {
 				case t.HasValue:
-					sink(t)
+					if t, ok := t.Value.(rx.Notification); ok {
+						switch {
+						case t.HasValue:
+							sink(t)
+						default:
+							observer = rx.Noop
+							sink(t)
+						}
+					} else {
+						observer = rx.Noop
+						sink.Error(rx.ErrNotNotification)
+					}
 				default:
-					observer = rx.Noop
 					sink(t)
 				}
-			} else {
-				observer = rx.Noop
-				sink.Error(rx.ErrNotNotification)
 			}
-		default:
-			sink(t)
-		}
-	}
-	obs.Source.Subscribe(ctx, observer.Notify)
+			source.Subscribe(ctx, observer.Notify)
+		},
+	)
 }
 
 // Dematerialize converts an Observable of Notification objects into the
 // emissions that they represent. It's the opposite of Materialize.
 func Dematerialize() rx.Operator {
-	return func(source rx.Observable) rx.Observable {
-		obs := dematerializeObservable{source}
-		return rx.Create(obs.Subscribe)
-	}
+	return dematerialize
 }
