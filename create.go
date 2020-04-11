@@ -42,9 +42,9 @@ type kontext struct {
 	err atomic.Value
 }
 
-func (c *kontext) Err() error {
-	if err := c.err.Load(); err != nil {
+func (k *kontext) Err() error {
+	if err := k.err.Load(); err != nil {
 		return err.(error)
 	}
-	return c.Context.Err()
+	return k.Context.Err()
 }
