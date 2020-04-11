@@ -3,6 +3,8 @@ package rx
 import (
 	"context"
 	"sync"
+
+	"github.com/b97tsk/rx/x/misc"
 )
 
 // Subject is a special type of Observable that allows values to be multicasted
@@ -24,7 +26,7 @@ func NewSubject() Subject {
 type subject struct {
 	mux       sync.Mutex
 	observers observerList
-	cws       contextWaitService
+	cws       misc.ContextWaitService
 	err       error
 }
 
@@ -80,7 +82,7 @@ func (s *subject) subscribe(ctx context.Context, sink Observer) {
 		}
 
 		for s.cws == nil || !s.cws.Submit(ctx, finalize) {
-			s.cws = newContextWaitService()
+			s.cws = misc.NewContextWaitService()
 		}
 	}
 

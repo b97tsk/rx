@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/b97tsk/rx/x/misc"
 	"github.com/b97tsk/rx/x/queue"
 )
 
@@ -19,7 +20,7 @@ type replaySubject struct {
 	Subject
 	mux        sync.Mutex
 	observers  observerList
-	cws        contextWaitService
+	cws        misc.ContextWaitService
 	err        error
 	buffer     queue.Queue
 	BufferSize int
@@ -132,7 +133,7 @@ func (s *replaySubject) subscribe(ctx context.Context, sink Observer) {
 		}
 
 		for s.cws == nil || !s.cws.Submit(ctx, finalize) {
-			s.cws = newContextWaitService()
+			s.cws = misc.NewContextWaitService()
 		}
 
 		s.trimBuffer()

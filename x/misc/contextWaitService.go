@@ -1,4 +1,4 @@
-package rx
+package misc
 
 import (
 	"context"
@@ -8,21 +8,21 @@ import (
 
 const autoCloseDelay = 30 * time.Second
 
-type contextWaitService chan chan<- contextWaitAction
-
-type contextWaitAction struct {
+type ContextWaitAction struct {
 	Context  context.Context
 	Callback func()
 }
 
-func newContextWaitService() contextWaitService {
-	actionChan := make(chan contextWaitAction, 1)
-	service := make(contextWaitService, 1)
+type ContextWaitService chan chan<- ContextWaitAction
+
+func NewContextWaitService() ContextWaitService {
+	actionChan := make(chan ContextWaitAction, 1)
+	service := make(ContextWaitService, 1)
 	service <- actionChan
 	go func() {
 		var (
 			cases   []reflect.SelectCase
-			actions []contextWaitAction
+			actions []ContextWaitAction
 		)
 		cases = append(cases, reflect.SelectCase{
 			Dir:  reflect.SelectRecv,
@@ -48,7 +48,7 @@ func newContextWaitService() contextWaitService {
 				continue
 			}
 			if i == 1 {
-				action := v.Interface().(contextWaitAction)
+				action := v.Interface().(ContextWaitAction)
 				cases = append(cases, reflect.SelectCase{
 					Dir:  reflect.SelectRecv,
 					Chan: reflect.ValueOf(action.Context.Done()),
@@ -66,7 +66,7 @@ func newContextWaitService() contextWaitService {
 			{
 				i := i - 2
 				action := actions[i]
-				actions[i] = contextWaitAction{}
+				actions[i] = ContextWaitAction{}
 				j := len(actions) - 1
 				actions[i], actions[j] = actions[j], actions[i]
 				actions = actions[:j]
@@ -80,12 +80,12 @@ func newContextWaitService() contextWaitService {
 	return service
 }
 
-func (service contextWaitService) Submit(ctx context.Context, cb func()) bool {
+func (service ContextWaitService) Submit(ctx context.Context, cb func()) bool {
 	actionChan, serviceAvailable := <-service
 	if !serviceAvailable {
 		return false
 	}
-	actionChan <- contextWaitAction{ctx, cb}
+	actionChan <- ContextWaitAction{ctx, cb}
 	service <- actionChan
 	return true
 }

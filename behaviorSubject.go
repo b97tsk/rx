@@ -4,6 +4,8 @@ import (
 	"context"
 	"sync"
 	"sync/atomic"
+
+	"github.com/b97tsk/rx/x/misc"
 )
 
 // A BehaviorSubject stores the latest value emitted to its consumers, and
@@ -17,7 +19,7 @@ type behaviorSubject struct {
 	Subject
 	mux       sync.Mutex
 	observers observerList
-	cws       contextWaitService
+	cws       misc.ContextWaitService
 	err       error
 	val       atomic.Value
 }
@@ -102,7 +104,7 @@ func (s *behaviorSubject) subscribe(ctx context.Context, sink Observer) {
 		}
 
 		for s.cws == nil || !s.cws.Submit(ctx, finalize) {
-			s.cws = newContextWaitService()
+			s.cws = misc.NewContextWaitService()
 		}
 
 		sink.Next(s.getValue())
