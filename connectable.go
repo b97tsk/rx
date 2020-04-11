@@ -163,11 +163,13 @@ func (obs ConnectableObservable) Connect() (context.Context, context.CancelFunc)
 func (obs ConnectableObservable) RefCount() Observable {
 	return func(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 		ctx, cancel := obs.Subscribe(ctx, sink)
-		_, releaseRef := obs.connect(true)
-		go func() {
-			<-ctx.Done()
-			releaseRef()
-		}()
+		if ctx.Err() == nil {
+			_, releaseRef := obs.connect(true)
+			go func() {
+				<-ctx.Done()
+				releaseRef()
+			}()
+		}
 		return ctx, cancel
 	}
 }
