@@ -12,7 +12,7 @@ func TestShare(t *testing.T) {
 	t.Run("#1", func(t *testing.T) {
 		obs := rx.Interval(Step(3)).Pipe(
 			operators.Take(4),
-			operators.Share(),
+			operators.Share(rx.NewSubject),
 		)
 		Subscribe(
 			t,
@@ -27,7 +27,7 @@ func TestShare(t *testing.T) {
 	})
 	t.Run("#2", func(t *testing.T) {
 		obs := rx.Interval(Step(3)).Pipe(
-			operators.Share(),
+			operators.Share(rx.NewSubject),
 			operators.Take(4),
 		)
 		Subscribe(
