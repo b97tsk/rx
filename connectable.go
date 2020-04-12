@@ -19,10 +19,9 @@ type connectableObservable struct {
 	mux            sync.Mutex
 	source         Observable
 	subjectFactory func() Subject
+	subject        Subject
 	connection     context.Context
 	disconnect     context.CancelFunc
-	subject        Subject
-	refCount       int
 }
 
 // NewConnectableObservable creates a new ConnectableObservable.
@@ -44,6 +43,12 @@ func (obs ConnectableObservable) Exists() bool {
 	return obs.connectableObservable != nil
 }
 
+func (obs *connectableObservable) getSubject() Subject {
+	obs.mux.Lock()
+	defer obs.mux.Unlock()
+	return obs.getSubjectLocked()
+}
+
 func (obs *connectableObservable) getSubjectLocked() Subject {
 	if obs.subject.Observer == nil {
 		obs.subject = obs.subjectFactory()
@@ -51,13 +56,7 @@ func (obs *connectableObservable) getSubjectLocked() Subject {
 	return obs.subject
 }
 
-func (obs *connectableObservable) getSubject() Subject {
-	obs.mux.Lock()
-	defer obs.mux.Unlock()
-	return obs.getSubjectLocked()
-}
-
-func (obs *connectableObservable) connect(addRef bool) (context.Context, context.CancelFunc) {
+func (obs *connectableObservable) connect(ctx context.Context) (context.Context, context.CancelFunc) {
 	obs.mux.Lock()
 	defer obs.mux.Unlock()
 
@@ -68,11 +67,11 @@ func (obs *connectableObservable) connect(addRef bool) (context.Context, context
 		cx := make(chan X, 1)
 		cx <- X{}
 
-		subject := obs.getSubjectLocked()
+		sink := obs.getSubjectLocked().Observer
 
-		ctx, cancel := obs.source.Subscribe(context.Background(), func(t Notification) {
+		ctx, cancel := obs.source.Subscribe(ctx, func(t Notification) {
 			if t.HasValue {
-				t.Observe(subject.Observer)
+				sink(t)
 				return
 			}
 
@@ -82,10 +81,9 @@ func (obs *connectableObservable) connect(addRef bool) (context.Context, context
 			}
 
 			if connection == obs.connection {
+				obs.subject = Subject{}
 				obs.connection = nil
 				obs.disconnect = nil
-				obs.subject = Subject{}
-				obs.refCount = 0
 			}
 
 			if cxLocked {
@@ -94,7 +92,7 @@ func (obs *connectableObservable) connect(addRef bool) (context.Context, context
 				obs.mux.Unlock()
 			}
 
-			t.Observe(subject.Observer)
+			sink(t)
 		})
 
 		<-cx
@@ -109,69 +107,21 @@ func (obs *connectableObservable) connect(addRef bool) (context.Context, context
 		obs.disconnect = cancel
 	}
 
-	if addRef {
-		obs.refCount++
-
-		return connection, func() {
-			obs.mux.Lock()
-			defer obs.mux.Unlock()
-
-			if connection != obs.connection {
-				return
-			}
-			if obs.refCount == 0 {
-				return
-			}
-
-			obs.refCount--
-
-			if obs.refCount == 0 {
-				obs.disconnect()
-				obs.connection = nil
-				obs.disconnect = nil
-				obs.subject = Subject{}
-			}
-		}
-	}
-
 	return connection, func() {
 		obs.mux.Lock()
-		defer obs.mux.Unlock()
-
-		if connection != obs.connection {
-			return
+		if connection == obs.connection {
+			obs.disconnect()
+			obs.subject = Subject{}
+			obs.connection = nil
+			obs.disconnect = nil
 		}
-
-		obs.disconnect()
-		obs.connection = nil
-		obs.disconnect = nil
-		obs.subject = Subject{}
-		obs.refCount = 0
+		obs.mux.Unlock()
 	}
 }
 
 // Connect invokes an execution of an ConnectableObservable.
-func (obs ConnectableObservable) Connect() (context.Context, context.CancelFunc) {
-	return obs.connect(false)
-}
-
-// RefCount creates an Observable that keeps track of how many subscribers
-// it has. When the number of subscribers increases from 0 to 1, it will call
-// Connect() for us, which starts the shared execution. Only when the number
-// of subscribers decreases from 1 to 0 will it be fully unsubscribed, stopping
-// further execution.
-func (obs ConnectableObservable) RefCount() Observable {
-	return func(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
-		ctx, cancel := obs.Subscribe(ctx, sink)
-		if ctx.Err() == nil {
-			_, releaseRef := obs.connect(true)
-			go func() {
-				<-ctx.Done()
-				releaseRef()
-			}()
-		}
-		return ctx, cancel
-	}
+func (obs ConnectableObservable) Connect(ctx context.Context) (context.Context, context.CancelFunc) {
+	return obs.connect(ctx)
 }
 
 // Multicast returns a ConnectableObservable, which is a variety of Observable

@@ -39,9 +39,9 @@ func TestObservable_Publish(t *testing.T) {
 		return
 	default:
 	}
-	_, disconnect := obs.Connect()
-	defer disconnect()
+	_, disconnect := obs.Connect(context.Background())
 	<-ctx.Done()
+	disconnect()
 }
 
 func TestObservable_PublishBehavior(t *testing.T) {
@@ -74,9 +74,9 @@ func TestObservable_PublishBehavior(t *testing.T) {
 		return
 	default:
 	}
-	_, disconnect := obs.Connect()
-	defer disconnect()
+	_, disconnect := obs.Connect(context.Background())
 	<-ctx.Done()
+	disconnect()
 }
 
 func TestObservable_PublishReplay(t *testing.T) {
@@ -109,7 +109,7 @@ func TestObservable_PublishReplay(t *testing.T) {
 		return
 	default:
 	}
-	_, disconnect := obs.Connect()
-	defer disconnect()
+	_, disconnect := obs.Connect(context.Background())
 	<-ctx.Done()
+	disconnect()
 }
