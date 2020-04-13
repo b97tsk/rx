@@ -18,10 +18,10 @@ type zipValue struct {
 func (obs zipObservable) Subscribe(ctx context.Context, sink Observer) {
 	done := ctx.Done()
 
-	length := len(obs.Observables)
-	q := make(chan zipValue, length)
+	q := make(chan zipValue)
 
 	go func() {
+		length := len(obs.Observables)
 		values := make([]queue.Queue, length)
 		hasValues := make([]bool, length)
 		hasValuesCount := 0

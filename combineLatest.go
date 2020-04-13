@@ -16,10 +16,10 @@ type combineLatestValue struct {
 func (obs combineLatestObservable) Subscribe(ctx context.Context, sink Observer) {
 	done := ctx.Done()
 
-	length := len(obs.Observables)
-	q := make(chan combineLatestValue, length)
+	q := make(chan combineLatestValue)
 
 	go func() {
+		length := len(obs.Observables)
 		values := make([]interface{}, length)
 		hasValues := make([]bool, length)
 		hasValuesCount := 0

@@ -18,10 +18,10 @@ type withLatestFromValue struct {
 func (obs withLatestFromObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	done := ctx.Done()
 
-	length := len(obs.Observables)
-	q := make(chan withLatestFromValue, length)
+	q := make(chan withLatestFromValue)
 
 	go func() {
+		length := len(obs.Observables)
 		values := make([]interface{}, length)
 		hasValues := make([]bool, length)
 		hasValuesCount := 0

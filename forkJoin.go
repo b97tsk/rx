@@ -16,10 +16,10 @@ type forkJoinValue struct {
 func (obs forkJoinObservable) Subscribe(ctx context.Context, sink Observer) {
 	done := ctx.Done()
 
-	length := len(obs.Observables)
-	q := make(chan forkJoinValue, length)
+	q := make(chan forkJoinValue)
 
 	go func() {
+		length := len(obs.Observables)
 		values := make([]interface{}, length)
 		hasValues := make([]bool, length)
 		completeCount := 0

@@ -11,18 +11,16 @@ type congestingZipObservable struct {
 func (obs congestingZipObservable) Subscribe(ctx context.Context, sink Observer) {
 	done := ctx.Done()
 
-	length := len(obs.Observables)
-	channels := make([]chan Notification, length)
+	channels := make([]chan Notification, len(obs.Observables))
 
-	for i := 0; i < length; i++ {
+	for i := range channels {
 		channels[i] = make(chan Notification)
 	}
 
 	go func() {
 		for {
-			nextValues := make([]interface{}, length)
-
-			for i := 0; i < length; i++ {
+			nextValues := make([]interface{}, len(channels))
+			for i := range channels {
 				select {
 				case <-done:
 					return
@@ -36,7 +34,6 @@ func (obs congestingZipObservable) Subscribe(ctx context.Context, sink Observer)
 					}
 				}
 			}
-
 			sink.Next(nextValues)
 		}
 	}()
