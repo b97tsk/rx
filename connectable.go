@@ -96,7 +96,7 @@ func (obs *connectableObservable) connect(ctx context.Context) (context.Context,
 		})
 
 		<-cx
-		defer close(cx)
+		close(cx)
 
 		if ctx.Err() != nil {
 			return ctx, cancel
