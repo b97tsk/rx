@@ -40,7 +40,7 @@ func (obs windowWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 			if x, ok := <-cx; ok {
 				if t.HasError {
 					close(cx)
-					t.Observe(x.Window.Observer)
+					x.Window.Observer.Notify(t)
 					sink(t)
 					return
 				}
@@ -66,11 +66,11 @@ func (obs windowWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
-				t.Observe(x.Window.Observer)
+				x.Window.Observer.Notify(t)
 				cx <- x
 			default:
 				close(cx)
-				t.Observe(x.Window.Observer)
+				x.Window.Observer.Notify(t)
 				sink(t)
 			}
 		}

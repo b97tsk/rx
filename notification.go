@@ -7,8 +7,3 @@ type Notification struct {
 	HasValue bool
 	HasError bool
 }
-
-// Observe passes this notification to the specified Observer.
-func (t Notification) Observe(sink Observer) {
-	sink(t)
-}
