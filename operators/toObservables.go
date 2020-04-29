@@ -52,7 +52,7 @@ func (obs toObservablesObservable) Subscribe(ctx context.Context, sink rx.Observ
 		}
 	}
 
-	obs.Source.Subscribe(ctx, observer.Notify)
+	obs.Source.Subscribe(ctx, observer.Sink)
 }
 
 // ToObservables creates an Observable that collects all the Observables the

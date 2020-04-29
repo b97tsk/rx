@@ -18,12 +18,13 @@ func (sink Observer) Complete() {
 	sink(Notification{})
 }
 
-// Notify passes a notification to this Observer. Note that the receiver
-// is a pointer to an Observer, this is useful in some cases when you need
-// to change the receiver from one to another Observer, given that
-// `sink.Notify` gives you an Observer that is equivalent to
+// Sink passes a notification to this Observer.
+//
+// Note that the receiver of this method is a pointer to an Observer, this is
+// useful in some cases when you need to change the receiver from one to another
+// Observer, given that `sink.Sink` yields an Observer that is equivalent to
 // `func(t Notification) { (*sink)(t) }`.
-func (sink *Observer) Notify(t Notification) {
+func (sink *Observer) Sink(t Notification) {
 	(*sink)(t)
 }
 

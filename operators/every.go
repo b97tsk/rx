@@ -37,7 +37,7 @@ func (obs everyObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		}
 	}
 
-	obs.Source.Subscribe(ctx, observer.Notify)
+	obs.Source.Subscribe(ctx, observer.Sink)
 }
 
 // Every creates an Observable that emits whether or not every item of the source

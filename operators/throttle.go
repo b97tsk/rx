@@ -64,7 +64,7 @@ func (obs throttleObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		}
 
 		obs := obs.DurationSelector(val)
-		go obs.Subscribe(throttleCtx, observer.Notify)
+		go obs.Subscribe(throttleCtx, observer.Sink)
 	}
 
 	obs.Source.Subscribe(ctx, func(t rx.Notification) {

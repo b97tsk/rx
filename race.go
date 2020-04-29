@@ -48,7 +48,7 @@ func (obs raceObservable) Subscribe(ctx context.Context, sink Observer) {
 			cancel()
 		}
 
-		obs.Subscribe(ctx, observer.Notify)
+		obs.Subscribe(ctx, observer.Sink)
 	}
 }
 

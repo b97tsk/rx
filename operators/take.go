@@ -33,7 +33,7 @@ func (obs takeObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		}
 	}
 
-	obs.Source.Subscribe(ctx, observer.Notify)
+	obs.Source.Subscribe(ctx, observer.Sink)
 }
 
 // Take creates an Observable that emits only the first count values emitted

@@ -33,7 +33,7 @@ func (obs findIndexObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 		}
 	}
 
-	obs.Source.Subscribe(ctx, observer.Notify)
+	obs.Source.Subscribe(ctx, observer.Sink)
 }
 
 // FindIndex creates an Observable that emits only the index of the first value

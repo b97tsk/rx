@@ -37,7 +37,7 @@ func (obs someObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		}
 	}
 
-	obs.Source.Subscribe(ctx, observer.Notify)
+	obs.Source.Subscribe(ctx, observer.Sink)
 }
 
 // Some creates an Observable that emits whether or not any item of the source

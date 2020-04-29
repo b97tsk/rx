@@ -45,7 +45,7 @@ func (obs congestingConcatObservable) Subscribe(ctx context.Context, sink rx.Obs
 		}
 	}
 
-	obs.Source.Subscribe(ctx, observer.Notify)
+	obs.Source.Subscribe(ctx, observer.Sink)
 }
 
 // CongestingConcatAll converts a higher-order Observable into a first-order

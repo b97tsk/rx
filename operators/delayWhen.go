@@ -62,7 +62,7 @@ func (obs delayWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 				}
 
 				obs := obs.DurationSelector(sourceValue, sourceIndex)
-				obs.Subscribe(scheduleCtx, observer.Notify)
+				obs.Subscribe(scheduleCtx, observer.Sink)
 
 			case t.HasError:
 				close(cx)

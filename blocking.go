@@ -23,7 +23,7 @@ func (obs Observable) BlockingFirst(ctx context.Context) (interface{}, error) {
 		}
 		cancel()
 	}
-	ctx, _ = obs.Subscribe(ctx, observer.Notify)
+	ctx, _ = obs.Subscribe(ctx, observer.Sink)
 	<-ctx.Done()
 	switch {
 	case result.HasValue:
@@ -91,7 +91,7 @@ func (obs Observable) BlockingSingle(ctx context.Context) (interface{}, error) {
 			cancel()
 		}
 	}
-	ctx, _ = obs.Subscribe(ctx, observer.Notify)
+	ctx, _ = obs.Subscribe(ctx, observer.Sink)
 	<-ctx.Done()
 	switch {
 	case result.HasValue:

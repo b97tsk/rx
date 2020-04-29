@@ -30,7 +30,7 @@ func (obs windowObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 				cx <- x
 			default:
 				close(cx)
-				x.Window.Observer.Notify(t)
+				x.Window.Sink(t)
 				sink(t)
 			}
 		}
@@ -44,11 +44,11 @@ func (obs windowObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
-				x.Window.Observer.Notify(t)
+				x.Window.Sink(t)
 				cx <- x
 			default:
 				close(cx)
-				x.Window.Observer.Notify(t)
+				x.Window.Sink(t)
 				sink(t)
 			}
 		}

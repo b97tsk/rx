@@ -35,7 +35,7 @@ func single(source rx.Observable) rx.Observable {
 					}
 				}
 			}
-			source.Subscribe(ctx, observer.Notify)
+			source.Subscribe(ctx, observer.Sink)
 		},
 	)
 }

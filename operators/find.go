@@ -33,7 +33,7 @@ func (obs findObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		}
 	}
 
-	obs.Source.Subscribe(ctx, observer.Notify)
+	obs.Source.Subscribe(ctx, observer.Sink)
 }
 
 // Find creates an Observable that emits only the first value emitted by the

@@ -32,7 +32,7 @@ func (obs skipWhileObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 		}
 	}
 
-	return obs.Source.Subscribe(ctx, observer.Notify)
+	return obs.Source.Subscribe(ctx, observer.Sink)
 }
 
 // SkipWhile creates an Observable that skips all items emitted by the source

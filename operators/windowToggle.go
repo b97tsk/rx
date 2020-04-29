@@ -27,7 +27,7 @@ func (obs windowToggleObservable) Subscribe(ctx context.Context, sink rx.Observe
 	cleanupContexts := func(x *X, t rx.Notification) {
 		for _, c := range x.Contexts {
 			c.Cancel()
-			c.Window.Observer.Notify(t)
+			c.Window.Sink(t)
 		}
 	}
 
@@ -71,7 +71,7 @@ func (obs windowToggleObservable) Subscribe(ctx context.Context, sink rx.Observe
 				}
 
 				closingNotifier := obs.ClosingSelector(t.Value)
-				closingNotifier.Subscribe(ctx, observer.Notify)
+				closingNotifier.Subscribe(ctx, observer.Sink)
 
 			case t.HasError:
 				close(cx)
@@ -93,7 +93,7 @@ func (obs windowToggleObservable) Subscribe(ctx context.Context, sink rx.Observe
 			switch {
 			case t.HasValue:
 				for _, c := range x.Contexts {
-					c.Window.Observer.Notify(t)
+					c.Window.Sink(t)
 				}
 
 				cx <- x

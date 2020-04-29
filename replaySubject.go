@@ -83,8 +83,8 @@ func (s *replaySubject) notify(t Notification) {
 
 		s.mux.Unlock()
 
-		for _, sink := range observers {
-			sink.Notify(t)
+		for _, observer := range observers {
+			observer.Sink(t)
 		}
 
 		releaseRef()
@@ -99,8 +99,8 @@ func (s *replaySubject) notify(t Notification) {
 		}
 		s.mux.Unlock()
 
-		for _, sink := range observers {
-			sink.Notify(t)
+		for _, observer := range observers {
+			observer.Sink(t)
 		}
 	}
 }

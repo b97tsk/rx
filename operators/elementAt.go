@@ -40,7 +40,7 @@ func (obs elementAtObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 		}
 	}
 
-	obs.Source.Subscribe(ctx, observer.Notify)
+	obs.Source.Subscribe(ctx, observer.Sink)
 }
 
 // ElementAt creates an Observable that emits the single value at the specified

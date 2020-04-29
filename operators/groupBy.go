@@ -24,11 +24,11 @@ func (obs groupByObservable) Subscribe(ctx context.Context, sink rx.Observer) (c
 				groups[key] = group
 				sink.Next(rx.GroupedObservable{group.Observable, key})
 			}
-			group.Observer.Notify(t)
+			group.Sink(t)
 
 		default:
 			for _, group := range groups {
-				group.Observer.Notify(t)
+				group.Sink(t)
 			}
 			sink(t)
 		}

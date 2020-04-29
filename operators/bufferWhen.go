@@ -49,7 +49,7 @@ func (obs bufferWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 		}
 
 		closingNotifier := obs.ClosingSelector()
-		closingNotifier.Subscribe(ctx, observer.Notify)
+		closingNotifier.Subscribe(ctx, observer.Sink)
 	}
 
 	avoidRecursive.Do(openBuffer)

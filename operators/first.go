@@ -22,7 +22,7 @@ func first(source rx.Observable) rx.Observable {
 					sink.Error(rx.ErrEmpty)
 				}
 			}
-			source.Subscribe(ctx, observer.Notify)
+			source.Subscribe(ctx, observer.Sink)
 		},
 	)
 }

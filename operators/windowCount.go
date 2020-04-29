@@ -47,7 +47,7 @@ func (obs windowCountObservable) Subscribe(ctx context.Context, sink rx.Observer
 			}
 
 			for _, subject := range windows {
-				subject.Observer.Notify(t)
+				subject.Sink(t)
 			}
 
 			windowSize++
@@ -77,7 +77,7 @@ func (obs windowCountObservable) Subscribe(ctx context.Context, sink rx.Observer
 
 		default:
 			for _, subject := range windows {
-				subject.Observer.Notify(t)
+				subject.Sink(t)
 			}
 			sink(t)
 		}

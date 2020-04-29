@@ -49,7 +49,7 @@ func (obs auditObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 					}
 
 					obs := obs.DurationSelector(t.Value)
-					obs.Subscribe(scheduleCtx, observer.Notify)
+					obs.Subscribe(scheduleCtx, observer.Sink)
 				}
 
 			default:

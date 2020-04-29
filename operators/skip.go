@@ -30,7 +30,7 @@ func (obs skipObservable) Subscribe(ctx context.Context, sink rx.Observer) (cont
 		}
 	}
 
-	return obs.Source.Subscribe(ctx, observer.Notify)
+	return obs.Source.Subscribe(ctx, observer.Sink)
 }
 
 // Skip creates an Observable that skips the first count items emitted by the

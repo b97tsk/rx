@@ -36,7 +36,7 @@ func (obs skipUntilObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 			}
 		}
 
-		obs.Notifier.Subscribe(ctx, observer.Notify)
+		obs.Notifier.Subscribe(ctx, observer.Sink)
 	}
 
 	if ctx.Err() != nil {
@@ -58,7 +58,7 @@ func (obs skipUntilObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 			}
 		}
 
-		obs.Source.Subscribe(ctx, observer.Notify)
+		obs.Source.Subscribe(ctx, observer.Sink)
 	}
 }
 

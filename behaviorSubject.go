@@ -62,8 +62,8 @@ func (s *behaviorSubject) notify(t Notification) {
 		s.val.Store(behaviorSubjectValue{t.Value})
 		s.mux.Unlock()
 
-		for _, sink := range observers {
-			sink.Notify(t)
+		for _, observer := range observers {
+			observer.Sink(t)
 		}
 
 		releaseRef()
@@ -77,8 +77,8 @@ func (s *behaviorSubject) notify(t Notification) {
 		}
 		s.mux.Unlock()
 
-		for _, sink := range observers {
-			sink.Notify(t)
+		for _, observer := range observers {
+			observer.Sink(t)
 		}
 	}
 }

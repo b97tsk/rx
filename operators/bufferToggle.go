@@ -59,7 +59,7 @@ func (obs bufferToggleObservable) Subscribe(ctx context.Context, sink rx.Observe
 				}
 
 				closingNotifier := obs.ClosingSelector(t.Value)
-				closingNotifier.Subscribe(ctx, observer.Notify)
+				closingNotifier.Subscribe(ctx, observer.Sink)
 
 			case t.HasError:
 				close(cx)

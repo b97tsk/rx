@@ -96,7 +96,7 @@ func (obs windowTimeObservable) Subscribe(ctx context.Context, sink rx.Observer)
 				var windowFullContexts []*windowTimeContext
 				for _, c := range x.Contexts {
 					c.Size++
-					c.Window.Observer.Notify(t)
+					c.Window.Sink(t)
 					if c.Size == obs.MaxWindowSize {
 						windowFullContexts = append(windowFullContexts, c)
 					}
@@ -112,7 +112,7 @@ func (obs windowTimeObservable) Subscribe(ctx context.Context, sink rx.Observer)
 				close(cx)
 				for _, c := range x.Contexts {
 					c.Cancel()
-					c.Window.Observer.Notify(t)
+					c.Window.Sink(t)
 				}
 				sink(t)
 			}

@@ -29,7 +29,7 @@ func dematerialize(source rx.Observable) rx.Observable {
 					sink(t)
 				}
 			}
-			source.Subscribe(ctx, observer.Notify)
+			source.Subscribe(ctx, observer.Sink)
 		},
 	)
 }

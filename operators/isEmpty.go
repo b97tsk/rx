@@ -23,7 +23,7 @@ func isEmpty(source rx.Observable) rx.Observable {
 					sink.Complete()
 				}
 			}
-			source.Subscribe(ctx, observer.Notify)
+			source.Subscribe(ctx, observer.Sink)
 		},
 	)
 }

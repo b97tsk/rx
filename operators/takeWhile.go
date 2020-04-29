@@ -35,7 +35,7 @@ func (obs takeWhileObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 		}
 	}
 
-	obs.Source.Subscribe(ctx, observer.Notify)
+	obs.Source.Subscribe(ctx, observer.Sink)
 }
 
 // TakeWhile creates an Observable that emits values emitted by the source
