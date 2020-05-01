@@ -13,16 +13,20 @@ type groupByObservable struct {
 }
 
 func (obs groupByObservable) Subscribe(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
-	var groups = make(map[interface{}]rx.Subject)
+	var groups = make(map[interface{}]rx.Observer)
 	return obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		switch {
 		case t.HasValue:
 			key := obs.KeySelector(t.Value)
 			group, exists := groups[key]
 			if !exists {
-				group = obs.SubjectFactory()
+				subject := obs.SubjectFactory()
+				group = subject.Observer
 				groups[key] = group
-				sink.Next(rx.GroupedObservable{group.Observable, key})
+				sink.Next(rx.GroupedObservable{
+					Observable: subject.Observable,
+					Key:        key,
+				})
 			}
 			group.Sink(t)
 
