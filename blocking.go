@@ -107,22 +107,10 @@ func (obs Observable) BlockingSingle(ctx context.Context) (interface{}, error) {
 // the source completes or errors; if the source completes, it returns nil;
 // if the source errors, it returns the error.
 func (obs Observable) BlockingSubscribe(ctx context.Context, sink Observer) error {
-	var (
-		result    Notification
-		hasResult bool
-	)
-	ctx, _ = obs.Subscribe(ctx, func(t Notification) {
-		result = t
-		hasResult = true
-		sink(t)
-	})
+	ctx, _ = obs.Subscribe(ctx, sink)
 	<-ctx.Done()
-	switch {
-	case !hasResult || result.HasValue:
-		return ctx.Err()
-	case result.HasError:
-		return result.Error
-	default:
-		return nil
+	if err := ctx.Err(); err != Complete {
+		return err
 	}
+	return nil
 }
