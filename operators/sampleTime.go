@@ -21,7 +21,7 @@ func (obs sampleTimeObservable) Subscribe(ctx context.Context, sink rx.Observer)
 	cx := make(chan *X, 1)
 	cx <- &X{}
 
-	schedule.Schedule(ctx, obs.Duration, func() {
+	schedule.Periodic(ctx, obs.Duration, func() {
 		if x, ok := <-cx; ok {
 			if x.HasLatestValue {
 				sink.Next(x.LatestValue)

@@ -42,7 +42,7 @@ func (obs throttleTimeObservable) Subscribe(ctx context.Context, sink rx.Observe
 	)
 
 	doThrottle = func() {
-		throttleCtx, _ = schedule.ScheduleOnce(ctx, obs.Duration, func() {
+		throttleCtx, _ = schedule.Once(ctx, obs.Duration, func() {
 			if obs.Trailing {
 				if x, ok := <-cx; ok {
 					if x.HasTrailingValue {

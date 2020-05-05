@@ -16,10 +16,10 @@ func (obs intervalObservable) Subscribe(ctx context.Context, sink Observer) (con
 	ctx, cancel := context.WithCancel(ctx)
 
 	if obs.InitialDelay != obs.Period {
-		schedule.ScheduleOnce(ctx, obs.InitialDelay, func() {
+		schedule.Once(ctx, obs.InitialDelay, func() {
 			index := 0
 			wait := make(chan struct{})
-			schedule.Schedule(ctx, obs.Period, func() {
+			schedule.Periodic(ctx, obs.Period, func() {
 				<-wait
 				sink.Next(index)
 				index++
@@ -30,7 +30,7 @@ func (obs intervalObservable) Subscribe(ctx context.Context, sink Observer) (con
 		})
 	} else {
 		index := 0
-		schedule.Schedule(ctx, obs.Period, func() {
+		schedule.Periodic(ctx, obs.Period, func() {
 			sink.Next(index)
 			index++
 		})

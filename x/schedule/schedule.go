@@ -5,12 +5,11 @@ import (
 	"time"
 )
 
-// Schedule schedules to call a specific function periodly.
-func Schedule(ctx context.Context, period time.Duration, work func()) (context.Context, context.CancelFunc) {
+// Periodic schedules to call a specific function periodly.
+func Periodic(ctx context.Context, period time.Duration, work func()) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
-	done := ctx.Done()
-
 	go func() {
+		done := ctx.Done()
 		if period > 0 {
 			ticker := time.NewTicker(period)
 			defer ticker.Stop()
@@ -43,25 +42,21 @@ func Schedule(ctx context.Context, period time.Duration, work func()) (context.C
 			}
 		}
 	}()
-
 	return ctx, cancel
 }
 
-// ScheduleOnce schedules to call a specific function after a specific time span has passed.
-func ScheduleOnce(ctx context.Context, delay time.Duration, work func()) (context.Context, context.CancelFunc) {
+// Once schedules to call a specific function after a specific time span has passed.
+func Once(ctx context.Context, delay time.Duration, work func()) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
-	done := ctx.Done()
-
 	go func() {
 		timer := time.NewTimer(delay)
 		defer timer.Stop()
 		select {
-		case <-done:
+		case <-ctx.Done():
 		case <-timer.C:
 			work()
 			cancel()
 		}
 	}()
-
 	return ctx, cancel
 }

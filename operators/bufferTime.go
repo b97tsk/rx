@@ -46,7 +46,7 @@ func (obs bufferTimeObservable) Subscribe(ctx context.Context, sink rx.Observer)
 		ctx, cancel := context.WithCancel(ctx)
 		newContext := &bufferTimeContext{Cancel: cancel}
 		x.Contexts = append(x.Contexts, newContext)
-		schedule.ScheduleOnce(ctx, obs.TimeSpan, func() {
+		schedule.Once(ctx, obs.TimeSpan, func() {
 			closeContext(newContext)
 		})
 	}
@@ -81,7 +81,7 @@ func (obs bufferTimeObservable) Subscribe(ctx context.Context, sink rx.Observer)
 	openContext()
 
 	if obs.CreationInterval > 0 {
-		schedule.Schedule(ctx, obs.CreationInterval, openContext)
+		schedule.Periodic(ctx, obs.CreationInterval, openContext)
 	}
 
 	obs.Source.Subscribe(ctx, func(t rx.Notification) {

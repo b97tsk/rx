@@ -40,7 +40,7 @@ func (obs timeoutObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		if scheduleCancel != nil {
 			scheduleCancel()
 		}
-		_, scheduleCancel = schedule.ScheduleOnce(childCtx, obs.Duration, func() {
+		_, scheduleCancel = schedule.Once(childCtx, obs.Duration, func() {
 			if _, ok := <-cx; ok {
 				close(cx)
 				childCancel()

@@ -30,7 +30,7 @@ func (obs delayObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	var doSchedule func(time.Duration)
 
 	doSchedule = func(timeout time.Duration) {
-		schedule.ScheduleOnce(ctx, timeout, func() {
+		schedule.Once(ctx, timeout, func() {
 			x := <-cx
 			x.Scheduled = false
 			for x.Queue.Len() > 0 {
