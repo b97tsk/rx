@@ -22,25 +22,25 @@ func TestWindowWhen(t *testing.T) {
 		[]rx.Observable{
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
-				operators.WindowWhen(func() rx.Observable { return rx.Interval(Step(2)) }),
+				operators.WindowWhen(func() rx.Observable { return rx.Timer(Step(2)) }),
 				operators.MergeMap(toSlice),
 				ToString(),
 			),
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
-				operators.WindowWhen(func() rx.Observable { return rx.Interval(Step(4)) }),
+				operators.WindowWhen(func() rx.Observable { return rx.Timer(Step(4)) }),
 				operators.MergeMap(toSlice),
 				ToString(),
 			),
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
-				operators.WindowWhen(func() rx.Observable { return rx.Interval(Step(6)) }),
+				operators.WindowWhen(func() rx.Observable { return rx.Timer(Step(6)) }),
 				operators.MergeMap(toSlice),
 				ToString(),
 			),
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
-				operators.WindowWhen(func() rx.Observable { return rx.Interval(Step(8)) }),
+				operators.WindowWhen(func() rx.Observable { return rx.Timer(Step(8)) }),
 				operators.MergeMap(toSlice),
 				ToString(),
 			),

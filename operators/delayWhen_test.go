@@ -13,7 +13,7 @@ func TestDelayWhen(t *testing.T) {
 		t,
 		rx.Range(1, 5).Pipe(operators.DelayWhen(
 			func(val interface{}, idx int) rx.Observable {
-				return rx.Interval(Step(val.(int)))
+				return rx.Timer(Step(val.(int)))
 			},
 		)),
 		1, 2, 3, 4, rx.Complete,

@@ -24,7 +24,7 @@ func TestWindowToggle(t *testing.T) {
 				AddLatencyToValues(1, 2),
 				operators.WindowToggle(
 					rx.Interval(Step(2)),
-					func(interface{}) rx.Observable { return rx.Interval(Step(2)) },
+					func(interface{}) rx.Observable { return rx.Timer(Step(2)) },
 				),
 				operators.MergeMap(toSlice),
 				ToString(),
@@ -33,7 +33,7 @@ func TestWindowToggle(t *testing.T) {
 				AddLatencyToValues(1, 2),
 				operators.WindowToggle(
 					rx.Interval(Step(2)),
-					func(interface{}) rx.Observable { return rx.Interval(Step(4)) },
+					func(interface{}) rx.Observable { return rx.Timer(Step(4)) },
 				),
 				operators.MergeMap(toSlice),
 				ToString(),
@@ -42,7 +42,7 @@ func TestWindowToggle(t *testing.T) {
 				AddLatencyToValues(1, 2),
 				operators.WindowToggle(
 					rx.Interval(Step(4)),
-					func(interface{}) rx.Observable { return rx.Interval(Step(2)) },
+					func(interface{}) rx.Observable { return rx.Timer(Step(2)) },
 				),
 				operators.MergeMap(toSlice),
 				ToString(),
@@ -51,7 +51,7 @@ func TestWindowToggle(t *testing.T) {
 				AddLatencyToNotifications(1, 2),
 				operators.WindowToggle(
 					rx.Interval(Step(4)),
-					func(interface{}) rx.Observable { return rx.Interval(Step(2)) },
+					func(interface{}) rx.Observable { return rx.Timer(Step(2)) },
 				),
 				operators.MergeMap(toSlice),
 				ToString(),
@@ -64,7 +64,7 @@ func TestWindowToggle(t *testing.T) {
 						if idx.(int) > 1 {
 							return rx.Throw(ErrTest)
 						}
-						return rx.Interval(Step(2))
+						return rx.Timer(Step(2))
 					},
 				),
 				operators.MergeMap(toSlice),
@@ -74,7 +74,7 @@ func TestWindowToggle(t *testing.T) {
 				AddLatencyToValues(1, 2),
 				operators.WindowToggle(
 					rx.Interval(Step(4)).Pipe(operators.Take(2)),
-					func(interface{}) rx.Observable { return rx.Interval(Step(2)) },
+					func(interface{}) rx.Observable { return rx.Timer(Step(2)) },
 				),
 				operators.MergeMap(toSlice),
 				ToString(),
@@ -83,7 +83,7 @@ func TestWindowToggle(t *testing.T) {
 				AddLatencyToValues(1, 2),
 				operators.WindowToggle(
 					rx.Concat(rx.Interval(Step(4)).Pipe(operators.Take(2)), rx.Throw(ErrTest)),
-					func(interface{}) rx.Observable { return rx.Interval(Step(2)) },
+					func(interface{}) rx.Observable { return rx.Timer(Step(2)) },
 				),
 				operators.MergeMap(toSlice),
 				ToString(),

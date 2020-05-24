@@ -14,22 +14,22 @@ func TestBufferWhen(t *testing.T) {
 		[]rx.Observable{
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
-				operators.BufferWhen(func() rx.Observable { return rx.Interval(Step(2)) }),
+				operators.BufferWhen(func() rx.Observable { return rx.Timer(Step(2)) }),
 				ToString(),
 			),
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
-				operators.BufferWhen(func() rx.Observable { return rx.Interval(Step(4)) }),
+				operators.BufferWhen(func() rx.Observable { return rx.Timer(Step(4)) }),
 				ToString(),
 			),
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
-				operators.BufferWhen(func() rx.Observable { return rx.Interval(Step(6)) }),
+				operators.BufferWhen(func() rx.Observable { return rx.Timer(Step(6)) }),
 				ToString(),
 			),
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
-				operators.BufferWhen(func() rx.Observable { return rx.Interval(Step(8)) }),
+				operators.BufferWhen(func() rx.Observable { return rx.Timer(Step(8)) }),
 				ToString(),
 			),
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(

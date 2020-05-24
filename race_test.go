@@ -18,7 +18,7 @@ func TestRace(t *testing.T) {
 
 	for i := 0; i < N; i++ {
 		d := Step(i + 1)
-		observables[i] = rx.Just(d).Pipe(operators.Delay(d))
+		observables[i] = rx.Timer(d).Pipe(operators.MapTo(d))
 	}
 
 	rand.Seed(time.Now().UnixNano())
