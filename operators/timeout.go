@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/b97tsk/rx"
-	"github.com/b97tsk/rx/x/schedule"
 )
 
 // A TimeoutConfigure is a configure for Timeout.
@@ -40,7 +39,10 @@ func (obs timeoutObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		if scheduleCancel != nil {
 			scheduleCancel()
 		}
-		_, scheduleCancel = schedule.Once(childCtx, obs.Duration, func() {
+		_, scheduleCancel = rx.Timer(obs.Duration).Subscribe(childCtx, func(t rx.Notification) {
+			if t.HasValue {
+				return
+			}
 			if _, ok := <-cx; ok {
 				close(cx)
 				childCancel()

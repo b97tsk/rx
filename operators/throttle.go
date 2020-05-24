@@ -2,6 +2,7 @@ package operators
 
 import (
 	"context"
+	"time"
 
 	"github.com/b97tsk/rx"
 )
@@ -19,6 +20,25 @@ func (configure ThrottleConfigure) Use() rx.Operator {
 		obs := throttleObservable{source, configure}
 		return rx.Create(obs.Subscribe)
 	}
+}
+
+// A ThrottleTimeConfigure is a configure for ThrottleTime.
+type ThrottleTimeConfigure struct {
+	Duration time.Duration
+	Leading  bool
+	Trailing bool
+}
+
+// Use creates an Operator from this configure.
+func (configure ThrottleTimeConfigure) Use() rx.Operator {
+	durationSelector := func(interface{}) rx.Observable {
+		return rx.Timer(configure.Duration)
+	}
+	return ThrottleConfigure{
+		DurationSelector: durationSelector,
+		Leading:          configure.Leading,
+		Trailing:         configure.Trailing,
+	}.Use()
 }
 
 type throttleObservable struct {
@@ -104,5 +124,19 @@ func Throttle(durationSelector func(interface{}) rx.Observable) rx.Operator {
 		DurationSelector: durationSelector,
 		Leading:          true,
 		Trailing:         false,
+	}.Use()
+}
+
+// ThrottleTime creates an Observable that emits a value from the source
+// Observable, then ignores subsequent source values for a duration, then
+// repeats this process.
+//
+// ThrottleTime lets a value pass, then ignores source values for the next
+// duration time.
+func ThrottleTime(duration time.Duration) rx.Operator {
+	return ThrottleTimeConfigure{
+		Duration: duration,
+		Leading:  true,
+		Trailing: false,
 	}.Use()
 }

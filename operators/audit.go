@@ -2,6 +2,7 @@ package operators
 
 import (
 	"context"
+	"time"
 
 	"github.com/b97tsk/rx"
 )
@@ -71,4 +72,16 @@ func Audit(durationSelector func(interface{}) rx.Observable) rx.Operator {
 		obs := auditObservable{source, durationSelector}
 		return rx.Create(obs.Subscribe)
 	}
+}
+
+// AuditTime ignores source values for a duration, then emits the most recent
+// value from the source Observable, then repeats this process.
+//
+// When it sees a source values, it ignores that plus the next ones for a
+// duration, and then it emits the most recent value from the source.
+func AuditTime(duration time.Duration) rx.Operator {
+	durationSelector := func(interface{}) rx.Observable {
+		return rx.Timer(duration)
+	}
+	return Audit(durationSelector)
 }

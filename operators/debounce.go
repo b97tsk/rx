@@ -2,6 +2,7 @@ package operators
 
 import (
 	"context"
+	"time"
 
 	"github.com/b97tsk/rx"
 )
@@ -86,4 +87,14 @@ func Debounce(durationSelector func(interface{}) rx.Observable) rx.Operator {
 		obs := debounceObservable{source, durationSelector}
 		return rx.Create(obs.Subscribe)
 	}
+}
+
+// DebounceTime creates an Observable that emits a value from the source
+// Observable only after a particular time span has passed without another
+// source emission.
+func DebounceTime(duration time.Duration) rx.Operator {
+	durationSelector := func(interface{}) rx.Observable {
+		return rx.Timer(duration)
+	}
+	return Debounce(durationSelector)
 }

@@ -2,6 +2,7 @@ package operators
 
 import (
 	"context"
+	"time"
 
 	"github.com/b97tsk/rx"
 )
@@ -63,4 +64,10 @@ func Sample(notifier rx.Observable) rx.Operator {
 		obs := sampleObservable{source, notifier}
 		return rx.Create(obs.Subscribe)
 	}
+}
+
+// SampleTime creates an Observable that emits the most recently emitted value
+// from the source Observable within periodic time intervals.
+func SampleTime(period time.Duration) rx.Operator {
+	return Sample(rx.Interval(period))
 }

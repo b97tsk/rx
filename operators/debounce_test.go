@@ -15,14 +15,34 @@ func TestDebounce(t *testing.T) {
 			rx.Just("A", "B", "C").Pipe(
 				AddLatencyToValues(1, 2),
 				operators.Debounce(func(interface{}) rx.Observable {
-					return rx.Interval(Step(3))
+					return rx.Timer(Step(3))
 				}),
 			),
 			rx.Just("A", "B", "C").Pipe(
 				AddLatencyToValues(1, 3),
 				operators.Debounce(func(interface{}) rx.Observable {
-					return rx.Interval(Step(2))
+					return rx.Timer(Step(2))
 				}),
+			),
+		},
+		[][]interface{}{
+			{"C", rx.Complete},
+			{"A", "B", "C", rx.Complete},
+		},
+	)
+}
+
+func TestDebounceTime(t *testing.T) {
+	SubscribeN(
+		t,
+		[]rx.Observable{
+			rx.Just("A", "B", "C").Pipe(
+				AddLatencyToValues(1, 2),
+				operators.DebounceTime(Step(3)),
+			),
+			rx.Just("A", "B", "C").Pipe(
+				AddLatencyToValues(1, 3),
+				operators.DebounceTime(Step(2)),
 			),
 		},
 		[][]interface{}{

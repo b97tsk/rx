@@ -14,8 +14,19 @@ func TestAudit(t *testing.T) {
 		rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 			AddLatencyToValues(1, 2),
 			operators.Audit(func(interface{}) rx.Observable {
-				return rx.Interval(Step(3))
+				return rx.Timer(Step(3))
 			}),
+		),
+		"B", "D", "F", rx.Complete,
+	)
+}
+
+func TestAuditTime(t *testing.T) {
+	Subscribe(
+		t,
+		rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+			AddLatencyToValues(1, 2),
+			operators.AuditTime(Step(3)),
 		),
 		"B", "D", "F", rx.Complete,
 	)

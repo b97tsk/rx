@@ -6,7 +6,6 @@ import (
 
 	"github.com/b97tsk/rx"
 	"github.com/b97tsk/rx/x/queue"
-	"github.com/b97tsk/rx/x/schedule"
 )
 
 type delayObservable struct {
@@ -15,14 +14,15 @@ type delayObservable struct {
 }
 
 type delayValue struct {
-	Time time.Time
-	rx.Notification
+	Time  time.Time
+	Value interface{}
 }
 
 func (obs delayObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	type X struct {
-		Queue     queue.Queue
-		Scheduled bool
+		Queue           queue.Queue
+		Scheduled       bool
+		SourceCompleted bool
 	}
 	cx := make(chan *X, 1)
 	cx <- &X{}
@@ -30,57 +30,63 @@ func (obs delayObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	var doSchedule func(time.Duration)
 
 	doSchedule = func(timeout time.Duration) {
-		schedule.Once(ctx, timeout, func() {
-			x := <-cx
-			x.Scheduled = false
-			for x.Queue.Len() > 0 {
-				if ctx.Err() != nil {
-					break
-				}
-				t := x.Queue.Front().(delayValue)
-				now := time.Now()
-				if t.Time.After(now) {
-					x.Scheduled = true
-					doSchedule(t.Time.Sub(now))
-					break
-				}
-				x.Queue.PopFront()
-				sink(t.Notification)
+		rx.Timer(timeout).Subscribe(ctx, func(t rx.Notification) {
+			if t.HasValue {
+				return
 			}
-			cx <- x
+			if x, ok := <-cx; ok {
+				x.Scheduled = false
+				for x.Queue.Len() > 0 {
+					if ctx.Err() != nil {
+						break
+					}
+					t := x.Queue.Front().(delayValue)
+					now := time.Now()
+					if t.Time.After(now) {
+						x.Scheduled = true
+						doSchedule(t.Time.Sub(now))
+						break
+					}
+					x.Queue.PopFront()
+					sink.Next(t.Value)
+				}
+				if x.SourceCompleted && x.Queue.Len() == 0 {
+					sink.Complete()
+				}
+				cx <- x
+			}
 		})
 	}
 
 	obs.Source.Subscribe(ctx, func(t rx.Notification) {
-		x := <-cx
-		switch {
-		case t.HasValue:
-			x.Queue.PushBack(
-				delayValue{
-					Time:         time.Now().Add(obs.Duration),
-					Notification: t,
-				},
-			)
-			if !x.Scheduled {
-				x.Scheduled = true
-				doSchedule(obs.Duration)
-			}
-		case t.HasError:
-			// ERROR notification will not be delayed.
-			x.Queue.Init()
-			sink(t)
-		default:
-			x.Queue.PushBack(
-				delayValue{
-					Time: time.Now().Add(obs.Duration),
-				},
-			)
-			if !x.Scheduled {
-				x.Scheduled = true
-				doSchedule(obs.Duration)
+		if x, ok := <-cx; ok {
+			switch {
+			case t.HasValue:
+				x.Queue.PushBack(
+					delayValue{
+						Time:  time.Now().Add(obs.Duration),
+						Value: t.Value,
+					},
+				)
+				if !x.Scheduled {
+					x.Scheduled = true
+					doSchedule(obs.Duration)
+				}
+				cx <- x
+			case t.HasError:
+				x.Queue.Init()
+				close(cx)
+				sink(t)
+			default:
+				x.SourceCompleted = true
+				if x.Queue.Len() > 0 {
+					cx <- x
+					break
+				}
+				close(cx)
+				sink(t)
 			}
 		}
-		cx <- x
 	})
 }
 
