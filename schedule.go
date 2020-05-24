@@ -1,13 +1,11 @@
-package schedule
+package rx
 
 import (
 	"context"
 	"time"
 )
 
-// Periodic schedules to call a specific function periodly.
-func Periodic(ctx context.Context, period time.Duration, work func()) (context.Context, context.CancelFunc) {
-	ctx, cancel := context.WithCancel(ctx)
+func schedule(ctx context.Context, period time.Duration, work func()) {
 	go func() {
 		done := ctx.Done()
 		if period > 0 {
@@ -42,12 +40,9 @@ func Periodic(ctx context.Context, period time.Duration, work func()) (context.C
 			}
 		}
 	}()
-	return ctx, cancel
 }
 
-// Once schedules to call a specific function after a specific time span has passed.
-func Once(ctx context.Context, delay time.Duration, work func()) (context.Context, context.CancelFunc) {
-	ctx, cancel := context.WithCancel(ctx)
+func scheduleOnce(ctx context.Context, delay time.Duration, work func()) {
 	go func() {
 		timer := time.NewTimer(delay)
 		defer timer.Stop()
@@ -55,8 +50,6 @@ func Once(ctx context.Context, delay time.Duration, work func()) (context.Contex
 		case <-ctx.Done():
 		case <-timer.C:
 			work()
-			cancel()
 		}
 	}()
-	return ctx, cancel
 }
