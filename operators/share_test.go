@@ -10,7 +10,12 @@ import (
 
 func TestShare(t *testing.T) {
 	t.Run("#1", func(t *testing.T) {
-		obs := rx.Interval(Step(3)).Pipe(
+		obs := rx.Ticker(Step(3)).Pipe(
+			operators.Map(
+				func(val interface{}, idx int) interface{} {
+					return idx
+				},
+			),
 			operators.Take(4),
 			operators.Share(rx.NewSubject),
 		)
@@ -26,7 +31,12 @@ func TestShare(t *testing.T) {
 		)
 	})
 	t.Run("#2", func(t *testing.T) {
-		obs := rx.Interval(Step(3)).Pipe(
+		obs := rx.Ticker(Step(3)).Pipe(
+			operators.Map(
+				func(val interface{}, idx int) interface{} {
+					return idx
+				},
+			),
 			operators.Share(rx.NewSubject),
 			operators.Take(4),
 		)
@@ -45,7 +55,12 @@ func TestShare(t *testing.T) {
 
 func TestShareReplay(t *testing.T) {
 	t.Run("#1", func(t *testing.T) {
-		obs := rx.Interval(Step(3)).Pipe(
+		obs := rx.Ticker(Step(3)).Pipe(
+			operators.Map(
+				func(val interface{}, idx int) interface{} {
+					return idx
+				},
+			),
 			operators.Take(4),
 			operators.ShareReplay(1, 0),
 		)
@@ -61,7 +76,12 @@ func TestShareReplay(t *testing.T) {
 		)
 	})
 	t.Run("#2", func(t *testing.T) {
-		obs := rx.Interval(Step(3)).Pipe(
+		obs := rx.Ticker(Step(3)).Pipe(
+			operators.Map(
+				func(val interface{}, idx int) interface{} {
+					return idx
+				},
+			),
 			operators.ShareReplay(1, 0),
 			operators.Take(4),
 		)

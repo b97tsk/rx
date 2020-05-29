@@ -88,8 +88,10 @@ func (obs windowTimeObservable) Subscribe(ctx context.Context, sink rx.Observer)
 	openContext()
 
 	if obs.CreationInterval > 0 {
-		rx.Interval(obs.CreationInterval).Subscribe(ctx, func(rx.Notification) {
-			openContext()
+		rx.Ticker(obs.CreationInterval).Subscribe(ctx, func(t rx.Notification) {
+			if t.HasValue {
+				openContext()
+			}
 		})
 	}
 

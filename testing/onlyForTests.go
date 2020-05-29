@@ -20,7 +20,10 @@ func Step(n int) time.Duration {
 func AddLatencyToValues(initialDelay, period int) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		initialDelay, period := Step(initialDelay), Step(period)
-		return rx.Zip(source, rx.Timer(initialDelay, period)).Pipe(
+		return rx.Zip(
+			source,
+			rx.Concat(rx.Timer(initialDelay), rx.Ticker(period)),
+		).Pipe(
 			operators.Map(
 				func(val interface{}, idx int) interface{} {
 					return val.([]interface{})[0]
@@ -33,7 +36,10 @@ func AddLatencyToValues(initialDelay, period int) rx.Operator {
 func AddLatencyToNotifications(initialDelay, period int) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		initialDelay, period := Step(initialDelay), Step(period)
-		return rx.Zip(source.Pipe(operators.Materialize()), rx.Timer(initialDelay, period)).Pipe(
+		return rx.Zip(
+			source.Pipe(operators.Materialize()),
+			rx.Concat(rx.Timer(initialDelay), rx.Ticker(period)),
+		).Pipe(
 			operators.Map(
 				func(val interface{}, idx int) interface{} {
 					return val.([]interface{})[0]

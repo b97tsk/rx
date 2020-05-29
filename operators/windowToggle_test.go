@@ -23,7 +23,7 @@ func TestWindowToggle(t *testing.T) {
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
 				operators.WindowToggle(
-					rx.Interval(Step(2)),
+					rx.Ticker(Step(2)),
 					func(interface{}) rx.Observable { return rx.Timer(Step(2)) },
 				),
 				operators.MergeMap(toSlice),
@@ -32,7 +32,7 @@ func TestWindowToggle(t *testing.T) {
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
 				operators.WindowToggle(
-					rx.Interval(Step(2)),
+					rx.Ticker(Step(2)),
 					func(interface{}) rx.Observable { return rx.Timer(Step(4)) },
 				),
 				operators.MergeMap(toSlice),
@@ -41,7 +41,7 @@ func TestWindowToggle(t *testing.T) {
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
 				operators.WindowToggle(
-					rx.Interval(Step(4)),
+					rx.Ticker(Step(4)),
 					func(interface{}) rx.Observable { return rx.Timer(Step(2)) },
 				),
 				operators.MergeMap(toSlice),
@@ -50,7 +50,7 @@ func TestWindowToggle(t *testing.T) {
 			rx.Concat(rx.Just("A", "B", "C", "D", "E", "F", "G"), rx.Throw(ErrTest)).Pipe(
 				AddLatencyToNotifications(1, 2),
 				operators.WindowToggle(
-					rx.Interval(Step(4)),
+					rx.Ticker(Step(4)),
 					func(interface{}) rx.Observable { return rx.Timer(Step(2)) },
 				),
 				operators.MergeMap(toSlice),
@@ -59,9 +59,15 @@ func TestWindowToggle(t *testing.T) {
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
 				operators.WindowToggle(
-					rx.Interval(Step(4)),
-					func(idx interface{}) rx.Observable {
-						if idx.(int) > 1 {
+					rx.Ticker(Step(4)).Pipe(
+						operators.Map(
+							func(val interface{}, idx int) interface{} {
+								return idx
+							},
+						),
+					),
+					func(val interface{}) rx.Observable {
+						if val.(int) > 1 {
 							return rx.Throw(ErrTest)
 						}
 						return rx.Timer(Step(2))
@@ -73,7 +79,7 @@ func TestWindowToggle(t *testing.T) {
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
 				operators.WindowToggle(
-					rx.Interval(Step(4)).Pipe(operators.Take(2)),
+					rx.Ticker(Step(4)).Pipe(operators.Take(2)),
 					func(interface{}) rx.Observable { return rx.Timer(Step(2)) },
 				),
 				operators.MergeMap(toSlice),
@@ -82,7 +88,7 @@ func TestWindowToggle(t *testing.T) {
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
 				operators.WindowToggle(
-					rx.Concat(rx.Interval(Step(4)).Pipe(operators.Take(2)), rx.Throw(ErrTest)),
+					rx.Concat(rx.Ticker(Step(4)).Pipe(operators.Take(2)), rx.Throw(ErrTest)),
 					func(interface{}) rx.Observable { return rx.Timer(Step(2)) },
 				),
 				operators.MergeMap(toSlice),

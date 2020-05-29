@@ -10,7 +10,13 @@ import (
 )
 
 func TestObservable_Publish(t *testing.T) {
-	obs := rx.Interval(Step(1)).Publish()
+	obs := rx.Ticker(Step(1)).Pipe(
+		operators.Map(
+			func(val interface{}, idx int) interface{} {
+				return idx
+			},
+		),
+	).Publish()
 	ctx, _ := rx.Zip(
 		obs.Pipe(operators.Take(4)),
 		obs.Pipe(operators.Skip(4), operators.Take(4)),
@@ -45,7 +51,13 @@ func TestObservable_Publish(t *testing.T) {
 }
 
 func TestObservable_PublishBehavior(t *testing.T) {
-	obs := rx.Interval(Step(1)).PublishBehavior(-1)
+	obs := rx.Ticker(Step(1)).Pipe(
+		operators.Map(
+			func(val interface{}, idx int) interface{} {
+				return idx
+			},
+		),
+	).PublishBehavior(-1)
 	ctx, _ := rx.Zip(
 		obs.Pipe(operators.Take(4)),
 		obs.Pipe(operators.Skip(4), operators.Take(4)),
@@ -80,7 +92,13 @@ func TestObservable_PublishBehavior(t *testing.T) {
 }
 
 func TestObservable_PublishReplay(t *testing.T) {
-	obs := rx.Interval(Step(2)).PublishReplay(2, 0)
+	obs := rx.Ticker(Step(2)).Pipe(
+		operators.Map(
+			func(val interface{}, idx int) interface{} {
+				return idx
+			},
+		),
+	).PublishReplay(2, 0)
 	ctx, _ := rx.Zip(
 		obs.Pipe(operators.Take(4)),
 		obs.Pipe(operators.Skip(4), operators.Take(4), DelaySubscription(7)),

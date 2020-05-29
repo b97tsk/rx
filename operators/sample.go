@@ -69,5 +69,5 @@ func Sample(notifier rx.Observable) rx.Operator {
 // SampleTime creates an Observable that emits the most recently emitted value
 // from the source Observable within periodic time intervals.
 func SampleTime(period time.Duration) rx.Operator {
-	return Sample(rx.Interval(period))
+	return Sample(rx.Ticker(period))
 }

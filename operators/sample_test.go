@@ -14,13 +14,13 @@ func TestSample(t *testing.T) {
 		[]rx.Observable{
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
-				operators.Sample(rx.Interval(Step(4))),
+				operators.Sample(rx.Ticker(Step(4))),
 			),
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
 				operators.Sample(
 					rx.Concat(
-						rx.Interval(Step(4)).Pipe(operators.Take(3)),
+						rx.Ticker(Step(4)).Pipe(operators.Take(3)),
 						rx.Throw(ErrTest),
 					),
 				),
