@@ -15,15 +15,8 @@ func schedule(ctx context.Context, period time.Duration, work func()) {
 				select {
 				case <-done:
 					return
-				case t := <-ticker.C:
-					for ; !t.After(time.Now()); t = t.Add(period) {
-						select {
-						case <-done:
-							return
-						default:
-							work()
-						}
-					}
+				case <-ticker.C:
+					work()
 				}
 			}
 		} else {
