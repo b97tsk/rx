@@ -39,10 +39,10 @@ func TestBuffer(t *testing.T) {
 			),
 		},
 		[][]interface{}{
-			{"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", rx.Complete},
-			{"[A B]", "[C D]", "[E F]", rx.Complete},
-			{"[A B C]", "[D E F]", rx.Complete},
-			{"[A B C D]", rx.Complete},
+			{"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", rx.Completed},
+			{"[A B]", "[C D]", "[E F]", rx.Completed},
+			{"[A B C]", "[D E F]", rx.Completed},
+			{"[A B C D]", rx.Completed},
 			{ErrTest},
 		},
 	)

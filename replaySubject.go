@@ -95,7 +95,7 @@ func (s *replaySubject) notify(t Notification) {
 			s.err = t.Error
 			s.buffer.Init()
 		} else {
-			s.err = Complete
+			s.err = Completed
 		}
 		s.mux.Unlock()
 
@@ -109,7 +109,7 @@ func (s *replaySubject) subscribe(ctx context.Context, sink Observer) {
 	s.mux.Lock()
 
 	if err := s.err; err != nil {
-		if err != Complete {
+		if err != Completed {
 			sink.Error(err)
 		} else {
 			s.trimBuffer()

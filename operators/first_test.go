@@ -22,10 +22,10 @@ func TestFirst(t *testing.T) {
 		[][]interface{}{
 			{rx.ErrEmpty},
 			{ErrTest},
-			{"A", rx.Complete},
-			{"A", rx.Complete},
-			{"A", rx.Complete},
-			{"A", rx.Complete},
+			{"A", rx.Completed},
+			{"A", rx.Completed},
+			{"A", rx.Completed},
+			{"A", rx.Completed},
 		},
 	)
 }

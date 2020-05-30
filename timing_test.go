@@ -19,7 +19,7 @@ func TestTicker(t *testing.T) {
 			),
 			operators.Take(3),
 		),
-		0, 1, 2, rx.Complete,
+		0, 1, 2, rx.Completed,
 	)
 }
 
@@ -27,6 +27,6 @@ func TestTimer(t *testing.T) {
 	Subscribe(
 		t,
 		rx.Timer(Step(1)).Pipe(operators.MapTo(42)),
-		42, rx.Complete,
+		42, rx.Completed,
 	)
 }

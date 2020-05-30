@@ -17,10 +17,10 @@ func TestOnErrorResumeNext(t *testing.T) {
 			rx.OnErrorResumeNext(rx.Range(1, 4), rx.Range(4, 7), rx.Throw(ErrTest)),
 		},
 		[][]interface{}{
-			{1, 2, 3, 4, 5, 6, 7, 8, 9, rx.Complete},
-			{4, 5, 6, 7, 8, 9, rx.Complete},
-			{1, 2, 3, 7, 8, 9, rx.Complete},
-			{1, 2, 3, 4, 5, 6, rx.Complete},
+			{1, 2, 3, 4, 5, 6, 7, 8, 9, rx.Completed},
+			{4, 5, 6, 7, 8, 9, rx.Completed},
+			{1, 2, 3, 7, 8, 9, rx.Completed},
+			{1, 2, 3, 4, 5, 6, rx.Completed},
 		},
 	)
 }

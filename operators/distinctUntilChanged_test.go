@@ -12,6 +12,6 @@ func TestDistinctUntilChanged(t *testing.T) {
 	Subscribe(
 		t,
 		rx.Just("A", "B", "B", "A", "C", "C", "A").Pipe(operators.DistinctUntilChanged()),
-		"A", "B", "A", "C", "A", rx.Complete,
+		"A", "B", "A", "C", "A", rx.Completed,
 	)
 }

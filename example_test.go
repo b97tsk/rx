@@ -29,7 +29,7 @@ func Example() {
 				case t.HasError:
 					fmt.Println(t.Error)
 				default:
-					fmt.Println("Complete")
+					fmt.Println("Completed")
 				}
 			},
 		),
@@ -48,14 +48,14 @@ func Example() {
 	// already finished its work, there is nothing left to cancel.
 	cancel() // This is a noop in this example.
 
-	// To check if a subscription to an observable is really complete without
-	// an error, we can call the Err() method of the returned context to get
-	// an error and check if it equals to rx.Complete.
+	// To check if a subscription to an observable has really completed without
+	// an error, we can call the Err method of the returned context to get
+	// an error and check if it equals to rx.Completed.
 	switch ctx.Err() {
 	case nil:
 		fmt.Println("WIP")
-	case rx.Complete:
-		fmt.Println("Complete (checked)")
+	case rx.Completed:
+		fmt.Println("Completed (checked)")
 	case context.Canceled:
 		fmt.Println("Canceled")
 	default:
@@ -68,6 +68,6 @@ func Example() {
 	// 10
 	// 14
 	// 18
-	// Complete
-	// Complete (checked)
+	// Completed
+	// Completed (checked)
 }

@@ -21,11 +21,11 @@ func TestPairwise(t *testing.T) {
 			rx.Concat(rx.Just("A", "B", "C", "D"), rx.Throw(ErrTest)).Pipe(op),
 		},
 		[][]interface{}{
-			{rx.Complete},
-			{rx.Complete},
-			{"[A B]", rx.Complete},
-			{"[A B]", "[B C]", rx.Complete},
-			{"[A B]", "[B C]", "[C D]", rx.Complete},
+			{rx.Completed},
+			{rx.Completed},
+			{"[A B]", rx.Completed},
+			{"[A B]", "[B C]", rx.Completed},
+			{"[A B]", "[B C]", "[C D]", rx.Completed},
 			{"[A B]", "[B C]", "[C D]", ErrTest},
 		},
 	)

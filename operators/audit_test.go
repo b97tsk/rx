@@ -17,7 +17,7 @@ func TestAudit(t *testing.T) {
 				return rx.Timer(Step(3))
 			}),
 		),
-		"B", "D", "F", rx.Complete,
+		"B", "D", "F", rx.Completed,
 	)
 }
 
@@ -28,6 +28,6 @@ func TestAuditTime(t *testing.T) {
 			AddLatencyToValues(1, 2),
 			operators.AuditTime(Step(3)),
 		),
-		"B", "D", "F", rx.Complete,
+		"B", "D", "F", rx.Completed,
 	)
 }

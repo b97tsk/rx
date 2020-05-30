@@ -24,10 +24,10 @@ func TestFind(t *testing.T) {
 			rx.Concat(rx.Range(1, 5), rx.Throw(ErrTest)).Pipe(findFive),
 		},
 		[][]interface{}{
-			{5, rx.Complete},
-			{5, rx.Complete},
-			{rx.Complete},
-			{5, rx.Complete},
+			{5, rx.Completed},
+			{5, rx.Completed},
+			{rx.Completed},
+			{5, rx.Completed},
 			{ErrTest},
 		},
 	)

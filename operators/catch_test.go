@@ -21,8 +21,8 @@ func TestCatch(t *testing.T) {
 			rx.Concat(rx.Just("A", "B", "C"), rx.Throw(ErrTest)).Pipe(op),
 		},
 		[][]interface{}{
-			{"A", "B", "C", rx.Complete},
-			{"A", "B", "C", "D", "E", rx.Complete},
+			{"A", "B", "C", rx.Completed},
+			{"A", "B", "C", "D", "E", rx.Completed},
 		},
 	)
 }

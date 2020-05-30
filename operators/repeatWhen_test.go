@@ -23,8 +23,8 @@ func TestRepeatWhen(t *testing.T) {
 			rx.Concat(rx.Range(1, 4), rx.Throw(ErrTest)).Pipe(operators.RepeatWhen(repeatTwice)),
 		},
 		[][]interface{}{
-			{1, 2, 3, rx.Complete},
-			{1, 2, 3, 1, 2, 3, rx.Complete},
+			{1, 2, 3, rx.Completed},
+			{1, 2, 3, 1, 2, 3, rx.Completed},
 			{1, 2, 3, ErrTest},
 			{1, 2, 3, ErrTest},
 		},

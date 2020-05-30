@@ -29,9 +29,9 @@ func TestBufferTime(t *testing.T) {
 			),
 		},
 		[][]interface{}{
-			{"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", "[G]", rx.Complete},
-			{"[A B]", "[C D]", "[E F]", "[G]", rx.Complete},
-			{"[A B C]", "[D E F]", "[G]", rx.Complete},
+			{"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", "[G]", rx.Completed},
+			{"[A B]", "[C D]", "[E F]", "[G]", rx.Completed},
+			{"[A B C]", "[D E F]", "[G]", rx.Completed},
 		},
 	)
 	t.Log("----------")
@@ -60,10 +60,10 @@ func TestBufferTime(t *testing.T) {
 			),
 		},
 		[][]interface{}{
-			{"[A B C D]", "[E F G]", rx.Complete},
-			{"[A B C]", "[D E F]", "[G]", rx.Complete},
-			{"[A B]", "[C D]", "[E F]", "[G]", rx.Complete},
-			{"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", "[G]", "[]", rx.Complete},
+			{"[A B C D]", "[E F G]", rx.Completed},
+			{"[A B C]", "[D E F]", "[G]", rx.Completed},
+			{"[A B]", "[C D]", "[E F]", "[G]", rx.Completed},
+			{"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", "[G]", "[]", rx.Completed},
 		},
 	)
 	t.Log("----------")
@@ -87,9 +87,9 @@ func TestBufferTime(t *testing.T) {
 			),
 		},
 		[][]interface{}{
-			{"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", "[G]", rx.Complete},
-			{"[A]", "[C]", "[E]", "[G]", rx.Complete},
-			{"[A B]", "[B C]", "[C D]", "[D E]", "[E F]", "[F G]", "[G]", rx.Complete},
+			{"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", "[G]", rx.Completed},
+			{"[A]", "[C]", "[E]", "[G]", rx.Completed},
+			{"[A B]", "[B C]", "[C D]", "[D E]", "[E F]", "[F G]", "[G]", rx.Completed},
 		},
 	)
 }

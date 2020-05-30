@@ -109,7 +109,7 @@ func (obs Observable) BlockingSingle(ctx context.Context) (interface{}, error) {
 func (obs Observable) BlockingSubscribe(ctx context.Context, sink Observer) error {
 	ctx, _ = obs.Subscribe(ctx, sink)
 	<-ctx.Done()
-	if err := ctx.Err(); err != Complete {
+	if err := ctx.Err(); err != Completed {
 		return err
 	}
 	return nil

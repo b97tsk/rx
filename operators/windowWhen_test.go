@@ -52,10 +52,10 @@ func TestWindowWhen(t *testing.T) {
 			),
 		},
 		[][]interface{}{
-			{"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", "[G]", rx.Complete},
-			{"[A B]", "[C D]", "[E F]", "[G]", rx.Complete},
-			{"[A B C]", "[D E F]", "[G]", rx.Complete},
-			{"[A B C D]", "[E F G]", rx.Complete},
+			{"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", "[G]", rx.Completed},
+			{"[A B]", "[C D]", "[E F]", "[G]", rx.Completed},
+			{"[A B C]", "[D E F]", "[G]", rx.Completed},
+			{"[A B C D]", "[E F G]", rx.Completed},
 			{ErrTest},
 		},
 	)

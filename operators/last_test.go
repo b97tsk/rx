@@ -22,8 +22,8 @@ func TestLast(t *testing.T) {
 		[][]interface{}{
 			{rx.ErrEmpty},
 			{ErrTest},
-			{"A", rx.Complete},
-			{"B", rx.Complete},
+			{"A", rx.Completed},
+			{"B", rx.Completed},
 			{ErrTest},
 			{ErrTest},
 		},

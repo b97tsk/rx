@@ -38,6 +38,6 @@ func TestGroupBy(t *testing.T) {
 			),
 			ToString(),
 		),
-		"[A 3]", "[B 2]", "[C 2]", "[D 1]", rx.Complete,
+		"[A 3]", "[B 2]", "[C 2]", "[D 1]", rx.Completed,
 	)
 }

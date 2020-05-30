@@ -46,10 +46,10 @@ func TestThrottle(t *testing.T) {
 			),
 		},
 		[][]interface{}{
-			{"A", "C", "E", "G", rx.Complete},
+			{"A", "C", "E", "G", rx.Completed},
 			{"A", ErrTest},
-			{"C", "E", "G", rx.Complete},
-			{"A", "C", "E", "G", rx.Complete},
+			{"C", "E", "G", rx.Completed},
+			{"A", "C", "E", "G", rx.Completed},
 		},
 	)
 }
@@ -80,9 +80,9 @@ func TestThrottleTime(t *testing.T) {
 			),
 		},
 		[][]interface{}{
-			{"A", "C", "E", "G", rx.Complete},
-			{"C", "E", "G", rx.Complete},
-			{"A", "C", "E", "G", rx.Complete},
+			{"A", "C", "E", "G", rx.Completed},
+			{"C", "E", "G", rx.Completed},
+			{"A", "C", "E", "G", rx.Completed},
 		},
 	)
 }

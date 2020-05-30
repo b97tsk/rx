@@ -18,10 +18,10 @@ func TestSkipLast(t *testing.T) {
 			rx.Range(1, 1).Pipe(operators.SkipLast(3)),
 		},
 		[][]interface{}{
-			{1, 2, 3, 4, 5, 6, rx.Complete},
-			{1, 2, 3, rx.Complete},
-			{rx.Complete},
-			{rx.Complete},
+			{1, 2, 3, 4, 5, 6, rx.Completed},
+			{1, 2, 3, rx.Completed},
+			{rx.Completed},
+			{rx.Completed},
 		},
 	)
 

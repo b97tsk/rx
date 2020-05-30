@@ -20,10 +20,10 @@ func TestSkipUntil(t *testing.T) {
 			rx.Just("A", "B", "C").Pipe(addLatency, operators.SkipUntil(rx.Never())),
 		},
 		[][]interface{}{
-			{"A", "B", "C", rx.Complete},
-			{rx.Complete},
+			{"A", "B", "C", rx.Completed},
+			{rx.Completed},
 			{ErrTest},
-			{rx.Complete},
+			{rx.Completed},
 		},
 	)
 	SubscribeN(
@@ -34,8 +34,8 @@ func TestSkipUntil(t *testing.T) {
 			rx.Just("A", "B", "C").Pipe(addLatency, operators.SkipUntil(rx.Throw(ErrTest).Pipe(delay))),
 		},
 		[][]interface{}{
-			{"C", rx.Complete},
-			{rx.Complete},
+			{"C", rx.Completed},
+			{rx.Completed},
 			{ErrTest},
 		},
 	)

@@ -32,8 +32,8 @@ func TestExhaust(t *testing.T) {
 			).Pipe(AddLatencyToValues(0, 5), operators.Exhaust()),
 		},
 		[][]interface{}{
-			{"A", "B", "C", "D", "I", "J", "K", "L", rx.Complete},
-			{"A", "B", "C", "D", "I", "J", "K", "L", rx.Complete},
+			{"A", "B", "C", "D", "I", "J", "K", "L", rx.Completed},
+			{"A", "B", "C", "D", "I", "J", "K", "L", rx.Completed},
 			{"A", "B", "C", "D", "I", "J", "K", "L", ErrTest},
 		},
 	)

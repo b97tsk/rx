@@ -31,8 +31,8 @@ func TestToObservables(t *testing.T) {
 		observables[:],
 		[][]interface{}{
 			{rx.ErrNotObservable},
-			{"A", "B", "C", rx.Complete},
-			{rx.Complete},
+			{"A", "B", "C", rx.Completed},
+			{rx.Completed},
 			{ErrTest},
 		},
 	)

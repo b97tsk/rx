@@ -17,7 +17,7 @@ func TestFromChannel(t *testing.T) {
 			c <- "C"
 			close(c)
 		}()
-		Subscribe(t, rx.FromChannel(c), "A", "B", "C", rx.Complete)
+		Subscribe(t, rx.FromChannel(c), "A", "B", "C", rx.Completed)
 	})
 	t.Run("#2", func(t *testing.T) {
 		c := make(chan interface{})
@@ -34,8 +34,8 @@ func TestFromChannel(t *testing.T) {
 				rx.FromChannel(c).Pipe(operators.Take(2)),
 			},
 			[][]interface{}{
-				{"A", rx.Complete},
-				{"B", "C", rx.Complete},
+				{"A", rx.Completed},
+				{"B", "C", rx.Completed},
 			},
 		)
 	})

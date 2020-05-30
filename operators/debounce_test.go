@@ -26,8 +26,8 @@ func TestDebounce(t *testing.T) {
 			),
 		},
 		[][]interface{}{
-			{"C", rx.Complete},
-			{"A", "B", "C", rx.Complete},
+			{"C", rx.Completed},
+			{"A", "B", "C", rx.Completed},
 		},
 	)
 }
@@ -46,8 +46,8 @@ func TestDebounceTime(t *testing.T) {
 			),
 		},
 		[][]interface{}{
-			{"C", rx.Complete},
-			{"A", "B", "C", rx.Complete},
+			{"C", rx.Completed},
+			{"A", "B", "C", rx.Completed},
 		},
 	)
 }

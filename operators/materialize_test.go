@@ -18,10 +18,10 @@ func TestMaterialize(t *testing.T) {
 			rx.Concat(rx.Just("A", "B", "C"), rx.Throw(ErrTest)).Pipe(operators.Materialize(), operators.Count()),
 		},
 		[][]interface{}{
-			{1, rx.Complete},
-			{1, rx.Complete},
-			{4, rx.Complete},
-			{4, rx.Complete},
+			{1, rx.Completed},
+			{1, rx.Completed},
+			{4, rx.Completed},
+			{4, rx.Completed},
 		},
 	)
 }

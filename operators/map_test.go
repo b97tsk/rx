@@ -22,8 +22,8 @@ func TestMap(t *testing.T) {
 			rx.Concat(rx.Range(1, 5), rx.Throw(ErrTest)).Pipe(op),
 		},
 		[][]interface{}{
-			{rx.Complete},
-			{2, 4, 6, 8, rx.Complete},
+			{rx.Completed},
+			{2, 4, 6, 8, rx.Completed},
 			{2, 4, 6, 8, ErrTest},
 		},
 	)
@@ -38,8 +38,8 @@ func TestMapTo(t *testing.T) {
 			rx.Concat(rx.Just("A", "B", "C"), rx.Throw(ErrTest)).Pipe(operators.MapTo(42)),
 		},
 		[][]interface{}{
-			{rx.Complete},
-			{42, 42, 42, rx.Complete},
+			{rx.Completed},
+			{42, 42, 42, rx.Completed},
 			{42, 42, 42, ErrTest},
 		},
 	)

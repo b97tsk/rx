@@ -19,7 +19,7 @@ func TestDelay(t *testing.T) {
 			),
 		},
 		[][]interface{}{
-			{1, 2, 3, 4, rx.Complete},
+			{1, 2, 3, 4, rx.Completed},
 			{1, 2, 3, 4, ErrTest},
 		},
 	)

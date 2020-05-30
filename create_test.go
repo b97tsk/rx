@@ -30,7 +30,7 @@ func TestCreate(t *testing.T) {
 			),
 		},
 		[][]interface{}{
-			{"A", "B", "C", rx.Complete},
+			{"A", "B", "C", rx.Completed},
 			{"A", "B", "C", ErrTest},
 		},
 	)

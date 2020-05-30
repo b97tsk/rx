@@ -17,8 +17,8 @@ func TestDefaultIfEmpty(t *testing.T) {
 			rx.Concat(rx.Range(1, 4), rx.Throw(ErrTest)).Pipe(operators.DefaultIfEmpty(42)),
 		},
 		[][]interface{}{
-			{42, rx.Complete},
-			{1, 2, 3, rx.Complete},
+			{42, rx.Completed},
+			{1, 2, 3, rx.Completed},
 			{1, 2, 3, ErrTest},
 		},
 	)

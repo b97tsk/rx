@@ -18,9 +18,9 @@ func TestDematerialize(t *testing.T) {
 			rx.Concat(rx.Just("A", "B", "C"), rx.Throw(ErrTest)).Pipe(operators.Materialize(), operators.Dematerialize()),
 		},
 		[][]interface{}{
-			{rx.Complete},
+			{rx.Completed},
 			{ErrTest},
-			{"A", "B", "C", rx.Complete},
+			{"A", "B", "C", rx.Completed},
 			{"A", "B", "C", ErrTest},
 		},
 	)
@@ -33,7 +33,7 @@ func TestDematerialize(t *testing.T) {
 			rx.Concat(rx.Just("A", "B", "C"), rx.Throw(ErrTest)).Pipe(operators.Dematerialize()),
 		},
 		[][]interface{}{
-			{rx.Complete},
+			{rx.Completed},
 			{ErrTest},
 			{rx.ErrNotNotification},
 			{rx.ErrNotNotification},

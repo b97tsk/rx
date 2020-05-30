@@ -19,7 +19,7 @@ func TestSingle(t *testing.T) {
 		},
 		[][]interface{}{
 			{rx.ErrNotSingle},
-			{"A", rx.Complete},
+			{"A", rx.Completed},
 			{rx.ErrEmpty},
 			{ErrTest},
 		},

@@ -32,12 +32,12 @@ func TestScan(t *testing.T) {
 			rx.Throw(ErrTest).Pipe(operators.Scan(sum)),
 		},
 		[][]interface{}{
-			{1, 2, 3, 4, 5, 6, rx.Complete},
-			{42, rx.Complete},
-			{rx.Complete},
-			{1, 3, 6, 10, 15, 21, rx.Complete},
-			{42, rx.Complete},
-			{rx.Complete},
+			{1, 2, 3, 4, 5, 6, rx.Completed},
+			{42, rx.Completed},
+			{rx.Completed},
+			{1, 3, 6, 10, 15, 21, rx.Completed},
+			{42, rx.Completed},
+			{rx.Completed},
 			{ErrTest},
 		},
 	)

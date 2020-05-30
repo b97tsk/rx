@@ -52,7 +52,7 @@ func (s *subject) notify(t Notification) {
 		if t.HasError {
 			s.err = t.Error
 		} else {
-			s.err = Complete
+			s.err = Completed
 		}
 		s.mux.Unlock()
 
@@ -66,7 +66,7 @@ func (s *subject) subscribe(ctx context.Context, sink Observer) {
 	s.mux.Lock()
 
 	if err := s.err; err != nil {
-		if err != Complete {
+		if err != Completed {
 			sink.Error(err)
 		} else {
 			sink.Complete()

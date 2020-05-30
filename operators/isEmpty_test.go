@@ -18,9 +18,9 @@ func TestIsEmpty(t *testing.T) {
 			rx.Throw(ErrTest).Pipe(operators.IsEmpty()),
 		},
 		[][]interface{}{
-			{false, rx.Complete},
-			{false, rx.Complete},
-			{true, rx.Complete},
+			{false, rx.Completed},
+			{false, rx.Completed},
+			{true, rx.Completed},
 			{ErrTest},
 		},
 	)

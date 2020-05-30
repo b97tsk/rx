@@ -26,9 +26,9 @@ func TestToSlice(t *testing.T) {
 		t,
 		observables[:],
 		[][]interface{}{
-			{"[A B C]", rx.Complete},
-			{"[A]", rx.Complete},
-			{"[]", rx.Complete},
+			{"[A B C]", rx.Completed},
+			{"[A]", rx.Completed},
+			{"[]", rx.Completed},
 			{ErrTest},
 		},
 	)

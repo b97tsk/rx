@@ -24,10 +24,10 @@ func TestEvery(t *testing.T) {
 			rx.Concat(rx.Range(1, 5), rx.Throw(ErrTest)).Pipe(everyLessThan5),
 		},
 		[][]interface{}{
-			{false, rx.Complete},
-			{true, rx.Complete},
-			{true, rx.Complete},
-			{false, rx.Complete},
+			{false, rx.Completed},
+			{true, rx.Completed},
+			{true, rx.Completed},
+			{false, rx.Completed},
 			{ErrTest},
 		},
 	)

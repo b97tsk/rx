@@ -24,10 +24,10 @@ func TestSome(t *testing.T) {
 			rx.Concat(rx.Range(1, 5), rx.Throw(ErrTest)).Pipe(someGreaterThan4),
 		},
 		[][]interface{}{
-			{true, rx.Complete},
-			{false, rx.Complete},
-			{false, rx.Complete},
-			{true, rx.Complete},
+			{true, rx.Completed},
+			{false, rx.Completed},
+			{false, rx.Completed},
+			{true, rx.Completed},
 			{ErrTest},
 		},
 	)

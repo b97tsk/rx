@@ -81,12 +81,12 @@ func TestBufferToggle(t *testing.T) {
 			),
 		},
 		[][]interface{}{
-			{"[B]", "[C]", "[D]", "[E]", "[F]", "[G]", rx.Complete},
-			{"[B C]", "[C D]", "[D E]", "[E F]", "[F G]", "[G]", rx.Complete},
-			{"[C]", "[E]", "[G]", rx.Complete},
+			{"[B]", "[C]", "[D]", "[E]", "[F]", "[G]", rx.Completed},
+			{"[B C]", "[C D]", "[D E]", "[E F]", "[F G]", "[G]", rx.Completed},
+			{"[C]", "[E]", "[G]", rx.Completed},
 			{"[C]", "[E]", "[G]", ErrTest},
 			{"[C]", "[E]", ErrTest},
-			{"[C]", "[E]", rx.Complete},
+			{"[C]", "[E]", rx.Completed},
 			{"[C]", ErrTest},
 		},
 	)

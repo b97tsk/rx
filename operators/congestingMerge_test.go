@@ -24,8 +24,8 @@ func TestCongestingMergeAll(t *testing.T) {
 			).Pipe(operators.CongestingMergeConfigure{rx.ProjectToObservable, 1}.Use()),
 		},
 		[][]interface{}{
-			{"E", "C", "A", "F", "D", "B", rx.Complete},
-			{"A", "B", "C", "D", "E", "F", rx.Complete},
+			{"E", "C", "A", "F", "D", "B", rx.Completed},
+			{"A", "B", "C", "D", "E", "F", rx.Completed},
 		},
 	)
 }

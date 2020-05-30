@@ -22,8 +22,8 @@ func TestTakeWhile(t *testing.T) {
 			rx.Concat(rx.Range(1, 5), rx.Throw(ErrTest)).Pipe(takeLessThan5),
 		},
 		[][]interface{}{
-			{1, 2, 3, 4, rx.Complete},
-			{1, 2, 3, 4, rx.Complete},
+			{1, 2, 3, 4, rx.Completed},
+			{1, 2, 3, 4, rx.Completed},
 			{1, 2, 3, 4, ErrTest},
 		},
 	)

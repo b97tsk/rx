@@ -84,7 +84,7 @@ func SubscribeN(t *testing.T, observables []rx.Observable, outputs [][]interface
 					case x.HasError:
 						t.Logf("expect nothing, but got %v", x.Error)
 					default:
-						t.Log("expect nothing, but got complete")
+						t.Log("expect nothing, but got completed")
 					}
 					t.Fail()
 					return
@@ -109,11 +109,11 @@ func SubscribeN(t *testing.T, observables []rx.Observable, outputs [][]interface
 						t.Logf("expect %v", expected)
 					}
 				default:
-					if expected != rx.Complete {
-						t.Logf("expect %v, but got complete", expected)
+					if expected != rx.Completed {
+						t.Logf("expect %v, but got completed", expected)
 						t.Fail()
 					} else {
-						t.Log("expect complete")
+						t.Log("expect completed")
 					}
 				}
 			},

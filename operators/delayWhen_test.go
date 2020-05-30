@@ -16,6 +16,6 @@ func TestDelayWhen(t *testing.T) {
 				return rx.Timer(Step(val.(int)))
 			},
 		)),
-		1, 2, 3, 4, rx.Complete,
+		1, 2, 3, 4, rx.Completed,
 	)
 }

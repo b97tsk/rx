@@ -6,10 +6,10 @@ import (
 	"sync/atomic"
 )
 
-var errComplete = errors.New("complete")
+var errCompleted = errors.New("completed")
 
-// Complete is a special error that represents a complete subscription.
-var Complete = errComplete
+// Completed is a special error that denotes a successful subscription.
+var Completed = errCompleted
 
 // Create creates a new Observable, that will execute the specified function
 // when an Observer subscribes to it.
@@ -30,7 +30,7 @@ func Create(subscribe func(context.Context, Observer)) Observable {
 				k.err.Store(t.Error)
 				cancel()
 			default:
-				k.err.Store(Complete)
+				k.err.Store(Completed)
 				cancel()
 			}
 		})
