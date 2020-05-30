@@ -52,8 +52,10 @@ func Example() {
 	// an error, we can call the Err() method of the returned context to get
 	// an error and check if it equals to rx.Complete.
 	switch ctx.Err() {
+	case nil:
+		fmt.Println("WIP")
 	case rx.Complete:
-		fmt.Println("No Error")
+		fmt.Println("Complete (checked)")
 	case context.Canceled:
 		fmt.Println("Canceled")
 	default:
@@ -67,5 +69,5 @@ func Example() {
 	// 14
 	// 18
 	// Complete
-	// No Error
+	// Complete (checked)
 }
