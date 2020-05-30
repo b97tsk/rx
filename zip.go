@@ -17,15 +17,17 @@ type zipValue struct {
 
 func (obs zipObservable) Subscribe(ctx context.Context, sink Observer) {
 	done := ctx.Done()
-
 	q := make(chan zipValue)
 
 	go func() {
+		type Stream struct {
+			queue.Queue
+			Completed bool
+		}
 		length := len(obs.Observables)
-		values := make([]queue.Queue, length)
-		hasValues := make([]bool, length)
-		hasValuesCount := 0
-		hasCompleted := make([]bool, length)
+		streams := make([]Stream, length)
+		values := make([]interface{}, length)
+		readyCount := 0
 		for {
 			select {
 			case <-done:
@@ -34,38 +36,31 @@ func (obs zipObservable) Subscribe(ctx context.Context, sink Observer) {
 				index := t.Index
 				switch {
 				case t.HasValue:
-					values[index].PushBack(t.Value)
+					stream := &streams[index]
+					stream.PushBack(t.Value)
 
-					if hasValuesCount < length {
-						if hasValues[index] {
+					if readyCount < length {
+						if stream.Len() > 1 {
 							break
 						}
-
-						hasValues[index] = true
-						hasValuesCount++
-
-						if hasValuesCount < length {
+						readyCount++
+						if readyCount < length {
 							break
 						}
 					}
 
-					nextValues := make([]interface{}, length)
 					shouldComplete := false
-
-					for i := range values {
-						queue := &values[i]
-						nextValues[i] = queue.PopFront()
-						if queue.Len() == 0 {
-							hasValues[i] = false
-							hasValuesCount--
-							if hasCompleted[i] {
+					for i := range streams {
+						stream := &streams[i]
+						values[i] = stream.PopFront()
+						if stream.Len() == 0 {
+							readyCount--
+							if stream.Completed {
 								shouldComplete = true
 							}
 						}
 					}
-
-					sink.Next(nextValues)
-
+					sink.Next(values)
 					if shouldComplete {
 						sink.Complete()
 						return
@@ -76,8 +71,9 @@ func (obs zipObservable) Subscribe(ctx context.Context, sink Observer) {
 					return
 
 				default:
-					hasCompleted[index] = true
-					if !hasValues[index] {
+					stream := &streams[index]
+					stream.Completed = true
+					if stream.Len() == 0 {
 						sink(t.Notification)
 						return
 					}
@@ -99,6 +95,9 @@ func (obs zipObservable) Subscribe(ctx context.Context, sink Observer) {
 
 // Zip combines multiple Observables to create an Observable that emits the
 // values of each of its input Observables as a slice.
+//
+// For the purpose of allocation avoidance, slices emitted by the output
+// Observable actually share the same underlying array.
 func Zip(observables ...Observable) Observable {
 	if len(observables) == 0 {
 		return Empty()

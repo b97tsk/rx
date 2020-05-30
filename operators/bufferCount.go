@@ -43,24 +43,20 @@ func (obs bufferCountObservable) Subscribe(ctx context.Context, sink rx.Observer
 			if len(buffer) < obs.BufferSize {
 				break
 			}
-			newBuffer := make([]interface{}, 0, obs.BufferSize)
+			sink.Next(buffer)
 			if obs.StartBufferEvery < obs.BufferSize {
-				newBuffer = append(newBuffer, buffer[obs.StartBufferEvery:]...)
+				buffer = append(buffer[:0], buffer[obs.StartBufferEvery:]...)
 			} else {
+				buffer = buffer[:0]
 				skipCount = obs.StartBufferEvery - obs.BufferSize
 			}
-			sink.Next(buffer)
-			buffer = newBuffer
 		case t.HasError:
 			sink(t)
 		default:
 			if len(buffer) > 0 {
 				for obs.StartBufferEvery < len(buffer) {
-					remains := buffer[obs.StartBufferEvery:]
-					newBuffer := make([]interface{}, len(remains))
-					copy(newBuffer, remains)
 					sink.Next(buffer)
-					buffer = newBuffer
+					buffer = buffer[obs.StartBufferEvery:]
 				}
 				sink.Next(buffer)
 			}
@@ -74,6 +70,9 @@ func (obs bufferCountObservable) Subscribe(ctx context.Context, sink rx.Observer
 //
 // BufferCount collects values from the past as a slice, and emits that slice
 // only when its size reaches bufferSize.
+//
+// For the purpose of allocation avoidance, slices emitted by the output
+// Observable actually share the same underlying array.
 func BufferCount(bufferSize int) rx.Operator {
 	return BufferCountConfigure{BufferSize: bufferSize}.Use()
 }

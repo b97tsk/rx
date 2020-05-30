@@ -12,14 +12,13 @@ func (obs congestingZipObservable) Subscribe(ctx context.Context, sink Observer)
 	done := ctx.Done()
 
 	channels := make([]chan Notification, len(obs.Observables))
-
 	for i := range channels {
 		channels[i] = make(chan Notification)
 	}
 
 	go func() {
+		values := make([]interface{}, len(channels))
 		for {
-			nextValues := make([]interface{}, len(channels))
 			for i := range channels {
 				select {
 				case <-done:
@@ -27,14 +26,14 @@ func (obs congestingZipObservable) Subscribe(ctx context.Context, sink Observer)
 				case t := <-channels[i]:
 					switch {
 					case t.HasValue:
-						nextValues[i] = t.Value
+						values[i] = t.Value
 					default:
 						sink(t)
 						return
 					}
 				}
 			}
-			sink.Next(nextValues)
+			sink.Next(values)
 		}
 	}()
 
@@ -53,6 +52,9 @@ func (obs congestingZipObservable) Subscribe(ctx context.Context, sink Observer)
 // emits the values of each of its input Observables as a slice.
 //
 // It's like Zip, but it congests subscribed Observables.
+//
+// For the purpose of allocation avoidance, slices emitted by the output
+// Observable actually share the same underlying array.
 func CongestingZip(observables ...Observable) Observable {
 	if len(observables) == 0 {
 		return Empty()

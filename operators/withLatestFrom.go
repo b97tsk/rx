@@ -17,7 +17,6 @@ type withLatestFromValue struct {
 
 func (obs withLatestFromObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	done := ctx.Done()
-
 	q := make(chan withLatestFromValue)
 
 	go func() {
@@ -39,10 +38,8 @@ func (obs withLatestFromObservable) Subscribe(ctx context.Context, sink rx.Obser
 						if hasValues[index] {
 							break
 						}
-
 						hasValues[index] = true
 						hasValuesCount++
-
 						if hasValuesCount < length {
 							break
 						}
@@ -52,9 +49,7 @@ func (obs withLatestFromObservable) Subscribe(ctx context.Context, sink rx.Obser
 						break
 					}
 
-					newValues := make([]interface{}, len(values))
-					copy(newValues, values)
-					sink.Next(newValues)
+					sink.Next(values)
 
 				case t.HasError:
 					sink(t.Notification)
@@ -90,6 +85,9 @@ func (obs withLatestFromObservable) Subscribe(ctx context.Context, sink rx.Obser
 // To ensure output slice has always the same length, WithLatestFrom will
 // actually wait for all input Observables to emit at least once, before it
 // starts emitting results.
+//
+// For the purpose of allocation avoidance, slices emitted by the output
+// Observable actually share the same underlying array.
 func WithLatestFrom(observables ...rx.Observable) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		observables = append([]rx.Observable{source}, observables...)

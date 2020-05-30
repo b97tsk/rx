@@ -15,7 +15,6 @@ type combineLatestValue struct {
 
 func (obs combineLatestObservable) Subscribe(ctx context.Context, sink Observer) {
 	done := ctx.Done()
-
 	q := make(chan combineLatestValue)
 
 	go func() {
@@ -38,18 +37,14 @@ func (obs combineLatestObservable) Subscribe(ctx context.Context, sink Observer)
 						if hasValues[index] {
 							break
 						}
-
 						hasValues[index] = true
 						hasValuesCount++
-
 						if hasValuesCount < length {
 							break
 						}
 					}
 
-					newValues := make([]interface{}, len(values))
-					copy(newValues, values)
-					sink.Next(newValues)
+					sink.Next(values)
 
 				case t.HasError:
 					sink(t.Notification)
@@ -86,6 +81,9 @@ func (obs combineLatestObservable) Subscribe(ctx context.Context, sink Observer)
 // To ensure output slice has always the same length, CombineLatest will
 // actually wait for all input Observables to emit at least once, before it
 // starts emitting results.
+//
+// For the purpose of allocation avoidance, slices emitted by the output
+// Observable actually share the same underlying array.
 func CombineLatest(observables ...Observable) Observable {
 	if len(observables) == 0 {
 		return Empty()
