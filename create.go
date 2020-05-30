@@ -14,9 +14,10 @@ var Complete = errComplete
 // Create creates a new Observable, that will execute the specified function
 // when an Observer subscribes to it.
 //
-// It's the caller's responsibility to follow the rule of Observable that
+// It's the caller's responsibility to follow the Observable Contract that
 // no more emissions pass to the sink Observer after an ERROR or COMPLETE
-// emission passes to it.
+// emission has passed to it. Violations of this contract result in undefined
+// behaviors.
 func Create(subscribe func(context.Context, Observer)) Observable {
 	return func(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
 		ctx, cancel := context.WithCancel(ctx)
