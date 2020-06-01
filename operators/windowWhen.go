@@ -23,7 +23,7 @@ func (obs windowWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 
 	var (
 		openWindow     func()
-		avoidRecursive misc.AvoidRecursive
+		avoidRecursion misc.AvoidRecursion
 	)
 
 	openWindow = func() {
@@ -48,7 +48,7 @@ func (obs windowWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 				x.Window = rx.NewSubject()
 				sink.Next(x.Window.Observable)
 				cx <- x
-				avoidRecursive.Do(openWindow)
+				avoidRecursion.Do(openWindow)
 			}
 		}
 
@@ -56,7 +56,7 @@ func (obs windowWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 		closingNotifier.Subscribe(ctx, observer.Sink)
 	}
 
-	avoidRecursive.Do(openWindow)
+	avoidRecursion.Do(openWindow)
 
 	if ctx.Err() != nil {
 		return

@@ -19,7 +19,7 @@ func Concat(observables ...Observable) Observable {
 		func(ctx context.Context, sink Observer) {
 			var (
 				observer       Observer
-				avoidRecursive misc.AvoidRecursive
+				avoidRecursion misc.AvoidRecursion
 			)
 
 			remainder := observables
@@ -41,10 +41,10 @@ func Concat(observables ...Observable) Observable {
 					sink.Complete()
 					return
 				}
-				avoidRecursive.Do(subscribe)
+				avoidRecursion.Do(subscribe)
 			}
 
-			avoidRecursive.Do(subscribe)
+			avoidRecursion.Do(subscribe)
 		},
 	)
 }

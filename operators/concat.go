@@ -27,8 +27,8 @@ func (obs concatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	var doNextLocked func(*X)
 
 	doNextLocked = func(x *X) {
-		var avoidRecursive misc.AvoidRecursive
-		avoidRecursive.Do(func() {
+		var avoidRecursion misc.AvoidRecursion
+		avoidRecursion.Do(func() {
 			if x.Buffer.Len() == 0 {
 				x.ActiveCount--
 				if x.ActiveCount == 0 {
@@ -50,7 +50,7 @@ func (obs concatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 					if ctx.Err() != nil {
 						return
 					}
-					avoidRecursive.Do(func() {
+					avoidRecursion.Do(func() {
 						x := <-cx
 						doNextLocked(x)
 						cx <- x

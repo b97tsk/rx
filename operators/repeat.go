@@ -16,7 +16,7 @@ func (obs repeatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	var (
 		count          = obs.Count
 		observer       rx.Observer
-		avoidRecursive misc.AvoidRecursive
+		avoidRecursion misc.AvoidRecursion
 	)
 
 	subscribe := func() {
@@ -34,12 +34,12 @@ func (obs repeatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 				if count > 0 {
 					count--
 				}
-				avoidRecursive.Do(subscribe)
+				avoidRecursion.Do(subscribe)
 			}
 		}
 	}
 
-	avoidRecursive.Do(subscribe)
+	avoidRecursion.Do(subscribe)
 }
 
 // Repeat creates an Observable that repeats the stream of items emitted by the

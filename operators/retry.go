@@ -16,7 +16,7 @@ func (obs retryObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	var (
 		count          = obs.Count
 		observer       rx.Observer
-		avoidRecursive misc.AvoidRecursive
+		avoidRecursion misc.AvoidRecursion
 	)
 
 	subscribe := func() {
@@ -34,14 +34,14 @@ func (obs retryObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 				if count > 0 {
 					count--
 				}
-				avoidRecursive.Do(subscribe)
+				avoidRecursion.Do(subscribe)
 			}
 		default:
 			sink(t)
 		}
 	}
 
-	avoidRecursive.Do(subscribe)
+	avoidRecursion.Do(subscribe)
 }
 
 // Retry creates an Observable that mirrors the source Observable with the

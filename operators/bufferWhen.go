@@ -21,7 +21,7 @@ func (obs bufferWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 
 	var (
 		openBuffer     func()
-		avoidRecursive misc.AvoidRecursive
+		avoidRecursion misc.AvoidRecursion
 	)
 
 	openBuffer = func() {
@@ -44,7 +44,7 @@ func (obs bufferWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 				sink.Next(x.Buffers)
 				x.Buffers = nil
 				cx <- x
-				avoidRecursive.Do(openBuffer)
+				avoidRecursion.Do(openBuffer)
 			}
 		}
 
@@ -52,7 +52,7 @@ func (obs bufferWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 		closingNotifier.Subscribe(ctx, observer.Sink)
 	}
 
-	avoidRecursive.Do(openBuffer)
+	avoidRecursion.Do(openBuffer)
 
 	if ctx.Err() != nil {
 		return

@@ -21,7 +21,7 @@ func (obs retryWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 		lastError      error
 		subject        rx.Subject
 		createSubject  func() rx.Subject
-		avoidRecursive misc.AvoidRecursive
+		avoidRecursion misc.AvoidRecursion
 	)
 
 	type X struct{}
@@ -75,7 +75,7 @@ func (obs retryWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 				} else {
 					activeCount.Add(1)
 				}
-				avoidRecursive.Do(subscribe)
+				avoidRecursion.Do(subscribe)
 
 			case t.HasError:
 				sink(t)
@@ -89,7 +89,7 @@ func (obs retryWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 		return subject
 	}
 
-	avoidRecursive.Do(subscribe)
+	avoidRecursion.Do(subscribe)
 }
 
 // RetryWhen creates an Observable that mirrors the source Observable with

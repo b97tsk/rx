@@ -20,7 +20,7 @@ func (obs repeatWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 		activeCount    = atomic.Uint32(2)
 		subject        rx.Subject
 		createSubject  func() rx.Subject
-		avoidRecursive misc.AvoidRecursive
+		avoidRecursion misc.AvoidRecursion
 	)
 
 	type X struct{}
@@ -70,7 +70,7 @@ func (obs repeatWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 				} else {
 					activeCount.Add(1)
 				}
-				avoidRecursive.Do(subscribe)
+				avoidRecursion.Do(subscribe)
 
 			case t.HasError:
 				sink(t)
@@ -84,7 +84,7 @@ func (obs repeatWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 		return subject
 	}
 
-	avoidRecursive.Do(subscribe)
+	avoidRecursion.Do(subscribe)
 }
 
 // RepeatWhen creates an Observable that mirrors the source Observable with
