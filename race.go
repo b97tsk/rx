@@ -4,17 +4,15 @@ import (
 	"context"
 )
 
-type raceObservable struct {
-	Observables []Observable
-}
+type raceObservable []Observable
 
-func (obs raceObservable) Subscribe(ctx context.Context, sink Observer) {
+func (observables raceObservable) Subscribe(ctx context.Context, sink Observer) {
 	type Subscription struct {
 		Context context.Context
 		Cancel  context.CancelFunc
 	}
 
-	subscriptions := make([]Subscription, len(obs.Observables))
+	subscriptions := make([]Subscription, len(observables))
 	for i := range subscriptions {
 		ctx, cancel := context.WithCancel(ctx)
 		subscriptions[i] = Subscription{ctx, cancel}
@@ -23,7 +21,7 @@ func (obs raceObservable) Subscribe(ctx context.Context, sink Observer) {
 	race := make(chan struct{}, 1)
 	race <- struct{}{}
 
-	for i, obs := range obs.Observables {
+	for i, obs := range observables {
 		var (
 			index    = i
 			observer Observer
@@ -56,7 +54,6 @@ func Race(observables ...Observable) Observable {
 	case 1:
 		return observables[0]
 	default:
-		obs := raceObservable{observables}
-		return Create(obs.Subscribe)
+		return Create(raceObservable(observables).Subscribe)
 	}
 }

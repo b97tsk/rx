@@ -24,7 +24,7 @@ type behaviorSubject struct {
 	val       atomic.Value
 }
 
-type behaviorSubjectValue struct {
+type behaviorSubjectElement struct {
 	Value interface{}
 }
 
@@ -32,8 +32,8 @@ type behaviorSubjectValue struct {
 func NewBehaviorSubject(val interface{}) BehaviorSubject {
 	s := new(behaviorSubject)
 	s.Observable = Create(s.subscribe)
-	s.Observer = s.notify
-	s.val.Store(behaviorSubjectValue{val})
+	s.Observer = s.sink
+	s.val.Store(behaviorSubjectElement{val})
 	return BehaviorSubject{s}
 }
 
@@ -48,10 +48,10 @@ func (s BehaviorSubject) Value() interface{} {
 }
 
 func (s *behaviorSubject) getValue() interface{} {
-	return s.val.Load().(behaviorSubjectValue).Value
+	return s.val.Load().(behaviorSubjectElement).Value
 }
 
-func (s *behaviorSubject) notify(t Notification) {
+func (s *behaviorSubject) sink(t Notification) {
 	s.mux.Lock()
 	switch {
 	case s.err != nil:
@@ -59,7 +59,7 @@ func (s *behaviorSubject) notify(t Notification) {
 
 	case t.HasValue:
 		observers, releaseRef := s.observers.AddRef()
-		s.val.Store(behaviorSubjectValue{t.Value})
+		s.val.Store(behaviorSubjectElement{t.Value})
 		s.mux.Unlock()
 
 		for _, observer := range observers {

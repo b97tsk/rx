@@ -19,7 +19,7 @@ func NewSubject() Subject {
 	s := new(subject)
 	return Subject{
 		Observable: Create(s.subscribe),
-		Observer:   s.notify,
+		Observer:   s.sink,
 	}
 }
 
@@ -30,7 +30,7 @@ type subject struct {
 	err       error
 }
 
-func (s *subject) notify(t Notification) {
+func (s *subject) sink(t Notification) {
 	s.mux.Lock()
 	switch {
 	case s.err != nil:

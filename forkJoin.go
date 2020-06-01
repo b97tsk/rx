@@ -4,22 +4,20 @@ import (
 	"context"
 )
 
-type forkJoinObservable struct {
-	Observables []Observable
-}
+type forkJoinObservable []Observable
 
-type forkJoinValue struct {
+type forkJoinElement struct {
 	Index int
 	Notification
 }
 
-func (obs forkJoinObservable) Subscribe(ctx context.Context, sink Observer) {
+func (observables forkJoinObservable) Subscribe(ctx context.Context, sink Observer) {
 	done := ctx.Done()
 
-	q := make(chan forkJoinValue)
+	q := make(chan forkJoinElement)
 
 	go func() {
-		length := len(obs.Observables)
+		length := len(observables)
 		values := make([]interface{}, length)
 		hasValues := make([]bool, length)
 		completeCount := 0
@@ -58,12 +56,12 @@ func (obs forkJoinObservable) Subscribe(ctx context.Context, sink Observer) {
 		}
 	}()
 
-	for index, obs := range obs.Observables {
-		index := index
+	for i, obs := range observables {
+		index := i
 		go obs.Subscribe(ctx, func(t Notification) {
 			select {
 			case <-done:
-			case q <- forkJoinValue{index, t}:
+			case q <- forkJoinElement{index, t}:
 			}
 		})
 	}
@@ -78,6 +76,5 @@ func ForkJoin(observables ...Observable) Observable {
 	if len(observables) == 0 {
 		return Empty()
 	}
-	obs := forkJoinObservable{observables}
-	return Create(obs.Subscribe)
+	return Create(forkJoinObservable(observables).Subscribe)
 }

@@ -13,7 +13,7 @@ type delayObservable struct {
 	Duration time.Duration
 }
 
-type delayValue struct {
+type delayElement struct {
 	Time  time.Time
 	Value interface{}
 }
@@ -40,7 +40,7 @@ func (obs delayObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 					if ctx.Err() != nil {
 						break
 					}
-					t := x.Queue.Front().(delayValue)
+					t := x.Queue.Front().(delayElement)
 					now := time.Now()
 					if t.Time.After(now) {
 						x.Scheduled = true
@@ -63,7 +63,7 @@ func (obs delayObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 			switch {
 			case t.HasValue:
 				x.Queue.PushBack(
-					delayValue{
+					delayElement{
 						Time:  time.Now().Add(obs.Duration),
 						Value: t.Value,
 					},

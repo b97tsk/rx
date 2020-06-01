@@ -6,21 +6,19 @@ import (
 	"github.com/b97tsk/rx"
 )
 
-type withLatestFromObservable struct {
-	Observables []rx.Observable
-}
+type withLatestFromObservable []rx.Observable
 
-type withLatestFromValue struct {
+type withLatestFromElement struct {
 	Index int
 	rx.Notification
 }
 
-func (obs withLatestFromObservable) Subscribe(ctx context.Context, sink rx.Observer) {
+func (observables withLatestFromObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	done := ctx.Done()
-	q := make(chan withLatestFromValue)
+	q := make(chan withLatestFromElement)
 
 	go func() {
-		length := len(obs.Observables)
+		length := len(observables)
 		values := make([]interface{}, length)
 		hasValues := make([]bool, length)
 		hasValuesCount := 0
@@ -67,12 +65,12 @@ func (obs withLatestFromObservable) Subscribe(ctx context.Context, sink rx.Obser
 		}
 	}()
 
-	for index, obs := range obs.Observables {
-		index := index
+	for i, obs := range observables {
+		index := i
 		go obs.Subscribe(ctx, func(t rx.Notification) {
 			select {
 			case <-done:
-			case q <- withLatestFromValue{index, t}:
+			case q <- withLatestFromElement{index, t}:
 			}
 		})
 	}
@@ -91,7 +89,6 @@ func (obs withLatestFromObservable) Subscribe(ctx context.Context, sink rx.Obser
 func WithLatestFrom(observables ...rx.Observable) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		observables = append([]rx.Observable{source}, observables...)
-		obs := withLatestFromObservable{observables}
-		return rx.Create(obs.Subscribe)
+		return rx.Create(withLatestFromObservable(observables).Subscribe)
 	}
 }

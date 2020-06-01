@@ -27,7 +27,7 @@ type replaySubject struct {
 	WindowTime time.Duration
 }
 
-type replaySubjectValue struct {
+type replaySubjectElement struct {
 	Deadline time.Time
 	Value    interface{}
 }
@@ -39,7 +39,7 @@ func NewReplaySubject(bufferSize int, windowTime time.Duration) ReplaySubject {
 		WindowTime: windowTime,
 	}
 	s.Observable = Create(s.subscribe)
-	s.Observer = s.notify
+	s.Observer = s.sink
 	return ReplaySubject{s}
 }
 
@@ -52,7 +52,7 @@ func (s *replaySubject) trimBuffer() {
 	if s.WindowTime > 0 {
 		now := time.Now()
 		for s.buffer.Len() > 0 {
-			if s.buffer.Front().(replaySubjectValue).Deadline.After(now) {
+			if s.buffer.Front().(replaySubjectElement).Deadline.After(now) {
 				break
 			}
 			s.buffer.PopFront()
@@ -65,7 +65,7 @@ func (s *replaySubject) trimBuffer() {
 	}
 }
 
-func (s *replaySubject) notify(t Notification) {
+func (s *replaySubject) sink(t Notification) {
 	s.mux.Lock()
 	switch {
 	case s.err != nil:
@@ -78,7 +78,7 @@ func (s *replaySubject) notify(t Notification) {
 		if s.WindowTime > 0 {
 			deadline = time.Now().Add(s.WindowTime)
 		}
-		s.buffer.PushBack(replaySubjectValue{deadline, t.Value})
+		s.buffer.PushBack(replaySubjectElement{deadline, t.Value})
 		s.trimBuffer()
 
 		s.mux.Unlock()
@@ -118,7 +118,7 @@ func (s *replaySubject) subscribe(ctx context.Context, sink Observer) {
 					s.mux.Unlock()
 					return
 				}
-				sink.Next(s.buffer.At(i).(replaySubjectValue).Value)
+				sink.Next(s.buffer.At(i).(replaySubjectElement).Value)
 			}
 			sink.Complete()
 		}
@@ -142,7 +142,7 @@ func (s *replaySubject) subscribe(ctx context.Context, sink Observer) {
 			if ctx.Err() != nil {
 				break
 			}
-			sink.Next(s.buffer.At(i).(replaySubjectValue).Value)
+			sink.Next(s.buffer.At(i).(replaySubjectElement).Value)
 		}
 	}
 

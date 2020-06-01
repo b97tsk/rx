@@ -6,25 +6,23 @@ import (
 	"github.com/b97tsk/rx/x/queue"
 )
 
-type zipObservable struct {
-	Observables []Observable
-}
+type zipObservable []Observable
 
-type zipValue struct {
+type zipElement struct {
 	Index int
 	Notification
 }
 
-func (obs zipObservable) Subscribe(ctx context.Context, sink Observer) {
+func (observables zipObservable) Subscribe(ctx context.Context, sink Observer) {
 	done := ctx.Done()
-	q := make(chan zipValue)
+	q := make(chan zipElement)
 
 	go func() {
 		type Stream struct {
 			queue.Queue
 			Completed bool
 		}
-		length := len(obs.Observables)
+		length := len(observables)
 		streams := make([]Stream, length)
 		values := make([]interface{}, length)
 		readyCount := 0
@@ -82,12 +80,12 @@ func (obs zipObservable) Subscribe(ctx context.Context, sink Observer) {
 		}
 	}()
 
-	for index, obs := range obs.Observables {
-		index := index
+	for i, obs := range observables {
+		index := i
 		go obs.Subscribe(ctx, func(t Notification) {
 			select {
 			case <-done:
-			case q <- zipValue{index, t}:
+			case q <- zipElement{index, t}:
 			}
 		})
 	}
@@ -102,6 +100,5 @@ func Zip(observables ...Observable) Observable {
 	if len(observables) == 0 {
 		return Empty()
 	}
-	obs := zipObservable{observables}
-	return Create(obs.Subscribe)
+	return Create(zipObservable(observables).Subscribe)
 }

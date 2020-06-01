@@ -6,6 +6,20 @@ import (
 	"github.com/b97tsk/rx/x/atomic"
 )
 
+type mergeObservable []Observable
+
+func (observables mergeObservable) Subscribe(ctx context.Context, sink Observer) {
+	sink = Mutex(sink)
+	activeCount := atomic.Uint32(len(observables))
+	for _, obs := range observables {
+		go obs.Subscribe(ctx, func(t Notification) {
+			if t.HasValue || t.HasError || activeCount.Sub(1) == 0 {
+				sink(t)
+			}
+		})
+	}
+}
+
 // Merge creates an output Observable which concurrently emits all values from
 // every given input Observable.
 //
@@ -15,17 +29,5 @@ func Merge(observables ...Observable) Observable {
 	if len(observables) == 0 {
 		return Empty()
 	}
-	return Create(
-		func(ctx context.Context, sink Observer) {
-			sink = Mutex(sink)
-			activeCount := atomic.Uint32(len(observables))
-			for _, obs := range observables {
-				go obs.Subscribe(ctx, func(t Notification) {
-					if t.HasValue || t.HasError || activeCount.Sub(1) == 0 {
-						sink(t)
-					}
-				})
-			}
-		},
-	)
+	return Create(mergeObservable(observables).Subscribe)
 }

@@ -4,14 +4,12 @@ import (
 	"context"
 )
 
-type congestingZipObservable struct {
-	Observables []Observable
-}
+type congestingZipObservable []Observable
 
-func (obs congestingZipObservable) Subscribe(ctx context.Context, sink Observer) {
+func (observables congestingZipObservable) Subscribe(ctx context.Context, sink Observer) {
 	done := ctx.Done()
 
-	channels := make([]chan Notification, len(obs.Observables))
+	channels := make([]chan Notification, len(observables))
 	for i := range channels {
 		channels[i] = make(chan Notification)
 	}
@@ -37,8 +35,8 @@ func (obs congestingZipObservable) Subscribe(ctx context.Context, sink Observer)
 		}
 	}()
 
-	for index, obs := range obs.Observables {
-		c := channels[index]
+	for i, obs := range observables {
+		c := channels[i]
 		go obs.Subscribe(ctx, func(t Notification) {
 			select {
 			case <-done:
@@ -59,6 +57,5 @@ func CongestingZip(observables ...Observable) Observable {
 	if len(observables) == 0 {
 		return Empty()
 	}
-	obs := congestingZipObservable{observables}
-	return Create(obs.Subscribe)
+	return Create(congestingZipObservable(observables).Subscribe)
 }
