@@ -36,16 +36,15 @@ func (obs *shareObservable) Subscribe(ctx context.Context, sink rx.Observer) (co
 	connection := obs.connection
 
 	if connection == nil {
-		var disconnect context.CancelFunc
+		ctx, cancel := context.WithCancel(context.Background())
 
-		connection, disconnect = context.WithCancel(context.Background())
-
-		obs.connection = connection
-		obs.disconnect = disconnect
+		connection = ctx
+		obs.connection = ctx
+		obs.disconnect = cancel
 
 		sink := obs.subject.Observer
 
-		go obs.source.Subscribe(connection, func(t rx.Notification) {
+		go obs.source.Subscribe(ctx, func(t rx.Notification) {
 			if t.HasValue {
 				sink(t)
 				return
@@ -53,6 +52,7 @@ func (obs *shareObservable) Subscribe(ctx context.Context, sink rx.Observer) (co
 
 			obs.mux.Lock()
 			if connection == obs.connection {
+				obs.disconnect()
 				obs.subject = rx.Subject{}
 				obs.connection = nil
 				obs.disconnect = nil
@@ -61,7 +61,6 @@ func (obs *shareObservable) Subscribe(ctx context.Context, sink rx.Observer) (co
 			obs.mux.Unlock()
 
 			sink(t)
-			disconnect()
 		})
 	}
 
