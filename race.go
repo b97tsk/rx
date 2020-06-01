@@ -9,46 +9,41 @@ type raceObservable struct {
 }
 
 func (obs raceObservable) Subscribe(ctx context.Context, sink Observer) {
-	type X struct {
-		Subscriptions []context.CancelFunc
-	}
-	cx := make(chan *X, 1)
-	cx <- &X{
-		Subscriptions: make([]context.CancelFunc, 0, len(obs.Observables)),
+	type Subscription struct {
+		Context context.Context
+		Cancel  context.CancelFunc
 	}
 
-	for index, obs := range obs.Observables {
-		index := index
-
-		x, ok := <-cx
-		if !ok {
-			break
-		}
-
+	subscriptions := make([]Subscription, len(obs.Observables))
+	for i := range subscriptions {
 		ctx, cancel := context.WithCancel(ctx)
-		x.Subscriptions = append(x.Subscriptions, cancel)
+		subscriptions[i] = Subscription{ctx, cancel}
+	}
 
-		cx <- x
+	race := make(chan struct{}, 1)
+	race <- struct{}{}
 
-		var observer Observer
-
+	for i, obs := range obs.Observables {
+		var (
+			index    = i
+			observer Observer
+		)
 		observer = func(t Notification) {
-			if x, ok := <-cx; ok {
-				for i, cancel := range x.Subscriptions {
+			if _, ok := <-race; ok {
+				for i := range subscriptions {
 					if i != index {
-						cancel()
+						subscriptions[i].Cancel()
 					}
 				}
-				close(cx)
+				close(race)
 				observer = sink
 				sink(t)
 				return
 			}
 			observer = Noop
-			cancel()
+			subscriptions[index].Cancel()
 		}
-
-		obs.Subscribe(ctx, observer.Sink)
+		go obs.Subscribe(subscriptions[i].Context, observer.Sink)
 	}
 }
 
