@@ -13,8 +13,8 @@ type skipUntilObservable struct {
 }
 
 func (obs skipUntilObservable) Subscribe(ctx context.Context, sink rx.Observer) {
-	sinkNoMutex := sink
-	sink = rx.Mutex(sinkNoMutex)
+	originalSink := sink
+	sink = rx.Mutex(originalSink)
 
 	var noSkipping atomic.Uint32
 
@@ -43,6 +43,11 @@ func (obs skipUntilObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 		return
 	}
 
+	if noSkipping.Equals(1) {
+		obs.Source.Subscribe(ctx, originalSink)
+		return
+	}
+
 	{
 		var observer rx.Observer
 
@@ -50,8 +55,8 @@ func (obs skipUntilObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 			switch {
 			case t.HasValue:
 				if noSkipping.Equals(1) {
-					observer = sinkNoMutex
-					sinkNoMutex(t)
+					observer = originalSink
+					observer.Sink(t)
 				}
 			default:
 				sink(t)
