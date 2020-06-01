@@ -80,9 +80,6 @@ func (obs bufferWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 // BufferWhen collects values from the past as a slice. When it starts
 // collecting values, it calls a function that returns an Observable that
 // tells when to close the buffer and restart collecting.
-//
-// Dead loop could happen if closing Observables emit a value or complete as
-// soon as they are subscribed to.
 func BufferWhen(closingSelector func() rx.Observable) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		obs := bufferWhenObservable{source, closingSelector}
