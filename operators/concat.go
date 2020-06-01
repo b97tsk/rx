@@ -47,6 +47,9 @@ func (obs concatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 				case t.HasValue || t.HasError:
 					sink(t)
 				default:
+					if ctx.Err() != nil {
+						return
+					}
 					avoidRecursive.Do(func() {
 						x := <-cx
 						doNextLocked(x)

@@ -25,7 +25,6 @@ func (obs congestingConcatObservable) Subscribe(ctx context.Context, sink rx.Obs
 			sourceValue := t.Value
 
 			obs := obs.Project(sourceValue, sourceIndex)
-
 			childCtx, _ := obs.Subscribe(ctx, func(t rx.Notification) {
 				switch {
 				case t.HasValue:
@@ -37,8 +36,11 @@ func (obs congestingConcatObservable) Subscribe(ctx context.Context, sink rx.Obs
 					// do nothing
 				}
 			})
-
 			<-childCtx.Done()
+
+			if ctx.Err() != nil {
+				observer = rx.Noop
+			}
 
 		default:
 			sink(t)

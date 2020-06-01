@@ -24,6 +24,9 @@ func Concat(observables ...Observable) Observable {
 
 			remainder := observables
 			subscribe := func() {
+				if ctx.Err() != nil {
+					return
+				}
 				source := remainder[0]
 				remainder = remainder[1:]
 				source.Subscribe(ctx, observer)
