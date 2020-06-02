@@ -22,8 +22,13 @@ func (sink Observer) Complete() {
 //
 // Note that the receiver of this method is a pointer to an Observer, this is
 // useful in some cases when you need to change the receiver from one to another
-// Observer, given that `sink.Sink` yields an Observer that is equivalent to
-// `func(t Notification) { (*sink)(t) }`.
+// Observer, given that sink.Sink yields an Observer that is equivalent to:
+//
+// 	func(t Notification) { (*sink)(t) }
+//
+// Another use case: when you name your Observer observer, it looks bad if you
+// call it like this: observer(t). Better use observer.Sink(t) instead.
+//
 func (sink *Observer) Sink(t Notification) {
 	(*sink)(t)
 }

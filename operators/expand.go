@@ -47,7 +47,7 @@ func (obs expandObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 
 		sink.Next(sourceValue)
 
-		// calls obs.Project synchronously
+		// Call obs.Project synchronously.
 		obs1 := obs.Project(sourceValue, sourceIndex)
 
 		go obs1.Subscribe(ctx, func(t rx.Notification) {

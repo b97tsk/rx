@@ -45,7 +45,7 @@ func (obs mergeScanObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 	doNextLocked = func(x *X) {
 		sourceValue := x.Buffer.PopFront()
 
-		// calls obs.Accumulator synchronously
+		// Call obs.Accumulator synchronously.
 		obs := obs.Accumulator(x.Seed, sourceValue)
 
 		go obs.Subscribe(ctx, func(t rx.Notification) {

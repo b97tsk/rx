@@ -59,7 +59,7 @@ func (obs congestingMergeObservable) Subscribe(ctx context.Context, sink rx.Obse
 			sourceValue := t.Value
 			x.Index++
 
-			// calls obs.Project synchronously
+			// Call obs.Project synchronously.
 			obs := obs.Project(sourceValue, sourceIndex)
 
 			cx <- x

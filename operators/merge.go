@@ -45,7 +45,7 @@ func (obs mergeObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		sourceValue := x.Buffer.PopFront()
 		x.Index++
 
-		// calls obs.Project synchronously
+		// Call obs.Project synchronously.
 		obs := obs.Project(sourceValue, sourceIndex)
 
 		go obs.Subscribe(ctx, func(t rx.Notification) {
