@@ -51,15 +51,15 @@ func Example() {
 	// To check if a subscription to an observable has really completed without
 	// an error, we can call the Err method of the returned context to get
 	// an error and check if it equals to rx.Completed.
-	switch ctx.Err() {
+	switch err := ctx.Err(); err {
 	case nil:
-		fmt.Println("WIP")
+		fmt.Println("Status: WIP")
 	case rx.Completed:
-		fmt.Println("Completed (checked)")
+		fmt.Println("Status: Completed")
 	case context.Canceled:
-		fmt.Println("Canceled")
+		fmt.Println("Status: Canceled")
 	default:
-		fmt.Println(ctx.Err())
+		fmt.Printf("Status: Error(%v)\n", err)
 	}
 
 	// Output:
@@ -69,5 +69,5 @@ func Example() {
 	// 14
 	// 18
 	// Completed
-	// Completed (checked)
+	// Status: Completed
 }
