@@ -33,13 +33,11 @@ func (obs exhaustMapObservable) Subscribe(ctx context.Context, sink rx.Observer)
 
 			obs := obs.Project(sourceValue, sourceIndex)
 			obs.Subscribe(ctx, func(t rx.Notification) {
-				switch {
-				case t.HasValue || t.HasError:
+				if t.HasValue || t.HasError {
 					sink(t)
-				default:
-					if activeCount.Sub(1) > 0 {
-						break
-					}
+					return
+				}
+				if activeCount.Sub(1) == 0 {
 					sink(t)
 				}
 			})
@@ -48,10 +46,9 @@ func (obs exhaustMapObservable) Subscribe(ctx context.Context, sink rx.Observer)
 			sink(t)
 
 		default:
-			if activeCount.Sub(1) > 0 {
-				break
+			if activeCount.Sub(1) == 0 {
+				sink(t)
 			}
-			sink(t)
 		}
 	})
 }

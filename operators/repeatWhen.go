@@ -38,22 +38,21 @@ func (obs repeatWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 		sourceCtx, sourceCancel = context.WithCancel(ctx)
 		obs.Source.Subscribe(sourceCtx, func(t rx.Notification) {
 			if x, ok := <-cx; ok {
-				switch {
-				case t.HasValue || t.HasError:
+				if t.HasValue || t.HasError {
 					sink(t)
 					cx <- x
-				default:
-					activeCount := activeCount.Sub(1)
-					close(cx)
-					if activeCount == 0 {
-						sink(t)
-						break
-					}
-					if subject.Observer == nil {
-						subject = createSubject()
-					}
-					subject.Next(nil)
+					return
 				}
+				activeCount := activeCount.Sub(1)
+				close(cx)
+				if activeCount == 0 {
+					sink(t)
+					return
+				}
+				if subject.Observer == nil {
+					subject = createSubject()
+				}
+				subject.Next(nil)
 			}
 		})
 	}

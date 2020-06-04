@@ -43,19 +43,18 @@ func (obs concatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 
 			obs := obs.Project(sourceValue, sourceIndex)
 			obs.Subscribe(ctx, func(t rx.Notification) {
-				switch {
-				case t.HasValue || t.HasError:
+				if t.HasValue || t.HasError {
 					sink(t)
-				default:
-					if ctx.Err() != nil {
-						return
-					}
-					avoidRecursion.Do(func() {
-						x := <-cx
-						doNextLocked(x)
-						cx <- x
-					})
+					return
 				}
+				if ctx.Err() != nil {
+					return
+				}
+				avoidRecursion.Do(func() {
+					x := <-cx
+					doNextLocked(x)
+					cx <- x
+				})
 			})
 		})
 	}

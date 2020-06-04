@@ -55,21 +55,20 @@ func (obs mergeObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		obs := obs.Project(sourceValue, sourceIndex)
 
 		go obs.Subscribe(ctx, func(t rx.Notification) {
-			switch {
-			case t.HasValue || t.HasError:
+			if t.HasValue || t.HasError {
 				sink(t)
-			default:
-				x := <-cx
-				if x.Buffer.Len() > 0 {
-					doNextLocked(x)
-				} else {
-					x.ActiveCount--
-					if x.ActiveCount == 0 && x.SourceCompleted {
-						sink(t)
-					}
-				}
-				cx <- x
+				return
 			}
+			x := <-cx
+			if x.Buffer.Len() > 0 {
+				doNextLocked(x)
+			} else {
+				x.ActiveCount--
+				if x.ActiveCount == 0 && x.SourceCompleted {
+					sink(t)
+				}
+			}
+			cx <- x
 		})
 	}
 

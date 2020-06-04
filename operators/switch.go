@@ -44,19 +44,18 @@ func (obs switchMapObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 			obs := obs.Project(sourceValue, sourceIndex)
 
 			_, childCancel = obs.Subscribe(ctx, func(t rx.Notification) {
-				switch {
-				case t.HasValue || t.HasError:
+				if t.HasValue || t.HasError {
 					sink(t)
-				default:
-					x := <-cx
-					if x.ActiveIndex == sourceIndex {
-						x.ActiveIndex = -1
-						if x.SourceCompleted {
-							sink(t)
-						}
-					}
-					cx <- x
+					return
 				}
+				x := <-cx
+				if x.ActiveIndex == sourceIndex {
+					x.ActiveIndex = -1
+					if x.SourceCompleted {
+						sink(t)
+					}
+				}
+				cx <- x
 			})
 
 		case t.HasError:

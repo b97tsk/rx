@@ -24,19 +24,14 @@ func (obs repeatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	}
 
 	observer = func(t rx.Notification) {
-		switch {
-		case t.HasValue || t.HasError:
+		if t.HasValue || t.HasError || count == 0 {
 			sink(t)
-		default:
-			if count == 0 {
-				sink(t)
-			} else {
-				if count > 0 {
-					count--
-				}
-				avoidRecursion.Do(subscribe)
-			}
+			return
 		}
+		if count > 0 {
+			count--
+		}
+		avoidRecursion.Do(subscribe)
 	}
 
 	avoidRecursion.Do(subscribe)
