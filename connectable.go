@@ -24,8 +24,7 @@ type connectableObservable struct {
 	disconnect     context.CancelFunc
 }
 
-// NewConnectableObservable creates a new ConnectableObservable.
-func NewConnectableObservable(source Observable, subjectFactory func() Subject) ConnectableObservable {
+func newConnectableObservable(source Observable, subjectFactory func() Subject) ConnectableObservable {
 	connectable := &connectableObservable{
 		source:         source,
 		subjectFactory: subjectFactory,
@@ -128,7 +127,7 @@ func (obs ConnectableObservable) Connect(ctx context.Context) (context.Context, 
 // that waits until its Connect method is called before it begins emitting
 // items to those Observers that have subscribed to it.
 func (obs Observable) Multicast(subjectFactory func() Subject) ConnectableObservable {
-	return NewConnectableObservable(obs, subjectFactory)
+	return newConnectableObservable(obs, subjectFactory)
 }
 
 // Publish is like Multicast, but it uses only one subject.
