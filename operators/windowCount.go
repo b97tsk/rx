@@ -14,6 +14,12 @@ type WindowCountConfigure struct {
 
 // Use creates an Operator from this configure.
 func (configure WindowCountConfigure) Use() rx.Operator {
+	if configure.WindowSize <= 0 {
+		panic("WindowCount: WindowSize negative or zero")
+	}
+	if configure.StartWindowEvery == 0 {
+		configure.StartWindowEvery = configure.WindowSize
+	}
 	return func(source rx.Observable) rx.Observable {
 		return windowCountObservable{source, configure}.Subscribe
 	}
@@ -29,10 +35,6 @@ func (obs windowCountObservable) Subscribe(ctx context.Context, sink rx.Observer
 		windows    []rx.Subject
 		windowSize int
 	)
-
-	if obs.StartWindowEvery == 0 {
-		obs.StartWindowEvery = obs.WindowSize
-	}
 
 	window := rx.NewSubject()
 	windows = append(windows, window)

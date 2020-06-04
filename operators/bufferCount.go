@@ -14,6 +14,12 @@ type BufferCountConfigure struct {
 
 // Use creates an Operator from this configure.
 func (configure BufferCountConfigure) Use() rx.Operator {
+	if configure.BufferSize <= 0 {
+		panic("BufferCount: BufferSize negative or zero")
+	}
+	if configure.StartBufferEvery == 0 {
+		configure.StartBufferEvery = configure.BufferSize
+	}
 	return func(source rx.Observable) rx.Observable {
 		return bufferCountObservable{source, configure}.Subscribe
 	}
@@ -29,9 +35,6 @@ func (obs bufferCountObservable) Subscribe(ctx context.Context, sink rx.Observer
 		buffer    = make([]interface{}, 0, obs.BufferSize)
 		skipCount int
 	)
-	if obs.StartBufferEvery == 0 {
-		obs.StartBufferEvery = obs.BufferSize
-	}
 	return obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		switch {
 		case t.HasValue:

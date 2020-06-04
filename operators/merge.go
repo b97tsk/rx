@@ -15,6 +15,12 @@ type MergeConfigure struct {
 
 // Use creates an Operator from this configure.
 func (configure MergeConfigure) Use() rx.Operator {
+	if configure.Project == nil {
+		configure.Project = rx.ProjectToObservable
+	}
+	if configure.Concurrent == 0 {
+		configure.Concurrent = -1
+	}
 	return func(source rx.Observable) rx.Observable {
 		obs := mergeObservable{source, configure}
 		return rx.Create(obs.Subscribe)

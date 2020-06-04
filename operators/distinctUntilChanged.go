@@ -14,6 +14,12 @@ type DistinctUntilChangedConfigure struct {
 
 // Use creates an Operator from this configure.
 func (configure DistinctUntilChangedConfigure) Use() rx.Operator {
+	if configure.Compare == nil {
+		configure.Compare = func(v1, v2 interface{}) bool { return v1 == v2 }
+	}
+	if configure.KeySelector == nil {
+		configure.KeySelector = func(val interface{}) interface{} { return val }
+	}
 	return func(source rx.Observable) rx.Observable {
 		return distinctUntilChangedObservable{source, configure}.Subscribe
 	}
@@ -50,8 +56,5 @@ func (obs distinctUntilChangedObservable) Subscribe(ctx context.Context, sink rx
 //
 // If a comparator function is not provided, an equality check is used by default.
 func DistinctUntilChanged() rx.Operator {
-	return DistinctUntilChangedConfigure{
-		Compare:     func(v1, v2 interface{}) bool { return v1 == v2 },
-		KeySelector: func(val interface{}) interface{} { return val },
-	}.Use()
+	return DistinctUntilChangedConfigure{}.Use()
 }

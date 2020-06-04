@@ -16,6 +16,12 @@ type MergeScanConfigure struct {
 
 // Use creates an Operator from this configure.
 func (configure MergeScanConfigure) Use() rx.Operator {
+	if configure.Accumulator == nil {
+		panic("MergeScan: nil Accumulator")
+	}
+	if configure.Concurrent == 0 {
+		configure.Concurrent = -1
+	}
 	return func(source rx.Observable) rx.Observable {
 		obs := mergeScanObservable{source, configure}
 		return rx.Create(obs.Subscribe)

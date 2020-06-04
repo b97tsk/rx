@@ -15,6 +15,9 @@ type ScanConfigure struct {
 
 // Use creates an Operator from this configure.
 func (configure ScanConfigure) Use() rx.Operator {
+	if configure.Accumulator == nil {
+		panic("Scan: nil Accumulator")
+	}
 	return func(source rx.Observable) rx.Observable {
 		return scanObservable{source, configure}.Subscribe
 	}

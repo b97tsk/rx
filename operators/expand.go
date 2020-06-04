@@ -15,6 +15,12 @@ type ExpandConfigure struct {
 
 // Use creates an Operator from this configure.
 func (configure ExpandConfigure) Use() rx.Operator {
+	if configure.Project == nil {
+		panic("Expand: nil Project")
+	}
+	if configure.Concurrent == 0 {
+		configure.Concurrent = -1
+	}
 	return func(source rx.Observable) rx.Observable {
 		obs := expandObservable{source, configure}
 		return rx.Create(obs.Subscribe)
