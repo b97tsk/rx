@@ -14,11 +14,9 @@ type reduceObservable struct {
 }
 
 func (obs reduceObservable) Subscribe(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
-	var (
-		seed        = obs.Seed
-		hasSeed     = obs.HasSeed
-		sourceIndex = -1
-	)
+	seed := obs.Seed
+	hasSeed := obs.HasSeed
+	sourceIndex := -1
 	return obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		switch {
 		case t.HasValue:

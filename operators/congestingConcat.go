@@ -12,19 +12,16 @@ type congestingConcatObservable struct {
 }
 
 func (obs congestingConcatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
-	var (
-		sourceIndex = -1
-		observer    rx.Observer
-	)
+	var observer rx.Observer
+
+	sourceIndex := -1
 
 	observer = func(t rx.Notification) {
 		switch {
 		case t.HasValue:
 			sourceIndex++
-			sourceIndex := sourceIndex
-			sourceValue := t.Value
 
-			obs := obs.Project(sourceValue, sourceIndex)
+			obs := obs.Project(t.Value, sourceIndex)
 			childCtx, _ := obs.Subscribe(ctx, func(t rx.Notification) {
 				switch {
 				case t.HasValue:

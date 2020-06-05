@@ -11,7 +11,7 @@ import (
 func Map(project func(interface{}, int) interface{}) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		return func(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
-			var sourceIndex = -1
+			sourceIndex := -1
 			return source.Subscribe(ctx, func(t rx.Notification) {
 				switch {
 				case t.HasValue:

@@ -12,10 +12,9 @@ type skipWhileObservable struct {
 }
 
 func (obs skipWhileObservable) Subscribe(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
-	var (
-		sourceIndex = -1
-		observer    rx.Observer
-	)
+	var observer rx.Observer
+
+	sourceIndex := -1
 
 	observer = func(t rx.Notification) {
 		switch {

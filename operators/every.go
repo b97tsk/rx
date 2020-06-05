@@ -12,10 +12,9 @@ type everyObservable struct {
 }
 
 func (obs everyObservable) Subscribe(ctx context.Context, sink rx.Observer) {
-	var (
-		sourceIndex = -1
-		observer    rx.Observer
-	)
+	var observer rx.Observer
+
+	sourceIndex := -1
 
 	observer = func(t rx.Notification) {
 		switch {

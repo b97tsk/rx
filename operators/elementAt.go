@@ -14,10 +14,9 @@ type elementAtObservable struct {
 }
 
 func (obs elementAtObservable) Subscribe(ctx context.Context, sink rx.Observer) {
-	var (
-		index    = obs.Index
-		observer rx.Observer
-	)
+	var observer rx.Observer
+
+	index := obs.Index
 
 	observer = func(t rx.Notification) {
 		switch {

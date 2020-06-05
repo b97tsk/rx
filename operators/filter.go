@@ -11,7 +11,7 @@ import (
 func Filter(predicate func(interface{}, int) bool) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		return func(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
-			var sourceIndex = -1
+			sourceIndex := -1
 			return source.Subscribe(ctx, func(t rx.Notification) {
 				switch {
 				case t.HasValue:
@@ -32,7 +32,7 @@ func Filter(predicate func(interface{}, int) bool) rx.Operator {
 func Exclude(predicate func(interface{}, int) bool) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		return func(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
-			var sourceIndex = -1
+			sourceIndex := -1
 			return source.Subscribe(ctx, func(t rx.Notification) {
 				switch {
 				case t.HasValue:
