@@ -17,8 +17,8 @@ func (obs retryWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 	sink = rx.Mutex(sink)
 
 	var (
-		activeCount    = atomic.Uint32(2)
-		lastError      error
+		err            error
+		active         = atomic.Uint32(2)
 		subject        rx.Subject
 		createSubject  func() rx.Subject
 		avoidRecursion misc.AvoidRecursion
@@ -44,10 +44,10 @@ func (obs retryWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 					sink(t)
 					cx <- x
 				case t.HasError:
-					lastError = t.Error
-					activeCount := activeCount.Sub(1)
+					err = t.Error
+					active := active.Sub(1)
 					close(cx)
-					if activeCount == 0 {
+					if active == 0 {
 						sink(t)
 						break
 					}
@@ -73,7 +73,7 @@ func (obs retryWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 				if _, ok := <-cxCurrent; ok {
 					close(cxCurrent)
 				} else {
-					activeCount.Add(1)
+					active.Add(1)
 				}
 				avoidRecursion.Do(subscribe)
 
@@ -81,8 +81,8 @@ func (obs retryWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 				sink(t)
 
 			default:
-				if activeCount.Sub(1) == 0 {
-					sink.Error(lastError)
+				if active.Sub(1) == 0 {
+					sink.Error(err)
 				}
 			}
 		})

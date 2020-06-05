@@ -37,9 +37,9 @@ func (obs mergeObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 
 	type X struct {
 		Index           int
-		ActiveCount     int
-		SourceCompleted bool
+		Active          int
 		Buffer          queue.Queue
+		SourceCompleted bool
 	}
 	cx := make(chan *X, 1)
 	cx <- &X{}
@@ -63,8 +63,8 @@ func (obs mergeObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 			if x.Buffer.Len() > 0 {
 				doNextLocked(x)
 			} else {
-				x.ActiveCount--
-				if x.ActiveCount == 0 && x.SourceCompleted {
+				x.Active--
+				if x.Active == 0 && x.SourceCompleted {
 					sink(t)
 				}
 			}
@@ -77,8 +77,8 @@ func (obs mergeObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		case t.HasValue:
 			x := <-cx
 			x.Buffer.PushBack(t.Value)
-			if x.ActiveCount != obs.Concurrent {
-				x.ActiveCount++
+			if x.Active != obs.Concurrent {
+				x.Active++
 				doNextLocked(x)
 			}
 			cx <- x
@@ -89,7 +89,7 @@ func (obs mergeObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		default:
 			x := <-cx
 			x.SourceCompleted = true
-			if x.ActiveCount == 0 {
+			if x.Active == 0 {
 				sink(t)
 			}
 			cx <- x

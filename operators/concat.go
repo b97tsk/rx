@@ -17,12 +17,12 @@ func (obs concatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	sink = rx.Mutex(sink)
 
 	type X struct {
-		Index       int
-		ActiveCount int
-		Buffer      queue.Queue
+		Index  int
+		Active int
+		Buffer queue.Queue
 	}
 	cx := make(chan *X, 1)
-	cx <- &X{ActiveCount: 1}
+	cx <- &X{Active: 1}
 
 	var doNextLocked func(*X)
 
@@ -30,8 +30,8 @@ func (obs concatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		var avoidRecursion misc.AvoidRecursion
 		avoidRecursion.Do(func() {
 			if x.Buffer.Len() == 0 {
-				x.ActiveCount--
-				if x.ActiveCount == 0 {
+				x.Active--
+				if x.Active == 0 {
 					sink.Complete()
 				}
 				return
@@ -64,8 +64,8 @@ func (obs concatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		case t.HasValue:
 			x := <-cx
 			x.Buffer.PushBack(t.Value)
-			if x.ActiveCount == 1 {
-				x.ActiveCount++
+			if x.Active == 1 {
+				x.Active++
 				doNextLocked(x)
 			}
 			cx <- x
@@ -75,8 +75,8 @@ func (obs concatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 
 		default:
 			x := <-cx
-			x.ActiveCount--
-			if x.ActiveCount == 0 {
+			x.Active--
+			if x.Active == 0 {
 				sink(t)
 			}
 			cx <- x

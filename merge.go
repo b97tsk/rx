@@ -10,10 +10,10 @@ type mergeObservable []Observable
 
 func (observables mergeObservable) Subscribe(ctx context.Context, sink Observer) {
 	sink = Mutex(sink)
-	activeCount := atomic.Uint32(len(observables))
+	active := atomic.Uint32(len(observables))
 	for _, obs := range observables {
 		go obs.Subscribe(ctx, func(t Notification) {
-			if t.HasValue || t.HasError || activeCount.Sub(1) == 0 {
+			if t.HasValue || t.HasError || active.Sub(1) == 0 {
 				sink(t)
 			}
 		})

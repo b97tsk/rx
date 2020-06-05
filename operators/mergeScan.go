@@ -37,11 +37,11 @@ func (obs mergeScanObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 	sink = rx.Mutex(sink)
 
 	type X struct {
-		ActiveCount     int
-		SourceCompleted bool
+		Active          int
 		Buffer          queue.Queue
 		Seed            interface{}
 		HasValue        bool
+		SourceCompleted bool
 	}
 	cx := make(chan *X, 1)
 	cx <- &X{Seed: obs.Seed}
@@ -72,8 +72,8 @@ func (obs mergeScanObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 				if x.Buffer.Len() > 0 {
 					doNextLocked(x)
 				} else {
-					x.ActiveCount--
-					if x.ActiveCount == 0 && x.SourceCompleted {
+					x.Active--
+					if x.Active == 0 && x.SourceCompleted {
 						if !x.HasValue {
 							sink.Next(x.Seed)
 						}
@@ -90,8 +90,8 @@ func (obs mergeScanObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 		case t.HasValue:
 			x := <-cx
 			x.Buffer.PushBack(t.Value)
-			if x.ActiveCount != obs.Concurrent {
-				x.ActiveCount++
+			if x.Active != obs.Concurrent {
+				x.Active++
 				doNextLocked(x)
 			}
 			cx <- x
@@ -102,7 +102,7 @@ func (obs mergeScanObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 		default:
 			x := <-cx
 			x.SourceCompleted = true
-			if x.ActiveCount == 0 {
+			if x.Active == 0 {
 				if !x.HasValue {
 					sink.Next(x.Seed)
 				}

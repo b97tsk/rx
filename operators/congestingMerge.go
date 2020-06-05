@@ -32,24 +32,24 @@ type congestingMergeObservable struct {
 }
 
 func (obs congestingMergeObservable) Subscribe(ctx context.Context, sink rx.Observer) {
-	done := ctx.Done()
 	sink = rx.Mutex(sink)
 
-	complete := make(chan struct{}, 1)
-
 	type X struct {
-		Index       int
-		ActiveCount int
+		Index  int
+		Active int
 	}
 	cx := make(chan *X, 1)
 	cx <- &X{}
+
+	done := ctx.Done()
+	complete := make(chan struct{}, 1)
 
 	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		switch {
 		case t.HasValue:
 			x := <-cx
 
-			for x.ActiveCount == obs.Concurrent {
+			for x.Active == obs.Concurrent {
 				cx <- x
 				select {
 				case <-done:
@@ -59,7 +59,7 @@ func (obs congestingMergeObservable) Subscribe(ctx context.Context, sink rx.Obse
 				x = <-cx
 			}
 
-			x.ActiveCount++
+			x.Active++
 
 			sourceIndex := x.Index
 			sourceValue := t.Value
@@ -76,7 +76,7 @@ func (obs congestingMergeObservable) Subscribe(ctx context.Context, sink rx.Obse
 					return
 				}
 				x := <-cx
-				x.ActiveCount--
+				x.Active--
 				cx <- x
 				select {
 				case complete <- struct{}{}:
@@ -89,9 +89,9 @@ func (obs congestingMergeObservable) Subscribe(ctx context.Context, sink rx.Obse
 
 		default:
 			x := <-cx
-			if x.ActiveCount > 0 {
+			if x.Active > 0 {
 				go func() {
-					for x.ActiveCount > 0 {
+					for x.Active > 0 {
 						cx <- x
 						select {
 						case <-done:

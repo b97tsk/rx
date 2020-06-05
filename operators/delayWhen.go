@@ -13,11 +13,12 @@ type delayWhenObservable struct {
 
 func (obs delayWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	type X struct {
-		Index       int
-		ActiveCount int
+		Index           int
+		Active          int
+		SourceCompleted bool
 	}
 	cx := make(chan *X, 1)
-	cx <- &X{ActiveCount: 1}
+	cx <- &X{}
 
 	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		if x, ok := <-cx; ok {
@@ -26,7 +27,7 @@ func (obs delayWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 				sourceIndex := x.Index
 				sourceValue := t.Value
 				x.Index++
-				x.ActiveCount++
+				x.Active++
 
 				cx <- x
 
@@ -37,11 +38,11 @@ func (obs delayWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 					observer = rx.Noop
 					scheduleCancel()
 					if x, ok := <-cx; ok {
-						x.ActiveCount--
+						x.Active--
 						switch {
 						case t.HasValue:
 							sink.Next(sourceValue)
-							if x.ActiveCount == 0 {
+							if x.Active == 0 && x.SourceCompleted {
 								close(cx)
 								sink.Complete()
 								return
@@ -51,7 +52,7 @@ func (obs delayWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 							close(cx)
 							sink(t)
 						default:
-							if x.ActiveCount == 0 {
+							if x.Active == 0 && x.SourceCompleted {
 								close(cx)
 								sink(t)
 								return
@@ -69,8 +70,8 @@ func (obs delayWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 				sink(t)
 
 			default:
-				x.ActiveCount--
-				if x.ActiveCount == 0 {
+				x.SourceCompleted = true
+				if x.Active == 0 {
 					close(cx)
 					sink(t)
 					return

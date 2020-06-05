@@ -15,21 +15,19 @@ type exhaustMapObservable struct {
 func (obs exhaustMapObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	sink = rx.Mutex(sink)
 
-	var (
-		sourceIndex = -1
-		activeCount = atomic.Uint32(1)
-	)
+	index := 0
+	active := atomic.Uint32(1)
 
 	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		switch {
 		case t.HasValue:
-			if !activeCount.Cas(1, 2) {
+			if !active.Cas(1, 2) {
 				break
 			}
 
-			sourceIndex++
-			sourceIndex := sourceIndex
+			sourceIndex := index
 			sourceValue := t.Value
+			index++
 
 			obs := obs.Project(sourceValue, sourceIndex)
 			obs.Subscribe(ctx, func(t rx.Notification) {
@@ -37,7 +35,7 @@ func (obs exhaustMapObservable) Subscribe(ctx context.Context, sink rx.Observer)
 					sink(t)
 					return
 				}
-				if activeCount.Sub(1) == 0 {
+				if active.Sub(1) == 0 {
 					sink(t)
 				}
 			})
@@ -46,7 +44,7 @@ func (obs exhaustMapObservable) Subscribe(ctx context.Context, sink rx.Observer)
 			sink(t)
 
 		default:
-			if activeCount.Sub(1) == 0 {
+			if active.Sub(1) == 0 {
 				sink(t)
 			}
 		}

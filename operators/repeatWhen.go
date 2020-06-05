@@ -17,7 +17,7 @@ func (obs repeatWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 	sink = rx.Mutex(sink)
 
 	var (
-		activeCount    = atomic.Uint32(2)
+		active         = atomic.Uint32(2)
 		subject        rx.Subject
 		createSubject  func() rx.Subject
 		avoidRecursion misc.AvoidRecursion
@@ -43,9 +43,9 @@ func (obs repeatWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 					cx <- x
 					return
 				}
-				activeCount := activeCount.Sub(1)
+				active := active.Sub(1)
 				close(cx)
-				if activeCount == 0 {
+				if active == 0 {
 					sink(t)
 					return
 				}
@@ -67,7 +67,7 @@ func (obs repeatWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 				if _, ok := <-cxCurrent; ok {
 					close(cxCurrent)
 				} else {
-					activeCount.Add(1)
+					active.Add(1)
 				}
 				avoidRecursion.Do(subscribe)
 
@@ -75,7 +75,7 @@ func (obs repeatWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 				sink(t)
 
 			default:
-				if activeCount.Sub(1) == 0 {
+				if active.Sub(1) == 0 {
 					sink(t)
 				}
 			}
