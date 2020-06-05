@@ -34,9 +34,8 @@ type ThrottleTimeConfigure struct {
 
 // Use creates an Operator from this configure.
 func (configure ThrottleTimeConfigure) Use() rx.Operator {
-	durationSelector := func(interface{}) rx.Observable {
-		return rx.Timer(configure.Duration)
-	}
+	obsTimer := rx.Timer(configure.Duration)
+	durationSelector := func(interface{}) rx.Observable { return obsTimer }
 	return ThrottleConfigure{
 		DurationSelector: durationSelector,
 		Leading:          configure.Leading,

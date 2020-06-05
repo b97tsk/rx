@@ -41,11 +41,12 @@ func (obs bufferTimeObservable) Subscribe(ctx context.Context, sink rx.Observer)
 
 	var closeContext func(*bufferTimeContext)
 
+	obsTimer := rx.Timer(obs.TimeSpan)
 	openContextLocked := func(x *X) {
 		ctx, cancel := context.WithCancel(ctx)
 		newContext := &bufferTimeContext{Cancel: cancel}
 		x.Contexts = append(x.Contexts, newContext)
-		rx.Timer(obs.TimeSpan).Subscribe(ctx, func(t rx.Notification) {
+		obsTimer.Subscribe(ctx, func(t rx.Notification) {
 			if t.HasValue {
 				return
 			}

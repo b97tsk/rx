@@ -38,11 +38,12 @@ func (obs timeoutObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 
 	var scheduleCancel context.CancelFunc
 
+	obsTimer := rx.Timer(obs.Duration)
 	doSchedule := func() {
 		if scheduleCancel != nil {
 			scheduleCancel()
 		}
-		_, scheduleCancel = rx.Timer(obs.Duration).Subscribe(childCtx, func(t rx.Notification) {
+		_, scheduleCancel = obsTimer.Subscribe(childCtx, func(t rx.Notification) {
 			if t.HasValue {
 				return
 			}

@@ -93,8 +93,7 @@ func Debounce(durationSelector func(interface{}) rx.Observable) rx.Operator {
 // Observable only after a particular time span has passed without another
 // source emission.
 func DebounceTime(duration time.Duration) rx.Operator {
-	durationSelector := func(interface{}) rx.Observable {
-		return rx.Timer(duration)
-	}
+	obsTimer := rx.Timer(duration)
+	durationSelector := func(interface{}) rx.Observable { return obsTimer }
 	return Debounce(durationSelector)
 }

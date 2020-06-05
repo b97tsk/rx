@@ -80,8 +80,7 @@ func Audit(durationSelector func(interface{}) rx.Observable) rx.Operator {
 // When it sees a source values, it ignores that plus the next ones for a
 // duration, and then it emits the most recent value from the source.
 func AuditTime(duration time.Duration) rx.Operator {
-	durationSelector := func(interface{}) rx.Observable {
-		return rx.Timer(duration)
-	}
+	obsTimer := rx.Timer(duration)
+	durationSelector := func(interface{}) rx.Observable { return obsTimer }
 	return Audit(durationSelector)
 }
