@@ -8,7 +8,7 @@ import (
 
 type switchMapObservable struct {
 	Source  rx.Observable
-	Project func(interface{}, int) rx.Observable
+	Project func(interface{}, int) (rx.Observable, error)
 }
 
 func (obs switchMapObservable) Subscribe(ctx context.Context, sink rx.Observer) {
@@ -41,7 +41,11 @@ func (obs switchMapObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 				childCancel()
 			}
 
-			obs := obs.Project(sourceValue, sourceIndex)
+			obs, err := obs.Project(sourceValue, sourceIndex)
+			if err != nil {
+				sink.Error(err)
+				return
+			}
 
 			_, childCancel = obs.Subscribe(ctx, func(t rx.Notification) {
 				if t.HasValue || t.HasError {
@@ -78,7 +82,7 @@ func (obs switchMapObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 // Switch flattens an Observable-of-Observables by dropping the previous inner
 // Observable once a new one appears.
 func Switch() rx.Operator {
-	return SwitchMap(rx.ProjectToObservable)
+	return SwitchMap(projectToObservable)
 }
 
 // SwitchMap creates an Observable that projects each source value to an
@@ -87,7 +91,7 @@ func Switch() rx.Operator {
 //
 // SwitchMap maps each value to an Observable, then flattens all of these inner
 // Observables using Switch.
-func SwitchMap(project func(interface{}, int) rx.Observable) rx.Operator {
+func SwitchMap(project func(interface{}, int) (rx.Observable, error)) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		obs := switchMapObservable{source, project}
 		return rx.Create(obs.Subscribe)
@@ -100,5 +104,5 @@ func SwitchMap(project func(interface{}, int) rx.Observable) rx.Operator {
 //
 // It's like SwitchMap, but maps each value always to the same inner Observable.
 func SwitchMapTo(inner rx.Observable) rx.Operator {
-	return SwitchMap(func(interface{}, int) rx.Observable { return inner })
+	return SwitchMap(func(interface{}, int) (rx.Observable, error) { return inner, nil })
 }

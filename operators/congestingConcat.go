@@ -8,7 +8,7 @@ import (
 
 type congestingConcatObservable struct {
 	Source  rx.Observable
-	Project func(interface{}, int) rx.Observable
+	Project func(interface{}, int) (rx.Observable, error)
 }
 
 func (obs congestingConcatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
@@ -21,7 +21,13 @@ func (obs congestingConcatObservable) Subscribe(ctx context.Context, sink rx.Obs
 		case t.HasValue:
 			sourceIndex++
 
-			obs := obs.Project(t.Value, sourceIndex)
+			obs, err := obs.Project(t.Value, sourceIndex)
+			if err != nil {
+				observer = rx.Noop
+				sink.Error(err)
+				return
+			}
+
 			childCtx, _ := obs.Subscribe(ctx, func(t rx.Notification) {
 				switch {
 				case t.HasValue:
@@ -53,7 +59,7 @@ func (obs congestingConcatObservable) Subscribe(ctx context.Context, sink rx.Obs
 //
 // It's like ConcatAll, but it congests the source.
 func CongestingConcatAll() rx.Operator {
-	return CongestingConcatMap(rx.ProjectToObservable)
+	return CongestingConcatMap(projectToObservable)
 }
 
 // CongestingConcatMap creates an Observable that projects each source value to
@@ -63,7 +69,7 @@ func CongestingConcatAll() rx.Operator {
 // these inner Observables using CongestingConcatAll.
 //
 // It's like ConcatMap, but it congests the source.
-func CongestingConcatMap(project func(interface{}, int) rx.Observable) rx.Operator {
+func CongestingConcatMap(project func(interface{}, int) (rx.Observable, error)) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		obs := congestingConcatObservable{source, project}
 		return rx.Create(obs.Subscribe)
@@ -79,5 +85,5 @@ func CongestingConcatMap(project func(interface{}, int) rx.Observable) rx.Operat
 //
 // It's like ConcatMapTo, but it congests the source.
 func CongestingConcatMapTo(inner rx.Observable) rx.Operator {
-	return CongestingConcatMap(func(interface{}, int) rx.Observable { return inner })
+	return CongestingConcatMap(func(interface{}, int) (rx.Observable, error) { return inner, nil })
 }

@@ -9,14 +9,14 @@ import (
 
 // A MergeConfigure is a configure for Merge.
 type MergeConfigure struct {
-	Project    func(interface{}, int) rx.Observable
+	Project    func(interface{}, int) (rx.Observable, error)
 	Concurrent int
 }
 
 // Use creates an Operator from this configure.
 func (configure MergeConfigure) Use() rx.Operator {
 	if configure.Project == nil {
-		configure.Project = rx.ProjectToObservable
+		configure.Project = projectToObservable
 	}
 	if configure.Concurrent == 0 {
 		configure.Concurrent = -1
@@ -51,8 +51,11 @@ func (obs mergeObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		sourceValue := x.Buffer.PopFront()
 		x.Index++
 
-		// Call obs.Project synchronously.
-		obs := obs.Project(sourceValue, sourceIndex)
+		obs, err := obs.Project(sourceValue, sourceIndex)
+		if err != nil {
+			sink.Error(err)
+			return
+		}
 
 		go obs.Subscribe(ctx, func(t rx.Notification) {
 			if t.HasValue || t.HasError {
@@ -101,7 +104,7 @@ func (obs mergeObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 // which concurrently delivers all values that are emitted on the inner
 // Observables.
 func MergeAll() rx.Operator {
-	return MergeMap(rx.ProjectToObservable)
+	return MergeMap(projectToObservable)
 }
 
 // MergeMap creates an Observable that projects each source value to an
@@ -109,7 +112,7 @@ func MergeAll() rx.Operator {
 //
 // MergeMap maps each value to an Observable, then flattens all of these inner
 // Observables using MergeAll.
-func MergeMap(project func(interface{}, int) rx.Observable) rx.Operator {
+func MergeMap(project func(interface{}, int) (rx.Observable, error)) rx.Operator {
 	return MergeConfigure{project, -1}.Use()
 }
 
@@ -118,5 +121,5 @@ func MergeMap(project func(interface{}, int) rx.Observable) rx.Operator {
 //
 // It's like MergeMap, but maps each value always to the same inner Observable.
 func MergeMapTo(inner rx.Observable) rx.Operator {
-	return MergeMap(func(interface{}, int) rx.Observable { return inner })
+	return MergeMap(func(interface{}, int) (rx.Observable, error) { return inner, nil })
 }

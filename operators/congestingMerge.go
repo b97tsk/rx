@@ -8,14 +8,14 @@ import (
 
 // A CongestingMergeConfigure is a configure for CongestingMerge.
 type CongestingMergeConfigure struct {
-	Project    func(interface{}, int) rx.Observable
+	Project    func(interface{}, int) (rx.Observable, error)
 	Concurrent int
 }
 
 // Use creates an Operator from this configure.
 func (configure CongestingMergeConfigure) Use() rx.Operator {
 	if configure.Project == nil {
-		configure.Project = rx.ProjectToObservable
+		configure.Project = projectToObservable
 	}
 	if configure.Concurrent == 0 {
 		configure.Concurrent = -1
@@ -65,8 +65,11 @@ func (obs congestingMergeObservable) Subscribe(ctx context.Context, sink rx.Obse
 			sourceValue := t.Value
 			x.Index++
 
-			// Call obs.Project synchronously.
-			obs := obs.Project(sourceValue, sourceIndex)
+			obs, err := obs.Project(sourceValue, sourceIndex)
+			if err != nil {
+				sink.Error(err)
+				return
+			}
 
 			cx <- x
 
@@ -117,7 +120,7 @@ func (obs congestingMergeObservable) Subscribe(ctx context.Context, sink rx.Obse
 //
 // It's like MergeAll, but it may congest the source due to concurrent limit.
 func CongestingMergeAll() rx.Operator {
-	return CongestingMergeMap(rx.ProjectToObservable)
+	return CongestingMergeMap(projectToObservable)
 }
 
 // CongestingMergeMap creates an Observable that projects each source value to
@@ -127,7 +130,7 @@ func CongestingMergeAll() rx.Operator {
 // these inner Observables using CongestingMergeAll.
 //
 // It's like MergeMap, but it may congest the source due to concurrent limit.
-func CongestingMergeMap(project func(interface{}, int) rx.Observable) rx.Operator {
+func CongestingMergeMap(project func(interface{}, int) (rx.Observable, error)) rx.Operator {
 	return CongestingMergeConfigure{project, -1}.Use()
 }
 
@@ -140,5 +143,5 @@ func CongestingMergeMap(project func(interface{}, int) rx.Observable) rx.Operato
 //
 // It's like MergeMapTo, but it may congest the source due to concurrent limit.
 func CongestingMergeMapTo(inner rx.Observable) rx.Operator {
-	return CongestingMergeMap(func(interface{}, int) rx.Observable { return inner })
+	return CongestingMergeMap(func(interface{}, int) (rx.Observable, error) { return inner, nil })
 }

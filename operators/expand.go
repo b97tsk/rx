@@ -9,7 +9,7 @@ import (
 
 // An ExpandConfigure is a configure for Expand.
 type ExpandConfigure struct {
-	Project    func(interface{}, int) rx.Observable
+	Project    func(interface{}, int) (rx.Observable, error)
 	Concurrent int
 }
 
@@ -53,8 +53,11 @@ func (obs expandObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 
 		sink.Next(sourceValue)
 
-		// Call obs.Project synchronously.
-		obs1 := obs.Project(sourceValue, sourceIndex)
+		obs1, err := obs.Project(sourceValue, sourceIndex)
+		if err != nil {
+			sink.Error(err)
+			return
+		}
 
 		go obs1.Subscribe(ctx, func(t rx.Notification) {
 			switch {
@@ -115,6 +118,6 @@ func (obs expandObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 //
 // It's similar to MergeMap, but applies the projection function to every
 // source value as well as every output value. It's recursive.
-func Expand(project func(interface{}, int) rx.Observable) rx.Operator {
+func Expand(project func(interface{}, int) (rx.Observable, error)) rx.Operator {
 	return ExpandConfigure{project, -1}.Use()
 }

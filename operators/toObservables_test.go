@@ -20,8 +20,8 @@ func TestToObservables(t *testing.T) {
 			operators.ToObservables(),
 			operators.Single(),
 			operators.ConcatMap(
-				func(val interface{}, idx int) rx.Observable {
-					return rx.Concat(val.([]rx.Observable)...)
+				func(val interface{}, idx int) (rx.Observable, error) {
+					return rx.Concat(val.([]rx.Observable)...), nil
 				},
 			),
 		)

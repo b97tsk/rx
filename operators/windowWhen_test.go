@@ -9,13 +9,11 @@ import (
 )
 
 func TestWindowWhen(t *testing.T) {
-	toSlice := func(val interface{}, idx int) rx.Observable {
+	toSlice := func(val interface{}, idx int) (rx.Observable, error) {
 		if obs, ok := val.(rx.Observable); ok {
-			return obs.Pipe(
-				operators.ToSlice(),
-			)
+			return obs.Pipe(operators.ToSlice()), nil
 		}
-		return rx.Throw(rx.ErrNotObservable)
+		return nil, rx.ErrNotObservable
 	}
 	SubscribeN(
 		t,
