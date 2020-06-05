@@ -54,3 +54,9 @@ func Repeat(count int) rx.Operator {
 		return rx.Create(obs.Subscribe)
 	}
 }
+
+// RepeatForever creates an Observable that repeats the stream of items emitted
+// by the source Observable forever.
+func RepeatForever() rx.Operator {
+	return Repeat(-1)
+}

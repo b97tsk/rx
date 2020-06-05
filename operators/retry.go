@@ -57,3 +57,11 @@ func Retry(count int) rx.Operator {
 		return rx.Create(obs.Subscribe)
 	}
 }
+
+// RetryForever creates an Observable that mirrors the source Observable with
+// the exception of ERROR emission. If the source Observable errors, this
+// operator will resubscribe to the source Observable rather than propagating
+// the ERROR emission.
+func RetryForever() rx.Operator {
+	return Retry(-1)
+}
