@@ -38,9 +38,6 @@ func (q *Queue) PushBack(x interface{}) {
 // PopFront removes and returns the first element. It panics if the queue
 // is empty.
 func (q *Queue) PopFront() interface{} {
-	if q.length == 0 {
-		panic("queue: PopFront() called on empty queue")
-	}
 	x := q.buf[q.head]
 	q.buf[q.head] = nil
 	q.head = (q.head + 1) % len(q.buf)
@@ -52,25 +49,16 @@ func (q *Queue) PopFront() interface{} {
 // At returns the i-th element in the queue. It panics if the queue is empty
 // or i is not between 0 and Len()-1.
 func (q *Queue) At(i int) interface{} {
-	if i < 0 || i >= q.length {
-		panic("queue: At() called with index out of range")
-	}
 	return q.buf[(q.head+i)%len(q.buf)]
 }
 
 // Front returns the first element. It panics if the queue is empty.
 func (q *Queue) Front() interface{} {
-	if q.length == 0 {
-		panic("queue: Front() called on empty queue")
-	}
 	return q.buf[q.head]
 }
 
 // Back returns the last element. It panics if the queue is empty.
 func (q *Queue) Back() interface{} {
-	if q.length == 0 {
-		panic("queue: Back() called on empty queue")
-	}
 	return q.buf[(q.tail+len(q.buf)-1)%len(q.buf)]
 }
 

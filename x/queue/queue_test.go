@@ -66,27 +66,4 @@ func TestQueue(t *testing.T) {
 	if popped != "Z" || q.Len() != 0 {
 		t.FailNow()
 	}
-
-	if notPanic(func() { q.At(0) }) {
-		t.Log("At(0) didn't panic")
-		t.FailNow()
-	}
-	if notPanic(func() { q.PopFront() }) {
-		t.Log("PopFront() didn't panic")
-		t.FailNow()
-	}
-	if notPanic(func() { q.Front() }) {
-		t.Log("Front() didn't panic")
-		t.FailNow()
-	}
-	if notPanic(func() { q.Back() }) {
-		t.Log("Back() didn't panic")
-		t.FailNow()
-	}
-}
-
-func notPanic(f func()) bool {
-	defer func() { recover() }()
-	f()
-	return true
 }
