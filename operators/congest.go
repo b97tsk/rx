@@ -73,10 +73,10 @@ func (obs congestObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 // emissions if the source emits too fast, and congests the source if the cache
 // is full.
 func Congest(bufferSize int) rx.Operator {
+	if bufferSize < 1 {
+		return noop
+	}
 	return func(source rx.Observable) rx.Observable {
-		if bufferSize < 1 {
-			return source
-		}
 		obs := congestObservable{source, bufferSize}
 		return rx.Create(obs.Subscribe)
 	}
