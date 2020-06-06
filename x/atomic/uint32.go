@@ -32,7 +32,7 @@ func (addr *Uint32) Store(val uint32) {
 	atomic.StoreUint32((*uint32)(addr), val)
 }
 
-// Sub atomically substracts delta from *addr and returns the new value.
+// Sub atomically subtracts delta from *addr and returns the new value.
 func (addr *Uint32) Sub(delta uint32) uint32 {
 	return atomic.AddUint32((*uint32)(addr), ^(delta - 1))
 }
