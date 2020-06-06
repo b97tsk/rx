@@ -1,6 +1,6 @@
 package queue
 
-const minCapacity = 4
+const smallSize = 8
 
 // Queue represents a single instance of the queue data structure. The zero
 // value for a Queue is an empty queue ready to use.
@@ -29,7 +29,10 @@ func (q *Queue) Len() int {
 
 // PushBack inserts an element at the end of the queue.
 func (q *Queue) PushBack(x interface{}) {
-	q.growIfFull()
+	if q.length == len(q.buf) { // Grow if full.
+		buf := append(q.buf, x)
+		q.setbuf(buf[:cap(buf)])
+	}
 	q.buf[q.tail] = x
 	q.tail = (q.tail + 1) % len(q.buf)
 	q.length++
@@ -40,9 +43,12 @@ func (q *Queue) PushBack(x interface{}) {
 func (q *Queue) PopFront() interface{} {
 	x := q.buf[q.head]
 	q.buf[q.head] = nil
-	q.head = (q.head + 1) % len(q.buf)
+	max := len(q.buf)
+	q.head = (q.head + 1) % max
 	q.length--
-	q.shrinkIfSparse()
+	if q.length == max/4 && max > smallSize { // Shrink if sparse.
+		q.setbuf(make([]interface{}, q.length*2))
+	}
 	return x
 }
 
@@ -59,27 +65,11 @@ func (q *Queue) Front() interface{} {
 
 // Back returns the last element. It panics if the queue is empty.
 func (q *Queue) Back() interface{} {
-	return q.buf[(q.tail+len(q.buf)-1)%len(q.buf)]
+	max := len(q.buf)
+	return q.buf[(q.tail+max-1)%max]
 }
 
-func (q *Queue) growIfFull() {
-	if q.length == len(q.buf) {
-		q.resize()
-	}
-}
-
-func (q *Queue) shrinkIfSparse() {
-	if q.length == len(q.buf)/4 && len(q.buf) > minCapacity {
-		q.resize()
-	}
-}
-
-func (q *Queue) resize() {
-	size := q.length * 2
-	if size < minCapacity {
-		size = minCapacity
-	}
-	buf := make([]interface{}, size)
+func (q *Queue) setbuf(buf []interface{}) {
 	if q.head < q.tail {
 		copy(buf, q.buf[q.head:q.tail])
 	} else {
