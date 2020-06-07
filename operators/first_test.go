@@ -9,23 +9,47 @@ import (
 )
 
 func TestFirst(t *testing.T) {
+	first := operators.First()
 	SubscribeN(
 		t,
 		[]rx.Observable{
-			rx.Empty().Pipe(operators.First()),
-			rx.Throw(ErrTest).Pipe(operators.First()),
-			rx.Just("A").Pipe(operators.First()),
-			rx.Just("A", "B").Pipe(operators.First()),
-			rx.Concat(rx.Just("A"), rx.Throw(ErrTest)).Pipe(operators.First()),
-			rx.Concat(rx.Just("A", "B"), rx.Throw(ErrTest)).Pipe(operators.First()),
+			rx.Empty().Pipe(first),
+			rx.Throw(ErrTest).Pipe(first),
+			rx.Just(1).Pipe(first),
+			rx.Just(1, 2).Pipe(first),
+			rx.Concat(rx.Just(1), rx.Throw(ErrTest)).Pipe(first),
+			rx.Concat(rx.Just(1, 2), rx.Throw(ErrTest)).Pipe(first),
 		},
 		[][]interface{}{
 			{rx.ErrEmpty},
 			{ErrTest},
-			{"A", rx.Completed},
-			{"A", rx.Completed},
-			{"A", rx.Completed},
-			{"A", rx.Completed},
+			{1, rx.Completed},
+			{1, rx.Completed},
+			{1, rx.Completed},
+			{1, rx.Completed},
+		},
+	)
+}
+
+func TestFirstOrDefault(t *testing.T) {
+	first := operators.FirstOrDefault(404)
+	SubscribeN(
+		t,
+		[]rx.Observable{
+			rx.Empty().Pipe(first),
+			rx.Throw(ErrTest).Pipe(first),
+			rx.Just(1).Pipe(first),
+			rx.Just(1, 2).Pipe(first),
+			rx.Concat(rx.Just(1), rx.Throw(ErrTest)).Pipe(first),
+			rx.Concat(rx.Just(1, 2), rx.Throw(ErrTest)).Pipe(first),
+		},
+		[][]interface{}{
+			{404, rx.Completed},
+			{ErrTest},
+			{1, rx.Completed},
+			{1, rx.Completed},
+			{1, rx.Completed},
+			{1, rx.Completed},
 		},
 	)
 }

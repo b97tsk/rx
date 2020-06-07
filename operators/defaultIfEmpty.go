@@ -12,7 +12,7 @@ import (
 //
 // If the source Observable turns out to be empty, then this operator will emit
 // a default value.
-func DefaultIfEmpty(defaultValue interface{}) rx.Operator {
+func DefaultIfEmpty(def interface{}) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		return func(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
 			var hasValue bool
@@ -25,7 +25,7 @@ func DefaultIfEmpty(defaultValue interface{}) rx.Operator {
 					sink(t)
 				default:
 					if !hasValue {
-						sink.Next(defaultValue)
+						sink.Next(def)
 					}
 					sink(t)
 				}
