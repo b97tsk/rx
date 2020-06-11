@@ -17,10 +17,7 @@ type Subject struct {
 // NewSubject creates a new Subject.
 func NewSubject() Subject {
 	s := new(subject)
-	return Subject{
-		Observable: Create(s.subscribe),
-		Observer:   s.sink,
-	}
+	return Subject{Create(s.subscribe), s.sink}
 }
 
 type subject struct {
@@ -65,13 +62,8 @@ func (s *subject) sink(t Notification) {
 func (s *subject) subscribe(ctx context.Context, sink Observer) {
 	s.mux.Lock()
 
-	if err := s.err; err != nil {
-		if err != Completed {
-			sink.Error(err)
-		} else {
-			sink.Complete()
-		}
-	} else {
+	err := s.err
+	if err == nil {
 		observer := Mutex(sink)
 		s.observers.Append(&observer)
 
@@ -87,4 +79,12 @@ func (s *subject) subscribe(ctx context.Context, sink Observer) {
 	}
 
 	s.mux.Unlock()
+
+	if err != nil {
+		if err != Completed {
+			sink.Error(err)
+		} else {
+			sink.Complete()
+		}
+	}
 }

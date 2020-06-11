@@ -31,8 +31,7 @@ type behaviorSubjectElement struct {
 // NewBehaviorSubject creates a new BehaviorSubject.
 func NewBehaviorSubject(val interface{}) BehaviorSubject {
 	s := new(behaviorSubject)
-	s.Observable = Create(s.subscribe)
-	s.Observer = s.sink
+	s.Subject = Subject{Create(s.subscribe), s.sink}
 	s.val.Store(behaviorSubjectElement{val})
 	return BehaviorSubject{s}
 }
@@ -44,10 +43,10 @@ func (s BehaviorSubject) Exists() bool {
 
 // Value returns the latest value stored in this BehaviorSubject.
 func (s BehaviorSubject) Value() interface{} {
-	return s.getValue()
+	return s.value()
 }
 
-func (s *behaviorSubject) getValue() interface{} {
+func (s *behaviorSubject) value() interface{} {
 	return s.val.Load().(behaviorSubjectElement).Value
 }
 
@@ -86,14 +85,8 @@ func (s *behaviorSubject) sink(t Notification) {
 func (s *behaviorSubject) subscribe(ctx context.Context, sink Observer) {
 	s.mux.Lock()
 
-	if err := s.err; err != nil {
-		if err != Completed {
-			sink.Error(err)
-		} else {
-			sink.Next(s.getValue())
-			sink.Complete()
-		}
-	} else {
+	err := s.err
+	if err == nil {
 		observer := Mutex(sink)
 		s.observers.Append(&observer)
 
@@ -107,8 +100,17 @@ func (s *behaviorSubject) subscribe(ctx context.Context, sink Observer) {
 			s.cws = misc.NewContextWaitService()
 		}
 
-		sink.Next(s.getValue())
+		sink.Next(s.value())
 	}
 
 	s.mux.Unlock()
+
+	if err != nil {
+		if err != Completed {
+			sink.Error(err)
+		} else {
+			sink.Next(s.value())
+			sink.Complete()
+		}
+	}
 }

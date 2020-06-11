@@ -38,8 +38,7 @@ func NewReplaySubject(bufferSize int, windowTime time.Duration) ReplaySubject {
 		BufferSize: bufferSize,
 		WindowTime: windowTime,
 	}
-	s.Observable = Create(s.subscribe)
-	s.Observer = s.sink
+	s.Subject = Subject{Create(s.subscribe), s.sink}
 	return ReplaySubject{s}
 }
 
@@ -108,21 +107,8 @@ func (s *replaySubject) sink(t Notification) {
 func (s *replaySubject) subscribe(ctx context.Context, sink Observer) {
 	s.mux.Lock()
 
-	if err := s.err; err != nil {
-		if err != Completed {
-			sink.Error(err)
-		} else {
-			s.trimBuffer()
-			for i, j := 0, s.buffer.Len(); i < j; i++ {
-				if ctx.Err() != nil {
-					s.mux.Unlock()
-					return
-				}
-				sink.Next(s.buffer.At(i).(replaySubjectElement).Value)
-			}
-			sink.Complete()
-		}
-	} else {
+	err := s.err
+	if err == nil {
 		observer := Mutex(sink)
 		s.observers.Append(&observer)
 
@@ -135,16 +121,25 @@ func (s *replaySubject) subscribe(ctx context.Context, sink Observer) {
 		for s.cws == nil || !s.cws.Submit(ctx, finalize) {
 			s.cws = misc.NewContextWaitService()
 		}
+	}
 
-		s.trimBuffer()
+	s.trimBuffer()
 
-		for i, j := 0, s.buffer.Len(); i < j; i++ {
-			if ctx.Err() != nil {
-				break
-			}
-			sink.Next(s.buffer.At(i).(replaySubjectElement).Value)
+	for i, j := 0, s.buffer.Len(); i < j; i++ {
+		if ctx.Err() != nil {
+			s.mux.Unlock()
+			return
 		}
+		sink.Next(s.buffer.At(i).(replaySubjectElement).Value)
 	}
 
 	s.mux.Unlock()
+
+	if err != nil {
+		if err != Completed {
+			sink.Error(err)
+		} else {
+			sink.Complete()
+		}
+	}
 }
