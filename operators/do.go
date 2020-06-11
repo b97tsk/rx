@@ -8,12 +8,12 @@ import (
 
 // Do creates an Observable that mirrors the source Observable, but performs
 // a side effect before each emission.
-func Do(sink rx.Observer) rx.Operator {
+func Do(tap rx.Observer) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
-		return func(ctx context.Context, notify rx.Observer) (context.Context, context.CancelFunc) {
+		return func(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
 			return source.Subscribe(ctx, func(t rx.Notification) {
+				tap(t)
 				sink(t)
-				notify(t)
 			})
 		}
 	}
