@@ -19,7 +19,7 @@ type ReplaySubject struct {
 type replaySubject struct {
 	Subject
 	mux        sync.Mutex
-	observers  observerList
+	lst        observerList
 	cws        misc.ContextWaitService
 	err        error
 	buffer     queue.Queue
@@ -71,7 +71,8 @@ func (s *replaySubject) sink(t Notification) {
 		s.mux.Unlock()
 
 	case t.HasValue:
-		observers, releaseRef := s.observers.AddRef()
+		lst := s.lst.Clone()
+		defer lst.Release()
 
 		var deadline time.Time
 		if s.WindowTime > 0 {
@@ -82,23 +83,24 @@ func (s *replaySubject) sink(t Notification) {
 
 		s.mux.Unlock()
 
-		for _, observer := range observers {
+		for _, observer := range lst.Observers {
 			observer.Sink(t)
 		}
 
-		releaseRef()
-
 	default:
-		observers := s.observers.Swap(nil)
+		var lst observerList
+		s.lst.Swap(&lst)
+
 		if t.HasError {
 			s.err = t.Error
 			s.buffer.Init()
 		} else {
 			s.err = Completed
 		}
+
 		s.mux.Unlock()
 
-		for _, observer := range observers {
+		for _, observer := range lst.Observers {
 			observer.Sink(t)
 		}
 	}
@@ -110,11 +112,11 @@ func (s *replaySubject) subscribe(ctx context.Context, sink Observer) {
 	err := s.err
 	if err == nil {
 		observer := Mutex(sink)
-		s.observers.Append(&observer)
+		s.lst.Append(&observer)
 
 		finalize := func() {
 			s.mux.Lock()
-			s.observers.Remove(&observer)
+			s.lst.Remove(&observer)
 			s.mux.Unlock()
 		}
 

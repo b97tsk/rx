@@ -17,11 +17,11 @@ type BehaviorSubject struct {
 
 type behaviorSubject struct {
 	Subject
-	mux       sync.Mutex
-	observers observerList
-	cws       misc.ContextWaitService
-	err       error
-	val       atomic.Value
+	mux sync.Mutex
+	lst observerList
+	cws misc.ContextWaitService
+	err error
+	val atomic.Value
 }
 
 type behaviorSubjectElement struct {
@@ -57,26 +57,30 @@ func (s *behaviorSubject) sink(t Notification) {
 		s.mux.Unlock()
 
 	case t.HasValue:
-		observers, releaseRef := s.observers.AddRef()
+		lst := s.lst.Clone()
+		defer lst.Release()
+
 		s.val.Store(behaviorSubjectElement{t.Value})
+
 		s.mux.Unlock()
 
-		for _, observer := range observers {
+		for _, observer := range lst.Observers {
 			observer.Sink(t)
 		}
 
-		releaseRef()
-
 	default:
-		observers := s.observers.Swap(nil)
+		var lst observerList
+		s.lst.Swap(&lst)
+
 		if t.HasError {
 			s.err = t.Error
 		} else {
 			s.err = Completed
 		}
+
 		s.mux.Unlock()
 
-		for _, observer := range observers {
+		for _, observer := range lst.Observers {
 			observer.Sink(t)
 		}
 	}
@@ -88,11 +92,11 @@ func (s *behaviorSubject) subscribe(ctx context.Context, sink Observer) {
 	err := s.err
 	if err == nil {
 		observer := Mutex(sink)
-		s.observers.Append(&observer)
+		s.lst.Append(&observer)
 
 		finalize := func() {
 			s.mux.Lock()
-			s.observers.Remove(&observer)
+			s.lst.Remove(&observer)
 			s.mux.Unlock()
 		}
 

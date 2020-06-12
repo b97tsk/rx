@@ -5,53 +5,63 @@ import (
 )
 
 type observerList struct {
-	observers []*Observer
-	refs      *atomic.Uint32
+	Observers []*Observer
+
+	refs *atomic.Uint32
 }
 
-func (list *observerList) AddRef() ([]*Observer, func()) {
-	refs := list.refs
+func (lst *observerList) Clone() observerList {
+	refs := lst.refs
 	if refs == nil {
 		refs = new(atomic.Uint32)
-		list.refs = refs
+		lst.refs = refs
 	}
 	refs.Add(1)
-	return list.observers, func() { refs.Sub(1) }
+	return observerList{lst.Observers, refs}
 }
 
-func (list *observerList) Append(observer *Observer) {
-	if list.refs == nil || list.refs.Equals(0) {
-		list.observers = append(list.observers, observer)
+func (lst *observerList) Release() {
+	refs := lst.refs
+	if refs != nil {
+		refs.Sub(1)
+		lst.refs = nil
+	}
+}
+
+func (lst *observerList) Append(observer *Observer) {
+	refs := lst.refs
+	if refs == nil || refs.Equals(0) {
+		lst.Observers = append(lst.Observers, observer)
 		return
 	}
-	n := len(list.observers)
-	list.observers = append(list.observers[:n:n], observer)
-	list.refs = nil
+	observers := lst.Observers
+	n := len(observers)
+	lst.Observers = append(observers[:n:n], observer)
+	lst.refs = nil
 }
 
-func (list *observerList) Remove(observer *Observer) {
-	for i, sink := range list.observers {
+func (lst *observerList) Remove(observer *Observer) {
+	observers := lst.Observers
+	for i, sink := range observers {
 		if sink == observer {
-			observers := list.observers
-			if list.refs != nil && !list.refs.Equals(0) {
-				newObservers := make([]*Observer, len(observers))
-				copy(newObservers, observers)
-				observers = newObservers
-				list.refs = nil
-			}
-			copy(observers[i:], observers[i+1:])
 			n := len(observers)
-			observers[n-1] = nil
-			list.observers = observers[:n-1]
+			refs := lst.refs
+			if refs == nil || refs.Equals(0) {
+				copy(observers[i:], observers[i+1:])
+				observers[n-1] = nil
+				lst.Observers = observers[:n-1]
+			} else {
+				newObservers := make([]*Observer, n-1, n)
+				copy(newObservers, observers[:i])
+				copy(newObservers[i:], observers[i+1:])
+				lst.Observers = newObservers
+				lst.refs = nil
+			}
 			break
 		}
 	}
 }
 
-func (list *observerList) Swap(observers []*Observer) []*Observer {
-	observers, list.observers = list.observers, observers
-	if list.refs != nil && !list.refs.Equals(0) {
-		list.refs = nil
-	}
-	return observers
+func (lst *observerList) Swap(other *observerList) {
+	*lst, *other = *other, *lst
 }
