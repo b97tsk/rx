@@ -23,8 +23,8 @@ type replaySubject struct {
 	cws        misc.ContextWaitService
 	err        error
 	buffer     queue.Queue
-	BufferSize int
-	WindowTime time.Duration
+	bufferSize int
+	windowTime time.Duration
 }
 
 type replaySubjectElement struct {
@@ -35,8 +35,8 @@ type replaySubjectElement struct {
 // NewReplaySubject creates a new ReplaySubject.
 func NewReplaySubject(bufferSize int, windowTime time.Duration) ReplaySubject {
 	s := &replaySubject{
-		BufferSize: bufferSize,
-		WindowTime: windowTime,
+		bufferSize: bufferSize,
+		windowTime: windowTime,
 	}
 	s.Subject = Subject{Create(s.subscribe), s.sink}
 	return ReplaySubject{s}
@@ -47,8 +47,18 @@ func (s ReplaySubject) Exists() bool {
 	return s.replaySubject != nil
 }
 
+// BufferSize returns current buffer size setting.
+func (s ReplaySubject) BufferSize() int {
+	return s.bufferSize
+}
+
+// WindowTime returns current window time setting.
+func (s ReplaySubject) WindowTime() time.Duration {
+	return s.windowTime
+}
+
 func (s *replaySubject) trimBuffer() {
-	if s.WindowTime > 0 {
+	if s.windowTime > 0 {
 		now := time.Now()
 		for s.buffer.Len() > 0 {
 			if s.buffer.Front().(replaySubjectElement).Deadline.After(now) {
@@ -57,8 +67,8 @@ func (s *replaySubject) trimBuffer() {
 			s.buffer.PopFront()
 		}
 	}
-	if s.BufferSize > 0 {
-		for s.buffer.Len() > s.BufferSize {
+	if s.bufferSize > 0 {
+		for s.buffer.Len() > s.bufferSize {
 			s.buffer.PopFront()
 		}
 	}
@@ -75,8 +85,8 @@ func (s *replaySubject) sink(t Notification) {
 		defer lst.Release()
 
 		var deadline time.Time
-		if s.WindowTime > 0 {
-			deadline = time.Now().Add(s.WindowTime)
+		if s.windowTime > 0 {
+			deadline = time.Now().Add(s.windowTime)
 		}
 		s.buffer.PushBack(replaySubjectElement{deadline, t.Value})
 		s.trimBuffer()
