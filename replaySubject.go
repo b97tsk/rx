@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/b97tsk/rx/x/atomic"
 	"github.com/b97tsk/rx/x/misc"
 	"github.com/b97tsk/rx/x/queue"
 )
@@ -23,6 +24,7 @@ type replaySubject struct {
 	cws        misc.ContextWaitService
 	err        error
 	buffer     queue.Queue
+	bufferRefs *atomic.Uint32
 	bufferSize int
 	windowTime time.Duration
 }
@@ -57,19 +59,44 @@ func (s ReplaySubject) WindowTime() time.Duration {
 	return s.windowTime
 }
 
-func (s *replaySubject) trimBuffer() {
+func (s *replaySubject) bufferForRead() (queue.Queue, *atomic.Uint32) {
+	refs := s.bufferRefs
+	if refs == nil {
+		refs = new(atomic.Uint32)
+		s.bufferRefs = refs
+	}
+	refs.Add(1)
+	return s.buffer, refs
+}
+
+func (s *replaySubject) bufferForWrite() *queue.Queue {
+	refs := s.bufferRefs
+	if refs != nil && !refs.Equals(0) {
+		s.buffer = s.buffer.Clone()
+		s.bufferRefs = nil
+	}
+	return &s.buffer
+}
+
+func (s *replaySubject) trimBuffer(b *queue.Queue) {
 	if s.windowTime > 0 {
+		if b == nil {
+			b = s.bufferForWrite()
+		}
 		now := time.Now()
-		for s.buffer.Len() > 0 {
-			if s.buffer.Front().(replaySubjectElement).Deadline.After(now) {
+		for b.Len() > 0 {
+			if b.Front().(replaySubjectElement).Deadline.After(now) {
 				break
 			}
-			s.buffer.PopFront()
+			b.PopFront()
 		}
 	}
 	if s.bufferSize > 0 {
-		for s.buffer.Len() > s.bufferSize {
-			s.buffer.PopFront()
+		if b == nil {
+			b = s.bufferForWrite()
+		}
+		for b.Len() > s.bufferSize {
+			b.PopFront()
 		}
 	}
 }
@@ -88,8 +115,9 @@ func (s *replaySubject) sink(t Notification) {
 		if s.windowTime > 0 {
 			deadline = time.Now().Add(s.windowTime)
 		}
-		s.buffer.PushBack(replaySubjectElement{deadline, t.Value})
-		s.trimBuffer()
+		b := s.bufferForWrite()
+		b.PushBack(replaySubjectElement{deadline, t.Value})
+		s.trimBuffer(b)
 
 		s.mux.Unlock()
 
@@ -135,17 +163,19 @@ func (s *replaySubject) subscribe(ctx context.Context, sink Observer) {
 		}
 	}
 
-	s.trimBuffer()
+	s.trimBuffer(nil)
 
-	for i, j := 0, s.buffer.Len(); i < j; i++ {
-		if ctx.Err() != nil {
-			s.mux.Unlock()
-			return
-		}
-		sink.Next(s.buffer.At(i).(replaySubjectElement).Value)
-	}
+	b, refs := s.bufferForRead()
+	defer refs.Sub(1)
 
 	s.mux.Unlock()
+
+	for i, j := 0, b.Len(); i < j; i++ {
+		if ctx.Err() != nil {
+			return
+		}
+		sink.Next(b.At(i).(replaySubjectElement).Value)
+	}
 
 	if err != nil {
 		if err != Completed {
