@@ -14,12 +14,6 @@ func TestQueue(t *testing.T) {
 		t.FailNow()
 	}
 
-	q.Init()
-	if q.Len() != 0 {
-		t.Logf("Init: Len=%v Cap=%v", q.Len(), q.Cap())
-		t.FailNow()
-	}
-
 	for _, r := range "ABCDEFGHIJKLM" {
 		r := string(r)
 		q.PushBack(r)
@@ -30,20 +24,28 @@ func TestQueue(t *testing.T) {
 	}
 	for _, r := range "ABCDEFG" {
 		r := string(r)
-		popped := q.PopFront()
-		t.Logf("PopFront(%v): Len=%v Cap=%v Front=%v Back=%v", popped, q.Len(), q.Cap(), q.Front(), q.Back())
-		if popped != r {
+		v := q.PopFront()
+		t.Logf("PopFront(%v): Len=%v Cap=%v Front=%v Back=%v", v, q.Len(), q.Cap(), q.Front(), q.Back())
+		if v != r {
 			t.FailNow()
 		}
 	}
+
+	cloned := q.Clone()
 	for i, r := range "HIJKLM" {
 		r := string(r)
-		ith := q.At(i)
+		ith := cloned.At(i)
 		if ith != r {
 			t.Logf("At(%v): %v expected, but got %v", i, r, ith)
 			t.FailNow()
 		}
 	}
+	cloned.Init()
+	if cloned.Len() != 0 {
+		t.Logf("Reset(nil): Len=%v Cap=%v", cloned.Len(), cloned.Cap())
+		t.FailNow()
+	}
+
 	for _, r := range "NOPQRSTUVWXYZ" {
 		r := string(r)
 		q.PushBack(r)
@@ -54,16 +56,16 @@ func TestQueue(t *testing.T) {
 	}
 	for _, r := range "HIJKLMNOPQRSTUVWXY" {
 		r := string(r)
-		popped := q.PopFront()
-		t.Logf("PopFront(%v): Len=%v Cap=%v Front=%v Back=%v", popped, q.Len(), q.Cap(), q.Front(), q.Back())
-		if popped != r {
+		v := q.PopFront()
+		t.Logf("PopFront(%v): Len=%v Cap=%v Front=%v Back=%v", v, q.Len(), q.Cap(), q.Front(), q.Back())
+		if v != r {
 			t.FailNow()
 		}
 	}
 
-	popped := q.PopFront()
-	t.Logf("PopFront(%v): Len=%v Cap=%v", popped, q.Len(), q.Cap())
-	if popped != "Z" || q.Len() != 0 {
+	v := q.PopFront()
+	t.Logf("PopFront(%v): Len=%v Cap=%v", v, q.Len(), q.Cap())
+	if v != "Z" || q.Len() != 0 {
 		t.FailNow()
 	}
 }

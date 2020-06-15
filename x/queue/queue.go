@@ -11,7 +11,7 @@ type Queue struct {
 	length int
 }
 
-// Init initializes or clears the queue.
+// Init initializes or clears the Queue.
 func (q *Queue) Init() {
 	*q = Queue{}
 }
@@ -22,12 +22,12 @@ func (q *Queue) Cap() int {
 	return len(q.buf)
 }
 
-// Len returns the number of elements currently stored in the queue.
+// Len returns the number of elements currently stored in the Queue.
 func (q *Queue) Len() int {
 	return q.length
 }
 
-// PushBack inserts an element at the end of the queue.
+// PushBack inserts an element at the end of the Queue.
 func (q *Queue) PushBack(x interface{}) {
 	if q.length == len(q.buf) { // Grow if full.
 		buf := append(q.buf, x)
@@ -38,7 +38,7 @@ func (q *Queue) PushBack(x interface{}) {
 	q.length++
 }
 
-// PopFront removes and returns the first element. It panics if the queue
+// PopFront removes and returns the first element. It panics if the Queue
 // is empty.
 func (q *Queue) PopFront() interface{} {
 	x := q.buf[q.head]
@@ -52,24 +52,23 @@ func (q *Queue) PopFront() interface{} {
 	return x
 }
 
-// At returns the i-th element in the queue. It panics if the queue is empty
-// or i is not between 0 and Len()-1.
+// At returns the i-th element in the Queue. It panics if i is out of range.
 func (q *Queue) At(i int) interface{} {
 	return q.buf[(q.head+i)%len(q.buf)]
 }
 
-// Front returns the first element. It panics if the queue is empty.
+// Front returns the first element. It panics if the Queue is empty.
 func (q *Queue) Front() interface{} {
 	return q.buf[q.head]
 }
 
-// Back returns the last element. It panics if the queue is empty.
+// Back returns the last element. It panics if the Queue is empty.
 func (q *Queue) Back() interface{} {
 	max := len(q.buf)
 	return q.buf[(q.tail+max-1)%max]
 }
 
-// Copy copies elements of the queue into a destination slice. Copy returns
+// Copy copies elements of the Queue into a destination slice. Copy returns
 // the number of elements copied, which will be the minimum of q.Len() and
 // len(dst).
 func (q *Queue) Copy(dst []interface{}) int {
@@ -78,6 +77,16 @@ func (q *Queue) Copy(dst []interface{}) int {
 	}
 	n := copy(dst, q.buf[q.head:])
 	return n + copy(dst[n:], q.buf[:q.tail])
+}
+
+// Clone clones the Queue.
+func (q *Queue) Clone() Queue {
+	var b []interface{}
+	if q.length > 0 {
+		b = make([]interface{}, q.length, len(q.buf))
+		q.Copy(b)
+	}
+	return Queue{b, 0, len(b), len(b)}
 }
 
 func (q *Queue) setbuf(buf []interface{}) {
