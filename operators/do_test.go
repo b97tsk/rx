@@ -102,7 +102,7 @@ func TestDoOnComplete(t *testing.T) {
 
 func TestDoAtLast(t *testing.T) {
 	n := 0
-	op := operators.DoAtLast(func(rx.Notification) { n++ })
+	op := operators.DoAtLast(func(error) { n++ })
 	obs := rx.Defer(func() rx.Observable { return rx.Just(n) })
 	SubscribeN(
 		t,

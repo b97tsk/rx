@@ -71,7 +71,7 @@ func DoOnComplete(onComplete func()) rx.Operator {
 // DoAtLast creates an Observable that mirrors the source Observable, in the
 // case that an ERROR or COMPLETE emission is mirrored, makes a call to the
 // specified function.
-func DoAtLast(atLast func(rx.Notification)) rx.Operator {
+func DoAtLast(atLast func(error)) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		return func(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
 			return source.Subscribe(ctx, func(t rx.Notification) {
@@ -79,8 +79,12 @@ func DoAtLast(atLast func(rx.Notification)) rx.Operator {
 					sink(t)
 					return
 				}
+				var e error
+				if t.HasError {
+					e = t.Error
+				}
 				sink(t)
-				atLast(t)
+				atLast(e)
 			})
 		}
 	}
