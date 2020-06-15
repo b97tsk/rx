@@ -7,11 +7,11 @@ import (
 
 // Ticker creates an Observable that emits time.Time values every specified
 // interval of time.
-func Ticker(duration time.Duration) Observable {
+func Ticker(d time.Duration) Observable {
 	return Create(
 		func(ctx context.Context, sink Observer) {
 			go func() {
-				ticker := time.NewTicker(duration)
+				ticker := time.NewTicker(d)
 				defer ticker.Stop()
 				done := ctx.Done()
 				for {
@@ -29,11 +29,11 @@ func Ticker(duration time.Duration) Observable {
 
 // Timer creates an Observable that emits only a time.Time value after
 // a particular time span has passed.
-func Timer(duration time.Duration) Observable {
+func Timer(d time.Duration) Observable {
 	return Create(
 		func(ctx context.Context, sink Observer) {
 			go func() {
-				timer := time.NewTimer(duration)
+				timer := time.NewTimer(d)
 				defer timer.Stop()
 				select {
 				case <-ctx.Done():

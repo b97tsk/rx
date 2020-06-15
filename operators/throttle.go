@@ -135,9 +135,9 @@ func Throttle(durationSelector func(interface{}) rx.Observable) rx.Operator {
 //
 // ThrottleTime lets a value pass, then ignores source values for the next
 // duration time.
-func ThrottleTime(duration time.Duration) rx.Operator {
+func ThrottleTime(d time.Duration) rx.Operator {
 	return ThrottleTimeConfigure{
-		Duration: duration,
+		Duration: d,
 		Leading:  true,
 		Trailing: false,
 	}.Use()

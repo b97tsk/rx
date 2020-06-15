@@ -92,9 +92,9 @@ func (obs delayObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 
 // Delay delays the emission of items from the source Observable by a given
 // timeout.
-func Delay(timeout time.Duration) rx.Operator {
+func Delay(d time.Duration) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
-		obs := delayObservable{source, timeout}
+		obs := delayObservable{source, d}
 		return rx.Create(obs.Subscribe)
 	}
 }

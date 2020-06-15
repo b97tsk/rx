@@ -74,6 +74,6 @@ func (obs timeoutObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 
 // Timeout creates an Observable that mirrors the source Observable or notify
 // of an ErrTimeout if the source does not emit a value in given time span.
-func Timeout(duration time.Duration) rx.Operator {
-	return TimeoutConfigure{Duration: duration}.Use()
+func Timeout(d time.Duration) rx.Operator {
+	return TimeoutConfigure{Duration: d}.Use()
 }

@@ -12,11 +12,11 @@ func Range(low, high int) Observable {
 	}
 	return Create(
 		func(ctx context.Context, sink Observer) {
-			for index := low; index < high; index++ {
+			for idx := low; idx < high; idx++ {
 				if ctx.Err() != nil {
 					return
 				}
-				sink.Next(index)
+				sink.Next(idx)
 			}
 			sink.Complete()
 		},

@@ -60,12 +60,12 @@ func Reduce(accumulator func(interface{}, interface{}, int) interface{}) rx.Oper
 // completes, given an initial value.
 //
 // It's like Reduce, but you could specify an initial value.
-func Fold(initialValue interface{}, accumulator func(interface{}, interface{}, int) interface{}) rx.Operator {
+func Fold(init interface{}, accumulator func(interface{}, interface{}, int) interface{}) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		return reduceObservable{
 			Source:      source,
 			Accumulator: accumulator,
-			Seed:        initialValue,
+			Seed:        init,
 			HasSeed:     true,
 		}.Subscribe
 	}

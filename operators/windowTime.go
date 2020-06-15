@@ -131,6 +131,6 @@ func (obs windowTimeObservable) Subscribe(ctx context.Context, sink rx.Observer)
 // periodically in time.
 //
 // It's like BufferTime, but emits a nested Observable instead of a slice.
-func WindowTime(timeSpan time.Duration) rx.Operator {
-	return WindowTimeConfigure{TimeSpan: timeSpan}.Use()
+func WindowTime(d time.Duration) rx.Operator {
+	return WindowTimeConfigure{TimeSpan: d}.Use()
 }

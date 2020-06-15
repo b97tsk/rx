@@ -44,8 +44,8 @@ type kontext struct {
 }
 
 func (k *kontext) Err() error {
-	if err := k.err.Load(); err != nil {
-		return err.(error)
+	if x := k.err.Load(); x != nil {
+		return x.(error)
 	}
 	return k.Context.Err()
 }

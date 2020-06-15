@@ -132,6 +132,6 @@ func (obs bufferTimeObservable) Subscribe(ctx context.Context, sink rx.Observer)
 //
 // BufferTime collects values from the past as a slice, and emits those slices
 // periodically in time.
-func BufferTime(timeSpan time.Duration) rx.Operator {
-	return BufferTimeConfigure{TimeSpan: timeSpan}.Use()
+func BufferTime(d time.Duration) rx.Operator {
+	return BufferTimeConfigure{TimeSpan: d}.Use()
 }

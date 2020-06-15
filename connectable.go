@@ -25,16 +25,16 @@ type connectableObservable struct {
 }
 
 func newConnectableObservable(source Observable, subjectFactory func() Subject) ConnectableObservable {
-	connectable := &connectableObservable{
+	obs := &connectableObservable{
 		source:         source,
 		subjectFactory: subjectFactory,
 	}
-	connectable.Observable = Observable(
+	obs.Observable = Observable(
 		func(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
-			return connectable.getSubject().Subscribe(ctx, sink)
+			return obs.getSubject().Subscribe(ctx, sink)
 		},
 	)
-	return ConnectableObservable{connectable}
+	return ConnectableObservable{obs}
 }
 
 // Exists reports if this ConnectableObservable is ready to use.
