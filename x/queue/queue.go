@@ -69,13 +69,19 @@ func (q *Queue) Back() interface{} {
 	return q.buf[(q.tail+max-1)%max]
 }
 
-func (q *Queue) setbuf(buf []interface{}) {
+// Copy copies elements of the queue into a destination slice. Copy returns
+// the number of elements copied, which will be the minimum of q.Len() and
+// len(dst).
+func (q *Queue) Copy(dst []interface{}) int {
 	if q.head < q.tail {
-		copy(buf, q.buf[q.head:q.tail])
-	} else {
-		n := copy(buf, q.buf[q.head:])
-		copy(buf[n:], q.buf[:q.tail])
+		return copy(dst, q.buf[q.head:q.tail])
 	}
+	n := copy(dst, q.buf[q.head:])
+	return n + copy(dst[n:], q.buf[:q.tail])
+}
+
+func (q *Queue) setbuf(buf []interface{}) {
+	q.Copy(buf)
 	q.buf = buf
 	q.head = 0
 	q.tail = q.length
