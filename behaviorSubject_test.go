@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/b97tsk/rx"
+	. "github.com/b97tsk/rx/internal/rxtest"
 	"github.com/b97tsk/rx/operators"
-	. "github.com/b97tsk/rx/testing"
 )
 
 func TestBehaviorSubject(t *testing.T) {

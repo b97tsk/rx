@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/b97tsk/rx"
-	. "github.com/b97tsk/rx/testing"
+	. "github.com/b97tsk/rx/internal/rxtest"
 )
 
 func TestCongestingZip(t *testing.T) {

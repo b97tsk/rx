@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/b97tsk/rx"
-	. "github.com/b97tsk/rx/testing"
+	. "github.com/b97tsk/rx/internal/rxtest"
 )
 
 func TestReplaySubject(t *testing.T) {
