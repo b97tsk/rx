@@ -76,51 +76,51 @@ func SubscribeN(t *testing.T, observables []rx.Observable, outputs [][]interface
 		output := outputs[i]
 		source.BlockingSubscribe(
 			context.Background(),
-			func(x rx.Notification) {
+			func(u rx.Notification) {
 				if len(output) == 0 {
 					switch {
-					case x.HasValue:
-						t.Logf("expect nothing, but got %v", x.Value)
-					case x.HasError:
-						t.Logf("expect nothing, but got %v", x.Error)
+					case u.HasValue:
+						t.Logf("want nothing, but got %v", u.Value)
+					case u.HasError:
+						t.Logf("want nothing, but got %v", u.Error)
 					default:
-						t.Log("expect nothing, but got completed")
+						t.Log("want nothing, but got completed")
 					}
 					t.Fail()
 					return
 				}
 
-				expected := output[0]
+				wanted := output[0]
 				output = output[1:]
 
 				switch {
-				case x.HasValue:
-					if expected != x.Value {
-						t.Logf("expect %v, but got %v", expected, x.Value)
+				case u.HasValue:
+					if wanted != u.Value {
+						t.Logf("want %v, but got %v", wanted, u.Value)
 						t.Fail()
 					} else {
-						t.Logf("expect %v", expected)
+						t.Logf("want %v", wanted)
 					}
-				case x.HasError:
-					if expected != x.Error {
-						t.Logf("expect %v, but got %v", expected, x.Error)
+				case u.HasError:
+					if wanted != u.Error {
+						t.Logf("want %v, but got %v", wanted, u.Error)
 						t.Fail()
 					} else {
-						t.Logf("expect %v", expected)
+						t.Logf("want %v", wanted)
 					}
 				default:
-					if expected != rx.Completed {
-						t.Logf("expect %v, but got completed", expected)
+					if wanted != rx.Completed {
+						t.Logf("want %v, but got completed", wanted)
 						t.Fail()
 					} else {
-						t.Log("expect completed")
+						t.Log("want completed")
 					}
 				}
 			},
 		)
 		if len(output) > 0 {
-			for _, expected := range output {
-				t.Logf("expect %v, but got nothing", expected)
+			for _, wanted := range output {
+				t.Logf("want %v, but got nothing", wanted)
 			}
 			t.Fail()
 		}
