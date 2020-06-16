@@ -46,10 +46,10 @@ func (obs flatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	obs.Source.Subscribe(ctx, observer.Sink)
 }
 
-// Flat creates an Observable that flattens a higher-order Observable into
+// FlatAll creates an Observable that flattens a higher-order Observable into
 // a first-order Observable, by applying a flat function to those Observables
 // emitted by the higher-order Observable, and starts subscribing to it.
-func Flat(flat func(observables ...rx.Observable) rx.Observable) rx.Operator {
+func FlatAll(flat func(observables ...rx.Observable) rx.Observable) rx.Operator {
 	return FlatMap(flat, func(val interface{}, idx int) (rx.Observable, error) {
 		if obs, ok := val.(rx.Observable); ok {
 			return obs, nil
