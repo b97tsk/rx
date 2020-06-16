@@ -3,7 +3,6 @@ package operators
 import (
 	"context"
 	"sync"
-	"time"
 
 	"github.com/b97tsk/rx"
 	"github.com/b97tsk/rx/internal/misc"
@@ -96,20 +95,6 @@ func Share(subjectFactory func() rx.Subject) rx.Operator {
 		obs := shareObservable{
 			source:         source,
 			subjectFactory: subjectFactory,
-		}
-		return obs.Subscribe
-	}
-}
-
-// ShareReplay is like Share, but it uses a ReplaySubject instead.
-func ShareReplay(bufferSize int, windowTime time.Duration) rx.Operator {
-	return func(source rx.Observable) rx.Observable {
-		newSubject := func() rx.Subject {
-			return rx.NewReplaySubject(bufferSize, windowTime).Subject
-		}
-		obs := shareObservable{
-			source:         source,
-			subjectFactory: newSubject,
 		}
 		return obs.Subscribe
 	}
