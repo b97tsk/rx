@@ -29,22 +29,24 @@ type scanObservable struct {
 }
 
 func (obs scanObservable) Subscribe(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
-	seed := obs.Seed
-	hasSeed := obs.HasSeed
 	sourceIndex := -1
+	acc := struct {
+		Value    interface{}
+		HasValue bool
+	}{obs.Seed, obs.HasSeed}
 	return obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		switch {
 		case t.HasValue:
 			sourceIndex++
 
-			if hasSeed {
-				seed = obs.Accumulator(seed, t.Value, sourceIndex)
+			if acc.HasValue {
+				acc.Value = obs.Accumulator(acc.Value, t.Value, sourceIndex)
 			} else {
-				seed = t.Value
-				hasSeed = true
+				acc.Value = t.Value
+				acc.HasValue = true
 			}
 
-			sink.Next(seed)
+			sink.Next(acc.Value)
 
 		default:
 			sink(t)

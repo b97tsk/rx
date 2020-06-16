@@ -14,8 +14,10 @@ type sampleObservable struct {
 
 func (obs sampleObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	type X struct {
-		LatestValue    interface{}
-		HasLatestValue bool
+		Latest struct {
+			Value    interface{}
+			HasValue bool
+		}
 	}
 	cx := make(chan *X, 1)
 	cx <- &X{}
@@ -27,9 +29,9 @@ func (obs sampleObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 				sink(t)
 				return
 			}
-			if x.HasLatestValue {
-				sink.Next(x.LatestValue)
-				x.HasLatestValue = false
+			if x.Latest.HasValue {
+				sink.Next(x.Latest.Value)
+				x.Latest.HasValue = false
 			}
 			cx <- x
 		}
@@ -43,8 +45,8 @@ func (obs sampleObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
-				x.LatestValue = t.Value
-				x.HasLatestValue = true
+				x.Latest.Value = t.Value
+				x.Latest.HasValue = true
 				cx <- x
 			default:
 				close(cx)

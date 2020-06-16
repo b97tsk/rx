@@ -50,8 +50,10 @@ type throttleObservable struct {
 
 func (obs throttleObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	type X struct {
-		TrailingValue    interface{}
-		HasTrailingValue bool
+		Trailing struct {
+			Value    interface{}
+			HasValue bool
+		}
 	}
 	cx := make(chan *X, 1)
 	cx <- &X{}
@@ -74,10 +76,10 @@ func (obs throttleObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 					case t.HasError:
 						close(cx)
 						sink(t)
-					case x.HasTrailingValue:
-						sink.Next(x.TrailingValue)
-						x.HasTrailingValue = false
-						doThrottle(x.TrailingValue)
+					case x.Trailing.HasValue:
+						sink.Next(x.Trailing.Value)
+						x.Trailing.HasValue = false
+						doThrottle(x.Trailing.Value)
 						cx <- x
 					}
 				}
@@ -93,21 +95,21 @@ func (obs throttleObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
-				x.TrailingValue = t.Value
-				x.HasTrailingValue = true
+				x.Trailing.Value = t.Value
+				x.Trailing.HasValue = true
 				if throttleCtx == nil || throttleCtx.Err() != nil {
 					doThrottle(t.Value)
 					if obs.Leading {
 						sink(t)
-						x.HasTrailingValue = false
+						x.Trailing.HasValue = false
 					}
 				}
 				cx <- x
 
 			default:
 				close(cx)
-				if x.HasTrailingValue {
-					sink.Next(x.TrailingValue)
+				if x.Trailing.HasValue {
+					sink.Next(x.Trailing.Value)
 				}
 				sink(t)
 			}

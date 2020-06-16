@@ -14,8 +14,10 @@ type debounceObservable struct {
 
 func (obs debounceObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	type X struct {
-		LatestValue    interface{}
-		HasLatestValue bool
+		Latest struct {
+			Value    interface{}
+			HasValue bool
+		}
 	}
 	cx := make(chan *X, 1)
 	cx <- &X{}
@@ -29,8 +31,8 @@ func (obs debounceObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
-				x.LatestValue = t.Value
-				x.HasLatestValue = true
+				x.Latest.Value = t.Value
+				x.Latest.HasValue = true
 
 				cx <- x
 
@@ -50,9 +52,9 @@ func (obs debounceObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 							sink(t)
 							return
 						}
-						if x.HasLatestValue {
-							sink.Next(x.LatestValue)
-							x.HasLatestValue = false
+						if x.Latest.HasValue {
+							sink.Next(x.Latest.Value)
+							x.Latest.HasValue = false
 						}
 						cx <- x
 					}
@@ -67,8 +69,8 @@ func (obs debounceObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 
 			default:
 				close(cx)
-				if x.HasLatestValue {
-					sink.Next(x.LatestValue)
+				if x.Latest.HasValue {
+					sink.Next(x.Latest.Value)
 				}
 				sink(t)
 			}

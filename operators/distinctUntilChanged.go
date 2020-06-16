@@ -31,18 +31,18 @@ type distinctUntilChangedObservable struct {
 }
 
 func (obs distinctUntilChangedObservable) Subscribe(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
-	var (
-		key    interface{}
-		hasKey bool
-	)
+	var key struct {
+		Value    interface{}
+		HasValue bool
+	}
 	return obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		if t.HasValue {
-			newKey := obs.KeySelector(t.Value)
-			if hasKey && obs.Compare(key, newKey) {
+			keyValue := obs.KeySelector(t.Value)
+			if key.HasValue && obs.Compare(key.Value, keyValue) {
 				return
 			}
-			key = newKey
-			hasKey = true
+			key.Value = keyValue
+			key.HasValue = true
 		}
 		sink(t)
 	})

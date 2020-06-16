@@ -8,20 +8,20 @@ import (
 
 func last(source rx.Observable) rx.Observable {
 	return func(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
-		var (
-			lastValue    interface{}
-			hasLastValue bool
-		)
+		var last struct {
+			Value    interface{}
+			HasValue bool
+		}
 		return source.Subscribe(ctx, func(t rx.Notification) {
 			switch {
 			case t.HasValue:
-				lastValue = t.Value
-				hasLastValue = true
+				last.Value = t.Value
+				last.HasValue = true
 			case t.HasError:
 				sink(t)
 			default:
-				if hasLastValue {
-					sink.Next(lastValue)
+				if last.HasValue {
+					sink.Next(last.Value)
 					sink.Complete()
 				} else {
 					sink.Error(rx.ErrEmpty)
@@ -44,20 +44,20 @@ func Last() rx.Operator {
 func LastOrDefault(def interface{}) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		return func(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
-			var (
-				lastValue    interface{}
-				hasLastValue bool
-			)
+			var last struct {
+				Value    interface{}
+				HasValue bool
+			}
 			return source.Subscribe(ctx, func(t rx.Notification) {
 				switch {
 				case t.HasValue:
-					lastValue = t.Value
-					hasLastValue = true
+					last.Value = t.Value
+					last.HasValue = true
 				case t.HasError:
 					sink(t)
 				default:
-					if hasLastValue {
-						sink.Next(lastValue)
+					if last.HasValue {
+						sink.Next(last.Value)
 					} else {
 						sink.Next(def)
 					}
