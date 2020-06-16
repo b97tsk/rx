@@ -72,12 +72,12 @@ func (obs switchMapObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 	})
 }
 
-// Switch converts a higher-order Observable into a first-order Observable by
-// subscribing to only the most recently emitted of those inner Observables.
+// SwitchAll converts a higher-order Observable into a first-order Observable
+// by subscribing to only the most recently emitted of those inner Observables.
 //
-// Switch flattens an Observable-of-Observables by dropping the previous inner
-// Observable once a new one appears.
-func Switch() rx.Operator {
+// SwitchAll flattens an Observable-of-Observables by dropping the previous
+// inner Observable once a new one appears.
+func SwitchAll() rx.Operator {
 	return SwitchMap(projectToObservable)
 }
 
