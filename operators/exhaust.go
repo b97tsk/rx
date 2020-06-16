@@ -50,13 +50,13 @@ func (obs exhaustMapObservable) Subscribe(ctx context.Context, sink rx.Observer)
 	})
 }
 
-// Exhaust converts a higher-order Observable into a first-order Observable
+// ExhaustAll converts a higher-order Observable into a first-order Observable
 // by dropping inner Observables while the previous inner Observable has not
 // yet completed.
 //
-// Exhaust flattens an Observable-of-Observables by dropping the next inner
+// ExhaustAll flattens an Observable-of-Observables by dropping the next inner
 // Observables while the current inner is still executing.
-func Exhaust() rx.Operator {
+func ExhaustAll() rx.Operator {
 	return ExhaustMap(projectToObservable)
 }
 
