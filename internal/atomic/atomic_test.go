@@ -3,7 +3,7 @@ package atomic_test
 import (
 	"testing"
 
-	"github.com/b97tsk/rx/x/atomic"
+	"github.com/b97tsk/rx/internal/atomic"
 )
 
 func TestUint32(t *testing.T) {

@@ -5,9 +5,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/b97tsk/rx/x/atomic"
-	"github.com/b97tsk/rx/x/misc"
-	"github.com/b97tsk/rx/x/queue"
+	"github.com/b97tsk/rx/internal/atomic"
+	"github.com/b97tsk/rx/internal/misc"
+	"github.com/b97tsk/rx/internal/queue"
 )
 
 // A ReplaySubject buffers a set number of values and will emit those values

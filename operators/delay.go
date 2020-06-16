@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/b97tsk/rx"
-	"github.com/b97tsk/rx/x/queue"
+	"github.com/b97tsk/rx/internal/queue"
 )
 
 type delayObservable struct {

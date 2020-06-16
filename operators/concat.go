@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/b97tsk/rx"
-	"github.com/b97tsk/rx/x/misc"
-	"github.com/b97tsk/rx/x/queue"
+	"github.com/b97tsk/rx/internal/misc"
+	"github.com/b97tsk/rx/internal/queue"
 )
 
 type concatObservable struct {

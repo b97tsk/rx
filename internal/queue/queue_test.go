@@ -3,7 +3,7 @@ package queue_test
 import (
 	"testing"
 
-	"github.com/b97tsk/rx/x/queue"
+	"github.com/b97tsk/rx/internal/queue"
 )
 
 func TestQueue(t *testing.T) {

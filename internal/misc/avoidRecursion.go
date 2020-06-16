@@ -1,7 +1,7 @@
 package misc
 
 import (
-	"github.com/b97tsk/rx/x/atomic"
+	"github.com/b97tsk/rx/internal/atomic"
 )
 
 // AvoidRecursion avoids to call some function recursively.

@@ -5,7 +5,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/b97tsk/rx/x/misc"
+	"github.com/b97tsk/rx/internal/misc"
 )
 
 // A BehaviorSubject stores the latest value emitted to its consumers, and

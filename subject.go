@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/b97tsk/rx/x/misc"
+	"github.com/b97tsk/rx/internal/misc"
 )
 
 // Subject is a special type of Observable that allows values to be multicasted

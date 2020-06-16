@@ -3,7 +3,7 @@ package rx
 import (
 	"context"
 
-	"github.com/b97tsk/rx/x/atomic"
+	"github.com/b97tsk/rx/internal/atomic"
 )
 
 type mergeObservable []Observable

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/b97tsk/rx"
-	"github.com/b97tsk/rx/x/misc"
+	"github.com/b97tsk/rx/internal/misc"
 )
 
 type retryObservable struct {

@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/b97tsk/rx"
-	"github.com/b97tsk/rx/x/atomic"
-	"github.com/b97tsk/rx/x/misc"
+	"github.com/b97tsk/rx/internal/atomic"
+	"github.com/b97tsk/rx/internal/misc"
 )
 
 type repeatWhenObservable struct {

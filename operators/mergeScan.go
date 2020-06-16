@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/b97tsk/rx"
-	"github.com/b97tsk/rx/x/queue"
+	"github.com/b97tsk/rx/internal/queue"
 )
 
 // A MergeScanConfigure is a configure for MergeScan.

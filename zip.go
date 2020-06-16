@@ -3,7 +3,7 @@ package rx
 import (
 	"context"
 
-	"github.com/b97tsk/rx/x/queue"
+	"github.com/b97tsk/rx/internal/queue"
 )
 
 type zipObservable []Observable

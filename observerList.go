@@ -1,7 +1,7 @@
 package rx
 
 import (
-	"github.com/b97tsk/rx/x/atomic"
+	"github.com/b97tsk/rx/internal/atomic"
 )
 
 type observerList struct {
