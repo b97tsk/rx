@@ -9,11 +9,11 @@ import (
 )
 
 func TestWindowToggle(t *testing.T) {
-	toSlice := func(val interface{}, idx int) (rx.Observable, error) {
+	toSlice := func(val interface{}, idx int) rx.Observable {
 		if obs, ok := val.(rx.Observable); ok {
-			return obs.Pipe(operators.ToSlice()), nil
+			return obs.Pipe(operators.ToSlice())
 		}
-		return nil, rx.ErrNotObservable
+		return rx.Throw(rx.ErrNotObservable)
 	}
 	SubscribeN(
 		t,

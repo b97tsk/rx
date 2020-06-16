@@ -9,7 +9,7 @@ import (
 
 // A MergeConfigure is a configure for Merge.
 type MergeConfigure struct {
-	Project    func(interface{}, int) (rx.Observable, error)
+	Project    func(interface{}, int) rx.Observable
 	Concurrent int
 }
 
@@ -51,13 +51,9 @@ func (obs mergeObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		sourceValue := x.Buffer.Pop()
 		x.Index++
 
-		obs, err := obs.Project(sourceValue, sourceIndex)
-		if err != nil {
-			sink.Error(err)
-			return
-		}
+		obs1 := obs.Project(sourceValue, sourceIndex)
 
-		go obs.Subscribe(ctx, func(t rx.Notification) {
+		go obs1.Subscribe(ctx, func(t rx.Notification) {
 			if t.HasValue || t.HasError {
 				sink(t)
 				return
@@ -112,7 +108,7 @@ func MergeAll() rx.Operator {
 //
 // MergeMap maps each value to an Observable, then flattens all of these inner
 // Observables using MergeAll.
-func MergeMap(project func(interface{}, int) (rx.Observable, error)) rx.Operator {
+func MergeMap(project func(interface{}, int) rx.Observable) rx.Operator {
 	return MergeConfigure{project, -1}.Use()
 }
 
@@ -121,5 +117,5 @@ func MergeMap(project func(interface{}, int) (rx.Observable, error)) rx.Operator
 //
 // It's like MergeMap, but maps each value always to the same inner Observable.
 func MergeMapTo(inner rx.Observable) rx.Operator {
-	return MergeMap(func(interface{}, int) (rx.Observable, error) { return inner, nil })
+	return MergeMap(func(interface{}, int) rx.Observable { return inner })
 }

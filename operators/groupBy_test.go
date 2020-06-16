@@ -22,10 +22,10 @@ func TestGroupBy(t *testing.T) {
 				},
 			),
 			operators.MergeMap(
-				func(val interface{}, idx int) (rx.Observable, error) {
+				func(val interface{}, idx int) rx.Observable {
 					group := val.(rx.GroupedObservable)
 					delay := Step(int([]rune(group.Key.(string))[0] - 'A'))
-					obs := group.Pipe(
+					return group.Pipe(
 						operators.Count(),
 						operators.Map(
 							func(val interface{}, idx int) interface{} {
@@ -34,7 +34,6 @@ func TestGroupBy(t *testing.T) {
 						),
 						operators.Delay(delay), // for ordered output
 					)
-					return obs, nil
 				},
 			),
 			ToString(),

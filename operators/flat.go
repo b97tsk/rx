@@ -50,7 +50,12 @@ func (obs flatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 // a first-order Observable, by applying a flat function to those Observables
 // emitted by the higher-order Observable, and starts subscribing to it.
 func Flat(flat func(observables ...rx.Observable) rx.Observable) rx.Operator {
-	return FlatMap(flat, projectToObservable)
+	return FlatMap(flat, func(val interface{}, idx int) (rx.Observable, error) {
+		if obs, ok := val.(rx.Observable); ok {
+			return obs, nil
+		}
+		return nil, rx.ErrNotObservable
+	})
 }
 
 // FlatMap creates an Observable that converts the source Observable to a

@@ -9,7 +9,7 @@ import (
 
 type exhaustMapObservable struct {
 	Source  rx.Observable
-	Project func(interface{}, int) (rx.Observable, error)
+	Project func(interface{}, int) rx.Observable
 }
 
 func (obs exhaustMapObservable) Subscribe(ctx context.Context, sink rx.Observer) {
@@ -27,13 +27,9 @@ func (obs exhaustMapObservable) Subscribe(ctx context.Context, sink rx.Observer)
 				break
 			}
 
-			obs, err := obs.Project(t.Value, sourceIndex)
-			if err != nil {
-				sink.Error(err)
-				return
-			}
+			obs1 := obs.Project(t.Value, sourceIndex)
 
-			obs.Subscribe(ctx, func(t rx.Notification) {
+			obs1.Subscribe(ctx, func(t rx.Notification) {
 				if t.HasValue || t.HasError {
 					sink(t)
 					return
@@ -70,7 +66,7 @@ func Exhaust() rx.Operator {
 //
 // ExhaustMap maps each value to an Observable, then flattens all of these
 // inner Observables using Exhaust.
-func ExhaustMap(project func(interface{}, int) (rx.Observable, error)) rx.Operator {
+func ExhaustMap(project func(interface{}, int) rx.Observable) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		obs := exhaustMapObservable{source, project}
 		return rx.Create(obs.Subscribe)

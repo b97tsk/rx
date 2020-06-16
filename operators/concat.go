@@ -10,7 +10,7 @@ import (
 
 type concatObservable struct {
 	Source  rx.Observable
-	Project func(interface{}, int) (rx.Observable, error)
+	Project func(interface{}, int) rx.Observable
 }
 
 func (obs concatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
@@ -41,13 +41,9 @@ func (obs concatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 			sourceValue := x.Buffer.Pop()
 			x.Index++
 
-			obs, err := obs.Project(sourceValue, sourceIndex)
-			if err != nil {
-				sink.Error(err)
-				return
-			}
+			obs1 := obs.Project(sourceValue, sourceIndex)
 
-			obs.Subscribe(ctx, func(t rx.Notification) {
+			obs1.Subscribe(ctx, func(t rx.Notification) {
 				if t.HasValue || t.HasError {
 					sink(t)
 					return
@@ -104,7 +100,7 @@ func ConcatAll() rx.Operator {
 //
 // ConcatMap maps each value to an Observable, then flattens all of these inner
 // Observables using ConcatAll.
-func ConcatMap(project func(interface{}, int) (rx.Observable, error)) rx.Operator {
+func ConcatMap(project func(interface{}, int) rx.Observable) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		obs := concatObservable{source, project}
 		return rx.Create(obs.Subscribe)
@@ -116,5 +112,5 @@ func ConcatMap(project func(interface{}, int) (rx.Observable, error)) rx.Operato
 //
 // It's like ConcatMap, but maps each value always to the same inner Observable.
 func ConcatMapTo(inner rx.Observable) rx.Operator {
-	return ConcatMap(func(interface{}, int) (rx.Observable, error) { return inner, nil })
+	return ConcatMap(func(interface{}, int) rx.Observable { return inner })
 }

@@ -8,7 +8,7 @@ import (
 
 // A CongestingMergeConfigure is a configure for CongestingMerge.
 type CongestingMergeConfigure struct {
-	Project    func(interface{}, int) (rx.Observable, error)
+	Project    func(interface{}, int) rx.Observable
 	Concurrent int
 }
 
@@ -65,15 +65,11 @@ func (obs congestingMergeObservable) Subscribe(ctx context.Context, sink rx.Obse
 			sourceValue := t.Value
 			x.Index++
 
-			obs, err := obs.Project(sourceValue, sourceIndex)
-			if err != nil {
-				sink.Error(err)
-				return
-			}
+			obs1 := obs.Project(sourceValue, sourceIndex)
 
 			cx <- x
 
-			obs.Subscribe(ctx, func(t rx.Notification) {
+			obs1.Subscribe(ctx, func(t rx.Notification) {
 				if t.HasValue || t.HasError {
 					sink(t)
 					return
@@ -130,7 +126,7 @@ func CongestingMergeAll() rx.Operator {
 // these inner Observables using CongestingMergeAll.
 //
 // It's like MergeMap, but it may congest the source due to concurrent limit.
-func CongestingMergeMap(project func(interface{}, int) (rx.Observable, error)) rx.Operator {
+func CongestingMergeMap(project func(interface{}, int) rx.Observable) rx.Operator {
 	return CongestingMergeConfigure{project, -1}.Use()
 }
 
@@ -143,5 +139,5 @@ func CongestingMergeMap(project func(interface{}, int) (rx.Observable, error)) r
 //
 // It's like MergeMapTo, but it may congest the source due to concurrent limit.
 func CongestingMergeMapTo(inner rx.Observable) rx.Operator {
-	return CongestingMergeMap(func(interface{}, int) (rx.Observable, error) { return inner, nil })
+	return CongestingMergeMap(func(interface{}, int) rx.Observable { return inner })
 }
