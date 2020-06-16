@@ -104,7 +104,7 @@ func observablePublishTest3(t *testing.T) {
 				return idx
 			},
 		),
-	).Publish(rx.NewReplaySubject(2, 0).Subject)
+	).Publish(rx.NewReplaySubject(2).Subject)
 	ctx, _ := rx.Zip(
 		obs.Pipe(operators.Take(4)),
 		obs.Pipe(operators.Skip(4), operators.Take(4), DelaySubscription(7)),

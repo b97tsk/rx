@@ -69,7 +69,7 @@ func shareTest3(t *testing.T) {
 		operators.Take(4),
 		operators.Share(
 			func() rx.Subject {
-				return rx.NewReplaySubject(1, 0).Subject
+				return rx.NewReplaySubject(1).Subject
 			},
 		),
 	)
@@ -94,7 +94,7 @@ func shareTest4(t *testing.T) {
 		),
 		operators.Share(
 			func() rx.Subject {
-				return rx.NewReplaySubject(1, 0).Subject
+				return rx.NewReplaySubject(1).Subject
 			},
 		),
 		operators.Take(4),

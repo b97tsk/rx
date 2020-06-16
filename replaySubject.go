@@ -25,8 +25,8 @@ type replaySubject struct {
 	err        error
 	buffer     queue.Queue
 	bufferRefs *atomic.Uint32s
-	bufferSize int
-	windowTime time.Duration
+	bufferSize atomic.Int64s
+	windowTime atomic.Int64s
 }
 
 type replaySubjectElement struct {
@@ -35,11 +35,8 @@ type replaySubjectElement struct {
 }
 
 // NewReplaySubject creates a new ReplaySubject.
-func NewReplaySubject(bufferSize int, windowTime time.Duration) ReplaySubject {
-	s := &replaySubject{
-		bufferSize: bufferSize,
-		windowTime: windowTime,
-	}
+func NewReplaySubject(bufferSize int) ReplaySubject {
+	s := &replaySubject{bufferSize: atomic.Int64(int64(bufferSize))}
 	s.Subject = Subject{Create(s.subscribe), s.sink}
 	return ReplaySubject{s}
 }
@@ -49,14 +46,24 @@ func (s ReplaySubject) Exists() bool {
 	return s.replaySubject != nil
 }
 
-// BufferSize returns current buffer size setting.
+// BufferSize gets current buffer size value.
 func (s ReplaySubject) BufferSize() int {
-	return s.bufferSize
+	return int(s.bufferSize.Load())
 }
 
-// WindowTime returns current window time setting.
+// WindowTime gets current window time value.
 func (s ReplaySubject) WindowTime() time.Duration {
-	return s.windowTime
+	return time.Duration(s.windowTime.Load())
+}
+
+// SetBufferSize sets buffer size to a specified value.
+func (s ReplaySubject) SetBufferSize(bufferSize int) {
+	s.bufferSize.Store(int64(bufferSize))
+}
+
+// SetWindowTime sets window time to a specified value.
+func (s ReplaySubject) SetWindowTime(windowTime time.Duration) {
+	s.windowTime.Store(int64(windowTime))
 }
 
 func (s *replaySubject) bufferForRead() (queue.Queue, *atomic.Uint32s) {
@@ -79,7 +86,7 @@ func (s *replaySubject) bufferForWrite() *queue.Queue {
 }
 
 func (s *replaySubject) trimBuffer(b *queue.Queue) {
-	if s.windowTime > 0 {
+	if windowTime := s.windowTime.Load(); windowTime > 0 {
 		if b == nil {
 			b = s.bufferForWrite()
 		}
@@ -91,11 +98,12 @@ func (s *replaySubject) trimBuffer(b *queue.Queue) {
 			b.Pop()
 		}
 	}
-	if s.bufferSize > 0 {
+	if bufferSize := s.bufferSize.Load(); bufferSize > 0 {
 		if b == nil {
 			b = s.bufferForWrite()
 		}
-		for b.Len() > s.bufferSize {
+		bufferSize := int(bufferSize)
+		for b.Len() > bufferSize {
 			b.Pop()
 		}
 	}
@@ -112,8 +120,8 @@ func (s *replaySubject) sink(t Notification) {
 		defer lst.Release()
 
 		var deadline time.Time
-		if s.windowTime > 0 {
-			deadline = time.Now().Add(s.windowTime)
+		if windowTime := s.windowTime.Load(); windowTime > 0 {
+			deadline = time.Now().Add(time.Duration(windowTime))
 		}
 		b := s.bufferForWrite()
 		b.Push(replaySubjectElement{deadline, t.Value})

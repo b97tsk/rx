@@ -18,7 +18,7 @@ func TestGroupBy(t *testing.T) {
 					return val
 				},
 				func() rx.Subject {
-					return rx.NewReplaySubject(0, 0).Subject
+					return rx.NewReplaySubject(0).Subject
 				},
 			),
 			operators.MergeMap(
