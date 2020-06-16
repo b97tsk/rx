@@ -3,7 +3,6 @@ package rx
 import (
 	"context"
 	"sync"
-	"time"
 )
 
 // A ConnectableObservable is an Observable that only subscribes to the source
@@ -131,19 +130,6 @@ func (obs Observable) Multicast(subjectFactory func() Subject) ConnectableObserv
 }
 
 // Publish is like Multicast, but it uses only one subject.
-func (obs Observable) Publish() ConnectableObservable {
-	subject := NewSubject()
+func (obs Observable) Publish(subject Subject) ConnectableObservable {
 	return obs.Multicast(func() Subject { return subject })
-}
-
-// PublishBehavior is like Publish, but it uses a BehaviorSubject instead.
-func (obs Observable) PublishBehavior(val interface{}) ConnectableObservable {
-	subject := NewBehaviorSubject(val)
-	return obs.Multicast(func() Subject { return subject.Subject })
-}
-
-// PublishReplay is like Publish, but it uses a ReplaySubject instead.
-func (obs Observable) PublishReplay(bufferSize int, windowTime time.Duration) ConnectableObservable {
-	subject := NewReplaySubject(bufferSize, windowTime)
-	return obs.Multicast(func() Subject { return subject.Subject })
 }
