@@ -24,7 +24,7 @@ type replaySubject struct {
 	cws        misc.ContextWaitService
 	err        error
 	buffer     queue.Queue
-	bufferRefs *atomic.Uint32
+	bufferRefs *atomic.Uint32s
 	bufferSize int
 	windowTime time.Duration
 }
@@ -59,10 +59,10 @@ func (s ReplaySubject) WindowTime() time.Duration {
 	return s.windowTime
 }
 
-func (s *replaySubject) bufferForRead() (queue.Queue, *atomic.Uint32) {
+func (s *replaySubject) bufferForRead() (queue.Queue, *atomic.Uint32s) {
 	refs := s.bufferRefs
 	if refs == nil {
-		refs = new(atomic.Uint32)
+		refs = new(atomic.Uint32s)
 		s.bufferRefs = refs
 	}
 	refs.Add(1)

@@ -6,7 +6,7 @@ import (
 
 // AvoidRecursion avoids to call some function recursively.
 type AvoidRecursion struct {
-	counter atomic.Uint32
+	counter atomic.Uint32s
 }
 
 // Do calls a function in a non-recursive way when Do is called recursively.
