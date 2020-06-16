@@ -54,9 +54,9 @@ func (obs congestObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 			case <-done:
 				return
 			case t := <-in:
-				queue.PushBack(t)
+				queue.Push(t)
 			case out <- outValue:
-				queue.PopFront()
+				queue.Pop()
 			}
 		}
 	}()

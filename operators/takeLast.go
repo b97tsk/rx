@@ -18,9 +18,9 @@ func (obs takeLastObservable) Subscribe(ctx context.Context, sink rx.Observer) (
 		switch {
 		case t.HasValue:
 			if queue.Len() == obs.Count {
-				queue.PopFront()
+				queue.Pop()
 			}
-			queue.PushBack(t.Value)
+			queue.Push(t.Value)
 		case t.HasError:
 			sink(t)
 		default:

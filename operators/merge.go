@@ -48,7 +48,7 @@ func (obs mergeObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 
 	doNextLocked = func(x *X) {
 		sourceIndex := x.Index
-		sourceValue := x.Buffer.PopFront()
+		sourceValue := x.Buffer.Pop()
 		x.Index++
 
 		obs, err := obs.Project(sourceValue, sourceIndex)
@@ -79,7 +79,7 @@ func (obs mergeObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		switch {
 		case t.HasValue:
 			x := <-cx
-			x.Buffer.PushBack(t.Value)
+			x.Buffer.Push(t.Value)
 			if x.Active != obs.Concurrent {
 				x.Active++
 				doNextLocked(x)

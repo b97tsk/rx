@@ -88,7 +88,7 @@ func (s *replaySubject) trimBuffer(b *queue.Queue) {
 			if b.Front().(replaySubjectElement).Deadline.After(now) {
 				break
 			}
-			b.PopFront()
+			b.Pop()
 		}
 	}
 	if s.bufferSize > 0 {
@@ -96,7 +96,7 @@ func (s *replaySubject) trimBuffer(b *queue.Queue) {
 			b = s.bufferForWrite()
 		}
 		for b.Len() > s.bufferSize {
-			b.PopFront()
+			b.Pop()
 		}
 	}
 }
@@ -116,7 +116,7 @@ func (s *replaySubject) sink(t Notification) {
 			deadline = time.Now().Add(s.windowTime)
 		}
 		b := s.bufferForWrite()
-		b.PushBack(replaySubjectElement{deadline, t.Value})
+		b.Push(replaySubjectElement{deadline, t.Value})
 		s.trimBuffer(b)
 
 		s.mux.Unlock()

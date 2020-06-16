@@ -17,7 +17,7 @@ func (q *Queue) Init() {
 }
 
 // Cap returns the capacity of the internal buffer. If Cap() equals to Len(),
-// new PushBack(x) causes the internal buffer to grow.
+// new Push(x) causes the internal buffer to grow.
 func (q *Queue) Cap() int {
 	return len(q.buf)
 }
@@ -27,8 +27,8 @@ func (q *Queue) Len() int {
 	return q.length
 }
 
-// PushBack inserts an element at the end of the Queue.
-func (q *Queue) PushBack(x interface{}) {
+// Push inserts an element at the end of the Queue.
+func (q *Queue) Push(x interface{}) {
 	if q.length == len(q.buf) { // Grow if full.
 		buf := append(q.buf, x)
 		q.setbuf(buf[:cap(buf)])
@@ -38,9 +38,8 @@ func (q *Queue) PushBack(x interface{}) {
 	q.length++
 }
 
-// PopFront removes and returns the first element. It panics if the Queue
-// is empty.
-func (q *Queue) PopFront() interface{} {
+// Pop removes and returns the first element. It panics if the Queue is empty.
+func (q *Queue) Pop() interface{} {
 	x := q.buf[q.head]
 	q.buf[q.head] = nil
 	max := len(q.buf)

@@ -47,7 +47,7 @@ func (obs delayObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 						doSchedule(t.Time.Sub(now))
 						break
 					}
-					x.Queue.PopFront()
+					x.Queue.Pop()
 					sink.Next(t.Value)
 				}
 				if x.SourceCompleted && x.Queue.Len() == 0 {
@@ -62,7 +62,7 @@ func (obs delayObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		if x, ok := <-cx; ok {
 			switch {
 			case t.HasValue:
-				x.Queue.PushBack(
+				x.Queue.Push(
 					delayElement{
 						Time:  time.Now().Add(obs.Duration),
 						Value: t.Value,

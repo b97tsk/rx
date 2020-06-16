@@ -38,7 +38,7 @@ func (obs concatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 			}
 
 			sourceIndex := x.Index
-			sourceValue := x.Buffer.PopFront()
+			sourceValue := x.Buffer.Pop()
 			x.Index++
 
 			obs, err := obs.Project(sourceValue, sourceIndex)
@@ -68,7 +68,7 @@ func (obs concatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		switch {
 		case t.HasValue:
 			x := <-cx
-			x.Buffer.PushBack(t.Value)
+			x.Buffer.Push(t.Value)
 			if x.Active == 1 {
 				x.Active++
 				doNextLocked(x)

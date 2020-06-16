@@ -16,7 +16,7 @@ func TestQueue(t *testing.T) {
 
 	for _, r := range "ABCDEFGHIJKLM" {
 		r := string(r)
-		q.PushBack(r)
+		q.Push(r)
 		t.Logf("PushBack(%v): Len=%v Cap=%v Front=%v Back=%v", r, q.Len(), q.Cap(), q.Front(), q.Back())
 		if q.Back() != r {
 			t.FailNow()
@@ -24,7 +24,7 @@ func TestQueue(t *testing.T) {
 	}
 	for _, r := range "ABCDEFG" {
 		r := string(r)
-		v := q.PopFront()
+		v := q.Pop()
 		t.Logf("PopFront(%v): Len=%v Cap=%v Front=%v Back=%v", v, q.Len(), q.Cap(), q.Front(), q.Back())
 		if v != r {
 			t.FailNow()
@@ -48,7 +48,7 @@ func TestQueue(t *testing.T) {
 
 	for _, r := range "NOPQRSTUVWXYZ" {
 		r := string(r)
-		q.PushBack(r)
+		q.Push(r)
 		t.Logf("PushBack(%v): Len=%v Cap=%v Front=%v Back=%v", r, q.Len(), q.Cap(), q.Front(), q.Back())
 		if q.Back() != r {
 			t.FailNow()
@@ -56,14 +56,14 @@ func TestQueue(t *testing.T) {
 	}
 	for _, r := range "HIJKLMNOPQRSTUVWXY" {
 		r := string(r)
-		v := q.PopFront()
+		v := q.Pop()
 		t.Logf("PopFront(%v): Len=%v Cap=%v Front=%v Back=%v", v, q.Len(), q.Cap(), q.Front(), q.Back())
 		if v != r {
 			t.FailNow()
 		}
 	}
 
-	v := q.PopFront()
+	v := q.Pop()
 	t.Logf("PopFront(%v): Len=%v Cap=%v", v, q.Len(), q.Cap())
 	if v != "Z" || q.Len() != 0 {
 		t.FailNow()

@@ -35,7 +35,7 @@ func (observables zipObservable) Subscribe(ctx context.Context, sink Observer) {
 				switch {
 				case t.HasValue:
 					stream := &streams[index]
-					stream.PushBack(t.Value)
+					stream.Push(t.Value)
 
 					if readyCount < length {
 						if stream.Len() > 1 {
@@ -50,7 +50,7 @@ func (observables zipObservable) Subscribe(ctx context.Context, sink Observer) {
 					shouldComplete := false
 					for i := range streams {
 						stream := &streams[i]
-						values[i] = stream.PopFront()
+						values[i] = stream.Pop()
 						if stream.Len() == 0 {
 							readyCount--
 							if stream.Completed {
