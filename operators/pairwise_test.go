@@ -23,10 +23,10 @@ func TestPairwise(t *testing.T) {
 		[][]interface{}{
 			{rx.Completed},
 			{rx.Completed},
-			{"[A B]", rx.Completed},
-			{"[A B]", "[B C]", rx.Completed},
-			{"[A B]", "[B C]", "[C D]", rx.Completed},
-			{"[A B]", "[B C]", "[C D]", ErrTest},
+			{"{A B}", rx.Completed},
+			{"{A B}", "{B C}", rx.Completed},
+			{"{A B}", "{B C}", "{C D}", rx.Completed},
+			{"{A B}", "{B C}", "{C D}", ErrTest},
 		},
 	)
 }

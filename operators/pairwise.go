@@ -8,19 +8,22 @@ import (
 
 func pairwise(source rx.Observable) rx.Observable {
 	return func(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
-		var (
-			prev    interface{}
-			hasPrev bool
-		)
+		var p struct {
+			Value    interface{}
+			HasValue bool
+		}
 		return source.Subscribe(ctx, func(t rx.Notification) {
 			switch {
 			case t.HasValue:
-				if hasPrev {
-					sink.Next([]interface{}{prev, t.Value})
-					prev = t.Value
+				if p.HasValue {
+					sink.Next(rx.Pair{
+						First:  p.Value,
+						Second: t.Value,
+					})
+					p.Value = t.Value
 				} else {
-					prev = t.Value
-					hasPrev = true
+					p.Value = t.Value
+					p.HasValue = true
 				}
 			default:
 				sink(t)
