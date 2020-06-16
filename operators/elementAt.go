@@ -44,7 +44,7 @@ func (obs elementAtObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 
 // ElementAt creates an Observable that emits the single value at the specified
 // index in a sequence of emissions from the source Observable, if the
-// specified index is out of range, notifies rx.ErrOutOfRange.
+// specified index is out of range, throws rx.ErrOutOfRange.
 func ElementAt(idx int) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		obs := elementAtObservable{

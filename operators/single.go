@@ -42,7 +42,7 @@ func single(source rx.Observable) rx.Observable {
 
 // Single creates an Observable that emits the single item emitted by the
 // source Observable. If the source emits more than one item or no items,
-// notify of an ErrNotSingle or ErrEmpty respectively.
+// throws rx.ErrNotSingle or rx.ErrEmpty respectively.
 func Single() rx.Operator {
 	return single
 }

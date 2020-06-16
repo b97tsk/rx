@@ -32,15 +32,15 @@ func last(source rx.Observable) rx.Observable {
 }
 
 // Last creates an Observable that emits only the last value emitted by
-// the source Observable, if the source turns out to be empty, notifies
+// the source Observable, if the source turns out to be empty, throws
 // rx.ErrEmpty.
 func Last() rx.Operator {
 	return last
 }
 
 // LastOrDefault creates an Observable that emits only the last value emitted
-// by the source Observable, if the source is empty, emits the provided
-// default value.
+// by the source Observable, if the source turns out to be empty, emits a
+// specified default value.
 func LastOrDefault(def interface{}) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		return func(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {

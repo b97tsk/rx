@@ -5,8 +5,8 @@ import (
 )
 
 // BlockingFirst subscribes to the source Observable, returns the first item
-// emitted by the source; if the source emits no items, it returns nil and
-// ErrEmpty; if the source errors, it returns nil and the error.
+// emitted by the source; if the source emits no items, it returns nil plus
+// ErrEmpty; if the source errors, it returns nil plus the error.
 func (obs Observable) BlockingFirst(ctx context.Context) (interface{}, error) {
 	var (
 		result   Notification
@@ -36,8 +36,8 @@ func (obs Observable) BlockingFirst(ctx context.Context) (interface{}, error) {
 }
 
 // BlockingLast subscribes to the source Observable, returns the last item
-// emitted by the source; if the source emits no items, it returns nil and
-// ErrEmpty; if the source errors, it returns nil and the error.
+// emitted by the source; if the source emits no items, it returns nil plus
+// ErrEmpty; if the source errors, it returns nil plus the error.
 func (obs Observable) BlockingLast(ctx context.Context) (interface{}, error) {
 	var result Notification
 	ctx, _ = obs.Subscribe(ctx, func(t Notification) {
@@ -63,8 +63,8 @@ func (obs Observable) BlockingLast(ctx context.Context) (interface{}, error) {
 
 // BlockingSingle subscribes to the source Observable, returns the single item
 // emitted by the source; if the source emits more than one item or no items,
-// it returns nil and ErrNotSingle or ErrEmpty respectively; if the source
-// errors, it returns nil and the error.
+// it returns nil plus ErrNotSingle or ErrEmpty respectively; if the source
+// errors, it returns nil plus the error.
 func (obs Observable) BlockingSingle(ctx context.Context) (interface{}, error) {
 	var (
 		result   Notification
