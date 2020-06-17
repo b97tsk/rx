@@ -9,25 +9,25 @@ import (
 )
 
 type shareObservable struct {
-	mux            sync.Mutex
-	cws            misc.ContextWaitService
-	source         rx.Observable
-	subjectFactory func() rx.Subject
-	subject        rx.Subject
-	connection     context.Context
-	disconnect     context.CancelFunc
-	shareCount     int
+	mux           sync.Mutex
+	cws           misc.ContextWaitService
+	source        rx.Observable
+	doubleFactory func() rx.Double
+	double        rx.Double
+	connection    context.Context
+	disconnect    context.CancelFunc
+	shareCount    int
 }
 
 func (obs *shareObservable) Subscribe(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
 	obs.mux.Lock()
 	defer obs.mux.Unlock()
 
-	if obs.subject.Observer == nil {
-		obs.subject = obs.subjectFactory()
+	if obs.double.Observable == nil {
+		obs.double = obs.doubleFactory()
 	}
 
-	ctx, cancel := obs.subject.Subscribe(ctx, sink)
+	ctx, cancel := obs.double.Subscribe(ctx, sink)
 	if ctx.Err() != nil {
 		return ctx, cancel
 	}
@@ -41,7 +41,7 @@ func (obs *shareObservable) Subscribe(ctx context.Context, sink rx.Observer) (co
 		obs.connection = ctx
 		obs.disconnect = cancel
 
-		sink := obs.subject.Observer
+		sink := obs.double.Observer
 
 		go obs.source.Subscribe(ctx, func(t rx.Notification) {
 			if t.HasValue {
@@ -52,7 +52,7 @@ func (obs *shareObservable) Subscribe(ctx context.Context, sink rx.Observer) (co
 			obs.mux.Lock()
 			if connection == obs.connection {
 				obs.disconnect()
-				obs.subject = rx.Subject{}
+				obs.double = rx.Double{}
 				obs.connection = nil
 				obs.disconnect = nil
 				obs.shareCount = 0
@@ -71,7 +71,7 @@ func (obs *shareObservable) Subscribe(ctx context.Context, sink rx.Observer) (co
 			obs.shareCount--
 			if obs.shareCount == 0 {
 				obs.disconnect()
-				obs.subject = rx.Subject{}
+				obs.double = rx.Double{}
 				obs.connection = nil
 				obs.disconnect = nil
 			}
@@ -90,11 +90,11 @@ func (obs *shareObservable) Subscribe(ctx context.Context, sink rx.Observer) (co
 // Observable. When subscribed multiple times, it guarantees that only one
 // subscription is made to the source Observable at the same time. When all
 // subscribers have unsubscribed it will unsubscribe from the source Observable.
-func Share(subjectFactory func() rx.Subject) rx.Operator {
+func Share(doubleFactory func() rx.Double) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		obs := shareObservable{
-			source:         source,
-			subjectFactory: subjectFactory,
+			source:        source,
+			doubleFactory: doubleFactory,
 		}
 		return obs.Subscribe
 	}

@@ -7,7 +7,7 @@ import (
 
 // A ConnectableObservable is an Observable that only subscribes to the source
 // Observable by calling its Connect method. Calling its Subscribe method will
-// not subscribe the source, instead, it subscribes to a local Subject, which
+// not subscribe the source, instead, it subscribes to a local Double, which
 // means that it can be called many times with different Observers.
 type ConnectableObservable struct {
 	*connectableObservable
@@ -15,22 +15,22 @@ type ConnectableObservable struct {
 
 type connectableObservable struct {
 	Observable
-	mux            sync.Mutex
-	source         Observable
-	subjectFactory func() Subject
-	subject        Subject
-	connection     context.Context
-	disconnect     context.CancelFunc
+	mux           sync.Mutex
+	source        Observable
+	doubleFactory func() Double
+	double        Double
+	connection    context.Context
+	disconnect    context.CancelFunc
 }
 
-func newConnectableObservable(source Observable, subjectFactory func() Subject) ConnectableObservable {
+func newConnectableObservable(source Observable, doubleFactory func() Double) ConnectableObservable {
 	obs := &connectableObservable{
-		source:         source,
-		subjectFactory: subjectFactory,
+		source:        source,
+		doubleFactory: doubleFactory,
 	}
 	obs.Observable = Observable(
 		func(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
-			return obs.getSubject().Subscribe(ctx, sink)
+			return obs.getDouble().Subscribe(ctx, sink)
 		},
 	)
 	return ConnectableObservable{obs}
@@ -41,17 +41,17 @@ func (obs ConnectableObservable) Exists() bool {
 	return obs.connectableObservable != nil
 }
 
-func (obs *connectableObservable) getSubject() Subject {
+func (obs *connectableObservable) getDouble() Double {
 	obs.mux.Lock()
 	defer obs.mux.Unlock()
-	return obs.getSubjectLocked()
+	return obs.getDoubleLocked()
 }
 
-func (obs *connectableObservable) getSubjectLocked() Subject {
-	if obs.subject.Observer == nil {
-		obs.subject = obs.subjectFactory()
+func (obs *connectableObservable) getDoubleLocked() Double {
+	if obs.double.Observable == nil {
+		obs.double = obs.doubleFactory()
 	}
-	return obs.subject
+	return obs.double
 }
 
 func (obs *connectableObservable) connect(ctx context.Context) (context.Context, context.CancelFunc) {
@@ -65,7 +65,7 @@ func (obs *connectableObservable) connect(ctx context.Context) (context.Context,
 		cx := make(chan X, 1)
 		cx <- X{}
 
-		sink := obs.getSubjectLocked().Observer
+		sink := obs.getDoubleLocked().Observer
 
 		ctx, cancel := obs.source.Subscribe(ctx, func(t Notification) {
 			if t.HasValue {
@@ -79,7 +79,7 @@ func (obs *connectableObservable) connect(ctx context.Context) (context.Context,
 			}
 
 			if connection == obs.connection {
-				obs.subject = Subject{}
+				obs.double = Double{}
 				obs.connection = nil
 				obs.disconnect = nil
 			}
@@ -109,7 +109,7 @@ func (obs *connectableObservable) connect(ctx context.Context) (context.Context,
 		obs.mux.Lock()
 		if connection == obs.connection {
 			obs.disconnect()
-			obs.subject = Subject{}
+			obs.double = Double{}
 			obs.connection = nil
 			obs.disconnect = nil
 		}
@@ -125,11 +125,11 @@ func (obs ConnectableObservable) Connect(ctx context.Context) (context.Context, 
 // Multicast returns a ConnectableObservable, which is a variety of Observable
 // that waits until its Connect method is called before it begins emitting
 // items to those Observers that have subscribed to it.
-func (obs Observable) Multicast(subjectFactory func() Subject) ConnectableObservable {
-	return newConnectableObservable(obs, subjectFactory)
+func (obs Observable) Multicast(doubleFactory func() Double) ConnectableObservable {
+	return newConnectableObservable(obs, doubleFactory)
 }
 
-// Publish is like Multicast, but it uses only one subject.
-func (obs Observable) Publish(subject Subject) ConnectableObservable {
-	return obs.Multicast(func() Subject { return subject })
+// Publish is like Multicast, but it uses only one Double.
+func (obs Observable) Publish(d Double) ConnectableObservable {
+	return obs.Multicast(func() Double { return d })
 }

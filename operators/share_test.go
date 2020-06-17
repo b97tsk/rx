@@ -23,7 +23,11 @@ func shareTest1(t *testing.T) {
 			},
 		),
 		operators.Take(4),
-		operators.Share(rx.NewSubject),
+		operators.Share(
+			func() rx.Double {
+				return rx.NewSubject().Double
+			},
+		),
 	)
 	Subscribe(
 		t,
@@ -44,7 +48,11 @@ func shareTest2(t *testing.T) {
 				return idx
 			},
 		),
-		operators.Share(rx.NewSubject),
+		operators.Share(
+			func() rx.Double {
+				return rx.NewSubject().Double
+			},
+		),
 		operators.Take(4),
 	)
 	Subscribe(
@@ -68,8 +76,8 @@ func shareTest3(t *testing.T) {
 		),
 		operators.Take(4),
 		operators.Share(
-			func() rx.Subject {
-				return rx.NewReplaySubject(1).Subject
+			func() rx.Double {
+				return rx.NewReplaySubject(1).Double
 			},
 		),
 	)
@@ -93,8 +101,8 @@ func shareTest4(t *testing.T) {
 			},
 		),
 		operators.Share(
-			func() rx.Subject {
-				return rx.NewReplaySubject(1).Subject
+			func() rx.Double {
+				return rx.NewReplaySubject(1).Double
 			},
 		),
 		operators.Take(4),

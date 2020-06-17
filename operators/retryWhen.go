@@ -51,7 +51,7 @@ func (obs retryWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 						sink(t)
 						break
 					}
-					if subject.Observer == nil {
+					if !subject.Exists() {
 						subject = createSubject()
 					}
 					subject.Next(t.Error)

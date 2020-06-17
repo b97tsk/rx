@@ -49,7 +49,7 @@ func (obs repeatWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 					sink(t)
 					return
 				}
-				if subject.Observer == nil {
+				if !subject.Exists() {
 					subject = createSubject()
 				}
 				subject.Next(nil)

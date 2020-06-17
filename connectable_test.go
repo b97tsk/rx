@@ -22,7 +22,7 @@ func observablePublishTest1(t *testing.T) {
 				return idx
 			},
 		),
-	).Publish(rx.NewSubject())
+	).Publish(rx.NewSubject().Double)
 	ctx, _ := rx.Zip(
 		obs.Pipe(operators.Take(4)),
 		obs.Pipe(operators.Skip(4), operators.Take(4)),
@@ -63,7 +63,7 @@ func observablePublishTest2(t *testing.T) {
 				return idx
 			},
 		),
-	).Publish(rx.NewBehaviorSubject(-1).Subject)
+	).Publish(rx.NewBehaviorSubject(-1).Double)
 	ctx, _ := rx.Zip(
 		obs.Pipe(operators.Take(4)),
 		obs.Pipe(operators.Skip(4), operators.Take(4)),
@@ -104,7 +104,7 @@ func observablePublishTest3(t *testing.T) {
 				return idx
 			},
 		),
-	).Publish(rx.NewReplaySubject(2).Subject)
+	).Publish(rx.NewReplaySubject(2).Double)
 	ctx, _ := rx.Zip(
 		obs.Pipe(operators.Take(4)),
 		obs.Pipe(operators.Skip(4), operators.Take(4), DelaySubscription(7)),

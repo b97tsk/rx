@@ -18,7 +18,7 @@ type ReplaySubject struct {
 }
 
 type replaySubject struct {
-	Subject
+	Double
 	mux        sync.Mutex
 	lst        observerList
 	cws        misc.ContextWaitService
@@ -37,7 +37,7 @@ type replaySubjectElement struct {
 // NewReplaySubject creates a new ReplaySubject.
 func NewReplaySubject(bufferSize int) ReplaySubject {
 	s := &replaySubject{bufferSize: atomic.Int64(int64(bufferSize))}
-	s.Subject = Subject{Create(s.subscribe), s.sink}
+	s.Double = Double{Create(s.subscribe), s.sink}
 	return ReplaySubject{s}
 }
 

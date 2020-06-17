@@ -16,7 +16,7 @@ type BehaviorSubject struct {
 }
 
 type behaviorSubject struct {
-	Subject
+	Double
 	mux sync.Mutex
 	lst observerList
 	cws misc.ContextWaitService
@@ -31,7 +31,7 @@ type behaviorSubjectElement struct {
 // NewBehaviorSubject creates a new BehaviorSubject.
 func NewBehaviorSubject(val interface{}) BehaviorSubject {
 	s := new(behaviorSubject)
-	s.Subject = Subject{Create(s.subscribe), s.sink}
+	s.Double = Double{Create(s.subscribe), s.sink}
 	s.val.Store(behaviorSubjectElement{val})
 	return BehaviorSubject{s}
 }
