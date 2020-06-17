@@ -10,11 +10,8 @@ import (
 // not subscribe the source, instead, it subscribes to a local Double, which
 // means that it can be called many times with different Observers.
 type ConnectableObservable struct {
-	*connectableObservable
-}
-
-type connectableObservable struct {
 	Observable
+
 	mux           sync.Mutex
 	source        Observable
 	doubleFactory func() Double
@@ -23,8 +20,8 @@ type connectableObservable struct {
 	disconnect    context.CancelFunc
 }
 
-func newConnectableObservable(source Observable, doubleFactory func() Double) ConnectableObservable {
-	obs := &connectableObservable{
+func newConnectableObservable(source Observable, doubleFactory func() Double) *ConnectableObservable {
+	obs := &ConnectableObservable{
 		source:        source,
 		doubleFactory: doubleFactory,
 	}
@@ -33,28 +30,24 @@ func newConnectableObservable(source Observable, doubleFactory func() Double) Co
 			return obs.getDouble().Subscribe(ctx, sink)
 		},
 	)
-	return ConnectableObservable{obs}
+	return obs
 }
 
-// Exists reports if this ConnectableObservable is ready to use.
-func (obs ConnectableObservable) Exists() bool {
-	return obs.connectableObservable != nil
-}
-
-func (obs *connectableObservable) getDouble() Double {
+func (obs *ConnectableObservable) getDouble() Double {
 	obs.mux.Lock()
 	defer obs.mux.Unlock()
 	return obs.getDoubleLocked()
 }
 
-func (obs *connectableObservable) getDoubleLocked() Double {
+func (obs *ConnectableObservable) getDoubleLocked() Double {
 	if obs.double.Observable == nil {
 		obs.double = obs.doubleFactory()
 	}
 	return obs.double
 }
 
-func (obs *connectableObservable) connect(ctx context.Context) (context.Context, context.CancelFunc) {
+// Connect invokes an execution of an ConnectableObservable.
+func (obs *ConnectableObservable) Connect(ctx context.Context) (context.Context, context.CancelFunc) {
 	obs.mux.Lock()
 	defer obs.mux.Unlock()
 
@@ -117,19 +110,14 @@ func (obs *connectableObservable) connect(ctx context.Context) (context.Context,
 	}
 }
 
-// Connect invokes an execution of an ConnectableObservable.
-func (obs ConnectableObservable) Connect(ctx context.Context) (context.Context, context.CancelFunc) {
-	return obs.connect(ctx)
-}
-
 // Multicast returns a ConnectableObservable, which is a variety of Observable
 // that waits until its Connect method is called before it begins emitting
 // items to those Observers that have subscribed to it.
-func (obs Observable) Multicast(doubleFactory func() Double) ConnectableObservable {
+func (obs Observable) Multicast(doubleFactory func() Double) *ConnectableObservable {
 	return newConnectableObservable(obs, doubleFactory)
 }
 
 // Publish is like Multicast, but it uses only one Double.
-func (obs Observable) Publish(d Double) ConnectableObservable {
+func (obs Observable) Publish(d Double) *ConnectableObservable {
 	return obs.Multicast(func() Double { return d })
 }
