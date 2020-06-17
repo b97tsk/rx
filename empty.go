@@ -11,7 +11,7 @@ var empty = Create(
 )
 
 // Empty returns an Observable that emits no items to the Observer and
-// immediately emits a COMPLETE notification.
+// immediately emits a COMPLETE emission.
 func Empty() Observable {
 	return empty
 }

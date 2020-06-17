@@ -11,7 +11,7 @@ var errCompleted = errors.New("completed")
 // Completed is a special error that denotes a successful subscription.
 var Completed = errCompleted
 
-// Create creates a new Observable, that will execute the specified function
+// Create creates a new Observable that will execute a specified function
 // when an Observer subscribes to it.
 //
 // It's the caller's responsibility to follow the Observable Contract that

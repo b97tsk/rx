@@ -85,21 +85,16 @@ func (obs concatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	})
 }
 
-// ConcatAll converts a higher-order Observable into a first-order Observable
-// by concatenating the inner Observables in order.
-//
-// ConcatAll flattens an Observable-of-Observables by putting one inner
-// Observable after the other.
+// ConcatAll creates an Observable that flattens a higher-order Observable into
+// a first-order Observable by concatenating the inner Observables in order.
 func ConcatAll() rx.Operator {
 	return ConcatMap(projectToObservable)
 }
 
-// ConcatMap projects each source value to an Observable which is merged in
-// the output Observable, in a serialized fashion waiting for each one to
-// complete before merging the next.
-//
-// ConcatMap maps each value to an Observable, then flattens all of these inner
-// Observables using ConcatAll.
+// ConcatMap creates an Observable that converts the source Observable into a
+// higher-order Observable, by projecting each source value to an Observable,
+// and flattens it into a first-order Observable by concatenating the inner
+// Observables in order.
 func ConcatMap(project func(interface{}, int) rx.Observable) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		obs := concatObservable{source, project}
@@ -107,8 +102,10 @@ func ConcatMap(project func(interface{}, int) rx.Observable) rx.Operator {
 	}
 }
 
-// ConcatMapTo projects each source value to the same Observable which is
-// merged multiple times in a serialized fashion on the output Observable.
+// ConcatMapTo creates an Observable that converts the source Observable into
+// a higher-order Observable, by projecting each source value to the same
+// Observable, and flattens it into a first-order Observable by concatenating
+// the inner Observables in order.
 //
 // It's like ConcatMap, but maps each value always to the same inner Observable.
 func ConcatMapTo(inner rx.Observable) rx.Operator {

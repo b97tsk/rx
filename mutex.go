@@ -1,7 +1,7 @@
 package rx
 
-// Mutex creates an Observer that passes all emissions to the specified
-// Observer in a mutually exclusive way.
+// Mutex creates an Observer that passes all emissions to a specified Observer
+// in a mutually exclusive way.
 func Mutex(sink Observer) Observer {
 	cx := make(chan Observer, 1)
 	cx <- sink

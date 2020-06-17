@@ -40,7 +40,7 @@ func (obs everyObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 }
 
 // Every creates an Observable that emits whether or not every item of the source
-// satisfies the condition specified.
+// satisfies a specified predicate.
 //
 // Every emits true or false, then completes.
 func Every(predicate func(interface{}, int) bool) rx.Operator {

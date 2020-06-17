@@ -42,7 +42,7 @@ func (obs elementAtObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 	obs.Source.Subscribe(ctx, observer.Sink)
 }
 
-// ElementAt creates an Observable that emits the single value at the specified
+// ElementAt creates an Observable that emits the single value at a specified
 // index in a sequence of emissions from the source Observable, if the
 // specified index is out of range, throws rx.ErrOutOfRange.
 func ElementAt(idx int) rx.Operator {
@@ -55,7 +55,7 @@ func ElementAt(idx int) rx.Operator {
 	}
 }
 
-// ElementAtOrDefault creates an Observable that emits the single value at the
+// ElementAtOrDefault creates an Observable that emits the single value at a
 // specified index in a sequence of emissions from the source Observable, if
 // the specified index is out of range, emits the provided default value.
 func ElementAtOrDefault(idx int, def interface{}) rx.Operator {

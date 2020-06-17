@@ -46,9 +46,9 @@ func (obs flatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	obs.Source.Subscribe(ctx, observer.Sink)
 }
 
-// FlatAll creates an Observable that flattens a higher-order Observable into
-// a first-order Observable, by applying a flat function to those Observables
-// emitted by the higher-order Observable, and starts subscribing to it.
+// FlatAll creates an Observable that flattens a higher-order Observable
+// into a first-order Observable, by applying a flat function to the inner
+// Observables, and starts subscribing to it.
 func FlatAll(flat func(observables ...rx.Observable) rx.Observable) rx.Operator {
 	return FlatMap(flat, func(val interface{}, idx int) (rx.Observable, error) {
 		if obs, ok := val.(rx.Observable); ok {
@@ -58,11 +58,10 @@ func FlatAll(flat func(observables ...rx.Observable) rx.Observable) rx.Operator 
 	})
 }
 
-// FlatMap creates an Observable that converts the source Observable to a
+// FlatMap creates an Observable that converts the source Observable into a
 // higher-order Observable, by projecting each source value to an Observable,
 // and flattens it into a first-order Observable, by applying a flat function
-// to those Observables emitted by the higher-order Observable, and starts
-// subscribing to it.
+// to the inner Observables, and starts subscribing to it.
 func FlatMap(flat func(observables ...rx.Observable) rx.Observable, project func(interface{}, int) (rx.Observable, error)) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		obs := flatObservable{source, flat, project}

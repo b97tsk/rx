@@ -40,7 +40,7 @@ func (obs someObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 }
 
 // Some creates an Observable that emits whether or not any item of the source
-// satisfies the condition specified.
+// satisfies a specified predicate.
 //
 // Some emits true or false, then completes.
 func Some(predicate func(interface{}, int) bool) rx.Operator {
