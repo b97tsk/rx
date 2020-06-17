@@ -2,7 +2,6 @@ package rx
 
 import (
 	"context"
-	"sync"
 	"time"
 
 	"github.com/b97tsk/rx/internal/atomic"
@@ -14,15 +13,8 @@ import (
 // immediately to any new subscribers in addition to emitting new values to
 // existing subscribers.
 type ReplaySubject struct {
-	*replaySubject
-}
+	Subject
 
-type replaySubject struct {
-	Double
-	mux        sync.Mutex
-	lst        observerList
-	cws        misc.ContextWaitService
-	err        error
 	buffer     queue.Queue
 	bufferRefs *atomic.Uint32s
 	bufferSize atomic.Int64s
@@ -35,38 +27,34 @@ type replaySubjectElement struct {
 }
 
 // NewReplaySubject creates a new ReplaySubject.
-func NewReplaySubject(bufferSize int) ReplaySubject {
-	s := &replaySubject{bufferSize: atomic.Int64(int64(bufferSize))}
+func NewReplaySubject(bufferSize int) *ReplaySubject {
+	s := new(ReplaySubject)
 	s.Double = Double{Create(s.subscribe), s.sink}
-	return ReplaySubject{s}
-}
-
-// Exists reports if this ReplaySubject is ready to use.
-func (s ReplaySubject) Exists() bool {
-	return s.replaySubject != nil
+	s.bufferSize = atomic.Int64(int64(bufferSize))
+	return s
 }
 
 // BufferSize gets current buffer size value.
-func (s ReplaySubject) BufferSize() int {
+func (s *ReplaySubject) BufferSize() int {
 	return int(s.bufferSize.Load())
 }
 
 // WindowTime gets current window time value.
-func (s ReplaySubject) WindowTime() time.Duration {
+func (s *ReplaySubject) WindowTime() time.Duration {
 	return time.Duration(s.windowTime.Load())
 }
 
 // SetBufferSize sets buffer size to a specified value.
-func (s ReplaySubject) SetBufferSize(bufferSize int) {
+func (s *ReplaySubject) SetBufferSize(bufferSize int) {
 	s.bufferSize.Store(int64(bufferSize))
 }
 
 // SetWindowTime sets window time to a specified value.
-func (s ReplaySubject) SetWindowTime(windowTime time.Duration) {
+func (s *ReplaySubject) SetWindowTime(windowTime time.Duration) {
 	s.windowTime.Store(int64(windowTime))
 }
 
-func (s *replaySubject) bufferForRead() (queue.Queue, *atomic.Uint32s) {
+func (s *ReplaySubject) bufferForRead() (queue.Queue, *atomic.Uint32s) {
 	refs := s.bufferRefs
 	if refs == nil {
 		refs = new(atomic.Uint32s)
@@ -76,7 +64,7 @@ func (s *replaySubject) bufferForRead() (queue.Queue, *atomic.Uint32s) {
 	return s.buffer, refs
 }
 
-func (s *replaySubject) bufferForWrite() *queue.Queue {
+func (s *ReplaySubject) bufferForWrite() *queue.Queue {
 	refs := s.bufferRefs
 	if refs != nil && !refs.Equals(0) {
 		s.buffer = s.buffer.Clone()
@@ -85,8 +73,8 @@ func (s *replaySubject) bufferForWrite() *queue.Queue {
 	return &s.buffer
 }
 
-func (s *replaySubject) trimBuffer(b *queue.Queue) {
-	if windowTime := s.windowTime.Load(); windowTime > 0 {
+func (s *ReplaySubject) trimBuffer(b *queue.Queue) {
+	if s.WindowTime() > 0 {
 		if b == nil {
 			b = s.bufferForWrite()
 		}
@@ -98,18 +86,17 @@ func (s *replaySubject) trimBuffer(b *queue.Queue) {
 			b.Pop()
 		}
 	}
-	if bufferSize := s.bufferSize.Load(); bufferSize > 0 {
+	if bufferSize := s.BufferSize(); bufferSize > 0 {
 		if b == nil {
 			b = s.bufferForWrite()
 		}
-		bufferSize := int(bufferSize)
 		for b.Len() > bufferSize {
 			b.Pop()
 		}
 	}
 }
 
-func (s *replaySubject) sink(t Notification) {
+func (s *ReplaySubject) sink(t Notification) {
 	s.mux.Lock()
 	switch {
 	case s.err != nil:
@@ -120,8 +107,8 @@ func (s *replaySubject) sink(t Notification) {
 		defer lst.Release()
 
 		var deadline time.Time
-		if windowTime := s.windowTime.Load(); windowTime > 0 {
-			deadline = time.Now().Add(time.Duration(windowTime))
+		if windowTime := s.WindowTime(); windowTime > 0 {
+			deadline = time.Now().Add(windowTime)
 		}
 		b := s.bufferForWrite()
 		b.Push(replaySubjectElement{deadline, t.Value})
@@ -152,7 +139,7 @@ func (s *replaySubject) sink(t Notification) {
 	}
 }
 
-func (s *replaySubject) subscribe(ctx context.Context, sink Observer) {
+func (s *ReplaySubject) subscribe(ctx context.Context, sink Observer) {
 	s.mux.Lock()
 
 	err := s.err

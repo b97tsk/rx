@@ -13,7 +13,7 @@ type windowObservable struct {
 
 func (obs windowObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	type X struct {
-		Window rx.Subject
+		Window *rx.Subject
 	}
 	window := rx.NewSubject()
 	cx := make(chan *X, 1)

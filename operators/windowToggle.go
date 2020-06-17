@@ -14,7 +14,7 @@ type windowToggleObservable struct {
 
 type windowToggleContext struct {
 	Cancel context.CancelFunc
-	Window rx.Subject
+	Window *rx.Subject
 }
 
 func (obs windowToggleObservable) Subscribe(ctx context.Context, sink rx.Observer) {

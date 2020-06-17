@@ -32,7 +32,7 @@ type windowCountObservable struct {
 
 func (obs windowCountObservable) Subscribe(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
 	var (
-		windows    []rx.Subject
+		windows    []*rx.Subject
 		windowSize int
 	)
 
@@ -48,8 +48,8 @@ func (obs windowCountObservable) Subscribe(ctx context.Context, sink rx.Observer
 				break
 			}
 
-			for _, subject := range windows {
-				subject.Sink(t)
+			for _, window := range windows {
+				window.Sink(t)
 			}
 
 			windowSize++
@@ -58,7 +58,7 @@ func (obs windowCountObservable) Subscribe(ctx context.Context, sink rx.Observer
 				window := windows[0]
 				copy(windows, windows[1:])
 				n := len(windows)
-				windows[n-1] = rx.Subject{}
+				windows[n-1] = nil
 				windows = windows[:n-1]
 				window.Complete()
 				windowSize = obs.WindowSize - obs.StartWindowEvery
@@ -78,8 +78,8 @@ func (obs windowCountObservable) Subscribe(ctx context.Context, sink rx.Observer
 			}
 
 		default:
-			for _, subject := range windows {
-				subject.Sink(t)
+			for _, window := range windows {
+				window.Sink(t)
 			}
 			sink(t)
 		}

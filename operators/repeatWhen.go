@@ -18,8 +18,8 @@ func (obs repeatWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 
 	var (
 		active         = atomic.Uint32(2)
-		subject        rx.Subject
-		createSubject  func() rx.Subject
+		subject        *rx.Subject
+		createSubject  func() *rx.Subject
 		avoidRecursion misc.AvoidRecursion
 	)
 
@@ -49,7 +49,7 @@ func (obs repeatWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 					sink(t)
 					return
 				}
-				if !subject.Exists() {
+				if subject == nil {
 					subject = createSubject()
 				}
 				subject.Next(nil)
@@ -57,7 +57,7 @@ func (obs repeatWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 		})
 	}
 
-	createSubject = func() rx.Subject {
+	createSubject = func() *rx.Subject {
 		subject := rx.NewSubject()
 		obs := obs.Notifier(subject.Observable)
 		obs.Subscribe(ctx, func(t rx.Notification) {

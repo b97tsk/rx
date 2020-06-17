@@ -29,7 +29,7 @@ type windowTimeObservable struct {
 
 type windowTimeContext struct {
 	Cancel context.CancelFunc
-	Window rx.Subject
+	Window *rx.Subject
 	Size   int
 }
 

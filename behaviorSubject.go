@@ -2,7 +2,6 @@ package rx
 
 import (
 	"context"
-	"sync"
 	"sync/atomic"
 
 	"github.com/b97tsk/rx/internal/misc"
@@ -12,15 +11,8 @@ import (
 // whenever a new Observer subscribes, it will immediately receive the
 // "current value" from the BehaviorSubject.
 type BehaviorSubject struct {
-	*behaviorSubject
-}
+	Subject
 
-type behaviorSubject struct {
-	Double
-	mux sync.Mutex
-	lst observerList
-	cws misc.ContextWaitService
-	err error
 	val atomic.Value
 }
 
@@ -29,28 +21,19 @@ type behaviorSubjectElement struct {
 }
 
 // NewBehaviorSubject creates a new BehaviorSubject.
-func NewBehaviorSubject(val interface{}) BehaviorSubject {
-	s := new(behaviorSubject)
+func NewBehaviorSubject(val interface{}) *BehaviorSubject {
+	s := new(BehaviorSubject)
 	s.Double = Double{Create(s.subscribe), s.sink}
 	s.val.Store(behaviorSubjectElement{val})
-	return BehaviorSubject{s}
-}
-
-// Exists reports if this BehaviorSubject is ready to use.
-func (s BehaviorSubject) Exists() bool {
-	return s.behaviorSubject != nil
+	return s
 }
 
 // Value returns the latest value stored in this BehaviorSubject.
-func (s BehaviorSubject) Value() interface{} {
-	return s.value()
-}
-
-func (s *behaviorSubject) value() interface{} {
+func (s *BehaviorSubject) Value() interface{} {
 	return s.val.Load().(behaviorSubjectElement).Value
 }
 
-func (s *behaviorSubject) sink(t Notification) {
+func (s *BehaviorSubject) sink(t Notification) {
 	s.mux.Lock()
 	switch {
 	case s.err != nil:
@@ -86,7 +69,7 @@ func (s *behaviorSubject) sink(t Notification) {
 	}
 }
 
-func (s *behaviorSubject) subscribe(ctx context.Context, sink Observer) {
+func (s *BehaviorSubject) subscribe(ctx context.Context, sink Observer) {
 	s.mux.Lock()
 
 	err := s.err
@@ -104,7 +87,7 @@ func (s *behaviorSubject) subscribe(ctx context.Context, sink Observer) {
 			s.cws = misc.NewContextWaitService()
 		}
 
-		sink.Next(s.value())
+		sink.Next(s.Value())
 	}
 
 	s.mux.Unlock()
@@ -113,7 +96,7 @@ func (s *behaviorSubject) subscribe(ctx context.Context, sink Observer) {
 		if err != Completed {
 			sink.Error(err)
 		} else {
-			sink.Next(s.value())
+			sink.Next(s.Value())
 			sink.Complete()
 		}
 	}

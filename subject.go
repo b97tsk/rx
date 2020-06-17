@@ -10,11 +10,8 @@ import (
 // Subject is a special type of Observable that allows values to be multicasted
 // to many Observers.
 type Subject struct {
-	*subject
-}
-
-type subject struct {
 	Double
+
 	mux sync.Mutex
 	lst observerList
 	cws misc.ContextWaitService
@@ -22,18 +19,13 @@ type subject struct {
 }
 
 // NewSubject creates a new Subject.
-func NewSubject() Subject {
-	s := new(subject)
+func NewSubject() *Subject {
+	s := new(Subject)
 	s.Double = Double{Create(s.subscribe), s.sink}
-	return Subject{s}
+	return s
 }
 
-// Exists reports if this Subject is ready to use.
-func (s Subject) Exists() bool {
-	return s.subject != nil
-}
-
-func (s *subject) sink(t Notification) {
+func (s *Subject) sink(t Notification) {
 	s.mux.Lock()
 	switch {
 	case s.err != nil:
@@ -67,7 +59,7 @@ func (s *subject) sink(t Notification) {
 	}
 }
 
-func (s *subject) subscribe(ctx context.Context, sink Observer) {
+func (s *Subject) subscribe(ctx context.Context, sink Observer) {
 	s.mux.Lock()
 
 	err := s.err
