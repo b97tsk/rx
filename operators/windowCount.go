@@ -17,6 +17,9 @@ func (configure WindowCountConfigure) Use() rx.Operator {
 	if configure.WindowSize <= 0 {
 		panic("WindowCount: WindowSize negative or zero")
 	}
+	if configure.StartWindowEvery < 0 {
+		panic("WindowCount: StartWindowEvery negative")
+	}
 	if configure.StartWindowEvery == 0 {
 		configure.StartWindowEvery = configure.WindowSize
 	}
