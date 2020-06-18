@@ -17,6 +17,9 @@ func (configure BufferCountConfigure) Use() rx.Operator {
 	if configure.BufferSize <= 0 {
 		panic("BufferCount: BufferSize negative or zero")
 	}
+	if configure.StartBufferEvery < 0 {
+		panic("BufferCount: StartBufferEvery negative")
+	}
 	if configure.StartBufferEvery == 0 {
 		configure.StartBufferEvery = configure.BufferSize
 	}
