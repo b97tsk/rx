@@ -10,7 +10,7 @@ func FromChan(c <-chan interface{}) Observable {
 	return Create(
 		func(ctx context.Context, sink Observer) {
 			done := ctx.Done()
-			for {
+			for ctx.Err() == nil {
 				select {
 				case <-done:
 					return
@@ -20,11 +20,6 @@ func FromChan(c <-chan interface{}) Observable {
 						return
 					}
 					sink.Next(val)
-					// Check if ctx was cancelled before next loop, such that
-					// Take(1) would exactly take one from the channel.
-					if ctx.Err() != nil {
-						return
-					}
 				}
 			}
 		},
