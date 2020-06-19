@@ -35,40 +35,37 @@ func (obs congestingMergeObservable) Subscribe(ctx context.Context, sink rx.Obse
 	sink = rx.Mutex(sink)
 
 	type X struct {
-		Index  int
 		Active int
 	}
 	cx := make(chan *X, 1)
 	cx <- &X{}
 
+	var observer rx.Observer
+
 	done := ctx.Done()
 	complete := make(chan struct{}, 1)
+	sourceIndex := -1
 
-	obs.Source.Subscribe(ctx, func(t rx.Notification) {
+	observer = func(t rx.Notification) {
 		switch {
 		case t.HasValue:
 			x := <-cx
-
 			for x.Active == obs.Concurrent {
 				cx <- x
 				select {
 				case <-done:
+					observer = rx.Noop
 					return
 				case <-complete:
 				}
 				x = <-cx
 			}
-
 			x.Active++
-
-			sourceIndex := x.Index
-			sourceValue := t.Value
-			x.Index++
-
-			obs1 := obs.Project(sourceValue, sourceIndex)
-
 			cx <- x
 
+			sourceIndex++
+
+			obs1 := obs.Project(t.Value, sourceIndex)
 			obs1.Subscribe(ctx, func(t rx.Notification) {
 				if t.HasValue || t.HasError {
 					sink(t)
@@ -107,7 +104,9 @@ func (obs congestingMergeObservable) Subscribe(ctx context.Context, sink rx.Obse
 			cx <- x
 			sink(t)
 		}
-	})
+	}
+
+	obs.Source.Subscribe(ctx, observer.Sink)
 }
 
 // CongestingMergeAll converts a higher-order Observable into a first-order
