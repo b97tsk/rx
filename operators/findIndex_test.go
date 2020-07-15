@@ -23,9 +23,9 @@ func TestFindIndex(t *testing.T) {
 			rx.Concat(rx.Just("A", "B", "C"), rx.Throw(ErrTest)).Pipe(findIndex),
 		},
 		[][]interface{}{
-			{3, rx.Completed},
-			{rx.Completed},
-			{3, rx.Completed},
+			{3, Completed},
+			{Completed},
+			{3, Completed},
 			{ErrTest},
 		},
 	)

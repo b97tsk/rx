@@ -17,8 +17,8 @@ func TestIgnoreElements(t *testing.T) {
 			rx.Concat(rx.Just("A", "B", "C"), rx.Throw(ErrTest)).Pipe(operators.IgnoreElements()),
 		},
 		[][]interface{}{
-			{rx.Completed},
-			{rx.Completed},
+			{Completed},
+			{Completed},
 			{ErrTest},
 		},
 	)

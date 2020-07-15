@@ -16,7 +16,7 @@ func TestTimeout(t *testing.T) {
 			rx.Just("A", "B", "C").Pipe(AddLatencyToValues(1, 3), operators.Timeout(Step(2))),
 		},
 		[][]interface{}{
-			{"A", "B", "C", rx.Completed},
+			{"A", "B", "C", Completed},
 			{"A", rx.ErrTimeout},
 		},
 	)

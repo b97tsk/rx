@@ -11,7 +11,10 @@ import (
 	"github.com/b97tsk/rx/operators"
 )
 
-var ErrTest = errors.New("test")
+var (
+	Completed = errors.New("completed")
+	ErrTest   = errors.New("test")
+)
 
 func Step(n int) time.Duration {
 	return 60 * time.Millisecond * time.Duration(n)
@@ -109,7 +112,7 @@ func SubscribeN(t *testing.T, observables []rx.Observable, outputs [][]interface
 						t.Logf("want %v", wanted)
 					}
 				default:
-					if wanted != rx.Completed {
+					if wanted != Completed {
 						t.Logf("want %v, but got completed", wanted)
 						t.Fail()
 					} else {

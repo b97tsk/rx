@@ -17,7 +17,7 @@ func TestFlatAll(t *testing.T) {
 				rx.Just("C", "D").Pipe(AddLatencyToValues(2, 4)),
 				rx.Just("E", "F").Pipe(AddLatencyToValues(1, 3)),
 			).Pipe(operators.FlatAll(rx.CombineLatest), ToString()),
-			"[A C E]", "[A C F]", "[A D F]", "[B D F]", rx.Completed,
+			"[A C E]", "[A C F]", "[A D F]", "[B D F]", Completed,
 		)
 	})
 	t.Run("Zip", func(t *testing.T) {
@@ -37,11 +37,11 @@ func TestFlatAll(t *testing.T) {
 			t,
 			observables[:],
 			[][]interface{}{
-				{"[A 1]", "[B 2]", rx.Completed},
-				{"[A 1]", "[B 2]", "[C 3]", rx.Completed},
-				{"[A 1]", "[B 2]", "[C 3]", rx.Completed},
-				{"[A 1]", "[B 2]", rx.Completed},
-				{"[A 1]", "[B 2]", "[C 3]", rx.Completed},
+				{"[A 1]", "[B 2]", Completed},
+				{"[A 1]", "[B 2]", "[C 3]", Completed},
+				{"[A 1]", "[B 2]", "[C 3]", Completed},
+				{"[A 1]", "[B 2]", Completed},
+				{"[A 1]", "[B 2]", "[C 3]", Completed},
 				{"[A 1]", "[B 2]", "[C 3]", ErrTest},
 			},
 		)

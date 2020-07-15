@@ -21,6 +21,6 @@ func TestMergeScan(t *testing.T) {
 			},
 			nil,
 		)),
-		"E", "C", "A", "F", "D", "B", rx.Completed,
+		"E", "C", "A", "F", "D", "B", Completed,
 	)
 }

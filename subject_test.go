@@ -27,10 +27,10 @@ func TestSubject(t *testing.T) {
 				subject.Observable,
 				subject.Pipe(operators.Scan(sum)),
 			).Pipe(ToString()),
-			"[3 3]", "[4 7]", "[5 12]", rx.Completed,
+			"[3 3]", "[4 7]", "[5 12]", Completed,
 		)
 
-		Subscribe(t, subject.Observable, rx.Completed)
+		Subscribe(t, subject.Observable, Completed)
 	})
 
 	t.Run("Error", func(t *testing.T) {

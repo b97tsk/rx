@@ -23,10 +23,10 @@ func TestFirst(t *testing.T) {
 		[][]interface{}{
 			{rx.ErrEmpty},
 			{ErrTest},
-			{1, rx.Completed},
-			{1, rx.Completed},
-			{1, rx.Completed},
-			{1, rx.Completed},
+			{1, Completed},
+			{1, Completed},
+			{1, Completed},
+			{1, Completed},
 		},
 	)
 }
@@ -44,12 +44,12 @@ func TestFirstOrDefault(t *testing.T) {
 			rx.Concat(rx.Just(1, 2), rx.Throw(ErrTest)).Pipe(first),
 		},
 		[][]interface{}{
-			{404, rx.Completed},
+			{404, Completed},
 			{ErrTest},
-			{1, rx.Completed},
-			{1, rx.Completed},
-			{1, rx.Completed},
-			{1, rx.Completed},
+			{1, Completed},
+			{1, Completed},
+			{1, Completed},
+			{1, Completed},
 		},
 	)
 }

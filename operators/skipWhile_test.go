@@ -22,7 +22,7 @@ func TestSkipWhile(t *testing.T) {
 			rx.Concat(rx.Range(1, 5), rx.Throw(ErrTest)).Pipe(skipLessThan5),
 		},
 		[][]interface{}{
-			{5, 4, 3, 2, 1, rx.Completed},
+			{5, 4, 3, 2, 1, Completed},
 			{5, 6, 7, 8, ErrTest},
 			{ErrTest},
 		},

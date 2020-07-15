@@ -18,10 +18,10 @@ func TestTake(t *testing.T) {
 			rx.Range(1, 1).Pipe(operators.Take(3)),
 		},
 		[][]interface{}{
-			{rx.Completed},
-			{1, 2, 3, rx.Completed},
-			{1, 2, rx.Completed},
-			{rx.Completed},
+			{Completed},
+			{1, 2, 3, Completed},
+			{1, 2, Completed},
+			{Completed},
 		},
 	)
 	SubscribeN(
@@ -33,8 +33,8 @@ func TestTake(t *testing.T) {
 			rx.Concat(rx.Range(1, 1), rx.Throw(ErrTest)).Pipe(operators.Take(3)),
 		},
 		[][]interface{}{
-			{rx.Completed},
-			{1, 2, 3, rx.Completed},
+			{Completed},
+			{1, 2, 3, Completed},
 			{1, 2, ErrTest},
 			{ErrTest},
 		},

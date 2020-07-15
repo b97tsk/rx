@@ -30,9 +30,9 @@ func TestWithLatestFrom(t *testing.T) {
 			t,
 			observables[:],
 			[][]interface{}{
-				{"[A 1]", "[B 2]", rx.Completed},
-				{"[A 1]", "[B 2]", "[C 3]", rx.Completed},
-				{"[A 1]", "[B 2]", "[C 3]", "[D 3]", rx.Completed},
+				{"[A 1]", "[B 2]", Completed},
+				{"[A 1]", "[B 2]", "[C 3]", Completed},
+				{"[A 1]", "[B 2]", "[C 3]", "[D 3]", Completed},
 			},
 		)
 	}
@@ -49,8 +49,8 @@ func TestWithLatestFrom(t *testing.T) {
 			t,
 			observables[:],
 			[][]interface{}{
-				{"[A 1]", "[B 2]", rx.Completed},
-				{"[A 1]", "[B 2]", "[C 3]", rx.Completed},
+				{"[A 1]", "[B 2]", Completed},
+				{"[A 1]", "[B 2]", "[C 3]", Completed},
 				{"[A 1]", "[B 2]", "[C 3]", ErrTest},
 			},
 		)

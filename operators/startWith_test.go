@@ -18,8 +18,8 @@ func TestStartWith(t *testing.T) {
 			rx.Throw(ErrTest).Pipe(operators.StartWith()),
 		},
 		[][]interface{}{
-			{"A", "B", "C", "D", "E", rx.Completed},
-			{"A", "B", "C", rx.Completed},
+			{"A", "B", "C", "D", "E", Completed},
+			{"A", "B", "C", Completed},
 			{"A", "B", "C", ErrTest},
 			{ErrTest},
 		},

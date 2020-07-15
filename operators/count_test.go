@@ -17,8 +17,8 @@ func TestCount(t *testing.T) {
 			rx.Concat(rx.Range(1, 9), rx.Throw(ErrTest)).Pipe(operators.Count()),
 		},
 		[][]interface{}{
-			{0, rx.Completed},
-			{8, rx.Completed},
+			{0, Completed},
+			{8, Completed},
 			{ErrTest},
 		},
 	)

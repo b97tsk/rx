@@ -24,13 +24,13 @@ func TestZip(t *testing.T) {
 		t,
 		observables[:],
 		[][]interface{}{
-			{"[A 1]", "[B 2]", rx.Completed},
-			{"[A 1]", "[B 2]", "[C 3]", rx.Completed},
-			{"[A 1]", "[B 2]", "[C 3]", rx.Completed},
-			{"[A 1]", "[B 2]", rx.Completed},
-			{"[A 1]", "[B 2]", "[C 3]", rx.Completed},
+			{"[A 1]", "[B 2]", Completed},
+			{"[A 1]", "[B 2]", "[C 3]", Completed},
+			{"[A 1]", "[B 2]", "[C 3]", Completed},
+			{"[A 1]", "[B 2]", Completed},
+			{"[A 1]", "[B 2]", "[C 3]", Completed},
 			{"[A 1]", "[B 2]", "[C 3]", ErrTest},
 		},
 	)
-	Subscribe(t, rx.Zip(), rx.Completed)
+	Subscribe(t, rx.Zip(), Completed)
 }

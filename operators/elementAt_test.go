@@ -19,9 +19,9 @@ func TestElementAt(t *testing.T) {
 			rx.Concat(rx.Range(1, 5), rx.Throw(ErrTest)).Pipe(findFifth),
 		},
 		[][]interface{}{
-			{5, rx.Completed},
+			{5, Completed},
 			{rx.ErrOutOfRange},
-			{5, rx.Completed},
+			{5, Completed},
 			{ErrTest},
 		},
 	)
@@ -38,9 +38,9 @@ func TestElementAtOrDefault(t *testing.T) {
 			rx.Concat(rx.Range(1, 5), rx.Throw(ErrTest)).Pipe(findFifth),
 		},
 		[][]interface{}{
-			{5, rx.Completed},
-			{404, rx.Completed},
-			{5, rx.Completed},
+			{5, Completed},
+			{404, Completed},
+			{5, Completed},
 			{ErrTest},
 		},
 	)

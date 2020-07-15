@@ -23,8 +23,8 @@ func TestThrowIfEmpty(t *testing.T) {
 		[][]interface{}{
 			{rx.ErrEmpty},
 			{ErrTest},
-			{1, rx.Completed},
-			{1, 2, rx.Completed},
+			{1, Completed},
+			{1, 2, Completed},
 			{1, ErrTest},
 			{1, 2, ErrTest},
 		},

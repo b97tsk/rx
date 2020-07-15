@@ -27,7 +27,7 @@ func TestSample(t *testing.T) {
 			),
 		},
 		[][]interface{}{
-			{"B", "D", "F", rx.Completed},
+			{"B", "D", "F", Completed},
 			{"B", "D", "F", ErrTest},
 		},
 	)
@@ -40,6 +40,6 @@ func TestSampleTime(t *testing.T) {
 			AddLatencyToValues(1, 2),
 			operators.SampleTime(Step(4)),
 		),
-		"B", "D", "F", rx.Completed,
+		"B", "D", "F", Completed,
 	)
 }

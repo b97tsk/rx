@@ -22,11 +22,11 @@ func TestDo(t *testing.T) {
 			obs,
 		},
 		[][]interface{}{
-			{1, rx.Completed},
-			{"A", 3, rx.Completed},
-			{"A", "B", 6, rx.Completed},
+			{1, Completed},
+			{"A", 3, Completed},
+			{"A", "B", 6, Completed},
 			{"A", "B", ErrTest},
-			{9, rx.Completed},
+			{9, Completed},
 		},
 	)
 }
@@ -45,11 +45,11 @@ func TestDoOnNext(t *testing.T) {
 			obs,
 		},
 		[][]interface{}{
-			{0, rx.Completed},
-			{"A", 1, rx.Completed},
-			{"A", "B", 3, rx.Completed},
+			{0, Completed},
+			{"A", 1, Completed},
+			{"A", "B", 3, Completed},
 			{"A", "B", ErrTest},
-			{5, rx.Completed},
+			{5, Completed},
 		},
 	)
 }
@@ -68,11 +68,11 @@ func TestDoOnError(t *testing.T) {
 			obs,
 		},
 		[][]interface{}{
-			{0, rx.Completed},
-			{"A", 0, rx.Completed},
-			{"A", "B", 0, rx.Completed},
+			{0, Completed},
+			{"A", 0, Completed},
+			{"A", "B", 0, Completed},
 			{"A", "B", ErrTest},
-			{1, rx.Completed},
+			{1, Completed},
 		},
 	)
 }
@@ -91,11 +91,11 @@ func TestDoOnComplete(t *testing.T) {
 			obs,
 		},
 		[][]interface{}{
-			{1, rx.Completed},
-			{"A", 2, rx.Completed},
-			{"A", "B", 3, rx.Completed},
+			{1, Completed},
+			{"A", 2, Completed},
+			{"A", "B", 3, Completed},
 			{"A", "B", ErrTest},
-			{3, rx.Completed},
+			{3, Completed},
 		},
 	)
 }
@@ -114,11 +114,11 @@ func TestDoAtLast(t *testing.T) {
 			obs,
 		},
 		[][]interface{}{
-			{1, rx.Completed},
-			{"A", 2, rx.Completed},
-			{"A", "B", 3, rx.Completed},
+			{1, Completed},
+			{"A", 2, Completed},
+			{"A", "B", 3, Completed},
 			{"A", "B", ErrTest},
-			{4, rx.Completed},
+			{4, Completed},
 		},
 	)
 }

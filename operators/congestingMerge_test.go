@@ -24,8 +24,8 @@ func TestCongestingMergeAll(t *testing.T) {
 			).Pipe(operators.CongestingMergeConfigure{Concurrent: 1}.Use()),
 		},
 		[][]interface{}{
-			{"E", "C", "A", "F", "D", "B", rx.Completed},
-			{"A", "B", "C", "D", "E", "F", rx.Completed},
+			{"E", "C", "A", "F", "D", "B", Completed},
+			{"A", "B", "C", "D", "E", "F", Completed},
 		},
 	)
 }

@@ -16,6 +16,6 @@ func TestCongest(t *testing.T) {
 			operators.Congest(3),
 			AddLatencyToValues(3, 4),
 		),
-		1, 2, 3, 4, 5, 6, 7, 8, rx.Completed,
+		1, 2, 3, 4, 5, 6, 7, 8, Completed,
 	)
 }

@@ -37,7 +37,7 @@ func shareTest1(t *testing.T) {
 			obs.Pipe(DelaySubscription(8)),
 			obs.Pipe(DelaySubscription(13)),
 		),
-		0, 1, 1, 2, 2, 2, 3, 3, 3, 0, 1, 2, 3, rx.Completed,
+		0, 1, 1, 2, 2, 2, 3, 3, 3, 0, 1, 2, 3, Completed,
 	)
 }
 
@@ -63,7 +63,7 @@ func shareTest2(t *testing.T) {
 			obs.Pipe(DelaySubscription(8)),
 			obs.Pipe(DelaySubscription(19)),
 		),
-		0, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 5, 0, 1, 2, 3, rx.Completed,
+		0, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 5, 0, 1, 2, 3, Completed,
 	)
 }
 
@@ -89,7 +89,7 @@ func shareTest3(t *testing.T) {
 			obs.Pipe(DelaySubscription(8)),
 			obs.Pipe(DelaySubscription(13)),
 		),
-		0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 0, 1, 2, 3, rx.Completed,
+		0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 0, 1, 2, 3, Completed,
 	)
 }
 
@@ -115,6 +115,6 @@ func shareTest4(t *testing.T) {
 			obs.Pipe(DelaySubscription(8)),
 			obs.Pipe(DelaySubscription(16)),
 		),
-		0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 0, 1, 2, 3, rx.Completed,
+		0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 0, 1, 2, 3, Completed,
 	)
 }

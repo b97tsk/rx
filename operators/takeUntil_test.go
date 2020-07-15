@@ -20,10 +20,10 @@ func TestTakeUntil(t *testing.T) {
 			rx.Just("A", "B", "C").Pipe(addLatency, operators.TakeUntil(rx.Never())),
 		},
 		[][]interface{}{
-			{rx.Completed},
-			{rx.Completed},
+			{Completed},
+			{Completed},
 			{ErrTest},
-			{"A", "B", "C", rx.Completed},
+			{"A", "B", "C", Completed},
 		},
 	)
 	SubscribeN(
@@ -34,8 +34,8 @@ func TestTakeUntil(t *testing.T) {
 			rx.Just("A", "B", "C").Pipe(addLatency, operators.TakeUntil(rx.Throw(ErrTest).Pipe(delay))),
 		},
 		[][]interface{}{
-			{"A", "B", rx.Completed},
-			{"A", "B", rx.Completed},
+			{"A", "B", Completed},
+			{"A", "B", Completed},
 			{"A", "B", ErrTest},
 		},
 	)

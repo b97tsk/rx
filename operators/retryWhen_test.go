@@ -26,9 +26,9 @@ func TestRetryWhen(t *testing.T) {
 			rx.Concat(rx.Range(1, 4), rx.Throw(ErrTest)).Pipe(operators.RetryWhen(retryTwice)),
 		},
 		[][]interface{}{
-			{1, 2, 3, rx.Completed},
-			{1, 2, 3, rx.Completed},
-			{1, 2, 3, rx.Completed},
+			{1, 2, 3, Completed},
+			{1, 2, 3, Completed},
+			{1, 2, 3, Completed},
 			{1, 2, 3, ErrTest},
 			{1, 2, 3, 1, 2, 3, ErrTest},
 			{1, 2, 3, 1, 2, 3, 1, 2, 3, ErrTest},

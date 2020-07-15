@@ -50,11 +50,11 @@ func TestWindowCount(t *testing.T) {
 			),
 		},
 		[][]interface{}{
-			{"[A B]", "[C D]", "[E F]", "[G]", rx.Completed},
-			{"[A B C]", "[D E F]", "[G]", rx.Completed},
-			{"[A B C]", "[B C D]", "[C D E]", "[D E F]", "[E F G]", "[F G]", "[G]", "[]", rx.Completed},
-			{"[A B C]", "[C D E]", "[E F G]", "[G]", rx.Completed},
-			{"[A B C]", "[E F G]", "[]", rx.Completed},
+			{"[A B]", "[C D]", "[E F]", "[G]", Completed},
+			{"[A B C]", "[D E F]", "[G]", Completed},
+			{"[A B C]", "[B C D]", "[C D E]", "[D E F]", "[E F G]", "[F G]", "[G]", "[]", Completed},
+			{"[A B C]", "[C D E]", "[E F G]", "[G]", Completed},
+			{"[A B C]", "[E F G]", "[]", Completed},
 		},
 	)
 }

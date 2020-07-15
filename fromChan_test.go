@@ -17,7 +17,7 @@ func TestFromChan(t *testing.T) {
 			c <- "C"
 			close(c)
 		}()
-		Subscribe(t, rx.FromChan(c), "A", "B", "C", rx.Completed)
+		Subscribe(t, rx.FromChan(c), "A", "B", "C", Completed)
 	})
 	t.Run("#2", func(t *testing.T) {
 		c := make(chan interface{})
@@ -36,9 +36,9 @@ func TestFromChan(t *testing.T) {
 				obs,
 			},
 			[][]interface{}{
-				{"A", rx.Completed},
-				{"B", "C", rx.Completed},
-				{rx.Completed},
+				{"A", Completed},
+				{"B", "C", Completed},
+				{Completed},
 			},
 		)
 	})

@@ -15,6 +15,6 @@ func TestMerge(t *testing.T) {
 			rx.Just("C", "D").Pipe(AddLatencyToValues(2, 4)),
 			rx.Just("E", "F").Pipe(AddLatencyToValues(1, 3)),
 		),
-		"E", "C", "A", "F", "D", "B", rx.Completed,
+		"E", "C", "A", "F", "D", "B", Completed,
 	)
 }

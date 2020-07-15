@@ -31,8 +31,8 @@ func TestSwitchAll(t *testing.T) {
 			).Pipe(AddLatencyToValues(0, 5), operators.SwitchAll()),
 		},
 		[][]interface{}{
-			{"A", "B", "C", "E", "F", "I", "J", "K", "L", rx.Completed},
-			{"A", "B", "C", "E", "F", "I", "J", "K", rx.Completed},
+			{"A", "B", "C", "E", "F", "I", "J", "K", "L", Completed},
+			{"A", "B", "C", "E", "F", "I", "J", "K", Completed},
 			{"A", "B", "C", "E", "F", "I", "J", "K", ErrTest},
 		},
 	)

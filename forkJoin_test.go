@@ -30,8 +30,8 @@ func TestOperators_ForkJoin(t *testing.T) {
 			).Pipe(ToString()),
 		},
 		[][]interface{}{
-			{"[C 4 8]", rx.Completed},
-			{rx.Completed},
+			{"[C 4 8]", Completed},
+			{Completed},
 			{ErrTest},
 		},
 	)

@@ -35,32 +35,9 @@ func Example() {
 		),
 	)
 
-	// To Subscribe to an observable, you call its Subscribe method with
-	// a context and an observer as parameters, and you get another context
-	// and a cancel function in return.
-	ctx, cancel := obs.Subscribe(context.Background(), rx.Noop)
-
-	// The returned context will be cancelled when the subscription completes.
-	// Since this example has no goroutines involved, it must have already done.
-	<-ctx.Done() // Wait for it done, though it's not necessary.
-
-	// Subscriptions to observables are cancellable, but since this example has
-	// already finished its work, there is nothing left to cancel.
-	cancel() // This is a noop in this example.
-
-	// To check if a subscription to an observable has really completed without
-	// an error, we can call the Err method of the returned context to get
-	// an error and check if it equals to rx.Completed.
-	switch err := ctx.Err(); err {
-	case nil:
-		fmt.Println("Status: WIP")
-	case rx.Completed:
-		fmt.Println("Status: Completed")
-	case context.Canceled:
-		fmt.Println("Status: Canceled")
-	default:
-		fmt.Printf("Status: Error(%v)\n", err)
-	}
+	// To Subscribe to an Observable, you call its Subscribe method which
+	// takes a context.Context and an Observer as arguments.
+	obs.Subscribe(context.Background(), rx.Noop)
 
 	// Output:
 	// 2
@@ -69,5 +46,4 @@ func Example() {
 	// 14
 	// 18
 	// Completed
-	// Status: Completed
 }

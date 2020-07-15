@@ -23,7 +23,8 @@ func observablePublishTest1(t *testing.T) {
 			},
 		),
 	).Publish(rx.NewSubject().Double)
-	ctx, _ := rx.Zip(
+	ctx, cancel := context.WithCancel(context.Background())
+	rx.Zip(
 		obs.Pipe(operators.Take(4)),
 		obs.Pipe(operators.Skip(4), operators.Take(4)),
 	).Pipe(
@@ -35,7 +36,10 @@ func observablePublishTest1(t *testing.T) {
 		),
 		operators.ToSlice(),
 		ToString(),
-	).Subscribe(context.Background(), func(u rx.Notification) {
+	).Subscribe(ctx, func(u rx.Notification) {
+		if !u.HasValue {
+			defer cancel()
+		}
 		switch {
 		case u.HasValue:
 			if u.Value != "[0 5 12 21]" {
@@ -64,7 +68,8 @@ func observablePublishTest2(t *testing.T) {
 			},
 		),
 	).Publish(rx.NewBehaviorSubject(-1).Double)
-	ctx, _ := rx.Zip(
+	ctx, cancel := context.WithCancel(context.Background())
+	rx.Zip(
 		obs.Pipe(operators.Take(4)),
 		obs.Pipe(operators.Skip(4), operators.Take(4)),
 	).Pipe(
@@ -76,7 +81,10 @@ func observablePublishTest2(t *testing.T) {
 		),
 		operators.ToSlice(),
 		ToString(),
-	).Subscribe(context.Background(), func(u rx.Notification) {
+	).Subscribe(ctx, func(u rx.Notification) {
+		if !u.HasValue {
+			defer cancel()
+		}
 		switch {
 		case u.HasValue:
 			if u.Value != "[-3 0 5 12]" {
@@ -105,7 +113,8 @@ func observablePublishTest3(t *testing.T) {
 			},
 		),
 	).Publish(rx.NewReplaySubject(2).Double)
-	ctx, _ := rx.Zip(
+	ctx, cancel := context.WithCancel(context.Background())
+	rx.Zip(
 		obs.Pipe(operators.Take(4)),
 		obs.Pipe(operators.Skip(4), operators.Take(4), DelaySubscription(7)),
 	).Pipe(
@@ -117,7 +126,10 @@ func observablePublishTest3(t *testing.T) {
 		),
 		operators.ToSlice(),
 		ToString(),
-	).Subscribe(context.Background(), func(u rx.Notification) {
+	).Subscribe(ctx, func(u rx.Notification) {
+		if !u.HasValue {
+			defer cancel()
+		}
 		switch {
 		case u.HasValue:
 			if u.Value != "[0 6 14 24]" {

@@ -18,8 +18,8 @@ func TestEndWith(t *testing.T) {
 			rx.Throw(ErrTest).Pipe(operators.EndWith()),
 		},
 		[][]interface{}{
-			{"A", "B", "C", "D", "E", rx.Completed},
-			{"D", "E", rx.Completed},
+			{"A", "B", "C", "D", "E", Completed},
+			{"D", "E", Completed},
 			{ErrTest},
 			{ErrTest},
 		},

@@ -22,8 +22,8 @@ func TestFilter(t *testing.T) {
 			rx.Concat(rx.Range(1, 9), rx.Throw(ErrTest)).Pipe(filterLessThan5),
 		},
 		[][]interface{}{
-			{1, 2, 3, 4, 4, 3, 2, 1, rx.Completed},
-			{1, 2, 3, 4, rx.Completed},
+			{1, 2, 3, 4, 4, 3, 2, 1, Completed},
+			{1, 2, 3, 4, Completed},
 			{1, 2, 3, 4, ErrTest},
 		},
 	)
@@ -43,8 +43,8 @@ func TestExclude(t *testing.T) {
 			rx.Concat(rx.Range(1, 9), rx.Throw(ErrTest)).Pipe(excludeLessThan5),
 		},
 		[][]interface{}{
-			{5, rx.Completed},
-			{5, 6, 7, 8, rx.Completed},
+			{5, Completed},
+			{5, 6, 7, 8, Completed},
 			{5, 6, 7, 8, ErrTest},
 		},
 	)
