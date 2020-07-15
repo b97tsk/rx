@@ -32,7 +32,7 @@ func TestThrottle(t *testing.T) {
 					},
 					Leading:  false,
 					Trailing: true,
-				}.Use(),
+				}.Make(),
 			),
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(0, 4),
@@ -42,7 +42,7 @@ func TestThrottle(t *testing.T) {
 					},
 					Leading:  true,
 					Trailing: true,
-				}.Use(),
+				}.Make(),
 			),
 		},
 		[][]interface{}{
@@ -68,7 +68,7 @@ func TestThrottleTime(t *testing.T) {
 					Duration: Step(9),
 					Leading:  false,
 					Trailing: true,
-				}.Use(),
+				}.Make(),
 			),
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(0, 4),
@@ -76,7 +76,7 @@ func TestThrottleTime(t *testing.T) {
 					Duration: Step(9),
 					Leading:  true,
 					Trailing: true,
-				}.Use(),
+				}.Make(),
 			),
 		},
 		[][]interface{}{

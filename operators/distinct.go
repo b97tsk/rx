@@ -11,8 +11,8 @@ type DistinctConfigure struct {
 	KeySelector func(interface{}) interface{}
 }
 
-// Use creates an Operator from this configure.
-func (configure DistinctConfigure) Use() rx.Operator {
+// Make creates an Operator from this configure.
+func (configure DistinctConfigure) Make() rx.Operator {
 	if configure.KeySelector == nil {
 		configure.KeySelector = func(val interface{}) interface{} { return val }
 	}
@@ -49,5 +49,5 @@ func (obs distinctObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 // will use each value from the source Observable directly with an equality
 // check against previous values.
 func Distinct() rx.Operator {
-	return DistinctConfigure{}.Use()
+	return DistinctConfigure{}.Make()
 }

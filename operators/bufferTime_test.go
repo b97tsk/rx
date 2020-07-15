@@ -40,22 +40,22 @@ func TestBufferTime(t *testing.T) {
 		[]rx.Observable{
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
-				operators.BufferTimeConfigure{Step(8), 0, 0}.Use(),
+				operators.BufferTimeConfigure{Step(8), 0, 0}.Make(),
 				ToString(),
 			),
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
-				operators.BufferTimeConfigure{Step(8), 0, 3}.Use(),
+				operators.BufferTimeConfigure{Step(8), 0, 3}.Make(),
 				ToString(),
 			),
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
-				operators.BufferTimeConfigure{Step(8), 0, 2}.Use(),
+				operators.BufferTimeConfigure{Step(8), 0, 2}.Make(),
 				ToString(),
 			),
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
-				operators.BufferTimeConfigure{Step(8), 0, 1}.Use(),
+				operators.BufferTimeConfigure{Step(8), 0, 1}.Make(),
 				ToString(),
 			),
 		},
@@ -72,17 +72,17 @@ func TestBufferTime(t *testing.T) {
 		[]rx.Observable{
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
-				operators.BufferTimeConfigure{Step(2), Step(2), 0}.Use(),
+				operators.BufferTimeConfigure{Step(2), Step(2), 0}.Make(),
 				ToString(),
 			),
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
-				operators.BufferTimeConfigure{Step(2), Step(4), 0}.Use(),
+				operators.BufferTimeConfigure{Step(2), Step(4), 0}.Make(),
 				ToString(),
 			),
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
-				operators.BufferTimeConfigure{Step(4), Step(2), 0}.Use(),
+				operators.BufferTimeConfigure{Step(4), Step(2), 0}.Make(),
 				ToString(),
 			),
 		},

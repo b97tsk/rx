@@ -13,8 +13,8 @@ type MergeConfigure struct {
 	Concurrent int
 }
 
-// Use creates an Operator from this configure.
-func (configure MergeConfigure) Use() rx.Operator {
+// Make creates an Operator from this configure.
+func (configure MergeConfigure) Make() rx.Operator {
 	if configure.Project == nil {
 		configure.Project = projectToObservable
 	}
@@ -109,7 +109,7 @@ func MergeAll() rx.Operator {
 // MergeMap maps each value to an Observable, then flattens all of these inner
 // Observables using MergeAll.
 func MergeMap(project func(interface{}, int) rx.Observable) rx.Operator {
-	return MergeConfigure{project, -1}.Use()
+	return MergeConfigure{project, -1}.Make()
 }
 
 // MergeMapTo creates an Observable that projects each source value to the same

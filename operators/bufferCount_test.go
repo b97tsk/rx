@@ -14,9 +14,9 @@ func TestBufferCount(t *testing.T) {
 		[]rx.Observable{
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(operators.BufferCount(2), ToString()),
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(operators.BufferCount(3), ToString()),
-			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(operators.BufferCountConfigure{3, 1}.Use(), ToString()),
-			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(operators.BufferCountConfigure{3, 2}.Use(), ToString()),
-			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(operators.BufferCountConfigure{3, 4}.Use(), ToString()),
+			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(operators.BufferCountConfigure{3, 1}.Make(), ToString()),
+			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(operators.BufferCountConfigure{3, 2}.Make(), ToString()),
+			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(operators.BufferCountConfigure{3, 4}.Make(), ToString()),
 		},
 		[][]interface{}{
 			{"[A B]", "[C D]", "[E F]", "[G]", Completed},

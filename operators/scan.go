@@ -13,8 +13,8 @@ type ScanConfigure struct {
 	HasSeed     bool
 }
 
-// Use creates an Operator from this configure.
-func (configure ScanConfigure) Use() rx.Operator {
+// Make creates an Operator from this configure.
+func (configure ScanConfigure) Make() rx.Operator {
 	if configure.Accumulator == nil {
 		panic("Scan: nil Accumulator")
 	}
@@ -61,5 +61,5 @@ func (obs scanObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 // It's like Reduce, but emits the current accumulation whenever the source
 // emits a value.
 func Scan(accumulator func(interface{}, interface{}, int) interface{}) rx.Operator {
-	return ScanConfigure{Accumulator: accumulator}.Use()
+	return ScanConfigure{Accumulator: accumulator}.Make()
 }

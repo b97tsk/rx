@@ -14,8 +14,8 @@ type MergeScanConfigure struct {
 	Concurrent  int
 }
 
-// Use creates an Operator from this configure.
-func (configure MergeScanConfigure) Use() rx.Operator {
+// Make creates an Operator from this configure.
+func (configure MergeScanConfigure) Make() rx.Operator {
 	if configure.Accumulator == nil {
 		panic("MergeScan: nil Accumulator")
 	}
@@ -120,5 +120,5 @@ func (obs mergeScanObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 // It's like Scan, but the Observables returned by the accumulator are merged
 // into the outer Observable.
 func MergeScan(accumulator func(interface{}, interface{}) rx.Observable, seed interface{}) rx.Operator {
-	return MergeScanConfigure{accumulator, seed, -1}.Use()
+	return MergeScanConfigure{accumulator, seed, -1}.Make()
 }

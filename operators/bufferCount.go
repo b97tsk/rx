@@ -12,8 +12,8 @@ type BufferCountConfigure struct {
 	StartBufferEvery int
 }
 
-// Use creates an Operator from this configure.
-func (configure BufferCountConfigure) Use() rx.Operator {
+// Make creates an Operator from this configure.
+func (configure BufferCountConfigure) Make() rx.Operator {
 	if configure.BufferSize <= 0 {
 		panic("BufferCount: BufferSize negative or zero")
 	}
@@ -80,5 +80,5 @@ func (obs bufferCountObservable) Subscribe(ctx context.Context, sink rx.Observer
 // For the purpose of allocation avoidance, slices emitted by the output
 // Observable actually share the same underlying array.
 func BufferCount(bufferSize int) rx.Operator {
-	return BufferCountConfigure{BufferSize: bufferSize}.Use()
+	return BufferCountConfigure{BufferSize: bufferSize}.Make()
 }

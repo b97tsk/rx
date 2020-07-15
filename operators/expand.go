@@ -13,8 +13,8 @@ type ExpandConfigure struct {
 	Concurrent int
 }
 
-// Use creates an Operator from this configure.
-func (configure ExpandConfigure) Use() rx.Operator {
+// Make creates an Operator from this configure.
+func (configure ExpandConfigure) Make() rx.Operator {
 	if configure.Project == nil {
 		panic("Expand: nil Project")
 	}
@@ -112,5 +112,5 @@ func (obs expandObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 // It's similar to MergeMap, but applies the projection function to every
 // source value as well as every output value. It's recursive.
 func Expand(project func(interface{}) rx.Observable) rx.Operator {
-	return ExpandConfigure{project, -1}.Use()
+	return ExpandConfigure{project, -1}.Make()
 }

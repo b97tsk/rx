@@ -13,8 +13,8 @@ type TimeoutConfigure struct {
 	Observable rx.Observable
 }
 
-// Use creates an Operator from this configure.
-func (configure TimeoutConfigure) Use() rx.Operator {
+// Make creates an Operator from this configure.
+func (configure TimeoutConfigure) Make() rx.Operator {
 	if configure.Observable == nil {
 		configure.Observable = rx.Throw(rx.ErrTimeout)
 	}
@@ -77,5 +77,5 @@ func (obs timeoutObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 // Timeout creates an Observable that mirrors the source Observable or throws
 // rx.ErrTimeout if the source does not emit a value in given time span.
 func Timeout(d time.Duration) rx.Operator {
-	return TimeoutConfigure{Duration: d}.Use()
+	return TimeoutConfigure{Duration: d}.Make()
 }

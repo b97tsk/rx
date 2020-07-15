@@ -49,25 +49,25 @@ func TestWindowTime(t *testing.T) {
 		[]rx.Observable{
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
-				operators.WindowTimeConfigure{Step(8), 0, 0}.Use(),
+				operators.WindowTimeConfigure{Step(8), 0, 0}.Make(),
 				operators.MergeMap(toSlice),
 				ToString(),
 			),
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
-				operators.WindowTimeConfigure{Step(8), 0, 3}.Use(),
+				operators.WindowTimeConfigure{Step(8), 0, 3}.Make(),
 				operators.MergeMap(toSlice),
 				ToString(),
 			),
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
-				operators.WindowTimeConfigure{Step(8), 0, 2}.Use(),
+				operators.WindowTimeConfigure{Step(8), 0, 2}.Make(),
 				operators.MergeMap(toSlice),
 				ToString(),
 			),
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
-				operators.WindowTimeConfigure{Step(8), 0, 1}.Use(),
+				operators.WindowTimeConfigure{Step(8), 0, 1}.Make(),
 				operators.MergeMap(toSlice),
 				ToString(),
 			),
@@ -85,19 +85,19 @@ func TestWindowTime(t *testing.T) {
 		[]rx.Observable{
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
-				operators.WindowTimeConfigure{Step(2), Step(2), 0}.Use(),
+				operators.WindowTimeConfigure{Step(2), Step(2), 0}.Make(),
 				operators.MergeMap(toSlice),
 				ToString(),
 			),
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
-				operators.WindowTimeConfigure{Step(2), Step(4), 0}.Use(),
+				operators.WindowTimeConfigure{Step(2), Step(4), 0}.Make(),
 				operators.MergeMap(toSlice),
 				ToString(),
 			),
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
-				operators.WindowTimeConfigure{Step(4), Step(2), 0}.Use(),
+				operators.WindowTimeConfigure{Step(4), Step(2), 0}.Make(),
 				operators.MergeMap(toSlice),
 				ToString(),
 			),

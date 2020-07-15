@@ -14,8 +14,8 @@ type ThrottleConfigure struct {
 	Trailing         bool
 }
 
-// Use creates an Operator from this configure.
-func (configure ThrottleConfigure) Use() rx.Operator {
+// Make creates an Operator from this configure.
+func (configure ThrottleConfigure) Make() rx.Operator {
 	if configure.DurationSelector == nil {
 		panic("Throttle: nil DurationSelector")
 	}
@@ -31,15 +31,15 @@ type ThrottleTimeConfigure struct {
 	Trailing bool
 }
 
-// Use creates an Operator from this configure.
-func (configure ThrottleTimeConfigure) Use() rx.Operator {
+// Make creates an Operator from this configure.
+func (configure ThrottleTimeConfigure) Make() rx.Operator {
 	obsTimer := rx.Timer(configure.Duration)
 	durationSelector := func(interface{}) rx.Observable { return obsTimer }
 	return ThrottleConfigure{
 		DurationSelector: durationSelector,
 		Leading:          configure.Leading,
 		Trailing:         configure.Trailing,
-	}.Use()
+	}.Make()
 }
 
 type throttleObservable struct {
@@ -130,7 +130,7 @@ func Throttle(durationSelector func(interface{}) rx.Observable) rx.Operator {
 		DurationSelector: durationSelector,
 		Leading:          true,
 		Trailing:         false,
-	}.Use()
+	}.Make()
 }
 
 // ThrottleTime creates an Observable that emits a value from the source
@@ -144,5 +144,5 @@ func ThrottleTime(d time.Duration) rx.Operator {
 		Duration: d,
 		Leading:  true,
 		Trailing: false,
-	}.Use()
+	}.Make()
 }

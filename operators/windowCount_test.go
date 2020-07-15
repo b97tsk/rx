@@ -32,19 +32,19 @@ func TestWindowCount(t *testing.T) {
 			),
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
-				operators.WindowCountConfigure{3, 1}.Use(),
+				operators.WindowCountConfigure{3, 1}.Make(),
 				operators.MergeMap(toSlice),
 				ToString(),
 			),
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
-				operators.WindowCountConfigure{3, 2}.Use(),
+				operators.WindowCountConfigure{3, 2}.Make(),
 				operators.MergeMap(toSlice),
 				ToString(),
 			),
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
-				operators.WindowCountConfigure{3, 4}.Use(),
+				operators.WindowCountConfigure{3, 4}.Make(),
 				operators.MergeMap(toSlice),
 				ToString(),
 			),

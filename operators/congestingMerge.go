@@ -12,8 +12,8 @@ type CongestingMergeConfigure struct {
 	Concurrent int
 }
 
-// Use creates an Operator from this configure.
-func (configure CongestingMergeConfigure) Use() rx.Operator {
+// Make creates an Operator from this configure.
+func (configure CongestingMergeConfigure) Make() rx.Operator {
 	if configure.Project == nil {
 		configure.Project = projectToObservable
 	}
@@ -126,7 +126,7 @@ func CongestingMergeAll() rx.Operator {
 //
 // It's like MergeMap, but it may congest the source due to concurrent limit.
 func CongestingMergeMap(project func(interface{}, int) rx.Observable) rx.Operator {
-	return CongestingMergeConfigure{project, -1}.Use()
+	return CongestingMergeConfigure{project, -1}.Make()
 }
 
 // CongestingMergeMapTo creates an Observable that projects each source value

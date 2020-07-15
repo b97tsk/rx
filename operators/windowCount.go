@@ -12,8 +12,8 @@ type WindowCountConfigure struct {
 	StartWindowEvery int
 }
 
-// Use creates an Operator from this configure.
-func (configure WindowCountConfigure) Use() rx.Operator {
+// Make creates an Operator from this configure.
+func (configure WindowCountConfigure) Make() rx.Operator {
 	if configure.WindowSize <= 0 {
 		panic("WindowCount: WindowSize negative or zero")
 	}
@@ -94,5 +94,5 @@ func (obs windowCountObservable) Subscribe(ctx context.Context, sink rx.Observer
 //
 // It's like BufferCount, but emits a nested Observable instead of a slice.
 func WindowCount(windowSize int) rx.Operator {
-	return WindowCountConfigure{WindowSize: windowSize}.Use()
+	return WindowCountConfigure{WindowSize: windowSize}.Make()
 }
