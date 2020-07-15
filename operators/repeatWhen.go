@@ -10,7 +10,7 @@ import (
 
 type repeatWhenObservable struct {
 	Source   rx.Observable
-	Notifier func(rx.Observable) rx.Observable
+	Notifier rx.Operator
 }
 
 func (obs repeatWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) {
@@ -18,73 +18,45 @@ func (obs repeatWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 	sink = sink.WithCancel(cancel).Mutex()
 
 	var (
-		active         = atomic.Uint32(2)
+		repeatActive   = atomic.Uint32(1)
+		sourceActive   = atomic.Uint32(1)
 		subject        *rx.Subject
-		createSubject  func() *rx.Subject
+		subscribe      func()
 		avoidRecursion misc.AvoidRecursion
 	)
 
-	type X struct{}
-	var cxCurrent chan X
-
-	var (
-		sourceCtx    context.Context
-		sourceCancel context.CancelFunc
-	)
-
-	subscribe := func() {
-		cx := make(chan X, 1)
-		cx <- X{}
-		cxCurrent = cx
-		sourceCtx, sourceCancel = context.WithCancel(ctx)
-		obs.Source.Subscribe(sourceCtx, func(t rx.Notification) {
-			if x, ok := <-cx; ok {
-				if !t.HasValue {
-					sourceCancel()
-				}
-				if t.HasValue || t.HasError {
-					sink(t)
-					cx <- x
-					return
-				}
-				active := active.Sub(1)
-				close(cx)
-				if active == 0 {
-					sink(t)
-					return
-				}
-				if subject == nil {
-					subject = createSubject()
-				}
-				subject.Next(nil)
-			}
-		})
-	}
-
-	createSubject = func() *rx.Subject {
-		subject := rx.NewSubject()
-		obs := obs.Notifier(subject.Observable)
-		obs.Subscribe(ctx, func(t rx.Notification) {
-			switch {
-			case t.HasValue:
-				sourceCancel()
-				if _, ok := <-cxCurrent; ok {
-					close(cxCurrent)
-				} else {
-					active.Add(1)
-				}
-				avoidRecursion.Do(subscribe)
-
-			case t.HasError:
+	subscribe = func() {
+		obs.Source.Subscribe(ctx, func(t rx.Notification) {
+			if t.HasValue || t.HasError {
 				sink(t)
-
-			default:
-				if active.Sub(1) == 0 {
-					sink(t)
-				}
+				return
 			}
+			sourceActive.Store(0)
+			if repeatActive.Equals(0) {
+				sink(t)
+				return
+			}
+			if subject == nil {
+				subject = rx.NewSubject()
+				obs := obs.Notifier(subject.Observable)
+				obs.Subscribe(ctx, func(t rx.Notification) {
+					switch {
+					case t.HasValue:
+						if sourceActive.Cas(0, 1) {
+							avoidRecursion.Do(subscribe)
+						}
+					case t.HasError:
+						sink(t)
+					default:
+						repeatActive.Store(0)
+						if sourceActive.Equals(0) {
+							sink(t)
+						}
+					}
+				})
+			}
+			subject.Next(nil)
 		})
-		return subject
 	}
 
 	avoidRecursion.Do(subscribe)
@@ -96,7 +68,7 @@ func (obs repeatWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 // that Observable emits a value, this operator will resubscribe to the source
 // Observable. Otherwise, this operator will emit a COMPLETE on the child
 // subscription.
-func RepeatWhen(notifier func(rx.Observable) rx.Observable) rx.Operator {
+func RepeatWhen(notifier rx.Operator) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		return repeatWhenObservable{source, notifier}.Subscribe
 	}
