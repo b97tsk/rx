@@ -25,10 +25,7 @@ func (obs debounceObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	cx := make(chan *X, 1)
 	cx <- &X{}
 
-	var (
-		scheduleCtx    context.Context
-		scheduleCancel context.CancelFunc
-	)
+	var scheduleCancel context.CancelFunc
 
 	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		if x, ok := <-cx; ok {
@@ -43,6 +40,7 @@ func (obs debounceObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 					scheduleCancel()
 				}
 
+				var scheduleCtx context.Context
 				scheduleCtx, scheduleCancel = context.WithCancel(ctx)
 
 				var observer rx.Observer
