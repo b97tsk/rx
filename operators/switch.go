@@ -12,7 +12,8 @@ type switchMapObservable struct {
 }
 
 func (obs switchMapObservable) Subscribe(ctx context.Context, sink rx.Observer) {
-	sink = sink.Mutex()
+	ctx, cancel := context.WithCancel(ctx)
+	sink = sink.WithCancel(cancel).Mutex()
 
 	type X struct {
 		Index           int
@@ -41,9 +42,14 @@ func (obs switchMapObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 				childCancel()
 			}
 
-			obs1 := obs.Project(sourceValue, sourceIndex)
+			var childCtx context.Context
+			childCtx, childCancel = context.WithCancel(ctx)
 
-			_, childCancel = obs1.Subscribe(ctx, func(t rx.Notification) {
+			obs1 := obs.Project(sourceValue, sourceIndex)
+			obs1.Subscribe(childCtx, func(t rx.Notification) {
+				if !t.HasValue {
+					childCancel()
+				}
 				if t.HasValue || t.HasError {
 					sink(t)
 					return
@@ -89,8 +95,7 @@ func SwitchAll() rx.Operator {
 // Observables using Switch.
 func SwitchMap(project func(interface{}, int) rx.Observable) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
-		obs := switchMapObservable{source, project}
-		return rx.Create(obs.Subscribe)
+		return switchMapObservable{source, project}.Subscribe
 	}
 }
 

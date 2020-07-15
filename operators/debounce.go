@@ -13,6 +13,9 @@ type debounceObservable struct {
 }
 
 func (obs debounceObservable) Subscribe(ctx context.Context, sink rx.Observer) {
+	ctx, cancel := context.WithCancel(ctx)
+	sink = sink.WithCancel(cancel)
+
 	type X struct {
 		Latest struct {
 			Value    interface{}
@@ -86,8 +89,7 @@ func (obs debounceObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 // by a second Observable.
 func Debounce(durationSelector func(interface{}) rx.Observable) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
-		obs := debounceObservable{source, durationSelector}
-		return rx.Create(obs.Subscribe)
+		return debounceObservable{source, durationSelector}.Subscribe
 	}
 }
 

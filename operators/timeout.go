@@ -19,8 +19,7 @@ func (configure TimeoutConfigure) Use() rx.Operator {
 		configure.Observable = rx.Throw(rx.ErrTimeout)
 	}
 	return func(source rx.Observable) rx.Observable {
-		obs := timeoutObservable{source, configure}
-		return rx.Create(obs.Subscribe)
+		return timeoutObservable{source, configure}.Subscribe
 	}
 }
 
@@ -43,7 +42,9 @@ func (obs timeoutObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		if scheduleCancel != nil {
 			scheduleCancel()
 		}
-		_, scheduleCancel = obsTimer.Subscribe(childCtx, func(t rx.Notification) {
+		var scheduleCtx context.Context
+		scheduleCtx, scheduleCancel = context.WithCancel(childCtx)
+		obsTimer.Subscribe(scheduleCtx, func(t rx.Notification) {
 			if t.HasValue {
 				return
 			}
@@ -66,6 +67,7 @@ func (obs timeoutObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 				doSchedule()
 			default:
 				close(cx)
+				childCancel()
 				sink(t)
 			}
 		}

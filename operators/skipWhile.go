@@ -11,7 +11,7 @@ type skipWhileObservable struct {
 	Predicate func(interface{}, int) bool
 }
 
-func (obs skipWhileObservable) Subscribe(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
+func (obs skipWhileObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	var observer rx.Observer
 
 	sourceIndex := -1
@@ -31,7 +31,7 @@ func (obs skipWhileObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 		}
 	}
 
-	return obs.Source.Subscribe(ctx, observer.Sink)
+	obs.Source.Subscribe(ctx, observer.Sink)
 }
 
 // SkipWhile creates an Observable that skips all items emitted by the source

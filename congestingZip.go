@@ -7,6 +7,8 @@ import (
 type congestingZipObservable []Observable
 
 func (observables congestingZipObservable) Subscribe(ctx context.Context, sink Observer) {
+	ctx, cancel := context.WithCancel(ctx)
+	sink = sink.WithCancel(cancel)
 	done := ctx.Done()
 
 	channels := make([]chan Notification, len(observables))
@@ -57,5 +59,5 @@ func CongestingZip(observables ...Observable) Observable {
 	if len(observables) == 0 {
 		return Empty()
 	}
-	return Create(congestingZipObservable(observables).Subscribe)
+	return congestingZipObservable(observables).Subscribe
 }

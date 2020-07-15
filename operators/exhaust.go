@@ -13,7 +13,8 @@ type exhaustMapObservable struct {
 }
 
 func (obs exhaustMapObservable) Subscribe(ctx context.Context, sink rx.Observer) {
-	sink = sink.Mutex()
+	ctx, cancel := context.WithCancel(ctx)
+	sink = sink.WithCancel(cancel).Mutex()
 
 	sourceIndex := -1
 	active := atomic.Uint32(1)
@@ -68,7 +69,6 @@ func ExhaustAll() rx.Operator {
 // inner Observables using Exhaust.
 func ExhaustMap(project func(interface{}, int) rx.Observable) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
-		obs := exhaustMapObservable{source, project}
-		return rx.Create(obs.Subscribe)
+		return exhaustMapObservable{source, project}.Subscribe
 	}
 }

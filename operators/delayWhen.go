@@ -12,6 +12,9 @@ type delayWhenObservable struct {
 }
 
 func (obs delayWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) {
+	ctx, cancel := context.WithCancel(ctx)
+	sink = sink.WithCancel(cancel)
+
 	type X struct {
 		Index           int
 		Active          int
@@ -90,7 +93,6 @@ func (obs delayWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 // a second Observable.
 func DelayWhen(durationSelector func(interface{}, int) rx.Observable) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
-		obs := delayWhenObservable{source, durationSelector}
-		return rx.Create(obs.Subscribe)
+		return delayWhenObservable{source, durationSelector}.Subscribe
 	}
 }

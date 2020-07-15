@@ -10,17 +10,15 @@ func FromSlice(slice []interface{}) Observable {
 	if len(slice) == 0 {
 		return Empty()
 	}
-	return Create(
-		func(ctx context.Context, sink Observer) {
-			for _, val := range slice {
-				if ctx.Err() != nil {
-					return
-				}
-				sink.Next(val)
+	return func(ctx context.Context, sink Observer) {
+		for _, val := range slice {
+			if ctx.Err() != nil {
+				return
 			}
-			sink.Complete()
-		},
-	)
+			sink.Next(val)
+		}
+		sink.Complete()
+	}
 }
 
 // Just creates an Observable that emits some values you specify as arguments,

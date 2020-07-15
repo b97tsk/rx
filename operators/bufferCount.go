@@ -33,12 +33,12 @@ type bufferCountObservable struct {
 	BufferCountConfigure
 }
 
-func (obs bufferCountObservable) Subscribe(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
+func (obs bufferCountObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	var (
 		buffer    = make([]interface{}, 0, obs.BufferSize)
 		skipCount int
 	)
-	return obs.Source.Subscribe(ctx, func(t rx.Notification) {
+	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		switch {
 		case t.HasValue:
 			if skipCount > 0 {

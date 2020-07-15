@@ -12,9 +12,9 @@ type takeLastObservable struct {
 	Count  int
 }
 
-func (obs takeLastObservable) Subscribe(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
+func (obs takeLastObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	var queue queue.Queue
-	return obs.Source.Subscribe(ctx, func(t rx.Notification) {
+	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		switch {
 		case t.HasValue:
 			if queue.Len() == obs.Count {

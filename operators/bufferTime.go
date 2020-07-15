@@ -17,8 +17,7 @@ type BufferTimeConfigure struct {
 // Use creates an Operator from this configure.
 func (configure BufferTimeConfigure) Use() rx.Operator {
 	return func(source rx.Observable) rx.Observable {
-		obs := bufferTimeObservable{source, configure}
-		return rx.Create(obs.Subscribe)
+		return bufferTimeObservable{source, configure}.Subscribe
 	}
 }
 
@@ -33,6 +32,9 @@ type bufferTimeContext struct {
 }
 
 func (obs bufferTimeObservable) Subscribe(ctx context.Context, sink rx.Observer) {
+	ctx, cancel := context.WithCancel(ctx)
+	sink = sink.WithCancel(cancel)
+
 	type X struct {
 		Contexts []*bufferTimeContext
 	}

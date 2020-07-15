@@ -14,16 +14,16 @@ func (obs Observable) BlockingFirst(ctx context.Context) (interface{}, error) {
 	)
 	ctx, cancel := context.WithCancel(ctx)
 	observer = func(t Notification) {
-		observer = Noop
 		switch {
 		case t.HasValue || t.HasError:
 			result = t
 		default:
 			result = Notification{Error: ErrEmpty, HasError: true}
 		}
+		observer = Noop
 		cancel()
 	}
-	ctx, _ = obs.Subscribe(ctx, observer.Sink)
+	obs.Subscribe(ctx, observer.Sink)
 	<-ctx.Done()
 	switch {
 	case result.HasValue:
@@ -40,7 +40,8 @@ func (obs Observable) BlockingFirst(ctx context.Context) (interface{}, error) {
 // ErrEmpty; if the source errors, it returns nil plus the error.
 func (obs Observable) BlockingLast(ctx context.Context) (interface{}, error) {
 	var result Notification
-	ctx, _ = obs.Subscribe(ctx, func(t Notification) {
+	ctx, cancel := context.WithCancel(ctx)
+	obs.Subscribe(ctx, func(t Notification) {
 		switch {
 		case t.HasValue || t.HasError:
 			result = t
@@ -48,6 +49,9 @@ func (obs Observable) BlockingLast(ctx context.Context) (interface{}, error) {
 			if !result.HasValue {
 				result = Notification{Error: ErrEmpty, HasError: true}
 			}
+		}
+		if !t.HasValue {
+			cancel()
 		}
 	})
 	<-ctx.Done()
@@ -75,23 +79,24 @@ func (obs Observable) BlockingSingle(ctx context.Context) (interface{}, error) {
 		switch {
 		case t.HasValue:
 			if result.HasValue {
-				observer = Noop
 				result = Notification{Error: ErrNotSingle, HasError: true}
+				observer = Noop
 				cancel()
 			} else {
 				result = t
 			}
 		case t.HasError:
 			result = t
-			cancel()
 		default:
 			if !result.HasValue {
 				result = Notification{Error: ErrEmpty, HasError: true}
 			}
+		}
+		if !t.HasValue {
 			cancel()
 		}
 	}
-	ctx, _ = obs.Subscribe(ctx, observer.Sink)
+	obs.Subscribe(ctx, observer.Sink)
 	<-ctx.Done()
 	switch {
 	case result.HasValue:
@@ -107,10 +112,26 @@ func (obs Observable) BlockingSingle(ctx context.Context) (interface{}, error) {
 // the source completes or errors; if the source completes, it returns nil;
 // if the source errors, it returns the error.
 func (obs Observable) BlockingSubscribe(ctx context.Context, sink Observer) error {
-	ctx, _ = obs.Subscribe(ctx, sink)
+	var (
+		result    Notification
+		hasResult bool
+	)
+	ctx, cancel := context.WithCancel(ctx)
+	obs.Subscribe(ctx, func(t Notification) {
+		if !t.HasValue {
+			defer cancel()
+		}
+		result = t
+		hasResult = true
+		sink(t)
+	})
 	<-ctx.Done()
-	if err := ctx.Err(); err != Completed {
-		return err
+	switch {
+	case !hasResult || result.HasValue:
+		return ctx.Err()
+	case result.HasError:
+		return result.Error
+	default:
+		return nil
 	}
-	return nil
 }

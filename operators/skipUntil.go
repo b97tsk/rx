@@ -14,7 +14,8 @@ type skipUntilObservable struct {
 
 func (obs skipUntilObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	originalSink := sink
-	sink = sink.Mutex()
+	ctx, cancel := context.WithCancel(ctx)
+	sink = sink.WithCancel(cancel).Mutex()
 
 	noSkipping := atomic.Uint32(0)
 
@@ -24,11 +25,11 @@ func (obs skipUntilObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 		var observer rx.Observer
 
 		observer = func(t rx.Notification) {
+			observer = rx.Noop
+			cancel()
 			switch {
 			case t.HasValue:
 				noSkipping.Store(1)
-				observer = rx.Noop
-				cancel()
 			case t.HasError:
 				sink(t)
 			default:
@@ -71,7 +72,6 @@ func (obs skipUntilObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 // Observable until a second Observable emits an item.
 func SkipUntil(notifier rx.Observable) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
-		obs := skipUntilObservable{source, notifier}
-		return rx.Create(obs.Subscribe)
+		return skipUntilObservable{source, notifier}.Subscribe
 	}
 }

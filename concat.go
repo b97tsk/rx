@@ -48,5 +48,5 @@ func Concat(observables ...Observable) Observable {
 	if len(observables) == 0 {
 		return Empty()
 	}
-	return Create(concatObservable(observables).Subscribe)
+	return concatObservable(observables).Subscribe
 }

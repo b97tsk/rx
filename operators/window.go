@@ -12,6 +12,9 @@ type windowObservable struct {
 }
 
 func (obs windowObservable) Subscribe(ctx context.Context, sink rx.Observer) {
+	ctx, cancel := context.WithCancel(ctx)
+	sink = sink.WithCancel(cancel)
+
 	type X struct {
 		Window *rx.Subject
 	}
@@ -61,7 +64,6 @@ func (obs windowObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 // It's like Buffer, but emits a nested Observable instead of a slice.
 func Window(windowBoundaries rx.Observable) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
-		obs := windowObservable{source, windowBoundaries}
-		return rx.Create(obs.Subscribe)
+		return windowObservable{source, windowBoundaries}.Subscribe
 	}
 }

@@ -12,6 +12,8 @@ type forkJoinElement struct {
 }
 
 func (observables forkJoinObservable) Subscribe(ctx context.Context, sink Observer) {
+	ctx, cancel := context.WithCancel(ctx)
+	sink = sink.WithCancel(cancel)
 	done := ctx.Done()
 
 	q := make(chan forkJoinElement)
@@ -76,5 +78,5 @@ func ForkJoin(observables ...Observable) Observable {
 	if len(observables) == 0 {
 		return Empty()
 	}
-	return Create(forkJoinObservable(observables).Subscribe)
+	return forkJoinObservable(observables).Subscribe
 }

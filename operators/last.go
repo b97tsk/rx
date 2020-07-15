@@ -7,12 +7,12 @@ import (
 )
 
 func last(source rx.Observable) rx.Observable {
-	return func(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
+	return func(ctx context.Context, sink rx.Observer) {
 		var last struct {
 			Value    interface{}
 			HasValue bool
 		}
-		return source.Subscribe(ctx, func(t rx.Notification) {
+		source.Subscribe(ctx, func(t rx.Notification) {
 			switch {
 			case t.HasValue:
 				last.Value = t.Value
@@ -43,12 +43,12 @@ func Last() rx.Operator {
 // specified default value.
 func LastOrDefault(def interface{}) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
-		return func(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
+		return func(ctx context.Context, sink rx.Observer) {
 			var last struct {
 				Value    interface{}
 				HasValue bool
 			}
-			return source.Subscribe(ctx, func(t rx.Notification) {
+			source.Subscribe(ctx, func(t rx.Notification) {
 				switch {
 				case t.HasValue:
 					last.Value = t.Value

@@ -77,7 +77,6 @@ func Congest(bufferSize int) rx.Operator {
 		return noop
 	}
 	return func(source rx.Observable) rx.Observable {
-		obs := congestObservable{source, bufferSize}
-		return rx.Create(obs.Subscribe)
+		return congestObservable{source, bufferSize}.Subscribe
 	}
 }

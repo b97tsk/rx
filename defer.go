@@ -9,7 +9,7 @@ import (
 //
 // Defer creates the Observable lazily, that is, only when it is subscribed.
 func Defer(create func() Observable) Observable {
-	return func(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
-		return create().Subscribe(ctx, sink)
+	return func(ctx context.Context, sink Observer) {
+		create().Subscribe(ctx, sink)
 	}
 }

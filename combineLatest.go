@@ -12,6 +12,8 @@ type combineLatestElement struct {
 }
 
 func (observables combineLatestObservable) Subscribe(ctx context.Context, sink Observer) {
+	ctx, cancel := context.WithCancel(ctx)
+	sink = sink.WithCancel(cancel)
 	done := ctx.Done()
 	q := make(chan combineLatestElement)
 
@@ -86,5 +88,5 @@ func CombineLatest(observables ...Observable) Observable {
 	if len(observables) == 0 {
 		return Empty()
 	}
-	return Create(combineLatestObservable(observables).Subscribe)
+	return combineLatestObservable(observables).Subscribe
 }

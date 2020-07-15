@@ -19,6 +19,9 @@ type delayElement struct {
 }
 
 func (obs delayObservable) Subscribe(ctx context.Context, sink rx.Observer) {
+	ctx, cancel := context.WithCancel(ctx)
+	sink = sink.WithCancel(cancel)
+
 	type X struct {
 		Queue           queue.Queue
 		Scheduled       bool
@@ -94,7 +97,6 @@ func (obs delayObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 // timeout.
 func Delay(d time.Duration) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
-		obs := delayObservable{source, d}
-		return rx.Create(obs.Subscribe)
+		return delayObservable{source, d}.Subscribe
 	}
 }

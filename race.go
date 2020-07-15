@@ -54,6 +54,6 @@ func Race(observables ...Observable) Observable {
 	case 1:
 		return observables[0]
 	default:
-		return Create(raceObservable(observables).Subscribe)
+		return raceObservable(observables).Subscribe
 	}
 }

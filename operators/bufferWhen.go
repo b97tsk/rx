@@ -13,6 +13,9 @@ type bufferWhenObservable struct {
 }
 
 func (obs bufferWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) {
+	ctx, cancel := context.WithCancel(ctx)
+	sink = sink.WithCancel(cancel)
+
 	type X struct {
 		Buffers []interface{}
 	}
@@ -82,7 +85,6 @@ func (obs bufferWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 // tells when to close the buffer and restart collecting.
 func BufferWhen(closingSelector func() rx.Observable) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
-		obs := bufferWhenObservable{source, closingSelector}
-		return rx.Create(obs.Subscribe)
+		return bufferWhenObservable{source, closingSelector}.Subscribe
 	}
 }

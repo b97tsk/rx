@@ -20,8 +20,7 @@ func (configure ThrottleConfigure) Use() rx.Operator {
 		panic("Throttle: nil DurationSelector")
 	}
 	return func(source rx.Observable) rx.Observable {
-		obs := throttleObservable{source, configure}
-		return rx.Create(obs.Subscribe)
+		return throttleObservable{source, configure}.Subscribe
 	}
 }
 
@@ -49,6 +48,9 @@ type throttleObservable struct {
 }
 
 func (obs throttleObservable) Subscribe(ctx context.Context, sink rx.Observer) {
+	ctx, cancel := context.WithCancel(ctx)
+	sink = sink.WithCancel(cancel)
+
 	type X struct {
 		Trailing struct {
 			Value    interface{}
@@ -70,6 +72,7 @@ func (obs throttleObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		var observer rx.Observer
 		observer = func(t rx.Notification) {
 			observer = rx.Noop
+			defer cancel()
 			if obs.Trailing || t.HasError {
 				if x, ok := <-cx; ok {
 					switch {
@@ -84,7 +87,6 @@ func (obs throttleObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 					}
 				}
 			}
-			cancel()
 		}
 
 		obs := obs.DurationSelector(val)

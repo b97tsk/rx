@@ -50,8 +50,7 @@ func Repeat(count int) rx.Operator {
 		if count > 0 {
 			count--
 		}
-		obs := repeatObservable{source, count}
-		return rx.Create(obs.Subscribe)
+		return repeatObservable{source, count}.Subscribe
 	}
 }
 

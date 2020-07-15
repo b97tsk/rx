@@ -17,8 +17,7 @@ type WindowTimeConfigure struct {
 // Use creates an Operator from this configure.
 func (configure WindowTimeConfigure) Use() rx.Operator {
 	return func(source rx.Observable) rx.Observable {
-		obs := windowTimeObservable{source, configure}
-		return rx.Create(obs.Subscribe)
+		return windowTimeObservable{source, configure}.Subscribe
 	}
 }
 
@@ -34,6 +33,9 @@ type windowTimeContext struct {
 }
 
 func (obs windowTimeObservable) Subscribe(ctx context.Context, sink rx.Observer) {
+	ctx, cancel := context.WithCancel(ctx)
+	sink = sink.WithCancel(cancel)
+
 	type X struct {
 		Contexts []*windowTimeContext
 	}

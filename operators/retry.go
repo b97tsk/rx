@@ -53,8 +53,7 @@ func Retry(count int) rx.Operator {
 		if count == 0 {
 			return source
 		}
-		obs := retryObservable{source, count}
-		return rx.Create(obs.Subscribe)
+		return retryObservable{source, count}.Subscribe
 	}
 }
 

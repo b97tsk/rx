@@ -21,7 +21,7 @@ type Subject struct {
 // NewSubject creates a new Subject.
 func NewSubject() *Subject {
 	s := new(Subject)
-	s.Double = Double{Create(s.subscribe), s.sink}
+	s.Double = Double{s.subscribe, s.sink}
 	return s
 }
 
@@ -48,7 +48,7 @@ func (s *Subject) sink(t Notification) {
 		if t.HasError {
 			s.err = t.Error
 		} else {
-			s.err = Completed
+			s.err = errCompleted
 		}
 
 		s.mux.Unlock()
@@ -64,7 +64,8 @@ func (s *Subject) subscribe(ctx context.Context, sink Observer) {
 
 	err := s.err
 	if err == nil {
-		observer := sink.MutexContext(ctx)
+		ctx, cancel := context.WithCancel(ctx)
+		observer := sink.WithCancel(cancel).MutexContext(ctx)
 		s.lst.Append(&observer)
 
 		finalize := func() {
@@ -81,7 +82,7 @@ func (s *Subject) subscribe(ctx context.Context, sink Observer) {
 	s.mux.Unlock()
 
 	if err != nil {
-		if err != Completed {
+		if err != errCompleted {
 			sink.Error(err)
 		} else {
 			sink.Complete()

@@ -28,13 +28,13 @@ type scanObservable struct {
 	ScanConfigure
 }
 
-func (obs scanObservable) Subscribe(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
+func (obs scanObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	sourceIndex := -1
 	acc := struct {
 		Value    interface{}
 		HasValue bool
 	}{obs.Seed, obs.HasSeed}
-	return obs.Source.Subscribe(ctx, func(t rx.Notification) {
+	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		switch {
 		case t.HasValue:
 			sourceIndex++

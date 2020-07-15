@@ -18,6 +18,9 @@ type windowToggleContext struct {
 }
 
 func (obs windowToggleObservable) Subscribe(ctx context.Context, sink rx.Observer) {
+	ctx, cancel := context.WithCancel(ctx)
+	sink = sink.WithCancel(cancel)
+
 	type X struct {
 		Contexts []*windowToggleContext
 	}
@@ -114,7 +117,6 @@ func (obs windowToggleObservable) Subscribe(ctx context.Context, sink rx.Observe
 // It's like BufferToggle, but emits a nested Observable instead of a slice.
 func WindowToggle(openings rx.Observable, closingSelector func(interface{}) rx.Observable) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
-		obs := windowToggleObservable{source, openings, closingSelector}
-		return rx.Create(obs.Subscribe)
+		return windowToggleObservable{source, openings, closingSelector}.Subscribe
 	}
 }

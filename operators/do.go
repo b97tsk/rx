@@ -10,8 +10,8 @@ import (
 // a side effect before each emission.
 func Do(tap rx.Observer) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
-		return func(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
-			return source.Subscribe(ctx, func(t rx.Notification) {
+		return func(ctx context.Context, sink rx.Observer) {
+			source.Subscribe(ctx, func(t rx.Notification) {
 				tap(t)
 				sink(t)
 			})
@@ -23,8 +23,8 @@ func Do(tap rx.Observer) rx.Operator {
 // performs a side effect before each value.
 func DoOnNext(onNext func(interface{})) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
-		return func(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
-			return source.Subscribe(ctx, func(t rx.Notification) {
+		return func(ctx context.Context, sink rx.Observer) {
+			source.Subscribe(ctx, func(t rx.Notification) {
 				if t.HasValue {
 					onNext(t.Value)
 				}
@@ -39,8 +39,8 @@ func DoOnNext(onNext func(interface{})) rx.Operator {
 // the ERROR emission.
 func DoOnError(onError func(error)) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
-		return func(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
-			return source.Subscribe(ctx, func(t rx.Notification) {
+		return func(ctx context.Context, sink rx.Observer) {
+			source.Subscribe(ctx, func(t rx.Notification) {
 				if t.HasError {
 					onError(t.Error)
 				}
@@ -55,13 +55,11 @@ func DoOnError(onError func(error)) rx.Operator {
 // the COMPLETE emission.
 func DoOnComplete(onComplete func()) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
-		return func(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
-			return source.Subscribe(ctx, func(t rx.Notification) {
-				if t.HasValue || t.HasError {
-					sink(t)
-					return
+		return func(ctx context.Context, sink rx.Observer) {
+			source.Subscribe(ctx, func(t rx.Notification) {
+				if !t.HasValue && !t.HasError {
+					onComplete()
 				}
-				onComplete()
 				sink(t)
 			})
 		}
@@ -73,8 +71,8 @@ func DoOnComplete(onComplete func()) rx.Operator {
 // specified function.
 func DoAtLast(atLast func(error)) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
-		return func(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
-			return source.Subscribe(ctx, func(t rx.Notification) {
+		return func(ctx context.Context, sink rx.Observer) {
+			source.Subscribe(ctx, func(t rx.Notification) {
 				if t.HasValue {
 					sink(t)
 					return

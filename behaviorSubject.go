@@ -23,7 +23,7 @@ type behaviorSubjectElement struct {
 // NewBehaviorSubject creates a new BehaviorSubject.
 func NewBehaviorSubject(val interface{}) *BehaviorSubject {
 	s := new(BehaviorSubject)
-	s.Double = Double{Create(s.subscribe), s.sink}
+	s.Double = Double{s.subscribe, s.sink}
 	s.val.Store(behaviorSubjectElement{val})
 	return s
 }
@@ -58,7 +58,7 @@ func (s *BehaviorSubject) sink(t Notification) {
 		if t.HasError {
 			s.err = t.Error
 		} else {
-			s.err = Completed
+			s.err = errCompleted
 		}
 
 		s.mux.Unlock()
@@ -74,7 +74,8 @@ func (s *BehaviorSubject) subscribe(ctx context.Context, sink Observer) {
 
 	err := s.err
 	if err == nil {
-		observer := sink.MutexContext(ctx)
+		ctx, cancel := context.WithCancel(ctx)
+		observer := sink.WithCancel(cancel).MutexContext(ctx)
 		s.lst.Append(&observer)
 
 		finalize := func() {
@@ -93,7 +94,7 @@ func (s *BehaviorSubject) subscribe(ctx context.Context, sink Observer) {
 	s.mux.Unlock()
 
 	if err != nil {
-		if err != Completed {
+		if err != errCompleted {
 			sink.Error(err)
 		} else {
 			sink.Next(s.Value())

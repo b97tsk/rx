@@ -7,37 +7,40 @@ import (
 )
 
 func single(source rx.Observable) rx.Observable {
-	return rx.Create(
-		func(ctx context.Context, sink rx.Observer) {
-			var (
-				value    interface{}
-				hasValue bool
-				observer rx.Observer
-			)
-			observer = func(t rx.Notification) {
-				switch {
-				case t.HasValue:
-					if hasValue {
-						observer = rx.Noop
-						sink.Error(rx.ErrNotSingle)
-					} else {
-						value = t.Value
-						hasValue = true
-					}
-				case t.HasError:
-					sink(t)
-				default:
-					if hasValue {
-						sink.Next(value)
-						sink.Complete()
-					} else {
-						sink.Error(rx.ErrEmpty)
-					}
+	return func(ctx context.Context, sink rx.Observer) {
+		ctx, cancel := context.WithCancel(ctx)
+		sink = sink.WithCancel(cancel)
+
+		var (
+			value    interface{}
+			hasValue bool
+			observer rx.Observer
+		)
+
+		observer = func(t rx.Notification) {
+			switch {
+			case t.HasValue:
+				if hasValue {
+					observer = rx.Noop
+					sink.Error(rx.ErrNotSingle)
+				} else {
+					value = t.Value
+					hasValue = true
+				}
+			case t.HasError:
+				sink(t)
+			default:
+				if hasValue {
+					sink.Next(value)
+					sink.Complete()
+				} else {
+					sink.Error(rx.ErrEmpty)
 				}
 			}
-			source.Subscribe(ctx, observer.Sink)
-		},
-	)
+		}
+
+		source.Subscribe(ctx, observer.Sink)
+	}
 }
 
 // Single creates an Observable that emits the single item emitted by the

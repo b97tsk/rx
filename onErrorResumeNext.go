@@ -45,5 +45,5 @@ func OnErrorResumeNext(observables ...Observable) Observable {
 	if len(observables) == 0 {
 		return Empty()
 	}
-	return Create(onErrorResumeNextObservable(observables).Subscribe)
+	return onErrorResumeNextObservable(observables).Subscribe
 }

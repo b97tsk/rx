@@ -21,8 +21,7 @@ func (configure CongestingMergeConfigure) Use() rx.Operator {
 		configure.Concurrent = -1
 	}
 	return func(source rx.Observable) rx.Observable {
-		obs := congestingMergeObservable{source, configure}
-		return rx.Create(obs.Subscribe)
+		return congestingMergeObservable{source, configure}.Subscribe
 	}
 }
 
@@ -32,7 +31,8 @@ type congestingMergeObservable struct {
 }
 
 func (obs congestingMergeObservable) Subscribe(ctx context.Context, sink rx.Observer) {
-	sink = sink.Mutex()
+	ctx, cancel := context.WithCancel(ctx)
+	sink = sink.WithCancel(cancel).Mutex()
 
 	type X struct {
 		Active int

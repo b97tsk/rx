@@ -33,7 +33,7 @@ type windowCountObservable struct {
 	WindowCountConfigure
 }
 
-func (obs windowCountObservable) Subscribe(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
+func (obs windowCountObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	var (
 		windows    []*rx.Subject
 		windowSize int
@@ -43,7 +43,7 @@ func (obs windowCountObservable) Subscribe(ctx context.Context, sink rx.Observer
 	windows = append(windows, window)
 	sink.Next(window.Observable)
 
-	return obs.Source.Subscribe(ctx, func(t rx.Notification) {
+	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		switch {
 		case t.HasValue:
 			if windowSize < 0 {

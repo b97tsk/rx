@@ -10,15 +10,13 @@ func Range(low, high int) Observable {
 	if low >= high {
 		return Empty()
 	}
-	return Create(
-		func(ctx context.Context, sink Observer) {
-			for idx := low; idx < high; idx++ {
-				if ctx.Err() != nil {
-					return
-				}
-				sink.Next(idx)
+	return func(ctx context.Context, sink Observer) {
+		for idx := low; idx < high; idx++ {
+			if ctx.Err() != nil {
+				return
 			}
-			sink.Complete()
-		},
-	)
+			sink.Next(idx)
+		}
+		sink.Complete()
+	}
 }

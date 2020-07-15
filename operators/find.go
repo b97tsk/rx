@@ -12,6 +12,9 @@ type findObservable struct {
 }
 
 func (obs findObservable) Subscribe(ctx context.Context, sink rx.Observer) {
+	ctx, cancel := context.WithCancel(ctx)
+	sink = sink.WithCancel(cancel)
+
 	var observer rx.Observer
 
 	sourceIndex := -1
@@ -39,7 +42,6 @@ func (obs findObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 // source Observable that meets some condition.
 func Find(predicate func(interface{}, int) bool) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
-		obs := findObservable{source, predicate}
-		return rx.Create(obs.Subscribe)
+		return findObservable{source, predicate}.Subscribe
 	}
 }

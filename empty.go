@@ -4,11 +4,9 @@ import (
 	"context"
 )
 
-var empty = Create(
-	func(ctx context.Context, sink Observer) {
-		sink.Complete()
-	},
-)
+func empty(ctx context.Context, sink Observer) {
+	sink.Complete()
+}
 
 // Empty returns an Observable that emits no items to the Observer and
 // immediately emits a COMPLETE emission.

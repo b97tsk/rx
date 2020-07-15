@@ -12,6 +12,9 @@ type someObservable struct {
 }
 
 func (obs someObservable) Subscribe(ctx context.Context, sink rx.Observer) {
+	ctx, cancel := context.WithCancel(ctx)
+	sink = sink.WithCancel(cancel)
+
 	var observer rx.Observer
 
 	sourceIndex := -1
@@ -45,7 +48,6 @@ func (obs someObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 // Some emits true or false, then completes.
 func Some(predicate func(interface{}, int) bool) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
-		obs := someObservable{source, predicate}
-		return rx.Create(obs.Subscribe)
+		return someObservable{source, predicate}.Subscribe
 	}
 }

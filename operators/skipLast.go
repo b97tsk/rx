@@ -11,14 +11,14 @@ type skipLastObservable struct {
 	Count  int
 }
 
-func (obs skipLastObservable) Subscribe(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
+func (obs skipLastObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	var (
 		buffer     = make([]interface{}, obs.Count)
 		bufferSize = obs.Count
 		index      int
 		count      int
 	)
-	return obs.Source.Subscribe(ctx, func(t rx.Notification) {
+	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		switch {
 		case t.HasValue:
 			if count < bufferSize {

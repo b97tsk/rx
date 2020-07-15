@@ -14,6 +14,9 @@ type elementAtObservable struct {
 }
 
 func (obs elementAtObservable) Subscribe(ctx context.Context, sink rx.Observer) {
+	ctx, cancel := context.WithCancel(ctx)
+	sink = sink.WithCancel(cancel)
+
 	var observer rx.Observer
 
 	index := obs.Index
@@ -47,11 +50,10 @@ func (obs elementAtObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 // specified index is out of range, throws rx.ErrOutOfRange.
 func ElementAt(idx int) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
-		obs := elementAtObservable{
+		return elementAtObservable{
 			Source: source,
 			Index:  idx,
-		}
-		return rx.Create(obs.Subscribe)
+		}.Subscribe
 	}
 }
 
@@ -60,12 +62,11 @@ func ElementAt(idx int) rx.Operator {
 // the specified index is out of range, emits the provided default value.
 func ElementAtOrDefault(idx int, def interface{}) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
-		obs := elementAtObservable{
+		return elementAtObservable{
 			Source:     source,
 			Index:      idx,
 			Default:    def,
 			HasDefault: true,
-		}
-		return rx.Create(obs.Subscribe)
+		}.Subscribe
 	}
 }

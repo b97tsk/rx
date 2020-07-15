@@ -14,7 +14,8 @@ type retryWhenObservable struct {
 }
 
 func (obs retryWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) {
-	sink = sink.Mutex()
+	ctx, cancel := context.WithCancel(ctx)
+	sink = sink.WithCancel(cancel).Mutex()
 
 	var (
 		err            error
@@ -39,6 +40,9 @@ func (obs retryWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 		sourceCtx, sourceCancel = context.WithCancel(ctx)
 		obs.Source.Subscribe(sourceCtx, func(t rx.Notification) {
 			if x, ok := <-cx; ok {
+				if !t.HasValue {
+					sourceCancel()
+				}
 				switch {
 				case t.HasValue:
 					sink(t)
@@ -100,7 +104,6 @@ func (obs retryWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 // the child subscription.
 func RetryWhen(notifier func(rx.Observable) rx.Observable) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
-		obs := retryWhenObservable{source, notifier}
-		return rx.Create(obs.Subscribe)
+		return retryWhenObservable{source, notifier}.Subscribe
 	}
 }

@@ -26,8 +26,8 @@ func newConnectableObservable(source Observable, doubleFactory func() Double) *C
 		doubleFactory: doubleFactory,
 	}
 	obs.Observable = Observable(
-		func(ctx context.Context, sink Observer) (context.Context, context.CancelFunc) {
-			return obs.getDouble().Subscribe(ctx, sink)
+		func(ctx context.Context, sink Observer) {
+			obs.getDouble().Subscribe(ctx, sink)
 		},
 	)
 	return obs
@@ -59,12 +59,14 @@ func (obs *ConnectableObservable) Connect(ctx context.Context) (context.Context,
 		cx <- X{}
 
 		sink := obs.getDoubleLocked().Observer
-
-		ctx, cancel := obs.source.Subscribe(ctx, func(t Notification) {
+		ctx, cancel := context.WithCancel(ctx)
+		obs.source.Subscribe(ctx, func(t Notification) {
 			if t.HasValue {
 				sink(t)
 				return
 			}
+
+			cancel()
 
 			x, cxLocked := <-cx
 			if !cxLocked {

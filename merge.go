@@ -9,7 +9,8 @@ import (
 type mergeObservable []Observable
 
 func (observables mergeObservable) Subscribe(ctx context.Context, sink Observer) {
-	sink = sink.Mutex()
+	ctx, cancel := context.WithCancel(ctx)
+	sink = sink.WithCancel(cancel).Mutex()
 	active := atomic.Uint32(uint32(len(observables)))
 	observer := func(t Notification) {
 		if t.HasValue || t.HasError || active.Sub(1) == 0 {
@@ -30,5 +31,5 @@ func Merge(observables ...Observable) Observable {
 	if len(observables) == 0 {
 		return Empty()
 	}
-	return Create(mergeObservable(observables).Subscribe)
+	return mergeObservable(observables).Subscribe
 }

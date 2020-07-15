@@ -7,12 +7,12 @@ import (
 )
 
 func pairwise(source rx.Observable) rx.Observable {
-	return func(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
+	return func(ctx context.Context, sink rx.Observer) {
 		var p struct {
 			Value    interface{}
 			HasValue bool
 		}
-		return source.Subscribe(ctx, func(t rx.Notification) {
+		source.Subscribe(ctx, func(t rx.Notification) {
 			switch {
 			case t.HasValue:
 				if p.HasValue {

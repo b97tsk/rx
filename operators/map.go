@@ -10,9 +10,9 @@ import (
 // value emitted by the source Observable, then emits the resulting values.
 func Map(project func(interface{}, int) interface{}) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
-		return func(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
+		return func(ctx context.Context, sink rx.Observer) {
 			sourceIndex := -1
-			return source.Subscribe(ctx, func(t rx.Notification) {
+			source.Subscribe(ctx, func(t rx.Notification) {
 				switch {
 				case t.HasValue:
 					sourceIndex++
@@ -32,8 +32,8 @@ func Map(project func(interface{}, int) interface{}) rx.Operator {
 // every time.
 func MapTo(val interface{}) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
-		return func(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
-			return source.Subscribe(ctx, func(t rx.Notification) {
+		return func(ctx context.Context, sink rx.Observer) {
+			source.Subscribe(ctx, func(t rx.Notification) {
 				switch {
 				case t.HasValue:
 					sink.Next(val)

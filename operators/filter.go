@@ -10,9 +10,9 @@ import (
 // Observable by only emitting those that satisfy a specified predicate.
 func Filter(predicate func(interface{}, int) bool) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
-		return func(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
+		return func(ctx context.Context, sink rx.Observer) {
 			sourceIndex := -1
-			return source.Subscribe(ctx, func(t rx.Notification) {
+			source.Subscribe(ctx, func(t rx.Notification) {
 				switch {
 				case t.HasValue:
 					sourceIndex++
@@ -31,9 +31,9 @@ func Filter(predicate func(interface{}, int) bool) rx.Operator {
 // Observable by only emitting those that do not satisfy a specified predicate.
 func Exclude(predicate func(interface{}, int) bool) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
-		return func(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
+		return func(ctx context.Context, sink rx.Observer) {
 			sourceIndex := -1
-			return source.Subscribe(ctx, func(t rx.Notification) {
+			source.Subscribe(ctx, func(t rx.Notification) {
 				switch {
 				case t.HasValue:
 					sourceIndex++

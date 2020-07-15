@@ -11,11 +11,10 @@ type skipObservable struct {
 	Count  int
 }
 
-func (obs skipObservable) Subscribe(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
-	var (
-		count    = obs.Count
-		observer rx.Observer
-	)
+func (obs skipObservable) Subscribe(ctx context.Context, sink rx.Observer) {
+	var observer rx.Observer
+
+	count := obs.Count
 
 	observer = func(t rx.Notification) {
 		switch {
@@ -30,7 +29,7 @@ func (obs skipObservable) Subscribe(ctx context.Context, sink rx.Observer) (cont
 		}
 	}
 
-	return obs.Source.Subscribe(ctx, observer.Sink)
+	obs.Source.Subscribe(ctx, observer.Sink)
 }
 
 // Skip creates an Observable that skips the first count items emitted by the

@@ -12,6 +12,9 @@ type bufferObservable struct {
 }
 
 func (obs bufferObservable) Subscribe(ctx context.Context, sink rx.Observer) {
+	ctx, cancel := context.WithCancel(ctx)
+	sink = sink.WithCancel(cancel)
+
 	type X struct {
 		Buffers []interface{}
 	}
@@ -56,7 +59,6 @@ func (obs bufferObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 // only when another Observable emits.
 func Buffer(closingNotifier rx.Observable) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
-		obs := bufferObservable{source, closingNotifier}
-		return rx.Create(obs.Subscribe)
+		return bufferObservable{source, closingNotifier}.Subscribe
 	}
 }

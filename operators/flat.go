@@ -13,6 +13,9 @@ type flatObservable struct {
 }
 
 func (obs flatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
+	ctx, cancel := context.WithCancel(ctx)
+	sink = sink.WithCancel(cancel)
+
 	var (
 		observables []rx.Observable
 		observer    rx.Observer
@@ -64,7 +67,6 @@ func FlatAll(flat func(observables ...rx.Observable) rx.Observable) rx.Operator 
 // to the inner Observables, and starts subscribing to it.
 func FlatMap(flat func(observables ...rx.Observable) rx.Observable, project func(interface{}, int) (rx.Observable, error)) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
-		obs := flatObservable{source, flat, project}
-		return rx.Create(obs.Subscribe)
+		return flatObservable{source, flat, project}.Subscribe
 	}
 }

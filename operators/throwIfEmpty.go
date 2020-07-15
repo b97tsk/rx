@@ -10,9 +10,9 @@ import (
 // the source turns out to be empty, throws a specified error.
 func ThrowIfEmpty(e error) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
-		return func(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
+		return func(ctx context.Context, sink rx.Observer) {
 			var hasValue bool
-			return source.Subscribe(ctx, func(t rx.Notification) {
+			source.Subscribe(ctx, func(t rx.Notification) {
 				switch {
 				case t.HasValue:
 					hasValue = true

@@ -18,6 +18,9 @@ type bufferToggleContext struct {
 }
 
 func (obs bufferToggleObservable) Subscribe(ctx context.Context, sink rx.Observer) {
+	ctx, cancel := context.WithCancel(ctx)
+	sink = sink.WithCancel(cancel)
+
 	type X struct {
 		Contexts []*bufferToggleContext
 	}
@@ -112,7 +115,6 @@ func (obs bufferToggleObservable) Subscribe(ctx context.Context, sink rx.Observe
 // Observable that tells when to close the buffer.
 func BufferToggle(openings rx.Observable, closingSelector func(interface{}) rx.Observable) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
-		obs := bufferToggleObservable{source, openings, closingSelector}
-		return rx.Create(obs.Subscribe)
+		return bufferToggleObservable{source, openings, closingSelector}.Subscribe
 	}
 }

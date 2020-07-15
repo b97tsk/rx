@@ -12,7 +12,8 @@ type takeUntilObservable struct {
 }
 
 func (obs takeUntilObservable) Subscribe(ctx context.Context, sink rx.Observer) {
-	sink = sink.Mutex()
+	ctx, cancel := context.WithCancel(ctx)
+	sink = sink.WithCancel(cancel).Mutex()
 
 	obs.Notifier.Subscribe(ctx, func(t rx.Notification) {
 		switch {
@@ -37,7 +38,6 @@ func (obs takeUntilObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 // something. Then, it completes.
 func TakeUntil(notifier rx.Observable) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
-		obs := takeUntilObservable{source, notifier}
-		return rx.Create(obs.Subscribe)
+		return takeUntilObservable{source, notifier}.Subscribe
 	}
 }

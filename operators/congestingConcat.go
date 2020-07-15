@@ -22,8 +22,11 @@ func (obs congestingConcatObservable) Subscribe(ctx context.Context, sink rx.Obs
 			sourceIndex++
 
 			obs1 := obs.Project(t.Value, sourceIndex)
-
-			childCtx, _ := obs1.Subscribe(ctx, func(t rx.Notification) {
+			childCtx, childCancel := context.WithCancel(ctx)
+			obs1.Subscribe(childCtx, func(t rx.Notification) {
+				if !t.HasValue {
+					defer childCancel()
+				}
 				switch {
 				case t.HasValue:
 					sink(t)
@@ -65,8 +68,7 @@ func CongestingConcatAll() rx.Operator {
 // It's like ConcatMap, but it congests the source.
 func CongestingConcatMap(project func(interface{}, int) rx.Observable) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
-		obs := congestingConcatObservable{source, project}
-		return rx.Create(obs.Subscribe)
+		return congestingConcatObservable{source, project}.Subscribe
 	}
 }
 

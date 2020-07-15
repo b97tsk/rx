@@ -14,7 +14,8 @@ type concatObservable struct {
 }
 
 func (obs concatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
-	sink = sink.Mutex()
+	ctx, cancel := context.WithCancel(ctx)
+	sink = sink.WithCancel(cancel).Mutex()
 
 	type X struct {
 		Index  int
@@ -97,8 +98,7 @@ func ConcatAll() rx.Operator {
 // Observables in order.
 func ConcatMap(project func(interface{}, int) rx.Observable) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
-		obs := concatObservable{source, project}
-		return rx.Create(obs.Subscribe)
+		return concatObservable{source, project}.Subscribe
 	}
 }
 

@@ -13,13 +13,13 @@ type reduceObservable struct {
 	HasSeed     bool
 }
 
-func (obs reduceObservable) Subscribe(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
+func (obs reduceObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	sourceIndex := -1
 	acc := struct {
 		Value    interface{}
 		HasValue bool
 	}{obs.Seed, obs.HasSeed}
-	return obs.Source.Subscribe(ctx, func(t rx.Notification) {
+	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		switch {
 		case t.HasValue:
 			sourceIndex++

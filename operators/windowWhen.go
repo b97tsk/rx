@@ -13,6 +13,9 @@ type windowWhenObservable struct {
 }
 
 func (obs windowWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) {
+	ctx, cancel := context.WithCancel(ctx)
+	sink = sink.WithCancel(cancel)
+
 	type X struct {
 		Window *rx.Subject
 	}
@@ -84,7 +87,6 @@ func (obs windowWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 // It's like BufferWhen, but emits a nested Observable instead of a slice.
 func WindowWhen(closingSelector func() rx.Observable) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
-		obs := windowWhenObservable{source, closingSelector}
-		return rx.Create(obs.Subscribe)
+		return windowWhenObservable{source, closingSelector}.Subscribe
 	}
 }

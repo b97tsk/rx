@@ -14,7 +14,8 @@ type repeatWhenObservable struct {
 }
 
 func (obs repeatWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) {
-	sink = sink.Mutex()
+	ctx, cancel := context.WithCancel(ctx)
+	sink = sink.WithCancel(cancel).Mutex()
 
 	var (
 		active         = atomic.Uint32(2)
@@ -38,6 +39,9 @@ func (obs repeatWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 		sourceCtx, sourceCancel = context.WithCancel(ctx)
 		obs.Source.Subscribe(sourceCtx, func(t rx.Notification) {
 			if x, ok := <-cx; ok {
+				if !t.HasValue {
+					sourceCancel()
+				}
 				if t.HasValue || t.HasError {
 					sink(t)
 					cx <- x
@@ -94,7 +98,6 @@ func (obs repeatWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 // subscription.
 func RepeatWhen(notifier func(rx.Observable) rx.Observable) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
-		obs := repeatWhenObservable{source, notifier}
-		return rx.Create(obs.Subscribe)
+		return repeatWhenObservable{source, notifier}.Subscribe
 	}
 }

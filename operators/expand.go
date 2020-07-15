@@ -22,8 +22,7 @@ func (configure ExpandConfigure) Use() rx.Operator {
 		configure.Concurrent = -1
 	}
 	return func(source rx.Observable) rx.Observable {
-		obs := expandObservable{source, configure}
-		return rx.Create(obs.Subscribe)
+		return expandObservable{source, configure}.Subscribe
 	}
 }
 
@@ -33,7 +32,8 @@ type expandObservable struct {
 }
 
 func (obs expandObservable) Subscribe(ctx context.Context, sink rx.Observer) {
-	sink = sink.Mutex()
+	ctx, cancel := context.WithCancel(ctx)
+	sink = sink.WithCancel(cancel).Mutex()
 
 	type X struct {
 		Active          int

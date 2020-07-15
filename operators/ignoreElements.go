@@ -7,8 +7,8 @@ import (
 )
 
 func ignoreElements(source rx.Observable) rx.Observable {
-	return func(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
-		return source.Subscribe(ctx, func(t rx.Notification) {
+	return func(ctx context.Context, sink rx.Observer) {
+		source.Subscribe(ctx, func(t rx.Notification) {
 			if t.HasValue {
 				return
 			}

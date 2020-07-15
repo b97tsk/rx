@@ -26,9 +26,9 @@ type distinctObservable struct {
 	DistinctConfigure
 }
 
-func (obs distinctObservable) Subscribe(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
+func (obs distinctObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	var keys = make(map[interface{}]struct{})
-	return obs.Source.Subscribe(ctx, func(t rx.Notification) {
+	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		if t.HasValue {
 			key := obs.KeySelector(t.Value)
 			if _, exists := keys[key]; exists {

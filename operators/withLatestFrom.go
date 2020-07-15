@@ -14,6 +14,8 @@ type withLatestFromElement struct {
 }
 
 func (observables withLatestFromObservable) Subscribe(ctx context.Context, sink rx.Observer) {
+	ctx, cancel := context.WithCancel(ctx)
+	sink = sink.WithCancel(cancel)
 	done := ctx.Done()
 	q := make(chan withLatestFromElement)
 
@@ -89,6 +91,6 @@ func (observables withLatestFromObservable) Subscribe(ctx context.Context, sink 
 func WithLatestFrom(observables ...rx.Observable) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		observables = append([]rx.Observable{source}, observables...)
-		return rx.Create(withLatestFromObservable(observables).Subscribe)
+		return withLatestFromObservable(observables).Subscribe
 	}
 }

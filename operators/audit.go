@@ -13,6 +13,9 @@ type auditObservable struct {
 }
 
 func (obs auditObservable) Subscribe(ctx context.Context, sink rx.Observer) {
+	ctx, cancel := context.WithCancel(ctx)
+	sink = sink.WithCancel(cancel)
+
 	type X struct {
 		LatestValue interface{}
 		Scheduled   bool
@@ -69,8 +72,7 @@ func (obs auditObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 // Observable.
 func Audit(durationSelector func(interface{}) rx.Observable) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
-		obs := auditObservable{source, durationSelector}
-		return rx.Create(obs.Subscribe)
+		return auditObservable{source, durationSelector}.Subscribe
 	}
 }
 

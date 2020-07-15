@@ -13,6 +13,9 @@ type sampleObservable struct {
 }
 
 func (obs sampleObservable) Subscribe(ctx context.Context, sink rx.Observer) {
+	ctx, cancel := context.WithCancel(ctx)
+	sink = sink.WithCancel(cancel)
+
 	type X struct {
 		Latest struct {
 			Value    interface{}
@@ -63,8 +66,7 @@ func (obs sampleObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 // something.
 func Sample(notifier rx.Observable) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
-		obs := sampleObservable{source, notifier}
-		return rx.Create(obs.Subscribe)
+		return sampleObservable{source, notifier}.Subscribe
 	}
 }
 

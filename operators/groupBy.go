@@ -12,9 +12,9 @@ type groupByObservable struct {
 	DoubleFactory func() rx.Double
 }
 
-func (obs groupByObservable) Subscribe(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
+func (obs groupByObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	var groups = make(map[interface{}]rx.Observer)
-	return obs.Source.Subscribe(ctx, func(t rx.Notification) {
+	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		switch {
 		case t.HasValue:
 			key := obs.KeySelector(t.Value)

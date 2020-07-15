@@ -29,7 +29,7 @@ type replaySubjectElement struct {
 // NewReplaySubject creates a new ReplaySubject.
 func NewReplaySubject(bufferSize int) *ReplaySubject {
 	s := new(ReplaySubject)
-	s.Double = Double{Create(s.subscribe), s.sink}
+	s.Double = Double{s.subscribe, s.sink}
 	s.bufferSize = atomic.Int64(int64(bufferSize))
 	return s
 }
@@ -128,7 +128,7 @@ func (s *ReplaySubject) sink(t Notification) {
 			s.err = t.Error
 			s.buffer.Init()
 		} else {
-			s.err = Completed
+			s.err = errCompleted
 		}
 
 		s.mux.Unlock()
@@ -144,7 +144,8 @@ func (s *ReplaySubject) subscribe(ctx context.Context, sink Observer) {
 
 	err := s.err
 	if err == nil {
-		observer := sink.MutexContext(ctx)
+		ctx, cancel := context.WithCancel(ctx)
+		observer := sink.WithCancel(cancel).MutexContext(ctx)
 		s.lst.Append(&observer)
 
 		finalize := func() {
@@ -173,7 +174,7 @@ func (s *ReplaySubject) subscribe(ctx context.Context, sink Observer) {
 	}
 
 	if err != nil {
-		if err != Completed {
+		if err != errCompleted {
 			sink.Error(err)
 		} else {
 			sink.Complete()

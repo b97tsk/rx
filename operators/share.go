@@ -19,7 +19,7 @@ type shareObservable struct {
 	shareCount    int
 }
 
-func (obs *shareObservable) Subscribe(ctx context.Context, sink rx.Observer) (context.Context, context.CancelFunc) {
+func (obs *shareObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	obs.mux.Lock()
 	defer obs.mux.Unlock()
 
@@ -27,9 +27,11 @@ func (obs *shareObservable) Subscribe(ctx context.Context, sink rx.Observer) (co
 		obs.double = obs.doubleFactory()
 	}
 
-	ctx, cancel := obs.double.Subscribe(ctx, sink)
+	ctx, cancel := context.WithCancel(ctx)
+	sink = sink.WithCancel(cancel)
+	obs.double.Subscribe(ctx, sink)
 	if ctx.Err() != nil {
-		return ctx, cancel
+		return
 	}
 
 	connection := obs.connection
@@ -49,9 +51,10 @@ func (obs *shareObservable) Subscribe(ctx context.Context, sink rx.Observer) (co
 				return
 			}
 
+			cancel()
+
 			obs.mux.Lock()
 			if connection == obs.connection {
-				obs.disconnect()
 				obs.double = rx.Double{}
 				obs.connection = nil
 				obs.disconnect = nil
@@ -82,8 +85,6 @@ func (obs *shareObservable) Subscribe(ctx context.Context, sink rx.Observer) (co
 	for obs.cws == nil || !obs.cws.Submit(ctx, finalize) {
 		obs.cws = misc.NewContextWaitService()
 	}
-
-	return ctx, cancel
 }
 
 // Share returns a new Observable that multicasts (shares) the original

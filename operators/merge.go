@@ -22,8 +22,7 @@ func (configure MergeConfigure) Use() rx.Operator {
 		configure.Concurrent = -1
 	}
 	return func(source rx.Observable) rx.Observable {
-		obs := mergeObservable{source, configure}
-		return rx.Create(obs.Subscribe)
+		return mergeObservable{source, configure}.Subscribe
 	}
 }
 
@@ -33,7 +32,8 @@ type mergeObservable struct {
 }
 
 func (obs mergeObservable) Subscribe(ctx context.Context, sink rx.Observer) {
-	sink = sink.Mutex()
+	ctx, cancel := context.WithCancel(ctx)
+	sink = sink.WithCancel(cancel).Mutex()
 
 	type X struct {
 		Index           int

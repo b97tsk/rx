@@ -14,6 +14,8 @@ type zipElement struct {
 }
 
 func (observables zipObservable) Subscribe(ctx context.Context, sink Observer) {
+	ctx, cancel := context.WithCancel(ctx)
+	sink = sink.WithCancel(cancel)
 	done := ctx.Done()
 	q := make(chan zipElement)
 
@@ -100,5 +102,5 @@ func Zip(observables ...Observable) Observable {
 	if len(observables) == 0 {
 		return Empty()
 	}
-	return Create(zipObservable(observables).Subscribe)
+	return zipObservable(observables).Subscribe
 }

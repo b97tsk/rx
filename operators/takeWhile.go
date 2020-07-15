@@ -12,6 +12,9 @@ type takeWhileObservable struct {
 }
 
 func (obs takeWhileObservable) Subscribe(ctx context.Context, sink rx.Observer) {
+	ctx, cancel := context.WithCancel(ctx)
+	sink = sink.WithCancel(cancel)
+
 	var observer rx.Observer
 
 	sourceIndex := -1
@@ -45,7 +48,6 @@ func (obs takeWhileObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 // given. When the first value does not satisfy, it completes.
 func TakeWhile(predicate func(interface{}, int) bool) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
-		obs := takeWhileObservable{source, predicate}
-		return rx.Create(obs.Subscribe)
+		return takeWhileObservable{source, predicate}.Subscribe
 	}
 }
