@@ -9,7 +9,7 @@ import (
 type flatObservable struct {
 	Source  rx.Observable
 	Flat    func(observables ...rx.Observable) rx.Observable
-	Project func(interface{}, int) (rx.Observable, error)
+	Project func(interface{}, int) rx.Observable
 }
 
 func (obs flatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
@@ -28,14 +28,8 @@ func (obs flatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		case t.HasValue:
 			sourceIndex++
 
-			obs, err := obs.Project(t.Value, sourceIndex)
-			if err != nil {
-				observer = rx.Noop
-				sink.Error(err)
-				return
-			}
-
-			observables = append(observables, obs)
+			obs1 := obs.Project(t.Value, sourceIndex)
+			observables = append(observables, obs1)
 
 		case t.HasError:
 			sink(t)
@@ -53,19 +47,17 @@ func (obs flatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 // into a first-order Observable, by applying a flat function to the inner
 // Observables, and starts subscribing to it.
 func FlatAll(flat func(observables ...rx.Observable) rx.Observable) rx.Operator {
-	return FlatMap(flat, func(val interface{}, idx int) (rx.Observable, error) {
-		if obs, ok := val.(rx.Observable); ok {
-			return obs, nil
-		}
-		return nil, rx.ErrNotObservable
-	})
+	return FlatMap(flat, projectToObservable)
 }
 
 // FlatMap creates an Observable that converts the source Observable into a
 // higher-order Observable, by projecting each source value to an Observable,
 // and flattens it into a first-order Observable, by applying a flat function
 // to the inner Observables, and starts subscribing to it.
-func FlatMap(flat func(observables ...rx.Observable) rx.Observable, project func(interface{}, int) (rx.Observable, error)) rx.Operator {
+func FlatMap(
+	flat func(observables ...rx.Observable) rx.Observable,
+	project func(interface{}, int) rx.Observable,
+) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		return flatObservable{source, flat, project}.Subscribe
 	}
