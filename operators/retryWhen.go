@@ -10,7 +10,7 @@ import (
 
 type retryWhenObservable struct {
 	Source   rx.Observable
-	Notifier func(rx.Observable) rx.Observable
+	Notifier rx.Operator
 }
 
 func (obs retryWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) {
@@ -19,78 +19,46 @@ func (obs retryWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 
 	var (
 		err            error
-		active         = atomic.Uint32(2)
+		retryActive    = atomic.Uint32(1)
+		sourceActive   = atomic.Uint32(1)
 		subject        *rx.Subject
-		createSubject  func() *rx.Subject
+		subscribe      func()
 		avoidRecursion misc.AvoidRecursion
 	)
 
-	type X struct{}
-	var cxCurrent chan X
-
-	var (
-		sourceCtx    context.Context
-		sourceCancel context.CancelFunc
-	)
-
-	subscribe := func() {
-		cx := make(chan X, 1)
-		cx <- X{}
-		cxCurrent = cx
-		sourceCtx, sourceCancel = context.WithCancel(ctx)
-		obs.Source.Subscribe(sourceCtx, func(t rx.Notification) {
-			if x, ok := <-cx; ok {
-				if !t.HasValue {
-					sourceCancel()
-				}
-				switch {
-				case t.HasValue:
-					sink(t)
-					cx <- x
-				case t.HasError:
-					err = t.Error
-					active := active.Sub(1)
-					close(cx)
-					if active == 0 {
-						sink(t)
-						break
-					}
-					if subject == nil {
-						subject = createSubject()
-					}
-					subject.Next(t.Error)
-				default:
-					sink(t)
-					cx <- x
-				}
-			}
-		})
-	}
-
-	createSubject = func() *rx.Subject {
-		subject := rx.NewSubject()
-		obs := obs.Notifier(subject.Observable)
-		obs.Subscribe(ctx, func(t rx.Notification) {
-			switch {
-			case t.HasValue:
-				sourceCancel()
-				if _, ok := <-cxCurrent; ok {
-					close(cxCurrent)
-				} else {
-					active.Add(1)
-				}
-				avoidRecursion.Do(subscribe)
-
-			case t.HasError:
+	subscribe = func() {
+		obs.Source.Subscribe(ctx, func(t rx.Notification) {
+			if !t.HasError {
 				sink(t)
-
-			default:
-				if active.Sub(1) == 0 {
-					sink.Error(err)
-				}
+				return
 			}
+			err = t.Error
+			sourceActive.Store(0)
+			if retryActive.Equals(0) {
+				sink(t)
+				return
+			}
+			if subject == nil {
+				subject = rx.NewSubject()
+				obs := obs.Notifier(subject.Observable)
+				obs.Subscribe(ctx, func(t rx.Notification) {
+					switch {
+					case t.HasValue:
+						if sourceActive.Cas(0, 1) {
+							avoidRecursion.Do(subscribe)
+						}
+					case t.HasError:
+						sink(t)
+					default:
+						retryActive.Store(0)
+						if sourceActive.Equals(0) {
+							sink.Error(err)
+						}
+					}
+				})
+			}
+			subject.Next(t.Error)
 		})
-		return subject
 	}
 
 	avoidRecursion.Do(subscribe)
@@ -102,7 +70,7 @@ func (obs retryWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 // If that Observable emits a value, this operator will resubscribe to the
 // source Observable. Otherwise, this operator will emit the last error on
 // the child subscription.
-func RetryWhen(notifier func(rx.Observable) rx.Observable) rx.Operator {
+func RetryWhen(notifier rx.Operator) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		return retryWhenObservable{source, notifier}.Subscribe
 	}
