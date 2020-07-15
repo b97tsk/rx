@@ -24,21 +24,14 @@ func (obs retryObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	}
 
 	observer = func(t rx.Notification) {
-		switch {
-		case t.HasValue:
+		if t.HasValue || !t.HasError || count == 0 {
 			sink(t)
-		case t.HasError:
-			if count == 0 {
-				sink(t)
-			} else {
-				if count > 0 {
-					count--
-				}
-				avoidRecursion.Do(subscribe)
-			}
-		default:
-			sink(t)
+			return
 		}
+		if count > 0 {
+			count--
+		}
+		avoidRecursion.Do(subscribe)
 	}
 
 	avoidRecursion.Do(subscribe)
