@@ -14,7 +14,7 @@ type skipUntilObservable struct {
 
 func (obs skipUntilObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	originalSink := sink
-	sink = rx.Mutex(originalSink)
+	sink = sink.Mutex()
 
 	noSkipping := atomic.Uint32(0)
 

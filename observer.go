@@ -1,5 +1,9 @@
 package rx
 
+import (
+	"context"
+)
+
 // An Observer is a consumer of notifications delivered by an Observable.
 type Observer func(Notification)
 
@@ -31,6 +35,48 @@ func (sink Observer) Complete() {
 //
 func (sink *Observer) Sink(t Notification) {
 	(*sink)(t)
+}
+
+// Mutex creates an Observer that passes incoming emissions to sink in a
+// mutually exclusive way.
+func (sink Observer) Mutex() Observer {
+	cx := make(chan Observer, 1)
+	cx <- sink
+	return func(t Notification) {
+		if sink, ok := <-cx; ok {
+			switch {
+			case t.HasValue:
+				sink(t)
+				cx <- sink
+			default:
+				close(cx)
+				sink(t)
+			}
+		}
+	}
+}
+
+// MutexContext creates an Observer that passes incoming emissions to sink in
+// a mutually exclusive way while ctx is still active.
+func (sink Observer) MutexContext(ctx context.Context) Observer {
+	cx := make(chan Observer, 1)
+	cx <- sink
+	return func(t Notification) {
+		if sink, ok := <-cx; ok {
+			if ctx.Err() != nil {
+				close(cx)
+				return
+			}
+			switch {
+			case t.HasValue:
+				sink(t)
+				cx <- sink
+			default:
+				close(cx)
+				sink(t)
+			}
+		}
+	}
 }
 
 // Noop gives you an Observer that does nothing.

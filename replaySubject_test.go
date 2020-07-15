@@ -15,7 +15,7 @@ func TestReplaySubject(t *testing.T) {
 		subject.SetBufferSize(3)
 		subscribeThenComplete := rx.Create(
 			func(ctx context.Context, sink rx.Observer) {
-				sink = rx.Mutex(sink)
+				sink = sink.Mutex()
 				subject.Subscribe(ctx, sink)
 				sink.Complete()
 			},
@@ -36,7 +36,7 @@ func TestReplaySubject(t *testing.T) {
 		subject.SetWindowTime(Step(5))
 		subscribeThenComplete := rx.Create(
 			func(ctx context.Context, sink rx.Observer) {
-				sink = rx.Mutex(sink)
+				sink = sink.Mutex()
 				subject.Subscribe(ctx, sink)
 				sink.Complete()
 			},

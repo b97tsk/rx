@@ -32,7 +32,7 @@ type congestingMergeObservable struct {
 }
 
 func (obs congestingMergeObservable) Subscribe(ctx context.Context, sink rx.Observer) {
-	sink = rx.Mutex(sink)
+	sink = sink.Mutex()
 
 	type X struct {
 		Active int

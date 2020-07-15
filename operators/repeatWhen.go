@@ -14,7 +14,7 @@ type repeatWhenObservable struct {
 }
 
 func (obs repeatWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) {
-	sink = rx.Mutex(sink)
+	sink = sink.Mutex()
 
 	var (
 		active         = atomic.Uint32(2)

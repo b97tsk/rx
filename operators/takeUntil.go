@@ -12,7 +12,7 @@ type takeUntilObservable struct {
 }
 
 func (obs takeUntilObservable) Subscribe(ctx context.Context, sink rx.Observer) {
-	sink = rx.Mutex(sink)
+	sink = sink.Mutex()
 
 	obs.Notifier.Subscribe(ctx, func(t rx.Notification) {
 		switch {

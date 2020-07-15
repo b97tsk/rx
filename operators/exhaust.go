@@ -13,7 +13,7 @@ type exhaustMapObservable struct {
 }
 
 func (obs exhaustMapObservable) Subscribe(ctx context.Context, sink rx.Observer) {
-	sink = rx.Mutex(sink)
+	sink = sink.Mutex()
 
 	sourceIndex := -1
 	active := atomic.Uint32(1)

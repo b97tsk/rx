@@ -14,7 +14,7 @@ type concatObservable struct {
 }
 
 func (obs concatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
-	sink = rx.Mutex(sink)
+	sink = sink.Mutex()
 
 	type X struct {
 		Index  int

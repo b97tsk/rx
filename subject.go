@@ -64,7 +64,7 @@ func (s *Subject) subscribe(ctx context.Context, sink Observer) {
 
 	err := s.err
 	if err == nil {
-		observer := MutexContext(ctx, sink)
+		observer := sink.MutexContext(ctx)
 		s.lst.Append(&observer)
 
 		finalize := func() {

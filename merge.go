@@ -9,7 +9,7 @@ import (
 type mergeObservable []Observable
 
 func (observables mergeObservable) Subscribe(ctx context.Context, sink Observer) {
-	sink = Mutex(sink)
+	sink = sink.Mutex()
 	active := atomic.Uint32(uint32(len(observables)))
 	observer := func(t Notification) {
 		if t.HasValue || t.HasError || active.Sub(1) == 0 {

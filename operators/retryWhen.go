@@ -14,7 +14,7 @@ type retryWhenObservable struct {
 }
 
 func (obs retryWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) {
-	sink = rx.Mutex(sink)
+	sink = sink.Mutex()
 
 	var (
 		err            error
