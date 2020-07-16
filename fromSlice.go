@@ -7,9 +7,6 @@ import (
 // FromSlice creates an Observable that emits values from a slice, one after
 // the other, and then completes.
 func FromSlice(slice []interface{}) Observable {
-	if len(slice) == 0 {
-		return Empty()
-	}
 	return func(ctx context.Context, sink Observer) {
 		for _, val := range slice {
 			if ctx.Err() != nil {
