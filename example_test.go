@@ -39,6 +39,9 @@ func Example() {
 	// takes a context.Context and an Observer as arguments.
 	obs.Subscribe(context.Background(), rx.Noop)
 
+	// Since this example has no goroutines involved, it must have already done.
+	// You could also use BlockingSubscribe method instead. It blocks until done.
+
 	// Output:
 	// 2
 	// 6
