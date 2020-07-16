@@ -48,12 +48,8 @@ func (observables raceObservable) Subscribe(ctx context.Context, sink Observer) 
 // Race creates an Observable that mirrors the first source Observable to emit
 // an item from the combination of this Observable and supplied Observables.
 func Race(observables ...Observable) Observable {
-	switch len(observables) {
-	case 0:
+	if len(observables) == 0 {
 		return Empty()
-	case 1:
-		return observables[0]
-	default:
-		return raceObservable(observables).Subscribe
 	}
+	return raceObservable(observables).Subscribe
 }
