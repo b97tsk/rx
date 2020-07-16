@@ -6,6 +6,7 @@ import (
 	"github.com/b97tsk/rx"
 	. "github.com/b97tsk/rx/internal/rxtest"
 	"github.com/b97tsk/rx/operators"
+	"github.com/b97tsk/rx/subject"
 )
 
 func TestShare(t *testing.T) {
@@ -25,7 +26,7 @@ func shareTest1(t *testing.T) {
 		operators.Take(4),
 		operators.Share(
 			func() rx.Double {
-				return rx.NewSubject().Double
+				return subject.NewSubject().Double
 			},
 		),
 	)
@@ -50,7 +51,7 @@ func shareTest2(t *testing.T) {
 		),
 		operators.Share(
 			func() rx.Double {
-				return rx.NewSubject().Double
+				return subject.NewSubject().Double
 			},
 		),
 		operators.Take(4),
@@ -77,7 +78,7 @@ func shareTest3(t *testing.T) {
 		operators.Take(4),
 		operators.Share(
 			func() rx.Double {
-				return rx.NewReplaySubject(1).Double
+				return subject.NewReplaySubject(1).Double
 			},
 		),
 	)
@@ -102,7 +103,7 @@ func shareTest4(t *testing.T) {
 		),
 		operators.Share(
 			func() rx.Double {
-				return rx.NewReplaySubject(1).Double
+				return subject.NewReplaySubject(1).Double
 			},
 		),
 		operators.Take(4),

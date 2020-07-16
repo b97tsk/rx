@@ -1,9 +1,10 @@
-package rx
+package subject
 
 import (
 	"context"
 	"sync/atomic"
 
+	"github.com/b97tsk/rx"
 	"github.com/b97tsk/rx/internal/misc"
 )
 
@@ -23,7 +24,7 @@ type behaviorSubjectElement struct {
 // NewBehaviorSubject creates a new BehaviorSubject.
 func NewBehaviorSubject(val interface{}) *BehaviorSubject {
 	s := new(BehaviorSubject)
-	s.Double = Double{s.subscribe, s.sink}
+	s.Double = rx.Double{s.subscribe, s.sink}
 	s.val.Store(behaviorSubjectElement{val})
 	return s
 }
@@ -33,7 +34,7 @@ func (s *BehaviorSubject) Value() interface{} {
 	return s.val.Load().(behaviorSubjectElement).Value
 }
 
-func (s *BehaviorSubject) sink(t Notification) {
+func (s *BehaviorSubject) sink(t rx.Notification) {
 	s.mux.Lock()
 	switch {
 	case s.err != nil:
@@ -69,7 +70,7 @@ func (s *BehaviorSubject) sink(t Notification) {
 	}
 }
 
-func (s *BehaviorSubject) subscribe(ctx context.Context, sink Observer) {
+func (s *BehaviorSubject) subscribe(ctx context.Context, sink rx.Observer) {
 	s.mux.Lock()
 
 	err := s.err

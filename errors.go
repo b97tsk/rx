@@ -12,5 +12,3 @@ var (
 	ErrOutOfRange      = errors.New("out of range")
 	ErrTimeout         = errors.New("timeout")
 )
-
-var errCompleted = errors.New("completed") // Internal use only.

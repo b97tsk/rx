@@ -7,6 +7,7 @@ import (
 	"github.com/b97tsk/rx"
 	. "github.com/b97tsk/rx/internal/rxtest"
 	"github.com/b97tsk/rx/operators"
+	"github.com/b97tsk/rx/subject"
 )
 
 func TestObservable_Publish(t *testing.T) {
@@ -22,7 +23,7 @@ func observablePublishTest1(t *testing.T) {
 				return idx
 			},
 		),
-	).Publish(rx.NewSubject().Double)
+	).Publish(subject.NewSubject().Double)
 	ctx, cancel := context.WithCancel(context.Background())
 	rx.Zip(
 		obs.Pipe(operators.Take(4)),
@@ -67,7 +68,7 @@ func observablePublishTest2(t *testing.T) {
 				return idx
 			},
 		),
-	).Publish(rx.NewBehaviorSubject(-1).Double)
+	).Publish(subject.NewBehaviorSubject(-1).Double)
 	ctx, cancel := context.WithCancel(context.Background())
 	rx.Zip(
 		obs.Pipe(operators.Take(4)),
@@ -112,7 +113,7 @@ func observablePublishTest3(t *testing.T) {
 				return idx
 			},
 		),
-	).Publish(rx.NewReplaySubject(2).Double)
+	).Publish(subject.NewReplaySubject(2).Double)
 	ctx, cancel := context.WithCancel(context.Background())
 	rx.Zip(
 		obs.Pipe(operators.Take(4)),

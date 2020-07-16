@@ -6,6 +6,7 @@ import (
 	"github.com/b97tsk/rx"
 	. "github.com/b97tsk/rx/internal/rxtest"
 	"github.com/b97tsk/rx/operators"
+	"github.com/b97tsk/rx/subject"
 )
 
 func TestGroupBy(t *testing.T) {
@@ -18,7 +19,7 @@ func TestGroupBy(t *testing.T) {
 					return val
 				},
 				func() rx.Double {
-					return rx.NewReplaySubject(0).Double
+					return subject.NewReplaySubject(0).Double
 				},
 			),
 			operators.MergeMap(

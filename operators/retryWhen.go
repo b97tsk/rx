@@ -6,6 +6,7 @@ import (
 	"github.com/b97tsk/rx"
 	"github.com/b97tsk/rx/internal/atomic"
 	"github.com/b97tsk/rx/internal/misc"
+	"github.com/b97tsk/rx/subject"
 )
 
 type retryWhenObservable struct {
@@ -21,7 +22,7 @@ func (obs retryWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 		err            error
 		retryActive    = atomic.Uint32(1)
 		sourceActive   = atomic.Uint32(1)
-		subject        *rx.Subject
+		subject1       *subject.Subject
 		subscribe      func()
 		avoidRecursion misc.AvoidRecursion
 	)
@@ -38,9 +39,9 @@ func (obs retryWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 				sink(t)
 				return
 			}
-			if subject == nil {
-				subject = rx.NewSubject()
-				obs := obs.Notifier(subject.Observable)
+			if subject1 == nil {
+				subject1 = subject.NewSubject()
+				obs := obs.Notifier(subject1.Observable)
 				obs.Subscribe(ctx, func(t rx.Notification) {
 					switch {
 					case t.HasValue:
@@ -57,7 +58,7 @@ func (obs retryWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 					}
 				})
 			}
-			subject.Next(t.Error)
+			subject1.Next(t.Error)
 		})
 	}
 

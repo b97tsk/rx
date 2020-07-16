@@ -1,11 +1,12 @@
-package rx
+package subject
 
 import (
+	"github.com/b97tsk/rx"
 	"github.com/b97tsk/rx/internal/atomic"
 )
 
 type observerList struct {
-	Observers []*Observer
+	Observers []*rx.Observer
 
 	refs *atomic.Uint32s
 }
@@ -28,7 +29,7 @@ func (lst *observerList) Release() {
 	}
 }
 
-func (lst *observerList) Append(observer *Observer) {
+func (lst *observerList) Append(observer *rx.Observer) {
 	refs := lst.refs
 	if refs == nil || refs.Equals(0) {
 		lst.Observers = append(lst.Observers, observer)
@@ -40,7 +41,7 @@ func (lst *observerList) Append(observer *Observer) {
 	lst.refs = nil
 }
 
-func (lst *observerList) Remove(observer *Observer) {
+func (lst *observerList) Remove(observer *rx.Observer) {
 	observers := lst.Observers
 	for i, sink := range observers {
 		if sink == observer {
@@ -51,7 +52,7 @@ func (lst *observerList) Remove(observer *Observer) {
 				observers[n-1] = nil
 				lst.Observers = observers[:n-1]
 			} else {
-				newObservers := make([]*Observer, n-1, n)
+				newObservers := make([]*rx.Observer, n-1, n)
 				copy(newObservers, observers[:i])
 				copy(newObservers[i:], observers[i+1:])
 				lst.Observers = newObservers

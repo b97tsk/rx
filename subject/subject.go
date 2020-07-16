@@ -1,16 +1,20 @@
-package rx
+package subject
 
 import (
 	"context"
+	"errors"
 	"sync"
 
+	"github.com/b97tsk/rx"
 	"github.com/b97tsk/rx/internal/misc"
 )
+
+var errCompleted = errors.New("completed")
 
 // Subject is a special type of Observable that allows values to be multicasted
 // to many Observers.
 type Subject struct {
-	Double
+	rx.Double
 
 	mux sync.Mutex
 	lst observerList
@@ -21,11 +25,11 @@ type Subject struct {
 // NewSubject creates a new Subject.
 func NewSubject() *Subject {
 	s := new(Subject)
-	s.Double = Double{s.subscribe, s.sink}
+	s.Double = rx.Double{s.subscribe, s.sink}
 	return s
 }
 
-func (s *Subject) sink(t Notification) {
+func (s *Subject) sink(t rx.Notification) {
 	s.mux.Lock()
 	switch {
 	case s.err != nil:
@@ -59,7 +63,7 @@ func (s *Subject) sink(t Notification) {
 	}
 }
 
-func (s *Subject) subscribe(ctx context.Context, sink Observer) {
+func (s *Subject) subscribe(ctx context.Context, sink rx.Observer) {
 	s.mux.Lock()
 
 	err := s.err

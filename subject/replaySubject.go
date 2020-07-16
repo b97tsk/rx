@@ -1,9 +1,10 @@
-package rx
+package subject
 
 import (
 	"context"
 	"time"
 
+	"github.com/b97tsk/rx"
 	"github.com/b97tsk/rx/internal/atomic"
 	"github.com/b97tsk/rx/internal/misc"
 	"github.com/b97tsk/rx/internal/queue"
@@ -29,7 +30,7 @@ type replaySubjectElement struct {
 // NewReplaySubject creates a new ReplaySubject.
 func NewReplaySubject(bufferSize int) *ReplaySubject {
 	s := new(ReplaySubject)
-	s.Double = Double{s.subscribe, s.sink}
+	s.Double = rx.Double{s.subscribe, s.sink}
 	s.bufferSize = atomic.Int64(int64(bufferSize))
 	return s
 }
@@ -96,7 +97,7 @@ func (s *ReplaySubject) trimBuffer(b *queue.Queue) {
 	}
 }
 
-func (s *ReplaySubject) sink(t Notification) {
+func (s *ReplaySubject) sink(t rx.Notification) {
 	s.mux.Lock()
 	switch {
 	case s.err != nil:
@@ -139,7 +140,7 @@ func (s *ReplaySubject) sink(t Notification) {
 	}
 }
 
-func (s *ReplaySubject) subscribe(ctx context.Context, sink Observer) {
+func (s *ReplaySubject) subscribe(ctx context.Context, sink rx.Observer) {
 	s.mux.Lock()
 
 	err := s.err
