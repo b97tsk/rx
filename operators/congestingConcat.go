@@ -22,24 +22,12 @@ func (obs congestingConcatObservable) Subscribe(ctx context.Context, sink rx.Obs
 			sourceIndex++
 
 			obs1 := obs.Project(t.Value, sourceIndex)
-			childCtx, childCancel := context.WithCancel(ctx)
-			obs1.Subscribe(childCtx, func(t rx.Notification) {
-				if !t.HasValue {
-					defer childCancel()
-				}
-				switch {
-				case t.HasValue:
+			err := obs1.BlockingSubscribe(ctx, func(t rx.Notification) {
+				if t.HasValue || t.HasError {
 					sink(t)
-				case t.HasError:
-					observer = rx.Noop
-					sink(t)
-				default:
-					// do nothing
 				}
 			})
-			<-childCtx.Done()
-
-			if ctx.Err() != nil {
+			if err != nil {
 				observer = rx.Noop
 			}
 
