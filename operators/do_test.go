@@ -1,6 +1,7 @@
 package operators_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/b97tsk/rx"
@@ -11,7 +12,12 @@ import (
 func TestDo(t *testing.T) {
 	n := 0
 	op := operators.Do(func(rx.Notification) { n++ })
-	obs := rx.Defer(func() rx.Observable { return rx.Just(n) })
+	obs := rx.Observable(
+		func(ctx context.Context, sink rx.Observer) {
+			sink.Next(n)
+			sink.Complete()
+		},
+	)
 	SubscribeN(
 		t,
 		[]rx.Observable{
@@ -34,7 +40,12 @@ func TestDo(t *testing.T) {
 func TestDoOnNext(t *testing.T) {
 	n := 0
 	op := operators.DoOnNext(func(interface{}) { n++ })
-	obs := rx.Defer(func() rx.Observable { return rx.Just(n) })
+	obs := rx.Observable(
+		func(ctx context.Context, sink rx.Observer) {
+			sink.Next(n)
+			sink.Complete()
+		},
+	)
 	SubscribeN(
 		t,
 		[]rx.Observable{
@@ -57,7 +68,12 @@ func TestDoOnNext(t *testing.T) {
 func TestDoOnError(t *testing.T) {
 	n := 0
 	op := operators.DoOnError(func(error) { n++ })
-	obs := rx.Defer(func() rx.Observable { return rx.Just(n) })
+	obs := rx.Observable(
+		func(ctx context.Context, sink rx.Observer) {
+			sink.Next(n)
+			sink.Complete()
+		},
+	)
 	SubscribeN(
 		t,
 		[]rx.Observable{
@@ -80,7 +96,12 @@ func TestDoOnError(t *testing.T) {
 func TestDoOnComplete(t *testing.T) {
 	n := 0
 	op := operators.DoOnComplete(func() { n++ })
-	obs := rx.Defer(func() rx.Observable { return rx.Just(n) })
+	obs := rx.Observable(
+		func(ctx context.Context, sink rx.Observer) {
+			sink.Next(n)
+			sink.Complete()
+		},
+	)
 	SubscribeN(
 		t,
 		[]rx.Observable{
@@ -103,7 +124,12 @@ func TestDoOnComplete(t *testing.T) {
 func TestDoAtLast(t *testing.T) {
 	n := 0
 	op := operators.DoAtLast(func(error) { n++ })
-	obs := rx.Defer(func() rx.Observable { return rx.Just(n) })
+	obs := rx.Observable(
+		func(ctx context.Context, sink rx.Observer) {
+			sink.Next(n)
+			sink.Complete()
+		},
+	)
 	SubscribeN(
 		t,
 		[]rx.Observable{
