@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/b97tsk/rx"
-	"github.com/b97tsk/rx/subject"
 )
 
 // A WindowTimeConfigure is a configure for WindowTime.
@@ -29,7 +28,7 @@ type windowTimeObservable struct {
 
 type windowTimeContext struct {
 	Cancel context.CancelFunc
-	Window *subject.Subject
+	Window rx.Observer
 	Size   int
 }
 
@@ -48,9 +47,10 @@ func (obs windowTimeObservable) Subscribe(ctx context.Context, sink rx.Observer)
 	obsTimer := rx.Timer(obs.TimeSpan)
 	openContextLocked := func(x *X) {
 		ctx, cancel := context.WithCancel(ctx)
+		window := rx.Multicast()
 		newContext := &windowTimeContext{
 			Cancel: cancel,
-			Window: subject.NewSubject(),
+			Window: window.Observer,
 		}
 		x.Contexts = append(x.Contexts, newContext)
 		obsTimer.Subscribe(ctx, func(t rx.Notification) {
@@ -59,7 +59,7 @@ func (obs windowTimeObservable) Subscribe(ctx context.Context, sink rx.Observer)
 			}
 			closeContext(newContext)
 		})
-		sink.Next(newContext.Window.Observable)
+		sink.Next(window.Observable)
 	}
 
 	openContext := func() {

@@ -5,6 +5,7 @@ import (
 )
 
 var (
+	ErrDropped         = errors.New("dropped")
 	ErrEmpty           = errors.New("empty")
 	ErrNotNotification = errors.New("not notification")
 	ErrNotObservable   = errors.New("not observable")
@@ -12,3 +13,5 @@ var (
 	ErrOutOfRange      = errors.New("out of range")
 	ErrTimeout         = errors.New("timeout")
 )
+
+var errCompleted = errors.New("completed") // For internal use only.

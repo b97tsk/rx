@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/b97tsk/rx"
-	"github.com/b97tsk/rx/subject"
 )
 
 // A WindowCountConfigure is a configure for WindowCount.
@@ -36,12 +35,12 @@ type windowCountObservable struct {
 
 func (obs windowCountObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	var (
-		windows    []*subject.Subject
+		windows    []rx.Observer
 		windowSize int
 	)
 
-	window := subject.NewSubject()
-	windows = append(windows, window)
+	window := rx.Multicast()
+	windows = append(windows, window.Observer)
 	sink.Next(window.Observable)
 
 	obs.Source.Subscribe(ctx, func(t rx.Notification) {
@@ -67,16 +66,16 @@ func (obs windowCountObservable) Subscribe(ctx context.Context, sink rx.Observer
 				window.Complete()
 				windowSize = obs.WindowSize - obs.StartWindowEvery
 				if windowSize < 0 {
-					window := subject.NewSubject()
-					windows = append(windows, window)
+					window := rx.Multicast()
+					windows = append(windows, window.Observer)
 					sink.Next(window.Observable)
 				}
 			}
 
 			if obs.StartWindowEvery <= obs.WindowSize {
 				if windowSize%obs.StartWindowEvery == 0 {
-					window := subject.NewSubject()
-					windows = append(windows, window)
+					window := rx.Multicast()
+					windows = append(windows, window.Observer)
 					sink.Next(window.Observable)
 				}
 			}

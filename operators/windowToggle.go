@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/b97tsk/rx"
-	"github.com/b97tsk/rx/subject"
 )
 
 type windowToggleObservable struct {
@@ -15,7 +14,7 @@ type windowToggleObservable struct {
 
 type windowToggleContext struct {
 	Cancel context.CancelFunc
-	Window *subject.Subject
+	Window rx.Observer
 }
 
 func (obs windowToggleObservable) Subscribe(ctx context.Context, sink rx.Observer) {
@@ -40,12 +39,13 @@ func (obs windowToggleObservable) Subscribe(ctx context.Context, sink rx.Observe
 			switch {
 			case t.HasValue:
 				ctx, cancel := context.WithCancel(ctx)
+				window := rx.Multicast()
 				newContext := &windowToggleContext{
 					Cancel: cancel,
-					Window: subject.NewSubject(),
+					Window: window.Observer,
 				}
 				x.Contexts = append(x.Contexts, newContext)
-				sink.Next(newContext.Window.Observable)
+				sink.Next(window.Observable)
 
 				cx <- x
 

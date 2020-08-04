@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/b97tsk/rx"
-	"github.com/b97tsk/rx/subject"
 )
 
 type windowObservable struct {
@@ -17,11 +16,11 @@ func (obs windowObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	sink = sink.WithCancel(cancel)
 
 	type X struct {
-		Window *subject.Subject
+		Window rx.Observer
 	}
-	window := subject.NewSubject()
+	window := rx.Multicast()
 	cx := make(chan *X, 1)
-	cx <- &X{window}
+	cx <- &X{window.Observer}
 	sink.Next(window.Observable)
 
 	obs.WindowBoundaries.Subscribe(ctx, func(t rx.Notification) {
@@ -29,8 +28,9 @@ func (obs windowObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 			switch {
 			case t.HasValue:
 				x.Window.Complete()
-				x.Window = subject.NewSubject()
-				sink.Next(x.Window.Observable)
+				window := rx.Multicast()
+				x.Window = window.Observer
+				sink.Next(window.Observable)
 				cx <- x
 			default:
 				close(cx)

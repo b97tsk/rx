@@ -9,10 +9,10 @@ import (
 )
 
 type shareObservable struct {
-	mux           sync.Mutex
+	mu            sync.Mutex
 	cws           misc.ContextWaitService
 	source        rx.Observable
-	doubleFactory func() rx.Double
+	doubleFactory rx.DoubleFactory
 	double        rx.Double
 	connection    context.Context
 	disconnect    context.CancelFunc
@@ -20,8 +20,8 @@ type shareObservable struct {
 }
 
 func (obs *shareObservable) Subscribe(ctx context.Context, sink rx.Observer) {
-	obs.mux.Lock()
-	defer obs.mux.Unlock()
+	obs.mu.Lock()
+	defer obs.mu.Unlock()
 
 	if obs.double.Observable == nil {
 		obs.double = obs.doubleFactory()
@@ -53,14 +53,14 @@ func (obs *shareObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 
 			cancel()
 
-			obs.mux.Lock()
+			obs.mu.Lock()
 			if connection == obs.connection {
 				obs.double = rx.Double{}
 				obs.connection = nil
 				obs.disconnect = nil
 				obs.shareCount = 0
 			}
-			obs.mux.Unlock()
+			obs.mu.Unlock()
 
 			sink(t)
 		})
@@ -69,7 +69,7 @@ func (obs *shareObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	obs.shareCount++
 
 	finalize := func() {
-		obs.mux.Lock()
+		obs.mu.Lock()
 		if connection == obs.connection {
 			obs.shareCount--
 			if obs.shareCount == 0 {
@@ -79,7 +79,7 @@ func (obs *shareObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 				obs.disconnect = nil
 			}
 		}
-		obs.mux.Unlock()
+		obs.mu.Unlock()
 	}
 
 	for obs.cws == nil || !obs.cws.Submit(ctx, finalize) {
@@ -91,7 +91,7 @@ func (obs *shareObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 // Observable. When subscribed multiple times, it guarantees that only one
 // subscription is made to the source Observable at the same time. When all
 // subscribers have unsubscribed it will unsubscribe from the source Observable.
-func Share(doubleFactory func() rx.Double) rx.Operator {
+func Share(doubleFactory rx.DoubleFactory) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		obs := shareObservable{
 			source:        source,

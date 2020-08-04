@@ -6,7 +6,6 @@ import (
 	"github.com/b97tsk/rx"
 	"github.com/b97tsk/rx/internal/atomic"
 	"github.com/b97tsk/rx/internal/misc"
-	"github.com/b97tsk/rx/subject"
 )
 
 type repeatWhenObservable struct {
@@ -21,7 +20,7 @@ func (obs repeatWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 	var (
 		repeatActive   = atomic.Uint32(1)
 		sourceActive   = atomic.Uint32(1)
-		subject1       *subject.Subject
+		repeatSignal   rx.Observer
 		subscribe      func()
 		avoidRecursion misc.AvoidRecursion
 	)
@@ -37,9 +36,10 @@ func (obs repeatWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 				sink(t)
 				return
 			}
-			if subject1 == nil {
-				subject1 = subject.NewSubject()
-				obs := obs.Notifier(subject1.Observable)
+			if repeatSignal == nil {
+				d := rx.Unicast()
+				repeatSignal = d.Observer
+				obs := obs.Notifier(d.Observable)
 				obs.Subscribe(ctx, func(t rx.Notification) {
 					switch {
 					case t.HasValue:
@@ -56,7 +56,7 @@ func (obs repeatWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 					}
 				})
 			}
-			subject1.Next(nil)
+			repeatSignal.Next(nil)
 		})
 	}
 

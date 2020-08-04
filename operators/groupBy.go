@@ -7,9 +7,9 @@ import (
 )
 
 type groupByObservable struct {
-	Source        rx.Observable
-	KeySelector   func(interface{}) interface{}
-	DoubleFactory func() rx.Double
+	Source       rx.Observable
+	KeySelector  func(interface{}) interface{}
+	GroupFactory rx.DoubleFactory
 }
 
 func (obs groupByObservable) Subscribe(ctx context.Context, sink rx.Observer) {
@@ -20,7 +20,7 @@ func (obs groupByObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 			key := obs.KeySelector(t.Value)
 			group, exists := groups[key]
 			if !exists {
-				d := obs.DoubleFactory()
+				d := obs.GroupFactory()
 				group = d.Observer
 				groups[key] = group
 				sink.Next(rx.GroupedObservable{
@@ -42,8 +42,8 @@ func (obs groupByObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 // GroupBy creates an Observable that groups the items emitted by the source
 // Observable according to a specified criterion, and emits these grouped
 // items as GroupedObservables, one GroupedObservable per group.
-func GroupBy(keySelector func(interface{}) interface{}, doubleFactory func() rx.Double) rx.Operator {
+func GroupBy(keySelector func(interface{}) interface{}, groupFactory rx.DoubleFactory) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
-		return groupByObservable{source, keySelector, doubleFactory}.Subscribe
+		return groupByObservable{source, keySelector, groupFactory}.Subscribe
 	}
 }

@@ -6,3 +6,6 @@ type Double struct {
 	Observable
 	Observer
 }
+
+// A DoubleFactory is a factory function that produces Doubles.
+type DoubleFactory func() Double

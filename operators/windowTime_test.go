@@ -49,25 +49,36 @@ func TestWindowTime(t *testing.T) {
 		[]rx.Observable{
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
-				operators.WindowTimeConfigure{Step(8), 0, 0}.Make(),
+				operators.WindowTimeConfigure{
+					TimeSpan: Step(8),
+				}.Make(),
 				operators.MergeMap(toSlice),
 				ToString(),
 			),
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
-				operators.WindowTimeConfigure{Step(8), 0, 3}.Make(),
+				operators.WindowTimeConfigure{
+					TimeSpan:      Step(8),
+					MaxWindowSize: 3,
+				}.Make(),
 				operators.MergeMap(toSlice),
 				ToString(),
 			),
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
-				operators.WindowTimeConfigure{Step(8), 0, 2}.Make(),
+				operators.WindowTimeConfigure{
+					TimeSpan:      Step(8),
+					MaxWindowSize: 2,
+				}.Make(),
 				operators.MergeMap(toSlice),
 				ToString(),
 			),
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
-				operators.WindowTimeConfigure{Step(8), 0, 1}.Make(),
+				operators.WindowTimeConfigure{
+					TimeSpan:      Step(8),
+					MaxWindowSize: 1,
+				}.Make(),
 				operators.MergeMap(toSlice),
 				ToString(),
 			),
@@ -85,19 +96,28 @@ func TestWindowTime(t *testing.T) {
 		[]rx.Observable{
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
-				operators.WindowTimeConfigure{Step(2), Step(2), 0}.Make(),
+				operators.WindowTimeConfigure{
+					TimeSpan:         Step(2),
+					CreationInterval: Step(2),
+				}.Make(),
 				operators.MergeMap(toSlice),
 				ToString(),
 			),
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
-				operators.WindowTimeConfigure{Step(2), Step(4), 0}.Make(),
+				operators.WindowTimeConfigure{
+					TimeSpan:         Step(2),
+					CreationInterval: Step(4),
+				}.Make(),
 				operators.MergeMap(toSlice),
 				ToString(),
 			),
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
-				operators.WindowTimeConfigure{Step(4), Step(2), 0}.Make(),
+				operators.WindowTimeConfigure{
+					TimeSpan:         Step(4),
+					CreationInterval: Step(2),
+				}.Make(),
 				operators.MergeMap(toSlice),
 				ToString(),
 			),

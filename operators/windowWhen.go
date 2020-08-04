@@ -5,7 +5,6 @@ import (
 
 	"github.com/b97tsk/rx"
 	"github.com/b97tsk/rx/internal/misc"
-	"github.com/b97tsk/rx/subject"
 )
 
 type windowWhenObservable struct {
@@ -18,11 +17,11 @@ func (obs windowWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 	sink = sink.WithCancel(cancel)
 
 	type X struct {
-		Window *subject.Subject
+		Window rx.Observer
 	}
-	window := subject.NewSubject()
+	window := rx.Multicast()
 	cx := make(chan *X, 1)
-	cx <- &X{window}
+	cx <- &X{window.Observer}
 	sink.Next(window.Observable)
 
 	var (
@@ -49,8 +48,9 @@ func (obs windowWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 					return
 				}
 				x.Window.Complete()
-				x.Window = subject.NewSubject()
-				sink.Next(x.Window.Observable)
+				window := rx.Multicast()
+				x.Window = window.Observer
+				sink.Next(window.Observable)
 				cx <- x
 				avoidRecursion.Do(openWindow)
 			}

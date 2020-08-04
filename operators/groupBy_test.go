@@ -6,7 +6,6 @@ import (
 	"github.com/b97tsk/rx"
 	. "github.com/b97tsk/rx/internal/rxtest"
 	"github.com/b97tsk/rx/operators"
-	"github.com/b97tsk/rx/subject"
 )
 
 func TestGroupBy(t *testing.T) {
@@ -15,12 +14,8 @@ func TestGroupBy(t *testing.T) {
 		rx.Just("A", "B", "B", "A", "C", "C", "D", "A").Pipe(
 			AddLatencyToValues(0, 1),
 			operators.GroupBy(
-				func(val interface{}) interface{} {
-					return val
-				},
-				func() rx.Double {
-					return subject.NewReplaySubject(0).Double
-				},
+				func(val interface{}) interface{} { return val },
+				rx.MulticastReplayFactory(nil),
 			),
 			operators.MergeMap(
 				func(val interface{}, idx int) rx.Observable {

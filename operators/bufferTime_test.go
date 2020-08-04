@@ -40,22 +40,33 @@ func TestBufferTime(t *testing.T) {
 		[]rx.Observable{
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
-				operators.BufferTimeConfigure{Step(8), 0, 0}.Make(),
+				operators.BufferTimeConfigure{
+					TimeSpan: Step(8),
+				}.Make(),
 				ToString(),
 			),
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
-				operators.BufferTimeConfigure{Step(8), 0, 3}.Make(),
+				operators.BufferTimeConfigure{
+					TimeSpan:      Step(8),
+					MaxBufferSize: 3,
+				}.Make(),
 				ToString(),
 			),
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
-				operators.BufferTimeConfigure{Step(8), 0, 2}.Make(),
+				operators.BufferTimeConfigure{
+					TimeSpan:      Step(8),
+					MaxBufferSize: 2,
+				}.Make(),
 				ToString(),
 			),
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
-				operators.BufferTimeConfigure{Step(8), 0, 1}.Make(),
+				operators.BufferTimeConfigure{
+					TimeSpan:      Step(8),
+					MaxBufferSize: 1,
+				}.Make(),
 				ToString(),
 			),
 		},
@@ -72,17 +83,26 @@ func TestBufferTime(t *testing.T) {
 		[]rx.Observable{
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
-				operators.BufferTimeConfigure{Step(2), Step(2), 0}.Make(),
+				operators.BufferTimeConfigure{
+					TimeSpan:         Step(2),
+					CreationInterval: Step(2),
+				}.Make(),
 				ToString(),
 			),
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
-				operators.BufferTimeConfigure{Step(2), Step(4), 0}.Make(),
+				operators.BufferTimeConfigure{
+					TimeSpan:         Step(2),
+					CreationInterval: Step(4),
+				}.Make(),
 				ToString(),
 			),
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
-				operators.BufferTimeConfigure{Step(4), Step(2), 0}.Make(),
+				operators.BufferTimeConfigure{
+					TimeSpan:         Step(4),
+					CreationInterval: Step(2),
+				}.Make(),
 				ToString(),
 			),
 		},
