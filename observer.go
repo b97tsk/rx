@@ -26,7 +26,7 @@ func (sink Observer) Complete() {
 //
 // Sink also yields an Observer that is equivalent to:
 //
-// 	func(t Notification) { (*sink)(t) }
+//	func(t Notification) { (*sink)(t) }
 //
 // Useful when you want to set *sink to another Observer at some point.
 //
@@ -35,6 +35,15 @@ func (sink Observer) Complete() {
 //
 func (sink *Observer) Sink(t Notification) {
 	(*sink)(t)
+}
+
+// ElementsOnly creates an Observer that only passes NEXT emissions to sink.
+func (sink Observer) ElementsOnly() Observer {
+	return func(t Notification) {
+		if t.HasValue {
+			sink(t)
+		}
+	}
 }
 
 // Mutex creates an Observer that passes incoming emissions to sink in a
