@@ -2,6 +2,7 @@ package operators
 
 import (
 	"context"
+	"sync"
 
 	"github.com/b97tsk/rx"
 	"github.com/b97tsk/rx/internal/misc"
@@ -17,71 +18,72 @@ func (obs concatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	ctx, cancel := context.WithCancel(ctx)
 	sink = sink.WithCancel(cancel).Mutex()
 
-	type X struct {
-		Index  int
-		Active int
-		Buffer queue.Queue
-	}
-	cx := make(chan *X, 1)
-	cx <- &X{Active: 1}
+	x := struct {
+		sync.Mutex
+		Queue     queue.Queue
+		Index     int
+		Working   bool
+		Completed bool
+	}{Index: -1}
 
-	var doNextLocked func(*X)
+	var (
+		subscribe      func()
+		avoidRecursion misc.AvoidRecursion
+	)
 
-	doNextLocked = func(x *X) {
-		var avoidRecursion misc.AvoidRecursion
-		avoidRecursion.Do(func() {
-			if x.Buffer.Len() == 0 {
-				x.Active--
-				if x.Active == 0 {
-					sink.Complete()
-				}
+	subscribe = func() {
+		x.Lock()
+		if x.Queue.Len() == 0 {
+			defer x.Unlock()
+			x.Working = false
+			if x.Completed {
+				sink.Complete()
+			}
+			return
+		}
+		x.Index++
+		sourceIndex := x.Index
+		sourceValue := x.Queue.Pop()
+		x.Unlock()
+
+		obs1 := obs.Project(sourceValue, sourceIndex)
+		obs1.Subscribe(ctx, func(t rx.Notification) {
+			if t.HasValue || t.HasError {
+				sink(t)
 				return
 			}
-
-			sourceIndex := x.Index
-			sourceValue := x.Buffer.Pop()
-			x.Index++
-
-			obs1 := obs.Project(sourceValue, sourceIndex)
-
-			obs1.Subscribe(ctx, func(t rx.Notification) {
-				if t.HasValue || t.HasError {
-					sink(t)
-					return
-				}
-				if ctx.Err() != nil {
-					return
-				}
-				avoidRecursion.Do(func() {
-					x := <-cx
-					doNextLocked(x)
-					cx <- x
-				})
-			})
+			if ctx.Err() != nil {
+				return
+			}
+			avoidRecursion.Do(subscribe)
 		})
 	}
 
 	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		switch {
 		case t.HasValue:
-			x := <-cx
-			x.Buffer.Push(t.Value)
-			if x.Active == 1 {
-				x.Active++
-				doNextLocked(x)
+			x.Lock()
+			x.Queue.Push(t.Value)
+			var shouldSubscribe bool
+			if !x.Working {
+				x.Working = true
+				shouldSubscribe = true
 			}
-			cx <- x
+			x.Unlock()
+			if shouldSubscribe {
+				avoidRecursion.Do(subscribe)
+			}
 
 		case t.HasError:
 			sink(t)
 
 		default:
-			x := <-cx
-			x.Active--
-			if x.Active == 0 {
+			x.Lock()
+			defer x.Unlock()
+			x.Completed = true
+			if !x.Working {
 				sink(t)
 			}
-			cx <- x
 		}
 	})
 }
