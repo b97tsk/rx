@@ -17,34 +17,30 @@ func (obs exhaustMapObservable) Subscribe(ctx context.Context, sink rx.Observer)
 	sink = sink.WithCancel(cancel).Mutex()
 
 	sourceIndex := -1
-	active := atomic.Uint32(1)
+	workers := atomic.Uint32(1)
 
 	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		switch {
 		case t.HasValue:
 			sourceIndex++
-
-			if !active.Cas(1, 2) {
-				break
+			if workers.Cas(1, 2) {
+				obs1 := obs.Project(t.Value, sourceIndex)
+				obs1.Subscribe(ctx, func(t rx.Notification) {
+					if t.HasValue || t.HasError {
+						sink(t)
+						return
+					}
+					if workers.Sub(1) == 0 {
+						sink(t)
+					}
+				})
 			}
-
-			obs1 := obs.Project(t.Value, sourceIndex)
-
-			obs1.Subscribe(ctx, func(t rx.Notification) {
-				if t.HasValue || t.HasError {
-					sink(t)
-					return
-				}
-				if active.Sub(1) == 0 {
-					sink(t)
-				}
-			})
 
 		case t.HasError:
 			sink(t)
 
 		default:
-			if active.Sub(1) == 0 {
+			if workers.Sub(1) == 0 {
 				sink(t)
 			}
 		}
