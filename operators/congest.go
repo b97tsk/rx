@@ -15,13 +15,13 @@ type congestObservable struct {
 func (obs congestObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	done := ctx.Done()
 
-	c := make(chan rx.Notification)
+	cout := make(chan rx.Notification)
 	go func() {
 		for {
 			select {
 			case <-done:
 				return
-			case t := <-c:
+			case t := <-cout:
 				switch {
 				case t.HasValue:
 					sink(t)
@@ -33,29 +33,28 @@ func (obs congestObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		}
 	}()
 
-	q := make(chan rx.Notification)
+	cin := make(chan rx.Notification)
 	go func() {
 		var queue queue.Queue
 		for {
 			var (
-				in       <-chan rx.Notification
-				out      chan<- rx.Notification
-				outValue rx.Notification
+				in   <-chan rx.Notification
+				out  chan<- rx.Notification
+				outv rx.Notification
 			)
 			length := queue.Len()
 			if length < obs.BufferSize {
-				in = q
+				in = cin
 			}
 			if length > 0 {
-				out = c
-				outValue = queue.Front().(rx.Notification)
+				out, outv = cout, queue.Front().(rx.Notification)
 			}
 			select {
 			case <-done:
 				return
 			case t := <-in:
 				queue.Push(t)
-			case out <- outValue:
+			case out <- outv:
 				queue.Pop()
 			}
 		}
@@ -64,7 +63,7 @@ func (obs congestObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		select {
 		case <-done:
-		case q <- t:
+		case cin <- t:
 		}
 	})
 }
