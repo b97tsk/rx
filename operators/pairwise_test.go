@@ -9,17 +9,20 @@ import (
 )
 
 func TestPairwise(t *testing.T) {
-	op := rx.Pipe(operators.Pairwise(), ToString())
+	observables := [...]rx.Observable{
+		rx.Empty(),
+		rx.Just("A"),
+		rx.Just("A", "B"),
+		rx.Just("A", "B", "C"),
+		rx.Just("A", "B", "C", "D"),
+		rx.Concat(rx.Just("A", "B", "C", "D"), rx.Throw(ErrTest)),
+	}
+	for i, obs := range observables {
+		observables[i] = obs.Pipe(operators.Pairwise(), ToString())
+	}
 	SubscribeN(
 		t,
-		[]rx.Observable{
-			rx.Empty().Pipe(op),
-			rx.Just("A").Pipe(op),
-			rx.Just("A", "B").Pipe(op),
-			rx.Just("A", "B", "C").Pipe(op),
-			rx.Just("A", "B", "C", "D").Pipe(op),
-			rx.Concat(rx.Just("A", "B", "C", "D"), rx.Throw(ErrTest)).Pipe(op),
-		},
+		observables[:],
 		[][]interface{}{
 			{Completed},
 			{Completed},
