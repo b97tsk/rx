@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/internal/atomic"
 )
 
 type delayWhenObservable struct {
@@ -13,73 +14,48 @@ type delayWhenObservable struct {
 
 func (obs delayWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	ctx, cancel := context.WithCancel(ctx)
-	sink = sink.WithCancel(cancel)
+	sink = sink.WithCancel(cancel).Mutex()
 
-	type X struct {
-		Index           int
-		Active          int
-		SourceCompleted bool
-	}
-	cx := make(chan *X, 1)
-	cx <- &X{}
+	sourceIndex := -1
+	workers := atomic.Uint32(1)
 
 	obs.Source.Subscribe(ctx, func(t rx.Notification) {
-		if x, ok := <-cx; ok {
-			switch {
-			case t.HasValue:
-				sourceIndex := x.Index
-				sourceValue := t.Value
-				x.Index++
-				x.Active++
+		switch {
+		case t.HasValue:
+			sourceIndex++
+			sourceValue := t.Value
+			workers.Add(1)
 
-				cx <- x
+			scheduleCtx, scheduleCancel := context.WithCancel(ctx)
 
-				scheduleCtx, scheduleCancel := context.WithCancel(ctx)
-
-				var observer rx.Observer
-				observer = func(t rx.Notification) {
-					observer = rx.Noop
-					scheduleCancel()
-					if x, ok := <-cx; ok {
-						x.Active--
-						switch {
-						case t.HasValue:
-							sink.Next(sourceValue)
-							if x.Active == 0 && x.SourceCompleted {
-								close(cx)
-								sink.Complete()
-								return
-							}
-							cx <- x
-						case t.HasError:
-							close(cx)
-							sink(t)
-						default:
-							if x.Active == 0 && x.SourceCompleted {
-								close(cx)
-								sink(t)
-								return
-							}
-							cx <- x
-						}
+			var observer rx.Observer
+			observer = func(t rx.Notification) {
+				observer = rx.Noop
+				scheduleCancel()
+				switch {
+				case t.HasValue:
+					sink.Next(sourceValue)
+					if workers.Sub(1) == 0 {
+						sink.Complete()
+					}
+				case t.HasError:
+					sink(t)
+				default:
+					if workers.Sub(1) == 0 {
+						sink(t)
 					}
 				}
+			}
 
-				obs := obs.DurationSelector(sourceValue, sourceIndex)
-				obs.Subscribe(scheduleCtx, observer.Sink)
+			obs1 := obs.DurationSelector(sourceValue, sourceIndex)
+			obs1.Subscribe(scheduleCtx, observer.Sink)
 
-			case t.HasError:
-				close(cx)
+		case t.HasError:
+			sink(t)
+
+		default:
+			if workers.Sub(1) == 0 {
 				sink(t)
-
-			default:
-				x.SourceCompleted = true
-				if x.Active == 0 {
-					close(cx)
-					sink(t)
-					return
-				}
-				cx <- x
 			}
 		}
 	})
