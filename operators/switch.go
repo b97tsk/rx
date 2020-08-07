@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/internal/atomic"
 )
 
 type switchMapObservable struct {
@@ -15,28 +16,18 @@ func (obs switchMapObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 	ctx, cancel := context.WithCancel(ctx)
 	sink = sink.WithCancel(cancel).Mutex()
 
-	type X struct {
-		Index           int
-		ActiveIndex     int
-		SourceCompleted bool
-	}
-	cx := make(chan *X, 1)
-	cx <- &X{ActiveIndex: -1}
-
 	var childCancel context.CancelFunc
+
+	activeIndex := atomic.Int64(-1)
+	sourceIndex := -1
+	sourceCompleted := atomic.Uint32(0)
 
 	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		switch {
 		case t.HasValue:
-			x := <-cx
-
-			sourceIndex := x.Index
-			sourceValue := t.Value
-			x.Index++
-
-			x.ActiveIndex = sourceIndex
-
-			cx <- x
+			sourceIndex++
+			sourceIndex := sourceIndex
+			activeIndex.Store(int64(sourceIndex))
 
 			if childCancel != nil {
 				childCancel()
@@ -45,7 +36,7 @@ func (obs switchMapObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 			var childCtx context.Context
 			childCtx, childCancel = context.WithCancel(ctx)
 
-			obs1 := obs.Project(sourceValue, sourceIndex)
+			obs1 := obs.Project(t.Value, sourceIndex)
 			obs1.Subscribe(childCtx, func(t rx.Notification) {
 				if !t.HasValue {
 					childCancel()
@@ -54,26 +45,22 @@ func (obs switchMapObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 					sink(t)
 					return
 				}
-				x := <-cx
-				if x.ActiveIndex == sourceIndex {
-					x.ActiveIndex = -1
-					if x.SourceCompleted {
-						sink(t)
-					}
+				if !activeIndex.Cas(int64(sourceIndex), -1) {
+					return
 				}
-				cx <- x
+				if sourceCompleted.Equals(1) && activeIndex.Equals(-1) {
+					sink(t)
+				}
 			})
 
 		case t.HasError:
 			sink(t)
 
 		default:
-			x := <-cx
-			x.SourceCompleted = true
-			if x.ActiveIndex == -1 {
+			sourceCompleted.Store(1)
+			if activeIndex.Equals(-1) {
 				sink(t)
 			}
-			cx <- x
 		}
 	})
 }
