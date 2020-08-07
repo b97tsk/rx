@@ -2,6 +2,7 @@ package operators
 
 import (
 	"context"
+	"sync"
 
 	"github.com/b97tsk/rx"
 )
@@ -34,46 +35,48 @@ func (obs congestingMergeObservable) Subscribe(ctx context.Context, sink rx.Obse
 	ctx, cancel := context.WithCancel(ctx)
 	sink = sink.WithCancel(cancel).Mutex()
 
-	type X struct {
-		Active int
-	}
-	cx := make(chan *X, 1)
-	cx <- &X{}
-
-	var observer rx.Observer
-
 	done := ctx.Done()
 	complete := make(chan struct{}, 1)
-	sourceIndex := -1
+
+	x := struct {
+		sync.Mutex
+		Index     int
+		Workers   int
+		Completed bool
+	}{Index: -1}
+
+	var observer rx.Observer
 
 	observer = func(t rx.Notification) {
 		switch {
 		case t.HasValue:
-			x := <-cx
-			for x.Active == obs.Concurrent {
-				cx <- x
+			x.Lock()
+			for x.Workers == obs.Concurrent {
+				x.Unlock()
 				select {
 				case <-done:
 					observer = rx.Noop
 					return
 				case <-complete:
 				}
-				x = <-cx
+				x.Lock()
 			}
-			x.Active++
-			cx <- x
+			x.Index++
+			x.Workers++
+			x.Unlock()
 
-			sourceIndex++
-
-			obs1 := obs.Project(t.Value, sourceIndex)
-			obs1.Subscribe(ctx, func(t rx.Notification) {
+			obs1 := obs.Project(t.Value, x.Index)
+			go obs1.Subscribe(ctx, func(t rx.Notification) {
 				if t.HasValue || t.HasError {
 					sink(t)
 					return
 				}
-				x := <-cx
-				x.Active--
-				cx <- x
+				x.Lock()
+				defer x.Unlock()
+				x.Workers--
+				if x.Completed && x.Workers == 0 {
+					sink(t)
+				}
 				select {
 				case complete <- struct{}{}:
 				default:
@@ -84,25 +87,12 @@ func (obs congestingMergeObservable) Subscribe(ctx context.Context, sink rx.Obse
 			sink(t)
 
 		default:
-			x := <-cx
-			if x.Active > 0 {
-				go func() {
-					for x.Active > 0 {
-						cx <- x
-						select {
-						case <-done:
-							return
-						case <-complete:
-						}
-						x = <-cx
-					}
-					cx <- x
-					sink.Complete()
-				}()
-				return
+			x.Lock()
+			defer x.Unlock()
+			x.Completed = true
+			if x.Workers == 0 {
+				sink(t)
 			}
-			cx <- x
-			sink(t)
 		}
 	}
 
