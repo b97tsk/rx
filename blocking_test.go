@@ -32,6 +32,28 @@ func TestObservable_BlockingFirst(t *testing.T) {
 	cancel()
 }
 
+func TestObservable_BlockingFirstOrDefault(t *testing.T) {
+	tests := [...]struct {
+		obs rx.Observable
+		val interface{}
+	}{
+		{rx.Empty(), "C"},
+		{rx.Throw(ErrTest), "C"},
+		{rx.Just("A"), "A"},
+		{rx.Just("A", "B"), "A"},
+		{rx.Just("A", "B").Pipe(operators.Go()), "A"},
+		{rx.Never(), "C"},
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), Step(1))
+	for _, x := range tests {
+		val := x.obs.BlockingFirstOrDefault(ctx, "C")
+		if val != x.val {
+			t.Fail()
+		}
+	}
+	cancel()
+}
+
 func TestObservable_BlockingLast(t *testing.T) {
 	tests := [...]struct {
 		obs rx.Observable
