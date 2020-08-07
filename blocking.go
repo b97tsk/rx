@@ -80,6 +80,17 @@ func (obs Observable) BlockingLast(ctx context.Context) (interface{}, error) {
 	}
 }
 
+// BlockingLastOrDefault subscribes to the source Observable, returns the last
+// item emitted by the source, or returns def if the source emits no items or
+// emits an error.
+func (obs Observable) BlockingLastOrDefault(ctx context.Context, def interface{}) interface{} {
+	val, err := obs.BlockingLast(ctx)
+	if err != nil {
+		return def
+	}
+	return val
+}
+
 // BlockingSingle subscribes to the source Observable, returns the single item
 // emitted by the source; if the source emits more than one item or no items,
 // it returns nil plus ErrNotSingle or ErrEmpty respectively; if the source
