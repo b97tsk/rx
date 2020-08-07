@@ -31,9 +31,8 @@ type timeoutObservable struct {
 func (obs timeoutObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	childCtx, childCancel := context.WithCancel(ctx)
 
-	type X struct{}
-	cx := make(chan X, 1)
-	cx <- X{}
+	race := make(chan struct{}, 1)
+	race <- struct{}{}
 
 	var scheduleCancel context.CancelFunc
 
@@ -48,8 +47,8 @@ func (obs timeoutObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 			if t.HasValue {
 				return
 			}
-			if _, ok := <-cx; ok {
-				close(cx)
+			if _, ok := <-race; ok {
+				close(race)
 				childCancel()
 				obs.Observable.Subscribe(ctx, sink)
 			}
@@ -59,14 +58,14 @@ func (obs timeoutObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	doSchedule()
 
 	obs.Source.Subscribe(childCtx, func(t rx.Notification) {
-		if x, ok := <-cx; ok {
+		if x, ok := <-race; ok {
 			switch {
 			case t.HasValue:
 				sink(t)
-				cx <- x
+				race <- x
 				doSchedule()
 			default:
-				close(cx)
+				close(race)
 				childCancel()
 				sink(t)
 			}
