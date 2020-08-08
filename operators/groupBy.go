@@ -41,7 +41,7 @@ func (obs groupByObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 
 // GroupBy creates an Observable that groups the items emitted by the source
 // Observable according to a specified criterion, and emits these grouped
-// items as GroupedObservables, one GroupedObservable per group.
+// items as rx.GroupedObservables, one rx.GroupedObservable per group.
 func GroupBy(keySelector func(interface{}) interface{}, groupFactory rx.DoubleFactory) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		return groupByObservable{source, keySelector, groupFactory}.Subscribe

@@ -9,7 +9,7 @@ import (
 )
 
 func Example() {
-	// Create an observable and apply some operators.
+	// Create an Observable and apply some Operators.
 	obs := rx.Range(1, 10).Pipe(
 		operators.Filter(
 			func(val interface{}, idx int) bool {
@@ -39,8 +39,9 @@ func Example() {
 	// takes a context.Context and an Observer as arguments.
 	obs.Subscribe(context.Background(), rx.Noop)
 
-	// Since this example has no goroutines involved, it must have already done.
-	// You could also use BlockingSubscribe method instead. It blocks until done.
+	// Since this example has no other goroutines involved, it must have
+	// already done. You could also use BlockingSubscribe method instead.
+	// It blocks until done.
 
 	// Output:
 	// 2

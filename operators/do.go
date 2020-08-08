@@ -34,9 +34,9 @@ func DoOnNext(onNext func(interface{})) rx.Operator {
 	}
 }
 
-// DoOnError creates an Observable that mirrors the source Observable, in
-// the case that the source errors, performs a side effect before mirroring
-// the ERROR emission.
+// DoOnError creates an Observable that mirrors the source Observable, and
+// when the source emits an error, performs a side effect before mirroring
+// this error.
 func DoOnError(onError func(error)) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		return func(ctx context.Context, sink rx.Observer) {
@@ -50,9 +50,9 @@ func DoOnError(onError func(error)) rx.Operator {
 	}
 }
 
-// DoOnComplete creates an Observable that mirrors the source Observable, in
-// the case that the source completes, performs a side effect before mirroring
-// the COMPLETE emission.
+// DoOnComplete creates an Observable that mirrors the source Observable,
+// and when the source completes, performs a side effect before mirroring
+// this completion.
 func DoOnComplete(onComplete func()) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		return func(ctx context.Context, sink rx.Observer) {
@@ -66,9 +66,8 @@ func DoOnComplete(onComplete func()) rx.Operator {
 	}
 }
 
-// DoAtLast creates an Observable that mirrors the source Observable, in the
-// case that an ERROR or COMPLETE emission is mirrored, makes a call to a
-// specified function.
+// DoAtLast creates an Observable that mirrors the source Observable, and
+// when the source completes or emits an error, performs a side effect after.
 func DoAtLast(atLast func(error)) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		return func(ctx context.Context, sink rx.Observer) {

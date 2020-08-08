@@ -37,10 +37,10 @@ func (obs retryObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	avoidRecursion.Do(subscribe)
 }
 
-// Retry creates an Observable that mirrors the source Observable with the
-// exception of ERROR emission. If the source Observable errors, this
-// operator will resubscribe to the source Observable for a maximum of count
-// resubscriptions rather than propagating the ERROR emission.
+// Retry creates an Observable that mirrors the source Observable with one
+// exception: when the source emits an error, this operator will resubscribe
+// to the source for a maximum of count resubscriptions rather than propagating
+// this error.
 func Retry(count int) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		if count == 0 {
@@ -51,9 +51,8 @@ func Retry(count int) rx.Operator {
 }
 
 // RetryForever creates an Observable that mirrors the source Observable with
-// the exception of ERROR emission. If the source Observable errors, this
-// operator will resubscribe to the source Observable rather than propagating
-// the ERROR emission.
+// one exception: when the source emits an error, this operator will always
+// resubscribe to the source rather than propagating this error.
 func RetryForever() rx.Operator {
 	return Retry(-1)
 }

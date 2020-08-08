@@ -66,11 +66,10 @@ func (obs retryWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 }
 
 // RetryWhen creates an Observable that mirrors the source Observable with
-// the exception of ERROR emission. If the source Observable errors, this
-// operator will emit the error to the Observable returned from notifier.
-// If that Observable emits a value, this operator will resubscribe to the
-// source Observable. Otherwise, this operator will emit the last error on
-// the child subscription.
+// one exception: when the source emits an error, this operator will emit
+// this error to the Observable returned by the notifier. If that Observable
+// emits a value, this operator will resubscribe to the source; otherwise,
+// this operator will emit the last error on the child subscription.
 func RetryWhen(notifier rx.Operator) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		return retryWhenObservable{source, notifier}.Subscribe

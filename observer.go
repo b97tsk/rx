@@ -7,22 +7,22 @@ import (
 // An Observer is a consumer of notifications delivered by an Observable.
 type Observer func(Notification)
 
-// Next passes a NEXT emission to sink.
+// Next passes a value to sink.
 func (sink Observer) Next(val interface{}) {
 	sink(Notification{Value: val, HasValue: true})
 }
 
-// Error passes an ERROR emission to sink.
+// Error passes an error to sink.
 func (sink Observer) Error(err error) {
 	sink(Notification{Error: err, HasError: true})
 }
 
-// Complete passes a COMPLETE emission to sink.
+// Complete passes a completion to sink.
 func (sink Observer) Complete() {
 	sink(Notification{})
 }
 
-// Sink passes a specified emission to *sink.
+// Sink passes t to *sink.
 //
 // Sink also yields an Observer that is equivalent to:
 //
@@ -37,7 +37,7 @@ func (sink *Observer) Sink(t Notification) {
 	(*sink)(t)
 }
 
-// ElementsOnly creates an Observer that only passes NEXT emissions to sink.
+// ElementsOnly creates an Observer that only passes values to sink.
 func (sink Observer) ElementsOnly() Observer {
 	return func(t Notification) {
 		if t.HasValue {
@@ -66,7 +66,7 @@ func (sink Observer) Mutex() Observer {
 }
 
 // MutexContext creates an Observer that passes incoming emissions to sink in
-// a mutually exclusive way while ctx is still active.
+// a mutually exclusive way while ctx is active.
 func (sink Observer) MutexContext(ctx context.Context) Observer {
 	cx := make(chan Observer, 1)
 	cx <- sink
@@ -88,9 +88,9 @@ func (sink Observer) MutexContext(ctx context.Context) Observer {
 	}
 }
 
-// WithCancel creates an Observer that passes incoming emissions to sink and,
-// when an ERROR or COMPLETE emission passes in, calls a specified function
-// just before passing it to sink.
+// WithCancel creates an Observer that passes incoming emissions to sink, and
+// when an error or a completion passes in, calls a specified function just
+// before passing it to sink.
 func (sink Observer) WithCancel(cancel context.CancelFunc) Observer {
 	return func(t Notification) {
 		if !t.HasValue {

@@ -9,7 +9,7 @@ func empty(ctx context.Context, sink Observer) {
 }
 
 // Empty returns an Observable that emits no items to the Observer and
-// immediately emits a COMPLETE emission.
+// immediately completes.
 func Empty() Observable {
 	return empty
 }

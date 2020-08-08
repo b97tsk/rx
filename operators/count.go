@@ -23,8 +23,8 @@ func count(source rx.Observable) rx.Observable {
 	}
 }
 
-// Count creates an Observable that counts the number of NEXT emissions on
-// the source and emits that number when the source completes.
+// Count creates an Observable that counts the number of values on the source
+// and emits that number when the source completes.
 func Count() rx.Operator {
 	return count
 }

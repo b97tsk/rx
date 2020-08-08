@@ -17,8 +17,8 @@ func ignoreElements(source rx.Observable) rx.Observable {
 	}
 }
 
-// IgnoreElements creates an Observable that ignores all values emitted by the
-// source Observable and only passes ERROR or COMPLETE emission.
+// IgnoreElements creates an Observable that ignores all values emitted by
+// the source Observable and only passes errors or completions.
 func IgnoreElements() rx.Operator {
 	return ignoreElements
 }

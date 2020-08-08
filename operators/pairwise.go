@@ -33,7 +33,7 @@ func pairwise(source rx.Observable) rx.Observable {
 }
 
 // Pairwise creates an Observable that groups pairs of consecutive emissions
-// together and emits them as a slice of two values.
+// together and emits them as rx.Pairs.
 func Pairwise() rx.Operator {
 	return pairwise
 }

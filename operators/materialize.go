@@ -17,8 +17,8 @@ func materialize(source rx.Observable) rx.Observable {
 	}
 }
 
-// Materialize creates an Observable that represents all of the notifications
-// from the source Observable as NEXT emissions, and then completes.
+// Materialize creates an Observable that represents all of the Notifications
+// from the source Observable as values, and then completes.
 func Materialize() rx.Operator {
 	return materialize
 }
