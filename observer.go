@@ -2,6 +2,8 @@ package rx
 
 import (
 	"context"
+
+	"github.com/b97tsk/rx/internal/critical"
 )
 
 // An Observer is a consumer of notifications delivered by an Observable.
@@ -49,16 +51,15 @@ func (sink Observer) ElementsOnly() Observer {
 // Mutex creates an Observer that passes incoming emissions to sink in a
 // mutually exclusive way.
 func (sink Observer) Mutex() Observer {
-	cx := make(chan Observer, 1)
-	cx <- sink
+	var s critical.Section
 	return func(t Notification) {
-		if sink, ok := <-cx; ok {
+		if critical.Enter(&s) {
 			switch {
 			case t.HasValue:
+				defer critical.Leave(&s)
 				sink(t)
-				cx <- sink
 			default:
-				close(cx)
+				critical.Close(&s)
 				sink(t)
 			}
 		}
@@ -68,20 +69,17 @@ func (sink Observer) Mutex() Observer {
 // MutexContext creates an Observer that passes incoming emissions to sink in
 // a mutually exclusive way while ctx is active.
 func (sink Observer) MutexContext(ctx context.Context) Observer {
-	cx := make(chan Observer, 1)
-	cx <- sink
+	var s critical.Section
 	return func(t Notification) {
-		if sink, ok := <-cx; ok {
-			if ctx.Err() != nil {
-				close(cx)
-				return
-			}
+		if critical.Enter(&s) {
 			switch {
+			case ctx.Err() != nil:
+				critical.Close(&s)
 			case t.HasValue:
+				defer critical.Leave(&s)
 				sink(t)
-				cx <- sink
 			default:
-				close(cx)
+				critical.Close(&s)
 				sink(t)
 			}
 		}
