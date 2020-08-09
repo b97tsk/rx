@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/internal/critical"
 )
 
 type debounceObservable struct {
@@ -16,25 +17,23 @@ func (obs debounceObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	ctx, cancel := context.WithCancel(ctx)
 	sink = sink.WithCancel(cancel)
 
-	type X struct {
+	var x struct {
+		critical.Section
 		Latest struct {
 			Value    interface{}
 			HasValue bool
 		}
 	}
-	cx := make(chan *X, 1)
-	cx <- &X{}
 
 	var scheduleCancel context.CancelFunc
 
 	obs.Source.Subscribe(ctx, func(t rx.Notification) {
-		if x, ok := <-cx; ok {
+		if critical.Enter(&x.Section) {
 			switch {
 			case t.HasValue:
 				x.Latest.Value = t.Value
 				x.Latest.HasValue = true
-
-				cx <- x
+				critical.Leave(&x.Section)
 
 				if scheduleCancel != nil {
 					scheduleCancel()
@@ -47,9 +46,9 @@ func (obs debounceObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 				observer = func(t rx.Notification) {
 					observer = rx.Noop
 					scheduleCancel()
-					if x, ok := <-cx; ok {
+					if critical.Enter(&x.Section) {
 						if t.HasError {
-							close(cx)
+							critical.Close(&x.Section)
 							sink(t)
 							return
 						}
@@ -57,7 +56,7 @@ func (obs debounceObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 							sink.Next(x.Latest.Value)
 							x.Latest.HasValue = false
 						}
-						cx <- x
+						critical.Leave(&x.Section)
 					}
 				}
 
@@ -65,11 +64,11 @@ func (obs debounceObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 				obs.Subscribe(scheduleCtx, observer.Sink)
 
 			case t.HasError:
-				close(cx)
+				critical.Close(&x.Section)
 				sink(t)
 
 			default:
-				close(cx)
+				critical.Close(&x.Section)
 				if x.Latest.HasValue {
 					sink.Next(x.Latest.Value)
 				}

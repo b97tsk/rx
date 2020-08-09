@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/internal/critical"
 )
 
 // A WindowTimeConfigure is a configure for WindowTime.
@@ -36,16 +37,15 @@ func (obs windowTimeObservable) Subscribe(ctx context.Context, sink rx.Observer)
 	ctx, cancel := context.WithCancel(ctx)
 	sink = sink.WithCancel(cancel)
 
-	type X struct {
+	var x struct {
+		critical.Section
 		Contexts []*windowTimeContext
 	}
-	cx := make(chan *X, 1)
-	cx <- &X{}
 
 	var closeContext func(*windowTimeContext)
 
 	obsTimer := rx.Timer(obs.TimeSpan)
-	openContextLocked := func(x *X) {
+	openContextLocked := func() {
 		ctx, cancel := context.WithCancel(ctx)
 		window := rx.Multicast()
 		newContext := &windowTimeContext{
@@ -63,15 +63,15 @@ func (obs windowTimeObservable) Subscribe(ctx context.Context, sink rx.Observer)
 	}
 
 	openContext := func() {
-		if x, ok := <-cx; ok {
-			openContextLocked(x)
-			cx <- x
+		if critical.Enter(&x.Section) {
+			openContextLocked()
+			critical.Leave(&x.Section)
 		}
 	}
 
 	closeContext = func(toBeClosed *windowTimeContext) {
 		toBeClosed.Cancel()
-		if x, ok := <-cx; ok {
+		if critical.Enter(&x.Section) {
 			for i, c := range x.Contexts {
 				if c == toBeClosed {
 					copy(x.Contexts[i:], x.Contexts[i+1:])
@@ -80,12 +80,12 @@ func (obs windowTimeObservable) Subscribe(ctx context.Context, sink rx.Observer)
 					x.Contexts = x.Contexts[:n-1]
 					toBeClosed.Window.Complete()
 					if obs.CreationInterval <= 0 {
-						openContextLocked(x)
+						openContextLocked()
 					}
 					break
 				}
 			}
-			cx <- x
+			critical.Leave(&x.Section)
 		}
 	}
 
@@ -100,7 +100,7 @@ func (obs windowTimeObservable) Subscribe(ctx context.Context, sink rx.Observer)
 	}
 
 	obs.Source.Subscribe(ctx, func(t rx.Notification) {
-		if x, ok := <-cx; ok {
+		if critical.Enter(&x.Section) {
 			switch {
 			case t.HasValue:
 				var windowFullContexts []*windowTimeContext
@@ -112,14 +112,14 @@ func (obs windowTimeObservable) Subscribe(ctx context.Context, sink rx.Observer)
 					}
 				}
 
-				cx <- x
+				critical.Leave(&x.Section)
 
 				for _, c := range windowFullContexts {
 					closeContext(c)
 				}
 
 			default:
-				close(cx)
+				critical.Close(&x.Section)
 				for _, c := range x.Contexts {
 					c.Cancel()
 					c.Window.Sink(t)

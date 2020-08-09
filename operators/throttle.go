@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/internal/critical"
 )
 
 // A ThrottleConfigure is a configure for Throttle.
@@ -51,14 +52,13 @@ func (obs throttleObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	ctx, cancel := context.WithCancel(ctx)
 	sink = sink.WithCancel(cancel)
 
-	type X struct {
+	var x struct {
+		critical.Section
 		Trailing struct {
 			Value    interface{}
 			HasValue bool
 		}
 	}
-	cx := make(chan *X, 1)
-	cx <- &X{}
 
 	var (
 		doThrottle  func(interface{})
@@ -74,17 +74,18 @@ func (obs throttleObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 			observer = rx.Noop
 			defer cancel()
 			if obs.Trailing || t.HasError {
-				if x, ok := <-cx; ok {
-					switch {
-					case t.HasError:
-						close(cx)
+				if critical.Enter(&x.Section) {
+					if t.HasError {
+						critical.Close(&x.Section)
 						sink(t)
-					case x.Trailing.HasValue:
+						return
+					}
+					if x.Trailing.HasValue {
 						sink.Next(x.Trailing.Value)
 						x.Trailing.HasValue = false
 						doThrottle(x.Trailing.Value)
-						cx <- x
 					}
+					critical.Leave(&x.Section)
 				}
 			}
 		}
@@ -94,7 +95,7 @@ func (obs throttleObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	}
 
 	obs.Source.Subscribe(ctx, func(t rx.Notification) {
-		if x, ok := <-cx; ok {
+		if critical.Enter(&x.Section) {
 			switch {
 			case t.HasValue:
 				x.Trailing.Value = t.Value
@@ -106,10 +107,9 @@ func (obs throttleObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 						x.Trailing.HasValue = false
 					}
 				}
-				cx <- x
-
+				critical.Leave(&x.Section)
 			default:
-				close(cx)
+				critical.Close(&x.Section)
 				if x.Trailing.HasValue {
 					sink.Next(x.Trailing.Value)
 				}

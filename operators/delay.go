@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/internal/critical"
 	"github.com/b97tsk/rx/internal/queue"
 )
 
@@ -22,13 +23,12 @@ func (obs delayObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	ctx, cancel := context.WithCancel(ctx)
 	sink = sink.WithCancel(cancel)
 
-	type X struct {
-		Queue           queue.Queue
-		Scheduled       bool
-		SourceCompleted bool
+	var x struct {
+		critical.Section
+		Queue     queue.Queue
+		Scheduled bool
+		Completed bool
 	}
-	cx := make(chan *X, 1)
-	cx <- &X{}
 
 	var doSchedule func(time.Duration)
 
@@ -37,7 +37,7 @@ func (obs delayObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 			if t.HasValue {
 				return
 			}
-			if x, ok := <-cx; ok {
+			if critical.Enter(&x.Section) {
 				x.Scheduled = false
 				for x.Queue.Len() > 0 {
 					if ctx.Err() != nil {
@@ -53,16 +53,16 @@ func (obs delayObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 					x.Queue.Pop()
 					sink.Next(t.Value)
 				}
-				if x.SourceCompleted && x.Queue.Len() == 0 {
+				if x.Completed && x.Queue.Len() == 0 {
 					sink.Complete()
 				}
-				cx <- x
+				critical.Leave(&x.Section)
 			}
 		})
 	}
 
 	obs.Source.Subscribe(ctx, func(t rx.Notification) {
-		if x, ok := <-cx; ok {
+		if critical.Enter(&x.Section) {
 			switch {
 			case t.HasValue:
 				x.Queue.Push(
@@ -75,18 +75,18 @@ func (obs delayObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 					x.Scheduled = true
 					doSchedule(obs.Duration)
 				}
-				cx <- x
+				critical.Leave(&x.Section)
 			case t.HasError:
 				x.Queue.Init()
-				close(cx)
+				critical.Close(&x.Section)
 				sink(t)
 			default:
-				x.SourceCompleted = true
+				x.Completed = true
 				if x.Queue.Len() > 0 {
-					cx <- x
+					critical.Leave(&x.Section)
 					break
 				}
-				close(cx)
+				critical.Close(&x.Section)
 				sink(t)
 			}
 		}

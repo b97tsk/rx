@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/internal/critical"
 )
 
 type auditObservable struct {
@@ -16,22 +17,20 @@ func (obs auditObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	ctx, cancel := context.WithCancel(ctx)
 	sink = sink.WithCancel(cancel)
 
-	type X struct {
+	var x struct {
+		critical.Section
 		LatestValue interface{}
 		Scheduled   bool
 	}
-	cx := make(chan *X, 1)
-	cx <- &X{}
 
 	obs.Source.Subscribe(ctx, func(t rx.Notification) {
-		if x, ok := <-cx; ok {
+		if critical.Enter(&x.Section) {
 			switch {
 			case t.HasValue:
 				x.LatestValue = t.Value
 				shouldSchedule := !x.Scheduled
 				x.Scheduled = true
-
-				cx <- x
+				critical.Leave(&x.Section)
 
 				if shouldSchedule {
 					scheduleCtx, scheduleCancel := context.WithCancel(ctx)
@@ -40,15 +39,15 @@ func (obs auditObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 					observer = func(t rx.Notification) {
 						observer = rx.Noop
 						scheduleCancel()
-						if x, ok := <-cx; ok {
+						if critical.Enter(&x.Section) {
 							if t.HasError {
-								close(cx)
+								critical.Close(&x.Section)
 								sink(t)
 								return
 							}
 							sink.Next(x.LatestValue)
 							x.Scheduled = false
-							cx <- x
+							critical.Leave(&x.Section)
 						}
 					}
 
@@ -57,7 +56,7 @@ func (obs auditObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 				}
 
 			default:
-				close(cx)
+				critical.Close(&x.Section)
 				sink(t)
 			}
 		}

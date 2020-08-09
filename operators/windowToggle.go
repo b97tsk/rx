@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/internal/critical"
 )
 
 type windowToggleObservable struct {
@@ -21,13 +22,12 @@ func (obs windowToggleObservable) Subscribe(ctx context.Context, sink rx.Observe
 	ctx, cancel := context.WithCancel(ctx)
 	sink = sink.WithCancel(cancel)
 
-	type X struct {
+	var x struct {
+		critical.Section
 		Contexts []*windowToggleContext
 	}
-	cx := make(chan *X, 1)
-	cx <- &X{}
 
-	cleanupContexts := func(x *X, t rx.Notification) {
+	cleanupContexts := func(t rx.Notification) {
 		for _, c := range x.Contexts {
 			c.Cancel()
 			c.Window.Sink(t)
@@ -35,7 +35,7 @@ func (obs windowToggleObservable) Subscribe(ctx context.Context, sink rx.Observe
 	}
 
 	obs.Openings.Subscribe(ctx, func(t rx.Notification) {
-		if x, ok := <-cx; ok {
+		if critical.Enter(&x.Section) {
 			switch {
 			case t.HasValue:
 				ctx, cancel := context.WithCancel(ctx)
@@ -47,16 +47,16 @@ func (obs windowToggleObservable) Subscribe(ctx context.Context, sink rx.Observe
 				x.Contexts = append(x.Contexts, newContext)
 				sink.Next(window.Observable)
 
-				cx <- x
+				critical.Leave(&x.Section)
 
 				var observer rx.Observer
 				observer = func(t rx.Notification) {
 					observer = rx.Noop
 					cancel()
-					if x, ok := <-cx; ok {
+					if critical.Enter(&x.Section) {
 						if t.HasError {
-							close(cx)
-							cleanupContexts(x, t)
+							critical.Close(&x.Section)
+							cleanupContexts(t)
 							sink(t)
 							return
 						}
@@ -70,7 +70,7 @@ func (obs windowToggleObservable) Subscribe(ctx context.Context, sink rx.Observe
 								break
 							}
 						}
-						cx <- x
+						critical.Leave(&x.Section)
 					}
 				}
 
@@ -78,12 +78,12 @@ func (obs windowToggleObservable) Subscribe(ctx context.Context, sink rx.Observe
 				closingNotifier.Subscribe(ctx, observer.Sink)
 
 			case t.HasError:
-				close(cx)
-				cleanupContexts(x, t)
+				critical.Close(&x.Section)
+				cleanupContexts(t)
 				sink(t)
 
 			default:
-				cx <- x
+				critical.Leave(&x.Section)
 			}
 		}
 	})
@@ -93,18 +93,16 @@ func (obs windowToggleObservable) Subscribe(ctx context.Context, sink rx.Observe
 	}
 
 	obs.Source.Subscribe(ctx, func(t rx.Notification) {
-		if x, ok := <-cx; ok {
+		if critical.Enter(&x.Section) {
 			switch {
 			case t.HasValue:
 				for _, c := range x.Contexts {
 					c.Window.Sink(t)
 				}
-
-				cx <- x
-
+				critical.Leave(&x.Section)
 			default:
-				close(cx)
-				cleanupContexts(x, t)
+				critical.Close(&x.Section)
+				cleanupContexts(t)
 				sink(t)
 			}
 		}

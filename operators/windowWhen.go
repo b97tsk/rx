@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/internal/critical"
 	"github.com/b97tsk/rx/internal/misc"
 )
 
@@ -16,12 +17,13 @@ func (obs windowWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 	ctx, cancel := context.WithCancel(ctx)
 	sink = sink.WithCancel(cancel)
 
-	type X struct {
+	var x struct {
+		critical.Section
 		Window rx.Observer
 	}
+
 	window := rx.Multicast()
-	cx := make(chan *X, 1)
-	cx <- &X{window.Observer}
+	x.Window = window.Observer
 	sink.Next(window.Observable)
 
 	var (
@@ -40,9 +42,9 @@ func (obs windowWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 		observer = func(t rx.Notification) {
 			observer = rx.Noop
 			cancel()
-			if x, ok := <-cx; ok {
+			if critical.Enter(&x.Section) {
 				if t.HasError {
-					close(cx)
+					critical.Close(&x.Section)
 					x.Window.Sink(t)
 					sink(t)
 					return
@@ -51,7 +53,7 @@ func (obs windowWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 				window := rx.Multicast()
 				x.Window = window.Observer
 				sink.Next(window.Observable)
-				cx <- x
+				critical.Leave(&x.Section)
 				avoidRecursion.Do(openWindow)
 			}
 		}
@@ -67,13 +69,13 @@ func (obs windowWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 	}
 
 	obs.Source.Subscribe(ctx, func(t rx.Notification) {
-		if x, ok := <-cx; ok {
+		if critical.Enter(&x.Section) {
 			switch {
 			case t.HasValue:
 				x.Window.Sink(t)
-				cx <- x
+				critical.Leave(&x.Section)
 			default:
-				close(cx)
+				critical.Close(&x.Section)
 				x.Window.Sink(t)
 				sink(t)
 			}

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/internal/critical"
 )
 
 type bufferObservable struct {
@@ -15,21 +16,20 @@ func (obs bufferObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	ctx, cancel := context.WithCancel(ctx)
 	sink = sink.WithCancel(cancel)
 
-	type X struct {
-		Buffers []interface{}
+	var x struct {
+		critical.Section
+		Buffer []interface{}
 	}
-	cx := make(chan *X, 1)
-	cx <- &X{}
 
 	obs.ClosingNotifier.Subscribe(ctx, func(t rx.Notification) {
-		if x, ok := <-cx; ok {
+		if critical.Enter(&x.Section) {
 			switch {
 			case t.HasValue:
-				sink.Next(x.Buffers)
-				x.Buffers = nil
-				cx <- x
+				sink.Next(x.Buffer)
+				x.Buffer = nil
+				critical.Leave(&x.Section)
 			default:
-				close(cx)
+				critical.Close(&x.Section)
 				sink(t)
 			}
 		}
@@ -40,13 +40,13 @@ func (obs bufferObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	}
 
 	obs.Source.Subscribe(ctx, func(t rx.Notification) {
-		if x, ok := <-cx; ok {
+		if critical.Enter(&x.Section) {
 			switch {
 			case t.HasValue:
-				x.Buffers = append(x.Buffers, t.Value)
-				cx <- x
+				x.Buffer = append(x.Buffer, t.Value)
+				critical.Leave(&x.Section)
 			default:
-				close(cx)
+				critical.Close(&x.Section)
 				sink(t)
 			}
 		}

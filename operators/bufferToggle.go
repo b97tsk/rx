@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/internal/critical"
 )
 
 type bufferToggleObservable struct {
@@ -21,29 +22,28 @@ func (obs bufferToggleObservable) Subscribe(ctx context.Context, sink rx.Observe
 	ctx, cancel := context.WithCancel(ctx)
 	sink = sink.WithCancel(cancel)
 
-	type X struct {
+	var x struct {
+		critical.Section
 		Contexts []*bufferToggleContext
 	}
-	cx := make(chan *X, 1)
-	cx <- &X{}
 
 	obs.Openings.Subscribe(ctx, func(t rx.Notification) {
-		if x, ok := <-cx; ok {
+		if critical.Enter(&x.Section) {
 			switch {
 			case t.HasValue:
 				ctx, cancel := context.WithCancel(ctx)
 				newContext := &bufferToggleContext{Cancel: cancel}
 				x.Contexts = append(x.Contexts, newContext)
 
-				cx <- x
+				critical.Leave(&x.Section)
 
 				var observer rx.Observer
 				observer = func(t rx.Notification) {
 					observer = rx.Noop
 					cancel()
-					if x, ok := <-cx; ok {
+					if critical.Enter(&x.Section) {
 						if t.HasError {
-							close(cx)
+							critical.Close(&x.Section)
 							sink(t)
 							return
 						}
@@ -57,7 +57,7 @@ func (obs bufferToggleObservable) Subscribe(ctx context.Context, sink rx.Observe
 								break
 							}
 						}
-						cx <- x
+						critical.Leave(&x.Section)
 					}
 				}
 
@@ -65,11 +65,11 @@ func (obs bufferToggleObservable) Subscribe(ctx context.Context, sink rx.Observe
 				closingNotifier.Subscribe(ctx, observer.Sink)
 
 			case t.HasError:
-				close(cx)
+				critical.Close(&x.Section)
 				sink(t)
 
 			default:
-				cx <- x
+				critical.Leave(&x.Section)
 			}
 		}
 	})
@@ -79,21 +79,20 @@ func (obs bufferToggleObservable) Subscribe(ctx context.Context, sink rx.Observe
 	}
 
 	obs.Source.Subscribe(ctx, func(t rx.Notification) {
-		if x, ok := <-cx; ok {
+		if critical.Enter(&x.Section) {
 			switch {
 			case t.HasValue:
 				for _, c := range x.Contexts {
 					c.Buffer = append(c.Buffer, t.Value)
 				}
-
-				cx <- x
+				critical.Leave(&x.Section)
 
 			case t.HasError:
-				close(cx)
+				critical.Close(&x.Section)
 				sink(t)
 
 			default:
-				close(cx)
+				critical.Close(&x.Section)
 				for _, c := range x.Contexts {
 					if ctx.Err() != nil {
 						return
