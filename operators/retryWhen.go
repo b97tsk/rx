@@ -5,7 +5,7 @@ import (
 
 	"github.com/b97tsk/rx"
 	"github.com/b97tsk/rx/internal/atomic"
-	"github.com/b97tsk/rx/internal/misc"
+	"github.com/b97tsk/rx/internal/norec"
 )
 
 type retryWhenObservable struct {
@@ -17,24 +17,22 @@ func (obs retryWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 	ctx, cancel := context.WithCancel(ctx)
 	sink = sink.WithCancel(cancel).Mutex()
 
-	var (
-		err            error
-		retryActive    = atomic.Uint32(1)
-		sourceActive   = atomic.Uint32(1)
-		retrySignal    rx.Observer
-		subscribe      func()
-		avoidRecursion misc.AvoidRecursion
-	)
+	retryWorking := atomic.Uint32(1)
+	sourceWorking := atomic.Uint32(1)
 
-	subscribe = func() {
+	var lastError error
+	var retrySignal rx.Observer
+	var subscribeToSource func()
+
+	subscribeToSource = norec.Wrap(func() {
 		obs.Source.Subscribe(ctx, func(t rx.Notification) {
 			if !t.HasError {
 				sink(t)
 				return
 			}
-			err = t.Error
-			sourceActive.Store(0)
-			if retryActive.Equals(0) {
+			lastError = t.Error
+			sourceWorking.Store(0)
+			if retryWorking.Equals(0) {
 				sink(t)
 				return
 			}
@@ -45,24 +43,24 @@ func (obs retryWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 				obs.Subscribe(ctx, func(t rx.Notification) {
 					switch {
 					case t.HasValue:
-						if sourceActive.Cas(0, 1) {
-							avoidRecursion.Do(subscribe)
+						if sourceWorking.Cas(0, 1) {
+							subscribeToSource()
 						}
 					case t.HasError:
 						sink(t)
 					default:
-						retryActive.Store(0)
-						if sourceActive.Equals(0) {
-							sink.Error(err)
+						retryWorking.Store(0)
+						if sourceWorking.Equals(0) {
+							sink.Error(lastError)
 						}
 					}
 				})
 			}
 			retrySignal.Next(t.Error)
 		})
-	}
+	})
 
-	avoidRecursion.Do(subscribe)
+	subscribeToSource()
 }
 
 // RetryWhen creates an Observable that mirrors the source Observable with

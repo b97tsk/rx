@@ -5,7 +5,7 @@ import (
 
 	"github.com/b97tsk/rx"
 	"github.com/b97tsk/rx/internal/atomic"
-	"github.com/b97tsk/rx/internal/misc"
+	"github.com/b97tsk/rx/internal/norec"
 )
 
 type repeatWhenObservable struct {
@@ -17,22 +17,20 @@ func (obs repeatWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 	ctx, cancel := context.WithCancel(ctx)
 	sink = sink.WithCancel(cancel).Mutex()
 
-	var (
-		repeatActive   = atomic.Uint32(1)
-		sourceActive   = atomic.Uint32(1)
-		repeatSignal   rx.Observer
-		subscribe      func()
-		avoidRecursion misc.AvoidRecursion
-	)
+	repeatWorking := atomic.Uint32(1)
+	sourceWorking := atomic.Uint32(1)
 
-	subscribe = func() {
+	var repeatSignal rx.Observer
+	var subscribeToSource func()
+
+	subscribeToSource = norec.Wrap(func() {
 		obs.Source.Subscribe(ctx, func(t rx.Notification) {
 			if t.HasValue || t.HasError {
 				sink(t)
 				return
 			}
-			sourceActive.Store(0)
-			if repeatActive.Equals(0) {
+			sourceWorking.Store(0)
+			if repeatWorking.Equals(0) {
 				sink(t)
 				return
 			}
@@ -43,14 +41,14 @@ func (obs repeatWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 				obs.Subscribe(ctx, func(t rx.Notification) {
 					switch {
 					case t.HasValue:
-						if sourceActive.Cas(0, 1) {
-							avoidRecursion.Do(subscribe)
+						if sourceWorking.Cas(0, 1) {
+							subscribeToSource()
 						}
 					case t.HasError:
 						sink(t)
 					default:
-						repeatActive.Store(0)
-						if sourceActive.Equals(0) {
+						repeatWorking.Store(0)
+						if sourceWorking.Equals(0) {
 							sink(t)
 						}
 					}
@@ -58,9 +56,9 @@ func (obs repeatWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 			}
 			repeatSignal.Next(nil)
 		})
-	}
+	})
 
-	avoidRecursion.Do(subscribe)
+	subscribeToSource()
 }
 
 // RepeatWhen creates an Observable that mirrors the source Observable with

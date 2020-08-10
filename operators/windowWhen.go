@@ -5,7 +5,7 @@ import (
 
 	"github.com/b97tsk/rx"
 	"github.com/b97tsk/rx/internal/critical"
-	"github.com/b97tsk/rx/internal/misc"
+	"github.com/b97tsk/rx/internal/norec"
 )
 
 type windowWhenObservable struct {
@@ -26,12 +26,9 @@ func (obs windowWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 	x.Window = window.Observer
 	sink.Next(window.Observable)
 
-	var (
-		openWindow     func()
-		avoidRecursion misc.AvoidRecursion
-	)
+	var openWindow func()
 
-	openWindow = func() {
+	openWindow = norec.Wrap(func() {
 		if ctx.Err() != nil {
 			return
 		}
@@ -54,15 +51,15 @@ func (obs windowWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 				x.Window = window.Observer
 				sink.Next(window.Observable)
 				critical.Leave(&x.Section)
-				avoidRecursion.Do(openWindow)
+				openWindow()
 			}
 		}
 
 		closingNotifier := obs.ClosingSelector()
 		closingNotifier.Subscribe(ctx, observer.Sink)
-	}
+	})
 
-	avoidRecursion.Do(openWindow)
+	openWindow()
 
 	if ctx.Err() != nil {
 		return

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/b97tsk/rx"
-	"github.com/b97tsk/rx/internal/misc"
+	"github.com/b97tsk/rx/internal/norec"
 )
 
 type repeatObservable struct {
@@ -13,15 +13,13 @@ type repeatObservable struct {
 }
 
 func (obs repeatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
-	var (
-		count          = obs.Count
-		observer       rx.Observer
-		avoidRecursion misc.AvoidRecursion
-	)
+	var observer rx.Observer
 
-	subscribe := func() {
+	subscribeToSource := norec.Wrap(func() {
 		obs.Source.Subscribe(ctx, observer)
-	}
+	})
+
+	count := obs.Count
 
 	observer = func(t rx.Notification) {
 		if t.HasValue || t.HasError || count == 0 {
@@ -31,10 +29,10 @@ func (obs repeatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		if count > 0 {
 			count--
 		}
-		avoidRecursion.Do(subscribe)
+		subscribeToSource()
 	}
 
-	avoidRecursion.Do(subscribe)
+	subscribeToSource()
 }
 
 // Repeat creates an Observable that repeats the stream of items emitted by the

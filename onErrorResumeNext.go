@@ -3,40 +3,37 @@ package rx
 import (
 	"context"
 
-	"github.com/b97tsk/rx/internal/misc"
+	"github.com/b97tsk/rx/internal/norec"
 )
 
 type onErrorResumeNextObservable []Observable
 
 func (observables onErrorResumeNextObservable) Subscribe(ctx context.Context, sink Observer) {
-	var (
-		observer       Observer
-		avoidRecursion misc.AvoidRecursion
-	)
+	var observer Observer
 
 	remainder := observables
-	subscribe := func() {
+	subscribeToNext := norec.Wrap(func() {
+		if len(remainder) == 0 {
+			sink.Complete()
+			return
+		}
 		if ctx.Err() != nil {
 			return
 		}
 		source := remainder[0]
 		remainder = remainder[1:]
 		source.Subscribe(ctx, observer)
-	}
+	})
 
 	observer = func(t Notification) {
 		if t.HasValue {
 			sink(t)
 			return
 		}
-		if len(remainder) == 0 {
-			sink.Complete()
-			return
-		}
-		avoidRecursion.Do(subscribe)
+		subscribeToNext()
 	}
 
-	avoidRecursion.Do(subscribe)
+	subscribeToNext()
 }
 
 // OnErrorResumeNext creates an Observable that concatenates the provided

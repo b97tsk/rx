@@ -5,7 +5,7 @@ import (
 
 	"github.com/b97tsk/rx"
 	"github.com/b97tsk/rx/internal/critical"
-	"github.com/b97tsk/rx/internal/misc"
+	"github.com/b97tsk/rx/internal/norec"
 )
 
 type bufferWhenObservable struct {
@@ -22,12 +22,9 @@ func (obs bufferWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 		Buffer []interface{}
 	}
 
-	var (
-		openBuffer     func()
-		avoidRecursion misc.AvoidRecursion
-	)
+	var openBuffer func()
 
-	openBuffer = func() {
+	openBuffer = norec.Wrap(func() {
 		if ctx.Err() != nil {
 			return
 		}
@@ -47,15 +44,15 @@ func (obs bufferWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 				sink.Next(x.Buffer)
 				x.Buffer = nil
 				critical.Leave(&x.Section)
-				avoidRecursion.Do(openBuffer)
+				openBuffer()
 			}
 		}
 
 		closingNotifier := obs.ClosingSelector()
 		closingNotifier.Subscribe(ctx, observer.Sink)
-	}
+	})
 
-	avoidRecursion.Do(openBuffer)
+	openBuffer()
 
 	if ctx.Err() != nil {
 		return

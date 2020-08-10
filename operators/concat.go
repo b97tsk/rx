@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/b97tsk/rx"
-	"github.com/b97tsk/rx/internal/misc"
+	"github.com/b97tsk/rx/internal/norec"
 	"github.com/b97tsk/rx/internal/queue"
 )
 
@@ -26,12 +26,9 @@ func (obs concatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		Completed bool
 	}{Index: -1}
 
-	var (
-		subscribe      func()
-		avoidRecursion misc.AvoidRecursion
-	)
+	var subscribeToNext func()
 
-	subscribe = func() {
+	subscribeToNext = norec.Wrap(func() {
 		x.Lock()
 		if x.Queue.Len() == 0 {
 			defer x.Unlock()
@@ -55,23 +52,23 @@ func (obs concatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 			if ctx.Err() != nil {
 				return
 			}
-			avoidRecursion.Do(subscribe)
+			subscribeToNext()
 		})
-	}
+	})
 
 	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		switch {
 		case t.HasValue:
 			x.Lock()
 			x.Queue.Push(t.Value)
-			var shouldSubscribe bool
+			var subscribe bool
 			if !x.Working {
 				x.Working = true
-				shouldSubscribe = true
+				subscribe = true
 			}
 			x.Unlock()
-			if shouldSubscribe {
-				avoidRecursion.Do(subscribe)
+			if subscribe {
+				subscribeToNext()
 			}
 
 		case t.HasError:
