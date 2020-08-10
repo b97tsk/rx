@@ -15,10 +15,10 @@ type BufferCountConfigure struct {
 // Make creates an Operator from this configure.
 func (configure BufferCountConfigure) Make() rx.Operator {
 	if configure.BufferSize <= 0 {
-		panic("BufferCount: BufferSize negative or zero")
+		panic("BufferCount: BufferSize is negative or zero")
 	}
 	if configure.StartBufferEvery < 0 {
-		panic("BufferCount: StartBufferEvery negative")
+		panic("BufferCount: StartBufferEvery is negative")
 	}
 	if configure.StartBufferEvery == 0 {
 		configure.StartBufferEvery = configure.BufferSize

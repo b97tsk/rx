@@ -18,7 +18,7 @@ type ThrottleConfigure struct {
 // Make creates an Operator from this configure.
 func (configure ThrottleConfigure) Make() rx.Operator {
 	if configure.DurationSelector == nil {
-		panic("Throttle: nil DurationSelector")
+		panic("Throttle: DurationSelector is nil")
 	}
 	return func(source rx.Observable) rx.Observable {
 		return throttleObservable{source, configure}.Subscribe

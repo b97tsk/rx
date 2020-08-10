@@ -17,7 +17,7 @@ type ExpandConfigure struct {
 // Make creates an Operator from this configure.
 func (configure ExpandConfigure) Make() rx.Operator {
 	if configure.Project == nil {
-		panic("Expand: nil Project")
+		panic("Expand: Project is nil")
 	}
 	if configure.Concurrent == 0 {
 		configure.Concurrent = -1

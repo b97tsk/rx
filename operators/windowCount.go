@@ -15,10 +15,10 @@ type WindowCountConfigure struct {
 // Make creates an Operator from this configure.
 func (configure WindowCountConfigure) Make() rx.Operator {
 	if configure.WindowSize <= 0 {
-		panic("WindowCount: WindowSize negative or zero")
+		panic("WindowCount: WindowSize is negative or zero")
 	}
 	if configure.StartWindowEvery < 0 {
-		panic("WindowCount: StartWindowEvery negative")
+		panic("WindowCount: StartWindowEvery is negative")
 	}
 	if configure.StartWindowEvery == 0 {
 		configure.StartWindowEvery = configure.WindowSize

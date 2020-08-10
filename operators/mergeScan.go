@@ -18,7 +18,7 @@ type MergeScanConfigure struct {
 // Make creates an Operator from this configure.
 func (configure MergeScanConfigure) Make() rx.Operator {
 	if configure.Accumulator == nil {
-		panic("MergeScan: nil Accumulator")
+		panic("MergeScan: Accumulator is nil")
 	}
 	if configure.Concurrent == 0 {
 		configure.Concurrent = -1
