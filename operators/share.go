@@ -5,12 +5,12 @@ import (
 	"sync"
 
 	"github.com/b97tsk/rx"
-	"github.com/b97tsk/rx/internal/misc"
+	"github.com/b97tsk/rx/internal/ctxutil"
 )
 
 type shareObservable struct {
 	mu            sync.Mutex
-	cws           misc.ContextWaitService
+	cws           ctxutil.ContextWaitService
 	source        rx.Observable
 	doubleFactory rx.DoubleFactory
 	double        rx.Double
@@ -83,7 +83,7 @@ func (obs *shareObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	}
 
 	for obs.cws == nil || !obs.cws.Submit(ctx, finalize) {
-		obs.cws = misc.NewContextWaitService()
+		obs.cws = ctxutil.NewContextWaitService()
 	}
 }
 

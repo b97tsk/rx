@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/b97tsk/rx/internal/atomic"
-	"github.com/b97tsk/rx/internal/misc"
+	"github.com/b97tsk/rx/internal/ctxutil"
 	"github.com/b97tsk/rx/internal/queue"
 )
 
@@ -147,7 +147,7 @@ func (d *multicastReplay) subscribe(ctx context.Context, sink Observer) {
 		}
 
 		for d.cws == nil || !d.cws.Submit(ctx, finalize) {
-			d.cws = misc.NewContextWaitService()
+			d.cws = ctxutil.NewContextWaitService()
 		}
 	}
 

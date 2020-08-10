@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/b97tsk/rx/internal/misc"
+	"github.com/b97tsk/rx/internal/ctxutil"
 )
 
 // Multicast returns a Double whose Observable part takes care of all
@@ -22,7 +22,7 @@ type multicast struct {
 	mu  sync.Mutex
 	err error
 	lst observerList
-	cws misc.ContextWaitService
+	cws ctxutil.ContextWaitService
 }
 
 func (d *multicast) sink(t Notification) {
@@ -74,7 +74,7 @@ func (d *multicast) subscribe(ctx context.Context, sink Observer) {
 		}
 
 		for d.cws == nil || !d.cws.Submit(ctx, finalize) {
-			d.cws = misc.NewContextWaitService()
+			d.cws = ctxutil.NewContextWaitService()
 		}
 	}
 
