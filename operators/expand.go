@@ -10,8 +10,8 @@ import (
 
 // An ExpandConfigure is a configure for Expand.
 type ExpandConfigure struct {
-	Project    func(interface{}) rx.Observable
-	Concurrent int
+	Project     func(interface{}) rx.Observable
+	Concurrency int
 }
 
 // Make creates an Operator from this configure.
@@ -19,8 +19,8 @@ func (configure ExpandConfigure) Make() rx.Operator {
 	if configure.Project == nil {
 		panic("Expand: Project is nil")
 	}
-	if configure.Concurrent == 0 {
-		configure.Concurrent = -1
+	if configure.Concurrency == 0 {
+		configure.Concurrency = -1
 	}
 	return func(source rx.Observable) rx.Observable {
 		return expandObservable{source, configure}.Subscribe
@@ -54,7 +54,7 @@ func (obs expandObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 				x.Lock()
 				defer x.Unlock()
 				x.Queue.Push(t.Value)
-				if x.Workers != obs.Concurrent {
+				if x.Workers != obs.Concurrency {
 					x.Workers++
 					subscribeLocked()
 				}
@@ -83,7 +83,7 @@ func (obs expandObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 			x.Lock()
 			defer x.Unlock()
 			x.Queue.Push(t.Value)
-			if x.Workers != obs.Concurrent {
+			if x.Workers != obs.Concurrency {
 				x.Workers++
 				subscribeLocked()
 			}

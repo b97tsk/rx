@@ -10,8 +10,8 @@ import (
 
 // A MergeConfigure is a configure for Merge.
 type MergeConfigure struct {
-	Project    func(interface{}, int) rx.Observable
-	Concurrent int
+	Project     func(interface{}, int) rx.Observable
+	Concurrency int
 }
 
 // Make creates an Operator from this configure.
@@ -19,8 +19,8 @@ func (configure MergeConfigure) Make() rx.Operator {
 	if configure.Project == nil {
 		configure.Project = projectToObservable
 	}
-	if configure.Concurrent == 0 {
-		configure.Concurrent = -1
+	if configure.Concurrency == 0 {
+		configure.Concurrency = -1
 	}
 	return func(source rx.Observable) rx.Observable {
 		return mergeObservable{source, configure}.Subscribe
@@ -74,7 +74,7 @@ func (obs mergeObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 			x.Lock()
 			defer x.Unlock()
 			x.Queue.Push(t.Value)
-			if x.Workers != obs.Concurrent {
+			if x.Workers != obs.Concurrency {
 				x.Workers++
 				subscribeLocked()
 			}

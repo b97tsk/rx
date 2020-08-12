@@ -9,8 +9,8 @@ import (
 
 // A CongestingMergeConfigure is a configure for CongestingMerge.
 type CongestingMergeConfigure struct {
-	Project    func(interface{}, int) rx.Observable
-	Concurrent int
+	Project     func(interface{}, int) rx.Observable
+	Concurrency int
 }
 
 // Make creates an Operator from this configure.
@@ -18,8 +18,8 @@ func (configure CongestingMergeConfigure) Make() rx.Operator {
 	if configure.Project == nil {
 		configure.Project = projectToObservable
 	}
-	if configure.Concurrent == 0 {
-		configure.Concurrent = -1
+	if configure.Concurrency == 0 {
+		configure.Concurrency = -1
 	}
 	return func(source rx.Observable) rx.Observable {
 		return congestingMergeObservable{source, configure}.Subscribe
@@ -51,7 +51,7 @@ func (obs congestingMergeObservable) Subscribe(ctx context.Context, sink rx.Obse
 		switch {
 		case t.HasValue:
 			x.Lock()
-			for x.Workers == obs.Concurrent {
+			for x.Workers == obs.Concurrency {
 				x.Unlock()
 				select {
 				case <-done:
@@ -103,7 +103,7 @@ func (obs congestingMergeObservable) Subscribe(ctx context.Context, sink rx.Obse
 // Observable which concurrently delivers all values that are emitted on the
 // inner Observables.
 //
-// It's like MergeAll, but it may congest the source due to concurrent limit.
+// It's like MergeAll, but it may congest the source due to concurrency limit.
 func CongestingMergeAll() rx.Operator {
 	return CongestingMergeMap(projectToObservable)
 }
@@ -114,7 +114,7 @@ func CongestingMergeAll() rx.Operator {
 // CongestingMergeMap maps each value to an Observable, then flattens all of
 // these inner Observables using CongestingMergeAll.
 //
-// It's like MergeMap, but it may congest the source due to concurrent limit.
+// It's like MergeMap, but it may congest the source due to concurrency limit.
 func CongestingMergeMap(project func(interface{}, int) rx.Observable) rx.Operator {
 	return CongestingMergeConfigure{project, -1}.Make()
 }
@@ -126,7 +126,8 @@ func CongestingMergeMap(project func(interface{}, int) rx.Observable) rx.Operato
 // It's like CongestingMergeMap, but maps each value always to the same inner
 // Observable.
 //
-// It's like MergeMapTo, but it may congest the source due to concurrent limit.
+// It's like MergeMapTo, but it may congest the source due to concurrency
+// limit.
 func CongestingMergeMapTo(inner rx.Observable) rx.Operator {
 	return CongestingMergeMap(func(interface{}, int) rx.Observable { return inner })
 }

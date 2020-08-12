@@ -12,7 +12,7 @@ import (
 type MergeScanConfigure struct {
 	Accumulator func(interface{}, interface{}) rx.Observable
 	Seed        interface{}
-	Concurrent  int
+	Concurrency int
 }
 
 // Make creates an Operator from this configure.
@@ -20,8 +20,8 @@ func (configure MergeScanConfigure) Make() rx.Operator {
 	if configure.Accumulator == nil {
 		panic("MergeScan: Accumulator is nil")
 	}
-	if configure.Concurrent == 0 {
-		configure.Concurrent = -1
+	if configure.Concurrency == 0 {
+		configure.Concurrency = -1
 	}
 	return func(source rx.Observable) rx.Observable {
 		return mergeScanObservable{source, configure}.Subscribe
@@ -87,7 +87,7 @@ func (obs mergeScanObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 			x.Lock()
 			defer x.Unlock()
 			x.Queue.Push(t.Value)
-			if x.Workers != obs.Concurrent {
+			if x.Workers != obs.Concurrency {
 				x.Workers++
 				subscribeLocked()
 			}
