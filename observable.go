@@ -8,10 +8,17 @@ import (
 // subscribed, its values, when available, are emitted to the specified
 // Observer.
 //
-// It's easy to create your own Observable, but you're responsible to follow
-// the Observable Contract that no more emissions pass to the specified
+// Observables are expected to be sequential. If you want parallel, you
+// will have to break the work you're going to do into pieces (Observables),
+// process (subscribe to) them concurrently, and then later or in the meantime,
+// merge (flatten) them together (into one sequential Observable). Typically,
+// these can be done by one single Operator, for example, MergeMap.
+//
+// Although it's easy to write your own Observable, you're responsible to
+// follow the Observable Contract that no more emissions pass to the specified
 // Observer after an error or a completion has passed to it. Violations of
 // this contract result in undefined behaviors.
+//
 type Observable func(context.Context, Observer)
 
 // Pipe stitches operators together into a chain, returns the Observable result
