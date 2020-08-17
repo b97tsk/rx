@@ -47,7 +47,11 @@ func (d *multicast) sink(t Notification) {
 
 		d.err = errCompleted
 		if t.HasError {
-			d.err = t.Error
+			err := t.Error
+			if err == nil {
+				err = errNil
+			}
+			d.err = err
 		}
 
 		d.mu.Unlock()
@@ -82,6 +86,9 @@ func (d *multicast) subscribe(ctx context.Context, sink Observer) {
 
 	if err != nil {
 		if err != errCompleted {
+			if err == errNil {
+				err = nil
+			}
 			sink.Error(err)
 		} else {
 			sink.Complete()

@@ -41,7 +41,11 @@ func (d *unicast) sink(t Notification) {
 	default:
 		d.err = errCompleted
 		if t.HasError {
-			d.err = t.Error
+			err := t.Error
+			if err == nil {
+				err = errNil
+			}
+			d.err = err
 		}
 		obs := d.obs
 		d.obs.ctx, d.obs.sink = nil, nil
@@ -64,6 +68,9 @@ func (d *unicast) subscribe(ctx context.Context, sink Observer) {
 	d.mu.Unlock()
 	if err != nil {
 		if err != errCompleted {
+			if err == errNil {
+				err = nil
+			}
 			sink.Error(err)
 		} else {
 			sink.Complete()

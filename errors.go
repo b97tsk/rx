@@ -14,4 +14,8 @@ var (
 	ErrTimeout         = errors.New("timeout")
 )
 
-var errCompleted = errors.New("completed") // For internal use only.
+// Errors for internal use only.
+var (
+	errCompleted = errors.New("completed")
+	errNil       = errors.New("nil")
+)
