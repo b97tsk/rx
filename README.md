@@ -1,11 +1,12 @@
 # rx
 
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/b97tsk/rx)](https://pkg.go.dev/github.com/b97tsk/rx)
 [![Use Status](https://travis-ci.org/b97tsk/rx.svg?branch=master)](https://travis-ci.org/b97tsk/rx)
 [![Coverage Status](https://coveralls.io/repos/github/b97tsk/rx/badge.svg?branch=master)](https://coveralls.io/github/b97tsk/rx)
 
 A functional reactive programming library for Go, inspired by http://reactivex.io/rxjs.
 
-Actually aim to Go2, not practicing currently.
+Actually aim to Go2, not practicing right now.
 
 Future updates are not guaranteed.
 
