@@ -29,15 +29,15 @@ func (lst *observerList) Release() {
 }
 
 func (lst *observerList) Append(observer *Observer) {
-	refs := lst.refs
-	if refs == nil || refs.Equals(0) {
-		lst.Observers = append(lst.Observers, observer)
-		return
-	}
 	observers := lst.Observers
-	n := len(observers)
-	lst.Observers = append(observers[:n:n], observer)
-	lst.refs = nil
+	oldcap := cap(observers)
+	observers = append(observers, observer)
+	lst.Observers = observers
+	if cap(observers) != oldcap {
+		if refs := lst.refs; refs != nil && !refs.Equals(0) {
+			lst.refs = nil
+		}
+	}
 }
 
 func (lst *observerList) Remove(observer *Observer) {
@@ -45,17 +45,16 @@ func (lst *observerList) Remove(observer *Observer) {
 	for i, sink := range observers {
 		if sink == observer {
 			n := len(observers)
-			refs := lst.refs
-			if refs == nil || refs.Equals(0) {
-				copy(observers[i:], observers[i+1:])
-				observers[n-1] = nil
-				lst.Observers = observers[:n-1]
-			} else {
+			if refs := lst.refs; refs != nil && !refs.Equals(0) {
 				newObservers := make([]*Observer, n-1, n)
 				copy(newObservers, observers[:i])
 				copy(newObservers[i:], observers[i+1:])
 				lst.Observers = newObservers
 				lst.refs = nil
+			} else {
+				copy(observers[i:], observers[i+1:])
+				observers[n-1] = nil
+				lst.Observers = observers[:n-1]
 			}
 			break
 		}
