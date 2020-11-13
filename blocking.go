@@ -156,16 +156,7 @@ func (obs Observable) BlockingSingle(ctx context.Context) (interface{}, error) {
 // nil; if the source emits an error, it returns this error.
 //
 // If ctx was cancelled during the subscription, BlockingSubscribe immediately
-// returns ctx.Err() and sink may still be called after that. A possible
-// workaround is:
-//
-//	obs.BlockingSubscribe(ctx, func(t Notification) {
-//		if ctx.Err() != nil {
-//			return
-//		}
-//		/* rest of the code */
-//	})
-//
+// returns ctx.Err() and sink may still be called after that.
 func (obs Observable) BlockingSubscribe(ctx context.Context, sink Observer) error {
 	var result Notification
 	childCtx, childCancel := context.WithCancel(ctx)
