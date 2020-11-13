@@ -13,6 +13,8 @@ type congestObservable struct {
 }
 
 func (obs congestObservable) Subscribe(ctx context.Context, sink rx.Observer) {
+	ctx, cancel := context.WithCancel(ctx)
+	sink = sink.WithCancel(cancel)
 	done := ctx.Done()
 
 	cout := make(chan rx.Notification)
