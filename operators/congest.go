@@ -14,6 +14,7 @@ func Congest(bufferSize int) rx.Operator {
 	if bufferSize < 1 {
 		return noop
 	}
+
 	return func(source rx.Observable) rx.Observable {
 		return congestObservable{source, bufferSize}.Subscribe
 	}
@@ -26,10 +27,12 @@ type congestObservable struct {
 
 func (obs congestObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	ctx, cancel := context.WithCancel(ctx)
-	sink = sink.WithCancel(cancel)
 	done := ctx.Done()
 
+	sink = sink.WithCancel(cancel)
+
 	cout := make(chan rx.Notification)
+
 	go func() {
 		for {
 			select {
@@ -48,21 +51,26 @@ func (obs congestObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	}()
 
 	cin := make(chan rx.Notification)
+
 	go func() {
 		var queue queue.Queue
+
 		for {
 			var (
 				in   <-chan rx.Notification
 				out  chan<- rx.Notification
 				outv rx.Notification
 			)
+
 			length := queue.Len()
 			if length < obs.BufferSize {
 				in = cin
 			}
+
 			if length > 0 {
 				out, outv = cout, queue.Front().(rx.Notification)
 			}
+
 			select {
 			case <-done:
 				return

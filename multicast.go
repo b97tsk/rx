@@ -43,9 +43,11 @@ func (d *multicast) sink(t Notification) {
 
 	default:
 		var lst observerList
+
 		d.lst.Swap(&lst)
 
 		d.err = errCompleted
+
 		if t.HasError {
 			err := t.Error
 			if err == nil {
@@ -68,6 +70,7 @@ func (d *multicast) subscribe(ctx context.Context, sink Observer) {
 	err := d.err
 	if err == nil {
 		ctx, cancel := context.WithCancel(ctx)
+
 		observer := sink.WithCancel(cancel).MutexContext(ctx)
 		d.lst.Append(&observer)
 

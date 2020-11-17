@@ -31,8 +31,10 @@ func (lst *observerList) Release() {
 func (lst *observerList) Append(observer *Observer) {
 	observers := lst.Observers
 	oldcap := cap(observers)
+
 	observers = append(observers, observer)
 	lst.Observers = observers
+
 	if cap(observers) != oldcap {
 		if refs := lst.refs; refs != nil && !refs.Equals(0) {
 			lst.refs = nil
@@ -45,6 +47,7 @@ func (lst *observerList) Remove(observer *Observer) {
 	for i, sink := range observers {
 		if sink == observer {
 			n := len(observers)
+
 			if refs := lst.refs; refs != nil && !refs.Equals(0) {
 				newObservers := make([]*Observer, n-1, n)
 				copy(newObservers, observers[:i])
@@ -56,6 +59,7 @@ func (lst *observerList) Remove(observer *Observer) {
 				observers[n-1] = nil
 				lst.Observers = observers[:n-1]
 			}
+
 			break
 		}
 	}

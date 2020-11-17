@@ -45,10 +45,12 @@ type reduceObservable struct {
 
 func (obs reduceObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	sourceIndex := -1
+
 	acc := struct {
 		Value    interface{}
 		HasValue bool
 	}{obs.Seed, obs.HasSeed}
+
 	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		switch {
 		case t.HasValue:
@@ -68,6 +70,7 @@ func (obs reduceObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 			if acc.HasValue {
 				sink.Next(acc.Value)
 			}
+
 			sink(t)
 		}
 	})

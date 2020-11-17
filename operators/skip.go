@@ -12,6 +12,7 @@ func Skip(count int) rx.Operator {
 	if count <= 0 {
 		return noop
 	}
+
 	return func(source rx.Observable) rx.Observable {
 		return skipObservable{source, count}.Subscribe
 	}

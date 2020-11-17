@@ -28,6 +28,7 @@ func (configure ScanConfigure) Make() rx.Operator {
 	if configure.Accumulator == nil {
 		panic("Scan: Accumulator is nil")
 	}
+
 	return func(source rx.Observable) rx.Observable {
 		return scanObservable{source, configure}.Subscribe
 	}
@@ -40,10 +41,12 @@ type scanObservable struct {
 
 func (obs scanObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	sourceIndex := -1
+
 	acc := struct {
 		Value    interface{}
 		HasValue bool
 	}{obs.Seed, obs.HasSeed}
+
 	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		switch {
 		case t.HasValue:

@@ -32,6 +32,7 @@ type bufferToggleContext struct {
 
 func (obs bufferToggleObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	ctx, cancel := context.WithCancel(ctx)
+
 	sink = sink.WithCancel(cancel)
 
 	var x struct {
@@ -44,6 +45,7 @@ func (obs bufferToggleObservable) Subscribe(ctx context.Context, sink rx.Observe
 			switch {
 			case t.HasValue:
 				ctx, cancel := context.WithCancel(ctx)
+
 				newContext := &bufferToggleContext{Cancel: cancel}
 				x.Contexts = append(x.Contexts, newContext)
 
@@ -53,22 +55,28 @@ func (obs bufferToggleObservable) Subscribe(ctx context.Context, sink rx.Observe
 				observer = func(t rx.Notification) {
 					observer = rx.Noop
 					cancel()
+
 					if critical.Enter(&x.Section) {
 						if t.HasError {
 							critical.Close(&x.Section)
 							sink(t)
 							return
 						}
+
 						for i, c := range x.Contexts {
 							if c == newContext {
 								copy(x.Contexts[i:], x.Contexts[i+1:])
+
 								n := len(x.Contexts)
 								x.Contexts[n-1] = nil
 								x.Contexts = x.Contexts[:n-1]
+
 								sink.Next(newContext.Buffer)
+
 								break
 							}
 						}
+
 						critical.Leave(&x.Section)
 					}
 				}
@@ -78,6 +86,7 @@ func (obs bufferToggleObservable) Subscribe(ctx context.Context, sink rx.Observe
 
 			case t.HasError:
 				critical.Close(&x.Section)
+
 				sink(t)
 
 			default:
@@ -97,14 +106,17 @@ func (obs bufferToggleObservable) Subscribe(ctx context.Context, sink rx.Observe
 				for _, c := range x.Contexts {
 					c.Buffer = append(c.Buffer, t.Value)
 				}
+
 				critical.Leave(&x.Section)
 
 			case t.HasError:
 				critical.Close(&x.Section)
+
 				sink(t)
 
 			default:
 				critical.Close(&x.Section)
+
 				for _, c := range x.Contexts {
 					if ctx.Err() != nil {
 						return
@@ -112,6 +124,7 @@ func (obs bufferToggleObservable) Subscribe(ctx context.Context, sink rx.Observe
 					c.Cancel()
 					sink.Next(c.Buffer)
 				}
+
 				sink(t)
 			}
 		}

@@ -43,8 +43,8 @@ type multicastReplay struct {
 }
 
 type multicastReplayElement struct {
-	Deadline time.Time
 	Value    interface{}
+	Deadline time.Time
 }
 
 func (d *multicastReplay) bufferForRead() (queue.Queue, *atomic.Uint32s) {
@@ -71,7 +71,9 @@ func (d *multicastReplay) trimBuffer(b *queue.Queue) {
 		if b == nil {
 			b = d.bufferForWrite()
 		}
+
 		now := time.Now()
+
 		for b.Len() > 0 {
 			if b.Front().(multicastReplayElement).Deadline.After(now) {
 				break
@@ -79,10 +81,12 @@ func (d *multicastReplay) trimBuffer(b *queue.Queue) {
 			b.Pop()
 		}
 	}
+
 	if bufferSize := d.BufferSize; bufferSize > 0 {
 		if b == nil {
 			b = d.bufferForWrite()
 		}
+
 		for b.Len() > bufferSize {
 			b.Pop()
 		}
@@ -103,8 +107,10 @@ func (d *multicastReplay) sink(t Notification) {
 		if windowTime := d.WindowTime; windowTime > 0 {
 			deadline = time.Now().Add(windowTime)
 		}
+
 		b := d.bufferForWrite()
-		b.Push(multicastReplayElement{deadline, t.Value})
+		b.Push(multicastReplayElement{t.Value, deadline})
+
 		d.trimBuffer(b)
 
 		d.mu.Unlock()
@@ -115,9 +121,11 @@ func (d *multicastReplay) sink(t Notification) {
 
 	default:
 		var lst observerList
+
 		d.lst.Swap(&lst)
 
 		d.err = errCompleted
+
 		if t.HasError {
 			err := t.Error
 			if err == nil {
@@ -141,6 +149,7 @@ func (d *multicastReplay) subscribe(ctx context.Context, sink Observer) {
 	err := d.err
 	if err == nil {
 		ctx, cancel := context.WithCancel(ctx)
+
 		observer := sink.WithCancel(cancel).MutexContext(ctx)
 		d.lst.Append(&observer)
 

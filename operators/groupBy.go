@@ -22,27 +22,33 @@ type groupByObservable struct {
 }
 
 func (obs groupByObservable) Subscribe(ctx context.Context, sink rx.Observer) {
-	var groups = make(map[interface{}]rx.Observer)
+	groups := make(map[interface{}]rx.Observer)
+
 	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		switch {
 		case t.HasValue:
 			key := obs.KeySelector(t.Value)
+
 			group, exists := groups[key]
 			if !exists {
 				d := obs.GroupFactory()
+
 				group = d.Observer
 				groups[key] = group
+
 				sink.Next(rx.GroupedObservable{
 					Observable: d.Observable,
 					Key:        key,
 				})
 			}
+
 			group.Sink(t)
 
 		default:
 			for _, group := range groups {
 				group.Sink(t)
 			}
+
 			sink(t)
 		}
 	})

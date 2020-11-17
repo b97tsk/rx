@@ -20,12 +20,14 @@ func TestWithLatestFrom(t *testing.T) {
 
 	{
 		observables := observables
+
 		for i, obs := range observables {
 			observables[i] = obs.Pipe(
 				operators.WithLatestFrom(rx.Range(1, 4).Pipe(addLatency2)),
 				ToString(),
 			)
 		}
+
 		SubscribeN(
 			t,
 			observables[:],
@@ -39,12 +41,14 @@ func TestWithLatestFrom(t *testing.T) {
 
 	{
 		observables := observables
+
 		for i, obs := range observables {
 			observables[i] = obs.Pipe(
 				operators.WithLatestFrom(rx.Concat(rx.Range(1, 4), rx.Throw(ErrTest)).Pipe(addLatency2)),
 				ToString(),
 			)
 		}
+
 		SubscribeN(
 			t,
 			observables[:],

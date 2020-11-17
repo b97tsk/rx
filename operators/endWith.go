@@ -10,6 +10,7 @@ func EndWith(values ...interface{}) rx.Operator {
 	if len(values) == 0 {
 		return noop
 	}
+
 	return func(source rx.Observable) rx.Observable {
 		return rx.Concat(source, rx.FromSlice(values))
 	}

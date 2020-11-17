@@ -32,6 +32,7 @@ type sampleObservable struct {
 
 func (obs sampleObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	ctx, cancel := context.WithCancel(ctx)
+
 	sink = sink.WithCancel(cancel)
 
 	var x struct {
@@ -49,10 +50,12 @@ func (obs sampleObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 				sink(t)
 				return
 			}
+
 			if x.Latest.HasValue {
-				sink.Next(x.Latest.Value)
 				x.Latest.HasValue = false
+				sink.Next(x.Latest.Value)
 			}
+
 			critical.Leave(&x.Section)
 		}
 	})
@@ -67,9 +70,12 @@ func (obs sampleObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 			case t.HasValue:
 				x.Latest.Value = t.Value
 				x.Latest.HasValue = true
+
 				critical.Leave(&x.Section)
+
 			default:
 				critical.Close(&x.Section)
+
 				sink(t)
 			}
 		}

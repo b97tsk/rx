@@ -23,6 +23,7 @@ type everyObservable struct {
 
 func (obs everyObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	ctx, cancel := context.WithCancel(ctx)
+
 	sink = sink.WithCancel(cancel)
 
 	var observer rx.Observer

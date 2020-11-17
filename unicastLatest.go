@@ -29,8 +29,10 @@ type unicastLatest struct {
 func (d *unicastLatest) sink(t Notification) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
+
 	switch {
 	case d.err != nil:
+
 	case t.HasValue:
 		if ctx := d.obs.ctx; ctx != nil {
 			if ctx.Err() != nil {
@@ -39,8 +41,10 @@ func (d *unicastLatest) sink(t Notification) {
 				d.obs.sink(t)
 			}
 		}
+
 	default:
 		d.err = errCompleted
+
 		if t.HasError {
 			err := t.Error
 			if err == nil {
@@ -48,8 +52,11 @@ func (d *unicastLatest) sink(t Notification) {
 			}
 			d.err = err
 		}
+
 		obs := d.obs
+
 		d.obs.ctx, d.obs.sink = nil, nil
+
 		if ctx := obs.ctx; ctx != nil && ctx.Err() == nil {
 			obs.sink(t)
 		}
@@ -58,16 +65,21 @@ func (d *unicastLatest) sink(t Notification) {
 
 func (d *unicastLatest) subscribe(ctx context.Context, sink Observer) {
 	d.mu.Lock()
+
 	err := d.err
 	if err == nil {
 		obs := d.obs
+
 		d.obs.ctx, d.obs.sink = ctx, sink
+
 		if ctx := obs.ctx; ctx != nil && ctx.Err() == nil {
 			err = ErrDropped
 			sink = obs.sink
 		}
 	}
+
 	d.mu.Unlock()
+
 	if err != nil {
 		if err != errCompleted {
 			if err == errNil {

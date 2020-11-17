@@ -24,6 +24,7 @@ type bufferObservable struct {
 
 func (obs bufferObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	ctx, cancel := context.WithCancel(ctx)
+
 	sink = sink.WithCancel(cancel)
 
 	var x struct {
@@ -36,10 +37,14 @@ func (obs bufferObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 			switch {
 			case t.HasValue:
 				sink.Next(x.Buffer)
+
 				x.Buffer = nil
+
 				critical.Leave(&x.Section)
+
 			default:
 				critical.Close(&x.Section)
+
 				sink(t)
 			}
 		}
@@ -54,9 +59,12 @@ func (obs bufferObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 			switch {
 			case t.HasValue:
 				x.Buffer = append(x.Buffer, t.Value)
+
 				critical.Leave(&x.Section)
+
 			default:
 				critical.Close(&x.Section)
+
 				sink(t)
 			}
 		}

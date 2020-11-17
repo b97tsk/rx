@@ -17,9 +17,11 @@ func TestPairwise(t *testing.T) {
 		rx.Just("A", "B", "C", "D"),
 		rx.Concat(rx.Just("A", "B", "C", "D"), rx.Throw(ErrTest)),
 	}
+
 	for i, obs := range observables {
 		observables[i] = obs.Pipe(operators.Pairwise(), ToString())
 	}
+
 	SubscribeN(
 		t,
 		observables[:],

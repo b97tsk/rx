@@ -29,6 +29,7 @@ type delayElement struct {
 
 func (obs delayObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	ctx, cancel := context.WithCancel(ctx)
+
 	sink = sink.WithCancel(cancel)
 
 	var x struct {
@@ -45,12 +46,15 @@ func (obs delayObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 			if t.HasValue {
 				return
 			}
+
 			if critical.Enter(&x.Section) {
 				x.Scheduled = false
+
 				for x.Queue.Len() > 0 {
 					if ctx.Err() != nil {
 						break
 					}
+
 					t := x.Queue.Front().(delayElement)
 					now := time.Now()
 					if t.Time.After(now) {
@@ -58,12 +62,16 @@ func (obs delayObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 						doSchedule(t.Time.Sub(now))
 						break
 					}
+
 					x.Queue.Pop()
+
 					sink.Next(t.Value)
 				}
+
 				if x.Completed && x.Queue.Len() == 0 {
 					sink.Complete()
 				}
+
 				critical.Leave(&x.Section)
 			}
 		})
@@ -79,22 +87,31 @@ func (obs delayObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 						Value: t.Value,
 					},
 				)
+
 				if !x.Scheduled {
 					x.Scheduled = true
 					doSchedule(obs.Duration)
 				}
+
 				critical.Leave(&x.Section)
+
 			case t.HasError:
 				x.Queue.Init()
+
 				critical.Close(&x.Section)
+
 				sink(t)
+
 			default:
 				x.Completed = true
+
 				if x.Queue.Len() > 0 {
 					critical.Leave(&x.Section)
 					break
 				}
+
 				critical.Close(&x.Section)
+
 				sink(t)
 			}
 		}

@@ -34,7 +34,9 @@ func TestBufferTime(t *testing.T) {
 			{"[A B C]", "[D E F]", "[G]", Completed},
 		},
 	)
+
 	t.Log("----------")
+
 	SubscribeN(
 		t,
 		[]rx.Observable{
@@ -77,7 +79,9 @@ func TestBufferTime(t *testing.T) {
 			{"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", "[G]", "[]", Completed},
 		},
 	)
+
 	t.Log("----------")
+
 	SubscribeN(
 		t,
 		[]rx.Observable{

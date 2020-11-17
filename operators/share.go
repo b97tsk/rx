@@ -18,6 +18,7 @@ func Share(doubleFactory rx.DoubleFactory) rx.Operator {
 			source:        source,
 			doubleFactory: doubleFactory,
 		}
+
 		return obs.Subscribe
 	}
 }
@@ -42,8 +43,11 @@ func (obs *shareObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	}
 
 	ctx, cancel := context.WithCancel(ctx)
+
 	sink = sink.WithCancel(cancel)
+
 	obs.double.Subscribe(ctx, sink)
+
 	if ctx.Err() != nil {
 		return
 	}

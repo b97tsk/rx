@@ -15,6 +15,7 @@ func Count() rx.Operator {
 func count(source rx.Observable) rx.Observable {
 	return func(ctx context.Context, sink rx.Observer) {
 		var count int
+
 		source.Subscribe(ctx, func(t rx.Notification) {
 			switch {
 			case t.HasValue:

@@ -19,13 +19,16 @@ func last(source rx.Observable) rx.Observable {
 			Value    interface{}
 			HasValue bool
 		}
+
 		source.Subscribe(ctx, func(t rx.Notification) {
 			switch {
 			case t.HasValue:
 				last.Value = t.Value
 				last.HasValue = true
+
 			case t.HasError:
 				sink(t)
+
 			default:
 				if last.HasValue {
 					sink.Next(last.Value)
@@ -48,19 +51,23 @@ func LastOrDefault(def interface{}) rx.Operator {
 				Value    interface{}
 				HasValue bool
 			}
+
 			source.Subscribe(ctx, func(t rx.Notification) {
 				switch {
 				case t.HasValue:
 					last.Value = t.Value
 					last.HasValue = true
+
 				case t.HasError:
 					sink(t)
+
 				default:
 					if last.HasValue {
 						sink.Next(last.Value)
 					} else {
 						sink.Next(def)
 					}
+
 					sink(t)
 				}
 			})

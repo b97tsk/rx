@@ -41,6 +41,7 @@ type elementAtObservable struct {
 
 func (obs elementAtObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	ctx, cancel := context.WithCancel(ctx)
+
 	sink = sink.WithCancel(cancel)
 
 	var observer rx.Observer
@@ -51,13 +52,16 @@ func (obs elementAtObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 		switch {
 		case t.HasValue:
 			index--
+
 			if index == -1 {
 				observer = rx.Noop
 				sink(t)
 				sink.Complete()
 			}
+
 		case t.HasError:
 			sink(t)
+
 		default:
 			if obs.HasDefault {
 				sink.Next(obs.Default)

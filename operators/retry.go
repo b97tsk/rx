@@ -16,6 +16,7 @@ func Retry(count int) rx.Operator {
 		if count == 0 {
 			return source
 		}
+
 		return retryObservable{source, count}.Subscribe
 	}
 }
@@ -46,9 +47,11 @@ func (obs retryObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 			sink(t)
 			return
 		}
+
 		if count > 0 {
 			count--
 		}
+
 		subscribeToSource()
 	}
 

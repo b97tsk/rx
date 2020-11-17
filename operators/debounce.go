@@ -26,6 +26,7 @@ func Debounce(durationSelector func(interface{}) rx.Observable) rx.Operator {
 func DebounceTime(d time.Duration) rx.Operator {
 	obsTimer := rx.Timer(d)
 	durationSelector := func(interface{}) rx.Observable { return obsTimer }
+
 	return Debounce(durationSelector)
 }
 
@@ -36,6 +37,7 @@ type debounceObservable struct {
 
 func (obs debounceObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	ctx, cancel := context.WithCancel(ctx)
+
 	sink = sink.WithCancel(cancel)
 
 	var x struct {
@@ -54,6 +56,7 @@ func (obs debounceObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 			case t.HasValue:
 				x.Latest.Value = t.Value
 				x.Latest.HasValue = true
+
 				critical.Leave(&x.Section)
 
 				if scheduleCancel != nil {
@@ -64,35 +67,42 @@ func (obs debounceObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 				scheduleCtx, scheduleCancel = context.WithCancel(ctx)
 
 				var observer rx.Observer
+
 				observer = func(t rx.Notification) {
 					observer = rx.Noop
 					scheduleCancel()
+
 					if critical.Enter(&x.Section) {
 						if t.HasError {
 							critical.Close(&x.Section)
 							sink(t)
 							return
 						}
+
 						if x.Latest.HasValue {
-							sink.Next(x.Latest.Value)
 							x.Latest.HasValue = false
+							sink.Next(x.Latest.Value)
 						}
+
 						critical.Leave(&x.Section)
 					}
 				}
 
-				obs := obs.DurationSelector(t.Value)
-				obs.Subscribe(scheduleCtx, observer.Sink)
+				obs1 := obs.DurationSelector(t.Value)
+				obs1.Subscribe(scheduleCtx, observer.Sink)
 
 			case t.HasError:
 				critical.Close(&x.Section)
+
 				sink(t)
 
 			default:
 				critical.Close(&x.Section)
+
 				if x.Latest.HasValue {
 					sink.Next(x.Latest.Value)
 				}
+
 				sink(t)
 			}
 		}

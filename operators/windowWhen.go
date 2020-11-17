@@ -26,6 +26,7 @@ type windowWhenObservable struct {
 
 func (obs windowWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	ctx, cancel := context.WithCancel(ctx)
+
 	sink = sink.WithCancel(cancel)
 
 	var x struct {
@@ -47,9 +48,11 @@ func (obs windowWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 		ctx, cancel := context.WithCancel(ctx)
 
 		var observer rx.Observer
+
 		observer = func(t rx.Notification) {
 			observer = rx.Noop
 			cancel()
+
 			if critical.Enter(&x.Section) {
 				if t.HasError {
 					critical.Close(&x.Section)
@@ -57,11 +60,15 @@ func (obs windowWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 					sink(t)
 					return
 				}
+
 				x.Window.Complete()
+
 				window := rx.Multicast()
 				x.Window = window.Observer
 				sink.Next(window.Observable)
+
 				critical.Leave(&x.Section)
+
 				openWindow()
 			}
 		}
@@ -81,9 +88,12 @@ func (obs windowWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 			switch {
 			case t.HasValue:
 				x.Window.Sink(t)
+
 				critical.Leave(&x.Section)
+
 			default:
 				critical.Close(&x.Section)
+
 				x.Window.Sink(t)
 				sink(t)
 			}

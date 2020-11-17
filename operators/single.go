@@ -16,12 +16,14 @@ func Single() rx.Operator {
 func single(source rx.Observable) rx.Observable {
 	return func(ctx context.Context, sink rx.Observer) {
 		ctx, cancel := context.WithCancel(ctx)
+
 		sink = sink.WithCancel(cancel)
+
+		var observer rx.Observer
 
 		var (
 			value    interface{}
 			hasValue bool
-			observer rx.Observer
 		)
 
 		observer = func(t rx.Notification) {
@@ -34,8 +36,10 @@ func single(source rx.Observable) rx.Observable {
 					value = t.Value
 					hasValue = true
 				}
+
 			case t.HasError:
 				sink(t)
+
 			default:
 				if hasValue {
 					sink.Next(value)

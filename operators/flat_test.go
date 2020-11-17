@@ -20,8 +20,10 @@ func TestFlat(t *testing.T) {
 			"[A C E]", "[A C F]", "[A D F]", "[B D F]", Completed,
 		)
 	})
+
 	t.Run("Zip", func(t *testing.T) {
 		delay := DelaySubscription(1)
+
 		observables := [...]rx.Observable{
 			rx.Just(rx.Just("A", "B"), rx.Range(1, 4)),
 			rx.Just(rx.Just("A", "B", "C"), rx.Range(1, 4)),
@@ -30,9 +32,11 @@ func TestFlat(t *testing.T) {
 			rx.Just(rx.Just("A", "B", "C"), rx.Concat(rx.Range(1, 4), rx.Throw(ErrTest)).Pipe(delay)),
 			rx.Just(rx.Just("A", "B", "C", "D"), rx.Concat(rx.Range(1, 4), rx.Throw(ErrTest)).Pipe(delay)),
 		}
+
 		for i, obs := range observables {
 			observables[i] = obs.Pipe(operators.Flat(rx.Zip), ToString())
 		}
+
 		SubscribeN(
 			t,
 			observables[:],

@@ -15,6 +15,7 @@ func TestToSlice(t *testing.T) {
 		rx.Empty(),
 		rx.Throw(ErrTest),
 	}
+
 	for i, obs := range observables {
 		observables[i] = obs.Pipe(
 			operators.ToSlice(),
@@ -22,6 +23,7 @@ func TestToSlice(t *testing.T) {
 			ToString(),
 		)
 	}
+
 	SubscribeN(
 		t,
 		observables[:],

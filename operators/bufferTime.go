@@ -42,6 +42,7 @@ type bufferTimeContext struct {
 
 func (obs bufferTimeObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	ctx, cancel := context.WithCancel(ctx)
+
 	sink = sink.WithCancel(cancel)
 
 	var x struct {
@@ -52,10 +53,13 @@ func (obs bufferTimeObservable) Subscribe(ctx context.Context, sink rx.Observer)
 	var closeContext func(*bufferTimeContext)
 
 	obsTimer := rx.Timer(obs.TimeSpan)
+
 	openContextLocked := func() {
 		ctx, cancel := context.WithCancel(ctx)
+
 		newContext := &bufferTimeContext{Cancel: cancel}
 		x.Contexts = append(x.Contexts, newContext)
+
 		obsTimer.Subscribe(ctx, func(t rx.Notification) {
 			if t.HasValue {
 				return
@@ -73,20 +77,26 @@ func (obs bufferTimeObservable) Subscribe(ctx context.Context, sink rx.Observer)
 
 	closeContext = func(toBeClosed *bufferTimeContext) {
 		toBeClosed.Cancel()
+
 		if critical.Enter(&x.Section) {
 			for i, c := range x.Contexts {
 				if c == toBeClosed {
 					copy(x.Contexts[i:], x.Contexts[i+1:])
+
 					n := len(x.Contexts)
 					x.Contexts[n-1] = nil
 					x.Contexts = x.Contexts[:n-1]
+
 					sink.Next(toBeClosed.Buffer)
+
 					if obs.CreationInterval <= 0 {
 						openContextLocked()
 					}
+
 					break
 				}
 			}
+
 			critical.Leave(&x.Section)
 		}
 	}
@@ -106,6 +116,7 @@ func (obs bufferTimeObservable) Subscribe(ctx context.Context, sink rx.Observer)
 			switch {
 			case t.HasValue:
 				var bufferFullContexts []*bufferTimeContext
+
 				for _, c := range x.Contexts {
 					c.Buffer = append(c.Buffer, t.Value)
 					if len(c.Buffer) == obs.MaxBufferSize {
@@ -121,10 +132,12 @@ func (obs bufferTimeObservable) Subscribe(ctx context.Context, sink rx.Observer)
 
 			case t.HasError:
 				critical.Close(&x.Section)
+
 				sink(t)
 
 			default:
 				critical.Close(&x.Section)
+
 				for _, c := range x.Contexts {
 					if ctx.Err() != nil {
 						return
@@ -132,6 +145,7 @@ func (obs bufferTimeObservable) Subscribe(ctx context.Context, sink rx.Observer)
 					c.Cancel()
 					sink.Next(c.Buffer)
 				}
+
 				sink(t)
 			}
 		}

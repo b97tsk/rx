@@ -1,4 +1,4 @@
-package testing
+package rxtest
 
 import (
 	"context"
@@ -23,6 +23,7 @@ func Step(n int) time.Duration {
 func AddLatencyToValues(initialDelay, period int) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		initialDelay, period := Step(initialDelay), Step(period)
+
 		return rx.Zip(
 			source,
 			rx.Concat(rx.Timer(initialDelay), rx.Ticker(period)),
@@ -39,6 +40,7 @@ func AddLatencyToValues(initialDelay, period int) rx.Operator {
 func AddLatencyToNotifications(initialDelay, period int) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		initialDelay, period := Step(initialDelay), Step(period)
+
 		return rx.Zip(
 			source.Pipe(operators.Materialize()),
 			rx.Concat(rx.Timer(initialDelay), rx.Ticker(period)),
@@ -75,21 +77,23 @@ func SubscribeN(t *testing.T, observables []rx.Observable, outputs [][]interface
 	if len(observables) != len(outputs) {
 		panic("SubscribeN: len(observables) != len(outputs)")
 	}
+
 	for i, source := range observables {
 		output := outputs[i]
-		source.BlockingSubscribe(
+
+		_ = source.BlockingSubscribe(
 			context.Background(),
-			func(u rx.Notification) {
+			func(n rx.Notification) {
 				if len(output) == 0 {
+					t.Fail()
 					switch {
-					case u.HasValue:
-						t.Logf("want nothing, but got %v", u.Value)
-					case u.HasError:
-						t.Logf("want nothing, but got %v", u.Error)
+					case n.HasValue:
+						t.Logf("want nothing, but got %v", n.Value)
+					case n.HasError:
+						t.Logf("want nothing, but got %v", n.Error)
 					default:
 						t.Log("want nothing, but got completed")
 					}
-					t.Fail()
 					return
 				}
 
@@ -97,35 +101,37 @@ func SubscribeN(t *testing.T, observables []rx.Observable, outputs [][]interface
 				output = output[1:]
 
 				switch {
-				case u.HasValue:
-					if wanted != u.Value {
-						t.Logf("want %v, but got %v", wanted, u.Value)
+				case n.HasValue:
+					if wanted != n.Value {
 						t.Fail()
+						t.Logf("want %v, but got %v", wanted, n.Value)
 					} else {
 						t.Logf("want %v", wanted)
 					}
-				case u.HasError:
-					if wanted != u.Error {
-						t.Logf("want %v, but got %v", wanted, u.Error)
+				case n.HasError:
+					if wanted != n.Error {
 						t.Fail()
+						t.Logf("want %v, but got %v", wanted, n.Error)
 					} else {
 						t.Logf("want %v", wanted)
 					}
 				default:
 					if wanted != Completed {
-						t.Logf("want %v, but got completed", wanted)
 						t.Fail()
+						t.Logf("want %v, but got completed", wanted)
 					} else {
 						t.Log("want completed")
 					}
 				}
 			},
 		)
+
 		if len(output) > 0 {
+			t.Fail()
+
 			for _, wanted := range output {
 				t.Logf("want %v, but got nothing", wanted)
 			}
-			t.Fail()
 		}
 	}
 }

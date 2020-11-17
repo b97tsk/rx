@@ -44,6 +44,7 @@ type switchMapObservable struct {
 
 func (obs switchMapObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	ctx, cancel := context.WithCancel(ctx)
+
 	sink = sink.WithCancel(cancel).Mutex()
 
 	var childCancel context.CancelFunc
@@ -56,6 +57,7 @@ func (obs switchMapObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 		switch {
 		case t.HasValue:
 			sourceIndex++
+
 			sourceIndex := sourceIndex
 			activeIndex.Store(int64(sourceIndex))
 
@@ -71,13 +73,16 @@ func (obs switchMapObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 				if !t.HasValue {
 					childCancel()
 				}
+
 				if t.HasValue || t.HasError {
 					sink(t)
 					return
 				}
+
 				if !activeIndex.Cas(int64(sourceIndex), -1) {
 					return
 				}
+
 				if sourceCompleted.Equals(1) && activeIndex.Equals(-1) {
 					sink(t)
 				}
@@ -88,6 +93,7 @@ func (obs switchMapObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 
 		default:
 			sourceCompleted.Store(1)
+
 			if activeIndex.Equals(-1) {
 				sink(t)
 			}

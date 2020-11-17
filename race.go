@@ -2,6 +2,8 @@ package rx
 
 import (
 	"context"
+
+	"github.com/b97tsk/rx/internal/critical"
 )
 
 // Race creates an Observable that mirrors the first source Observable to emit
@@ -10,6 +12,7 @@ func Race(observables ...Observable) Observable {
 	if len(observables) == 0 {
 		return Empty()
 	}
+
 	return raceObservable(observables).Subscribe
 }
 
@@ -27,29 +30,33 @@ func (observables raceObservable) Subscribe(ctx context.Context, sink Observer) 
 		subscriptions[i] = Subscription{ctx, cancel}
 	}
 
-	race := make(chan struct{}, 1)
-	race <- struct{}{}
+	var race critical.Section
 
 	for i, obs := range observables {
-		var (
-			index    = i
-			observer Observer
-		)
+		var observer Observer
+
+		index := i
+
 		observer = func(t Notification) {
-			if _, ok := <-race; ok {
+			if critical.Enter(&race) {
 				for i := range subscriptions {
 					if i != index {
 						subscriptions[i].Cancel()
 					}
 				}
-				close(race)
+
+				critical.Close(&race)
+
 				observer = sink
 				sink(t)
 				return
 			}
+
 			observer = Noop
+
 			subscriptions[index].Cancel()
 		}
+
 		go obs.Subscribe(subscriptions[i].Context, observer.Sink)
 	}
 }

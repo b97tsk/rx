@@ -32,8 +32,10 @@ type withLatestFromElement struct {
 
 func (observables withLatestFromObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	ctx, cancel := context.WithCancel(ctx)
-	sink = sink.WithCancel(cancel)
 	done := ctx.Done()
+
+	sink = sink.WithCancel(cancel)
+
 	q := make(chan withLatestFromElement)
 
 	go func() {
@@ -41,12 +43,14 @@ func (observables withLatestFromObservable) Subscribe(ctx context.Context, sink 
 		values := make([]interface{}, length)
 		hasValues := make([]bool, length)
 		hasValuesCount := 0
+
 		for {
 			select {
 			case <-done:
 				return
 			case t := <-q:
 				index := t.Index
+
 				switch {
 				case t.HasValue:
 					values[index] = t.Value
@@ -55,8 +59,10 @@ func (observables withLatestFromObservable) Subscribe(ctx context.Context, sink 
 						if hasValues[index] {
 							break
 						}
+
 						hasValues[index] = true
 						hasValuesCount++
+
 						if hasValuesCount < length {
 							break
 						}
@@ -85,11 +91,12 @@ func (observables withLatestFromObservable) Subscribe(ctx context.Context, sink 
 	}()
 
 	for i, obs := range observables {
-		index := i
+		i := i
+
 		go obs.Subscribe(ctx, func(t rx.Notification) {
 			select {
 			case <-done:
-			case q <- withLatestFromElement{index, t}:
+			case q <- withLatestFromElement{i, t}:
 			}
 		})
 	}

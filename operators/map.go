@@ -12,11 +12,14 @@ func Map(project func(interface{}, int) interface{}) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		return func(ctx context.Context, sink rx.Observer) {
 			sourceIndex := -1
+
 			source.Subscribe(ctx, func(t rx.Notification) {
 				switch {
 				case t.HasValue:
 					sourceIndex++
+
 					sink.Next(project(t.Value, sourceIndex))
+
 				default:
 					sink(t)
 				}

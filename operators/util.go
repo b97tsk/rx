@@ -12,5 +12,6 @@ func projectToObservable(val interface{}, idx int) rx.Observable {
 	if obs, ok := val.(rx.Observable); ok {
 		return obs
 	}
+
 	return rx.Throw(rx.ErrNotObservable)
 }

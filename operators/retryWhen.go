@@ -26,13 +26,16 @@ type retryWhenObservable struct {
 
 func (obs retryWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	ctx, cancel := context.WithCancel(ctx)
+
 	sink = sink.WithCancel(cancel).Mutex()
 
 	retryWorking := atomic.Uint32(1)
 	sourceWorking := atomic.Uint32(1)
 
 	var lastError error
+
 	var retrySignal rx.Observer
+
 	var subscribeToSource func()
 
 	subscribeToSource = norec.Wrap(func() {
@@ -41,32 +44,40 @@ func (obs retryWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 				sink(t)
 				return
 			}
+
 			lastError = t.Error
 			sourceWorking.Store(0)
+
 			if retryWorking.Equals(0) {
 				sink(t)
 				return
 			}
+
 			if retrySignal == nil {
 				d := rx.Unicast()
 				retrySignal = d.Observer
-				obs := obs.Notifier(d.Observable)
-				obs.Subscribe(ctx, func(t rx.Notification) {
+
+				obs1 := obs.Notifier(d.Observable)
+				obs1.Subscribe(ctx, func(t rx.Notification) {
 					switch {
 					case t.HasValue:
 						if sourceWorking.Cas(0, 1) {
 							subscribeToSource()
 						}
+
 					case t.HasError:
 						sink(t)
+
 					default:
 						retryWorking.Store(0)
+
 						if sourceWorking.Equals(0) {
 							sink.Error(lastError)
 						}
 					}
 				})
 			}
+
 			retrySignal.Next(t.Error)
 		})
 	})

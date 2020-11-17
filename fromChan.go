@@ -9,6 +9,7 @@ import (
 func FromChan(c <-chan interface{}) Observable {
 	return func(ctx context.Context, sink Observer) {
 		done := ctx.Done()
+
 		for ctx.Err() == nil {
 			select {
 			case <-done:

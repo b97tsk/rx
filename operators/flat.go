@@ -34,11 +34,12 @@ type flatObservable struct {
 
 func (obs flatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	ctx, cancel := context.WithCancel(ctx)
+
 	sink = sink.WithCancel(cancel)
 
 	var (
-		observables []rx.Observable
 		observer    rx.Observer
+		observables []rx.Observable
 	)
 
 	sourceIndex := -1
@@ -55,8 +56,8 @@ func (obs flatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 			sink(t)
 
 		default:
-			obs := obs.Flat(observables...)
-			obs.Subscribe(ctx, sink)
+			obs1 := obs.Flat(observables...)
+			obs1.Subscribe(ctx, sink)
 		}
 	}
 

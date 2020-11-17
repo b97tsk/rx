@@ -51,9 +51,11 @@ func (configure CongestingMergeConfigure) Make() rx.Operator {
 	if configure.Project == nil {
 		configure.Project = projectToObservable
 	}
+
 	if configure.Concurrency == 0 {
 		configure.Concurrency = -1
 	}
+
 	return func(source rx.Observable) rx.Observable {
 		return congestingMergeObservable{source, configure}.Subscribe
 	}
@@ -66,10 +68,9 @@ type congestingMergeObservable struct {
 
 func (obs congestingMergeObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	ctx, cancel := context.WithCancel(ctx)
-	sink = sink.WithCancel(cancel).Mutex()
-
 	done := ctx.Done()
-	complete := make(chan struct{}, 1)
+
+	sink = sink.WithCancel(cancel).Mutex()
 
 	x := struct {
 		sync.Mutex
@@ -80,36 +81,48 @@ func (obs congestingMergeObservable) Subscribe(ctx context.Context, sink rx.Obse
 
 	var observer rx.Observer
 
+	complete := make(chan struct{}, 1)
+
 	observer = func(t rx.Notification) {
 		switch {
 		case t.HasValue:
 			x.Lock()
+
 			for x.Workers == obs.Concurrency {
 				x.Unlock()
+
 				select {
 				case <-done:
 					observer = rx.Noop
 					return
 				case <-complete:
 				}
+
 				x.Lock()
 			}
+
 			x.Index++
 			x.Workers++
+
 			x.Unlock()
 
 			obs1 := obs.Project(t.Value, x.Index)
+
 			go obs1.Subscribe(ctx, func(t rx.Notification) {
 				if t.HasValue || t.HasError {
 					sink(t)
 					return
 				}
+
 				x.Lock()
 				defer x.Unlock()
+
 				x.Workers--
+
 				if x.Completed && x.Workers == 0 {
 					sink(t)
 				}
+
 				select {
 				case complete <- struct{}{}:
 				default:
@@ -122,7 +135,9 @@ func (obs congestingMergeObservable) Subscribe(ctx context.Context, sink rx.Obse
 		default:
 			x.Lock()
 			defer x.Unlock()
+
 			x.Completed = true
+
 			if x.Workers == 0 {
 				sink(t)
 			}

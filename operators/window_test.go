@@ -13,8 +13,10 @@ func TestWindow(t *testing.T) {
 		if obs, ok := val.(rx.Observable); ok {
 			return obs.Pipe(operators.ToSlice())
 		}
+
 		return rx.Throw(rx.ErrNotObservable)
 	}
+
 	SubscribeN(
 		t,
 		[]rx.Observable{

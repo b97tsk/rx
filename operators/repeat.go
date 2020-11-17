@@ -14,12 +14,15 @@ func Repeat(count int) rx.Operator {
 		if count == 0 {
 			return rx.Empty()
 		}
+
 		if count == 1 {
 			return source
 		}
+
 		if count > 0 {
 			count--
 		}
+
 		return repeatObservable{source, count}.Subscribe
 	}
 }
@@ -49,9 +52,11 @@ func (obs repeatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 			sink(t)
 			return
 		}
+
 		if count > 0 {
 			count--
 		}
+
 		subscribeToSource()
 	}
 

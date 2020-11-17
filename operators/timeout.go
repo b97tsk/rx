@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/b97tsk/rx"
+	"github.com/b97tsk/rx/internal/critical"
 )
 
 // Timeout creates an Observable that mirrors the source Observable or throws
@@ -24,6 +25,7 @@ func (configure TimeoutConfigure) Make() rx.Operator {
 	if configure.Observable == nil {
 		configure.Observable = rx.Throw(rx.ErrTimeout)
 	}
+
 	return func(source rx.Observable) rx.Observable {
 		return timeoutObservable{source, configure}.Subscribe
 	}
@@ -37,24 +39,27 @@ type timeoutObservable struct {
 func (obs timeoutObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	childCtx, childCancel := context.WithCancel(ctx)
 
-	race := make(chan struct{}, 1)
-	race <- struct{}{}
+	var race critical.Section
 
 	var scheduleCancel context.CancelFunc
 
 	obsTimer := rx.Timer(obs.Duration)
+
 	doSchedule := func() {
 		if scheduleCancel != nil {
 			scheduleCancel()
 		}
+
 		var scheduleCtx context.Context
 		scheduleCtx, scheduleCancel = context.WithCancel(childCtx)
+
 		obsTimer.Subscribe(scheduleCtx, func(t rx.Notification) {
 			if t.HasValue {
 				return
 			}
-			if _, ok := <-race; ok {
-				close(race)
+
+			if critical.Enter(&race) {
+				critical.Close(&race)
 				childCancel()
 				obs.Observable.Subscribe(ctx, sink)
 			}
@@ -64,14 +69,14 @@ func (obs timeoutObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	doSchedule()
 
 	obs.Source.Subscribe(childCtx, func(t rx.Notification) {
-		if x, ok := <-race; ok {
+		if critical.Enter(&race) {
 			switch {
 			case t.HasValue:
 				sink(t)
-				race <- x
+				critical.Leave(&race)
 				doSchedule()
 			default:
-				close(race)
+				critical.Close(&race)
 				childCancel()
 				sink(t)
 			}

@@ -12,7 +12,9 @@ func Ticker(d time.Duration) Observable {
 		go func() {
 			ticker := time.NewTicker(d)
 			defer ticker.Stop()
+
 			done := ctx.Done()
+
 			for {
 				select {
 				case <-done:

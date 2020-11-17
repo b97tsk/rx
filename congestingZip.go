@@ -15,6 +15,7 @@ func CongestingZip(observables ...Observable) Observable {
 	if len(observables) == 0 {
 		return Empty()
 	}
+
 	return congestingZipObservable(observables).Subscribe
 }
 
@@ -22,8 +23,9 @@ type congestingZipObservable []Observable
 
 func (observables congestingZipObservable) Subscribe(ctx context.Context, sink Observer) {
 	ctx, cancel := context.WithCancel(ctx)
-	sink = sink.WithCancel(cancel)
 	done := ctx.Done()
+
+	sink = sink.WithCancel(cancel)
 
 	channels := make([]chan Notification, len(observables))
 	for i := range channels {
@@ -32,6 +34,7 @@ func (observables congestingZipObservable) Subscribe(ctx context.Context, sink O
 
 	go func() {
 		values := make([]interface{}, len(channels))
+
 		for {
 			for i := range channels {
 				select {
@@ -53,6 +56,7 @@ func (observables congestingZipObservable) Subscribe(ctx context.Context, sink O
 
 	for i, obs := range observables {
 		c := channels[i]
+
 		go obs.Subscribe(ctx, func(t Notification) {
 			select {
 			case <-done:

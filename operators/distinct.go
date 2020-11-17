@@ -28,6 +28,7 @@ func (configure DistinctConfigure) Make() rx.Operator {
 	if configure.KeySelector == nil {
 		configure.KeySelector = func(val interface{}) interface{} { return val }
 	}
+
 	return func(source rx.Observable) rx.Observable {
 		return distinctObservable{source, configure}.Subscribe
 	}
@@ -39,7 +40,8 @@ type distinctObservable struct {
 }
 
 func (obs distinctObservable) Subscribe(ctx context.Context, sink rx.Observer) {
-	var keys = make(map[interface{}]struct{})
+	keys := make(map[interface{}]struct{})
+
 	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		if t.HasValue {
 			key := obs.KeySelector(t.Value)

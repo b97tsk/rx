@@ -56,6 +56,7 @@ func (obs congestingConcatObservable) Subscribe(ctx context.Context, sink rx.Obs
 			sourceIndex++
 
 			obs1 := obs.Project(t.Value, sourceIndex)
+
 			err := obs1.BlockingSubscribe(ctx, func(t rx.Notification) {
 				if t.HasValue || t.HasError {
 					sink(t)

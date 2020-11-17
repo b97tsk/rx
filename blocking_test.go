@@ -22,13 +22,16 @@ func TestObservable_BlockingFirst(t *testing.T) {
 		{rx.Just("A", "B").Pipe(operators.Go()), "A", nil},
 		{rx.Never(), nil, context.DeadlineExceeded},
 	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), Step(1))
+
 	for _, x := range tests {
 		val, err := x.obs.BlockingFirst(ctx)
 		if val != x.val || err != x.err {
 			t.Fail()
 		}
 	}
+
 	cancel()
 }
 
@@ -44,13 +47,16 @@ func TestObservable_BlockingFirstOrDefault(t *testing.T) {
 		{rx.Just("A", "B").Pipe(operators.Go()), "A"},
 		{rx.Never(), "C"},
 	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), Step(1))
+
 	for _, x := range tests {
 		val := x.obs.BlockingFirstOrDefault(ctx, "C")
 		if val != x.val {
 			t.Fail()
 		}
 	}
+
 	cancel()
 }
 
@@ -67,13 +73,16 @@ func TestObservable_BlockingLast(t *testing.T) {
 		{rx.Just("A", "B").Pipe(operators.Go()), "B", nil},
 		{rx.Never(), nil, context.DeadlineExceeded},
 	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), Step(1))
+
 	for _, x := range tests {
 		val, err := x.obs.BlockingLast(ctx)
 		if val != x.val || err != x.err {
 			t.Fail()
 		}
 	}
+
 	cancel()
 }
 
@@ -89,13 +98,16 @@ func TestObservable_BlockingLastOrDefault(t *testing.T) {
 		{rx.Just("A", "B").Pipe(operators.Go()), "B"},
 		{rx.Never(), "C"},
 	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), Step(1))
+
 	for _, x := range tests {
 		val := x.obs.BlockingLastOrDefault(ctx, "C")
 		if val != x.val {
 			t.Fail()
 		}
 	}
+
 	cancel()
 }
 
@@ -112,13 +124,16 @@ func TestObservable_BlockingSingle(t *testing.T) {
 		{rx.Just("A", "B").Pipe(operators.Go()), nil, rx.ErrNotSingle},
 		{rx.Never(), nil, context.DeadlineExceeded},
 	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), Step(1))
+
 	for _, x := range tests {
 		val, err := x.obs.BlockingSingle(ctx)
 		if val != x.val || err != x.err {
 			t.Fail()
 		}
 	}
+
 	cancel()
 }
 
@@ -134,12 +149,15 @@ func TestObservable_BlockingSubscribe(t *testing.T) {
 		{rx.Just("A", "B").Pipe(operators.Go()), nil},
 		{rx.Never(), context.DeadlineExceeded},
 	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), Step(1))
+
 	for _, x := range tests {
 		err := x.obs.BlockingSubscribe(ctx, rx.Noop)
 		if err != x.err {
 			t.Fail()
 		}
 	}
+
 	cancel()
 }

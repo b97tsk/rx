@@ -42,6 +42,7 @@ type concatObservable struct {
 
 func (obs concatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	ctx, cancel := context.WithCancel(ctx)
+
 	sink = sink.WithCancel(cancel).Mutex()
 
 	x := struct {
@@ -56,17 +57,24 @@ func (obs concatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 
 	subscribeToNext = norec.Wrap(func() {
 		x.Lock()
+
 		if x.Queue.Len() == 0 {
 			defer x.Unlock()
+
 			x.Working = false
+
 			if x.Completed {
 				sink.Complete()
 			}
+
 			return
 		}
+
 		x.Index++
+
 		sourceIndex := x.Index
 		sourceValue := x.Queue.Pop()
+
 		x.Unlock()
 
 		obs1 := obs.Project(sourceValue, sourceIndex)
@@ -86,13 +94,17 @@ func (obs concatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		switch {
 		case t.HasValue:
 			x.Lock()
+
 			x.Queue.Push(t.Value)
+
 			var subscribe bool
 			if !x.Working {
 				x.Working = true
 				subscribe = true
 			}
+
 			x.Unlock()
+
 			if subscribe {
 				subscribeToNext()
 			}
@@ -103,7 +115,9 @@ func (obs concatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		default:
 			x.Lock()
 			defer x.Unlock()
+
 			x.Completed = true
+
 			if !x.Working {
 				sink(t)
 			}

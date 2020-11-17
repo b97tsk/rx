@@ -12,13 +12,16 @@ func Filter(predicate func(interface{}, int) bool) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		return func(ctx context.Context, sink rx.Observer) {
 			sourceIndex := -1
+
 			source.Subscribe(ctx, func(t rx.Notification) {
 				switch {
 				case t.HasValue:
 					sourceIndex++
+
 					if predicate(t.Value, sourceIndex) {
 						sink(t)
 					}
+
 				default:
 					sink(t)
 				}
@@ -34,13 +37,16 @@ func FilterMap(predicate func(interface{}, int) (interface{}, bool)) rx.Operator
 	return func(source rx.Observable) rx.Observable {
 		return func(ctx context.Context, sink rx.Observer) {
 			sourceIndex := -1
+
 			source.Subscribe(ctx, func(t rx.Notification) {
 				switch {
 				case t.HasValue:
 					sourceIndex++
+
 					if val, ok := predicate(t.Value, sourceIndex); ok {
 						sink.Next(val)
 					}
+
 				default:
 					sink(t)
 				}
@@ -55,13 +61,16 @@ func Exclude(predicate func(interface{}, int) bool) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		return func(ctx context.Context, sink rx.Observer) {
 			sourceIndex := -1
+
 			source.Subscribe(ctx, func(t rx.Notification) {
 				switch {
 				case t.HasValue:
 					sourceIndex++
+
 					if !predicate(t.Value, sourceIndex) {
 						sink(t)
 					}
+
 				default:
 					sink(t)
 				}

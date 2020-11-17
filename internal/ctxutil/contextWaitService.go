@@ -17,13 +17,16 @@ type ContextWaitService chan chan<- ContextWaitAction
 
 func NewContextWaitService() ContextWaitService {
 	actionChan := make(chan ContextWaitAction, 1)
+
 	service := make(ContextWaitService, 1)
 	service <- actionChan
+
 	go func() {
 		var (
 			cases   []reflect.SelectCase
 			actions []ContextWaitAction
 		)
+
 		cases = append(cases, reflect.SelectCase{
 			Dir:  reflect.SelectRecv,
 			Chan: reflect.ValueOf(time.After(autoCloseDelay)),
@@ -32,6 +35,7 @@ func NewContextWaitService() ContextWaitService {
 			Dir:  reflect.SelectRecv,
 			Chan: reflect.ValueOf(actionChan),
 		})
+
 		for {
 			i, v, _ := reflect.Select(cases)
 			if i == 0 {
@@ -39,30 +43,40 @@ func NewContextWaitService() ContextWaitService {
 				case <-service:
 					if len(actionChan) == 0 {
 						close(service)
+
 						return
 					}
 					service <- actionChan
 				default:
 				}
+
 				cases[0].Chan = reflect.ValueOf(nil)
+
 				continue
 			}
+
 			if i == 1 {
 				action := v.Interface().(ContextWaitAction)
+
 				cases = append(cases, reflect.SelectCase{
 					Dir:  reflect.SelectRecv,
 					Chan: reflect.ValueOf(action.Context.Done()),
 				})
+
 				actions = append(actions, action)
+
 				cases[0].Chan = reflect.ValueOf(nil)
+
 				continue
 			}
+
 			{
 				cases[i].Chan = reflect.ValueOf(nil)
 				j := len(cases) - 1
 				cases[i], cases[j] = cases[j], cases[i]
 				cases = cases[:j]
 			}
+
 			{
 				i := i - 2
 				action := actions[i]
@@ -72,11 +86,13 @@ func NewContextWaitService() ContextWaitService {
 				actions = actions[:j]
 				go action.Callback()
 			}
+
 			if len(actions) == 0 {
 				cases[0].Chan = reflect.ValueOf(time.After(autoCloseDelay))
 			}
 		}
 	}()
+
 	return service
 }
 
@@ -85,7 +101,9 @@ func (service ContextWaitService) Submit(ctx context.Context, cb func()) bool {
 	if !serviceAvailable {
 		return false
 	}
+
 	actionChan <- ContextWaitAction{ctx, cb}
 	service <- actionChan
+
 	return true
 }

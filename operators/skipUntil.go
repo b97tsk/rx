@@ -21,8 +21,10 @@ type skipUntilObservable struct {
 }
 
 func (obs skipUntilObservable) Subscribe(ctx context.Context, sink rx.Observer) {
-	originalSink := sink
 	ctx, cancel := context.WithCancel(ctx)
+
+	originalSink := sink
+
 	sink = sink.WithCancel(cancel).Mutex()
 
 	noSkipping := atomic.Uint32(0)
@@ -35,6 +37,7 @@ func (obs skipUntilObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 		observer = func(t rx.Notification) {
 			observer = rx.Noop
 			cancel()
+
 			switch {
 			case t.HasValue:
 				noSkipping.Store(1)

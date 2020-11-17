@@ -25,12 +25,15 @@ func (configure WindowCountConfigure) Make() rx.Operator {
 	if configure.WindowSize <= 0 {
 		panic("WindowCount: WindowSize is negative or zero")
 	}
+
 	if configure.StartWindowEvery < 0 {
 		panic("WindowCount: StartWindowEvery is negative")
 	}
+
 	if configure.StartWindowEvery == 0 {
 		configure.StartWindowEvery = configure.WindowSize
 	}
+
 	return func(source rx.Observable) rx.Observable {
 		return windowCountObservable{source, configure}.Subscribe
 	}
@@ -67,11 +70,15 @@ func (obs windowCountObservable) Subscribe(ctx context.Context, sink rx.Observer
 
 			if windowSize == obs.WindowSize {
 				window := windows[0]
+
 				copy(windows, windows[1:])
+
 				n := len(windows)
 				windows[n-1] = nil
 				windows = windows[:n-1]
+
 				window.Complete()
+
 				windowSize = obs.WindowSize - obs.StartWindowEvery
 				if windowSize < 0 {
 					window := rx.Multicast()
@@ -92,6 +99,7 @@ func (obs windowCountObservable) Subscribe(ctx context.Context, sink rx.Observer
 			for _, window := range windows {
 				window.Sink(t)
 			}
+
 			sink(t)
 		}
 	})

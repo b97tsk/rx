@@ -15,6 +15,7 @@ func Concat(observables ...Observable) Observable {
 	if len(observables) == 0 {
 		return Empty()
 	}
+
 	return concatObservable(observables).Subscribe
 }
 
@@ -24,16 +25,20 @@ func (observables concatObservable) Subscribe(ctx context.Context, sink Observer
 	var observer Observer
 
 	remainder := observables
+
 	subscribeToNext := norec.Wrap(func() {
 		if len(remainder) == 0 {
 			sink.Complete()
 			return
 		}
+
 		if ctx.Err() != nil {
 			return
 		}
+
 		source := remainder[0]
 		remainder = remainder[1:]
+
 		source.Subscribe(ctx, observer)
 	})
 

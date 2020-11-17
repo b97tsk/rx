@@ -13,6 +13,7 @@ func ForkJoin(observables ...Observable) Observable {
 	if len(observables) == 0 {
 		return Empty()
 	}
+
 	return forkJoinObservable(observables).Subscribe
 }
 
@@ -25,8 +26,9 @@ type forkJoinElement struct {
 
 func (observables forkJoinObservable) Subscribe(ctx context.Context, sink Observer) {
 	ctx, cancel := context.WithCancel(ctx)
-	sink = sink.WithCancel(cancel)
 	done := ctx.Done()
+
+	sink = sink.WithCancel(cancel)
 
 	q := make(chan forkJoinElement)
 
@@ -35,12 +37,14 @@ func (observables forkJoinObservable) Subscribe(ctx context.Context, sink Observ
 		values := make([]interface{}, length)
 		hasValues := make([]bool, length)
 		completeCount := 0
+
 		for {
 			select {
 			case <-done:
 				return
 			case t := <-q:
 				index := t.Index
+
 				switch {
 				case t.HasValue:
 					values[index] = t.Value
@@ -71,11 +75,12 @@ func (observables forkJoinObservable) Subscribe(ctx context.Context, sink Observ
 	}()
 
 	for i, obs := range observables {
-		index := i
+		i := i
+
 		go obs.Subscribe(ctx, func(t Notification) {
 			select {
 			case <-done:
-			case q <- forkJoinElement{index, t}:
+			case q <- forkJoinElement{i, t}:
 			}
 		})
 	}

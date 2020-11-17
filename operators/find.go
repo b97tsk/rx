@@ -21,6 +21,7 @@ type findObservable struct {
 
 func (obs findObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	ctx, cancel := context.WithCancel(ctx)
+
 	sink = sink.WithCancel(cancel)
 
 	var observer rx.Observer

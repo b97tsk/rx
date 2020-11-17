@@ -26,12 +26,14 @@ type repeatWhenObservable struct {
 
 func (obs repeatWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	ctx, cancel := context.WithCancel(ctx)
+
 	sink = sink.WithCancel(cancel).Mutex()
 
 	repeatWorking := atomic.Uint32(1)
 	sourceWorking := atomic.Uint32(1)
 
 	var repeatSignal rx.Observer
+
 	var subscribeToSource func()
 
 	subscribeToSource = norec.Wrap(func() {
@@ -40,31 +42,39 @@ func (obs repeatWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 				sink(t)
 				return
 			}
+
 			sourceWorking.Store(0)
+
 			if repeatWorking.Equals(0) {
 				sink(t)
 				return
 			}
+
 			if repeatSignal == nil {
 				d := rx.Unicast()
 				repeatSignal = d.Observer
-				obs := obs.Notifier(d.Observable)
-				obs.Subscribe(ctx, func(t rx.Notification) {
+
+				obs1 := obs.Notifier(d.Observable)
+				obs1.Subscribe(ctx, func(t rx.Notification) {
 					switch {
 					case t.HasValue:
 						if sourceWorking.Cas(0, 1) {
 							subscribeToSource()
 						}
+
 					case t.HasError:
 						sink(t)
+
 					default:
 						repeatWorking.Store(0)
+
 						if sourceWorking.Equals(0) {
 							sink(t)
 						}
 					}
 				})
 			}
+
 			repeatSignal.Next(nil)
 		})
 	})

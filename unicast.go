@@ -28,8 +28,10 @@ type unicast struct {
 func (d *unicast) sink(t Notification) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
+
 	switch {
 	case d.err != nil:
+
 	case t.HasValue:
 		if ctx := d.obs.ctx; ctx != nil {
 			if ctx.Err() != nil {
@@ -38,8 +40,10 @@ func (d *unicast) sink(t Notification) {
 				d.obs.sink(t)
 			}
 		}
+
 	default:
 		d.err = errCompleted
+
 		if t.HasError {
 			err := t.Error
 			if err == nil {
@@ -47,8 +51,11 @@ func (d *unicast) sink(t Notification) {
 			}
 			d.err = err
 		}
+
 		obs := d.obs
+
 		d.obs.ctx, d.obs.sink = nil, nil
+
 		if ctx := obs.ctx; ctx != nil && ctx.Err() == nil {
 			obs.sink(t)
 		}
@@ -57,6 +64,7 @@ func (d *unicast) sink(t Notification) {
 
 func (d *unicast) subscribe(ctx context.Context, sink Observer) {
 	d.mu.Lock()
+
 	err := d.err
 	if err == nil {
 		if d.obs.sink == nil {
@@ -65,7 +73,9 @@ func (d *unicast) subscribe(ctx context.Context, sink Observer) {
 			err = ErrDropped
 		}
 	}
+
 	d.mu.Unlock()
+
 	if err != nil {
 		if err != errCompleted {
 			if err == errNil {

@@ -11,10 +11,13 @@ type Section struct {
 
 func Enter(s *Section) bool {
 	s.mu.Lock()
+
 	if s.closed {
 		s.mu.Unlock()
+
 		return false
 	}
+
 	return true
 }
 

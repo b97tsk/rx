@@ -48,6 +48,7 @@ func (configure ThrottleConfigure) Make() rx.Operator {
 	if configure.DurationSelector == nil {
 		panic("Throttle: DurationSelector is nil")
 	}
+
 	return func(source rx.Observable) rx.Observable {
 		return throttleObservable{source, configure}.Subscribe
 	}
@@ -64,6 +65,7 @@ type ThrottleTimeConfigure struct {
 func (configure ThrottleTimeConfigure) Make() rx.Operator {
 	obsTimer := rx.Timer(configure.Duration)
 	durationSelector := func(interface{}) rx.Observable { return obsTimer }
+
 	return ThrottleConfigure{
 		DurationSelector: durationSelector,
 		Leading:          configure.Leading,
@@ -78,6 +80,7 @@ type throttleObservable struct {
 
 func (obs throttleObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	ctx, cancel := context.WithCancel(ctx)
+
 	sink = sink.WithCancel(cancel)
 
 	var x struct {
@@ -95,12 +98,16 @@ func (obs throttleObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 
 	doThrottle = func(val interface{}) {
 		ctx, cancel := context.WithCancel(ctx)
+
 		throttleCtx = ctx
 
 		var observer rx.Observer
+
 		observer = func(t rx.Notification) {
 			observer = rx.Noop
+
 			defer cancel()
+
 			if obs.Trailing || t.HasError {
 				if critical.Enter(&x.Section) {
 					if t.HasError {
@@ -108,18 +115,21 @@ func (obs throttleObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 						sink(t)
 						return
 					}
+
 					if x.Trailing.HasValue {
-						sink.Next(x.Trailing.Value)
 						x.Trailing.HasValue = false
+						sink.Next(x.Trailing.Value)
 						doThrottle(x.Trailing.Value)
 					}
+
 					critical.Leave(&x.Section)
 				}
 			}
 		}
 
-		obs := obs.DurationSelector(val)
-		go obs.Subscribe(throttleCtx, observer.Sink)
+		obs1 := obs.DurationSelector(val)
+
+		go obs1.Subscribe(throttleCtx, observer.Sink)
 	}
 
 	obs.Source.Subscribe(ctx, func(t rx.Notification) {
@@ -128,19 +138,25 @@ func (obs throttleObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 			case t.HasValue:
 				x.Trailing.Value = t.Value
 				x.Trailing.HasValue = true
+
 				if throttleCtx == nil || throttleCtx.Err() != nil {
 					doThrottle(t.Value)
+
 					if obs.Leading {
-						sink(t)
 						x.Trailing.HasValue = false
+						sink(t)
 					}
 				}
+
 				critical.Leave(&x.Section)
+
 			default:
 				critical.Close(&x.Section)
+
 				if x.Trailing.HasValue {
 					sink.Next(x.Trailing.Value)
 				}
+
 				sink(t)
 			}
 		}

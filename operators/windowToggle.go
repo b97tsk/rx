@@ -31,6 +31,7 @@ type windowToggleContext struct {
 
 func (obs windowToggleObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	ctx, cancel := context.WithCancel(ctx)
+
 	sink = sink.WithCancel(cancel)
 
 	var x struct {
@@ -50,20 +51,25 @@ func (obs windowToggleObservable) Subscribe(ctx context.Context, sink rx.Observe
 			switch {
 			case t.HasValue:
 				ctx, cancel := context.WithCancel(ctx)
+
 				window := rx.Multicast()
+
 				newContext := &windowToggleContext{
 					Cancel: cancel,
 					Window: window.Observer,
 				}
 				x.Contexts = append(x.Contexts, newContext)
+
 				sink.Next(window.Observable)
 
 				critical.Leave(&x.Section)
 
 				var observer rx.Observer
+
 				observer = func(t rx.Notification) {
 					observer = rx.Noop
 					cancel()
+
 					if critical.Enter(&x.Section) {
 						if t.HasError {
 							critical.Close(&x.Section)
@@ -71,16 +77,21 @@ func (obs windowToggleObservable) Subscribe(ctx context.Context, sink rx.Observe
 							sink(t)
 							return
 						}
+
 						for i, c := range x.Contexts {
 							if c == newContext {
 								copy(x.Contexts[i:], x.Contexts[i+1:])
+
 								n := len(x.Contexts)
 								x.Contexts[n-1] = nil
 								x.Contexts = x.Contexts[:n-1]
+
 								newContext.Window.Complete()
+
 								break
 							}
 						}
+
 						critical.Leave(&x.Section)
 					}
 				}
@@ -90,6 +101,7 @@ func (obs windowToggleObservable) Subscribe(ctx context.Context, sink rx.Observe
 
 			case t.HasError:
 				critical.Close(&x.Section)
+
 				cleanupContexts(t)
 				sink(t)
 
@@ -110,9 +122,12 @@ func (obs windowToggleObservable) Subscribe(ctx context.Context, sink rx.Observe
 				for _, c := range x.Contexts {
 					c.Window.Sink(t)
 				}
+
 				critical.Leave(&x.Section)
+
 			default:
 				critical.Close(&x.Section)
+
 				cleanupContexts(t)
 				sink(t)
 			}

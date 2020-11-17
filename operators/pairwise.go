@@ -18,6 +18,7 @@ func pairwise(source rx.Observable) rx.Observable {
 			Value    interface{}
 			HasValue bool
 		}
+
 		source.Subscribe(ctx, func(t rx.Notification) {
 			switch {
 			case t.HasValue:

@@ -15,9 +15,11 @@ func Dematerialize() rx.Operator {
 func dematerialize(source rx.Observable) rx.Observable {
 	return func(ctx context.Context, sink rx.Observer) {
 		ctx, cancel := context.WithCancel(ctx)
+
 		sink = sink.WithCancel(cancel)
 
 		var observer rx.Observer
+
 		observer = func(t rx.Notification) {
 			switch {
 			case t.HasValue:

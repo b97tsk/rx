@@ -28,9 +28,11 @@ func (configure ExpandConfigure) Make() rx.Operator {
 	if configure.Project == nil {
 		panic("Expand: Project is nil")
 	}
+
 	if configure.Concurrency == 0 {
 		configure.Concurrency = -1
 	}
+
 	return func(source rx.Observable) rx.Observable {
 		return expandObservable{source, configure}.Subscribe
 	}
@@ -43,6 +45,7 @@ type expandObservable struct {
 
 func (obs expandObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	ctx, cancel := context.WithCancel(ctx)
+
 	sink = sink.WithCancel(cancel).Mutex()
 
 	var x struct {
@@ -53,16 +56,22 @@ func (obs expandObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	}
 
 	var subscribeLocked func()
+
 	subscribeLocked = func() {
 		val := x.Queue.Pop()
+
 		sink.Next(val)
+
 		obs1 := obs.Project(val)
+
 		go obs1.Subscribe(ctx, func(t rx.Notification) {
 			switch {
 			case t.HasValue:
 				x.Lock()
 				defer x.Unlock()
+
 				x.Queue.Push(t.Value)
+
 				if x.Workers != obs.Concurrency {
 					x.Workers++
 					subscribeLocked()
@@ -74,10 +83,12 @@ func (obs expandObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 			default:
 				x.Lock()
 				defer x.Unlock()
+
 				if x.Queue.Len() > 0 {
 					subscribeLocked()
 				} else {
 					x.Workers--
+
 					if x.Completed && x.Workers == 0 {
 						sink(t)
 					}
@@ -91,7 +102,9 @@ func (obs expandObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		case t.HasValue:
 			x.Lock()
 			defer x.Unlock()
+
 			x.Queue.Push(t.Value)
+
 			if x.Workers != obs.Concurrency {
 				x.Workers++
 				subscribeLocked()
@@ -103,7 +116,9 @@ func (obs expandObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		default:
 			x.Lock()
 			defer x.Unlock()
+
 			x.Completed = true
+
 			if x.Workers == 0 {
 				sink(t)
 			}

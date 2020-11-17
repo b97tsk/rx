@@ -28,9 +28,11 @@ func (configure DistinctUntilChangedConfigure) Make() rx.Operator {
 	if configure.Compare == nil {
 		configure.Compare = func(v1, v2 interface{}) bool { return v1 == v2 }
 	}
+
 	if configure.KeySelector == nil {
 		configure.KeySelector = func(val interface{}) interface{} { return val }
 	}
+
 	return func(source rx.Observable) rx.Observable {
 		return distinctUntilChangedObservable{source, configure}.Subscribe
 	}
@@ -46,6 +48,7 @@ func (obs distinctUntilChangedObservable) Subscribe(ctx context.Context, sink rx
 		Value    interface{}
 		HasValue bool
 	}
+
 	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		if t.HasValue {
 			keyValue := obs.KeySelector(t.Value)

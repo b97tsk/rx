@@ -24,6 +24,7 @@ type takeUntilObservable struct {
 
 func (obs takeUntilObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	ctx, cancel := context.WithCancel(ctx)
+
 	sink = sink.WithCancel(cancel).Mutex()
 
 	obs.Notifier.Subscribe(ctx, func(t rx.Notification) {

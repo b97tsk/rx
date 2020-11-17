@@ -15,6 +15,7 @@ func Take(count int) rx.Operator {
 		if count <= 0 {
 			return rx.Empty()
 		}
+
 		return takeObservable{source, count}.Subscribe
 	}
 }
@@ -26,12 +27,12 @@ type takeObservable struct {
 
 func (obs takeObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	ctx, cancel := context.WithCancel(ctx)
+
 	sink = sink.WithCancel(cancel)
 
-	var (
-		count    = obs.Count
-		observer rx.Observer
-	)
+	var observer rx.Observer
+
+	count := obs.Count
 
 	observer = func(t rx.Notification) {
 		switch {

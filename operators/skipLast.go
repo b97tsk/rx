@@ -12,6 +12,7 @@ func SkipLast(count int) rx.Operator {
 	if count <= 0 {
 		return noop
 	}
+
 	return func(source rx.Observable) rx.Observable {
 		return skipLastObservable{source, count}.Subscribe
 	}
@@ -23,12 +24,11 @@ type skipLastObservable struct {
 }
 
 func (obs skipLastObservable) Subscribe(ctx context.Context, sink rx.Observer) {
-	var (
-		buffer     = make([]interface{}, obs.Count)
-		bufferSize = obs.Count
-		index      int
-		count      int
-	)
+	buffer := make([]interface{}, obs.Count)
+	bufferSize := obs.Count
+
+	var index, count int
+
 	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		switch {
 		case t.HasValue:
@@ -37,8 +37,11 @@ func (obs skipLastObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 			} else {
 				sink.Next(buffer[index])
 			}
+
 			buffer[index] = t.Value
+
 			index = (index + 1) % bufferSize
+
 		default:
 			sink(t)
 		}

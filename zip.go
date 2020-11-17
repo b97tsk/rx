@@ -15,6 +15,7 @@ func Zip(observables ...Observable) Observable {
 	if len(observables) == 0 {
 		return Empty()
 	}
+
 	return zipObservable(observables).Subscribe
 }
 
@@ -27,8 +28,9 @@ type zipElement struct {
 
 func (observables zipObservable) Subscribe(ctx context.Context, sink Observer) {
 	ctx, cancel := context.WithCancel(ctx)
-	sink = sink.WithCancel(cancel)
 	done := ctx.Done()
+
+	sink = sink.WithCancel(cancel)
 	q := make(chan zipElement)
 
 	go func() {
@@ -36,16 +38,19 @@ func (observables zipObservable) Subscribe(ctx context.Context, sink Observer) {
 			queue.Queue
 			Completed bool
 		}
+
 		length := len(observables)
 		streams := make([]Stream, length)
 		values := make([]interface{}, length)
 		readyCount := 0
+
 		for {
 			select {
 			case <-done:
 				return
 			case t := <-q:
 				index := t.Index
+
 				switch {
 				case t.HasValue:
 					stream := &streams[index]
@@ -55,24 +60,31 @@ func (observables zipObservable) Subscribe(ctx context.Context, sink Observer) {
 						if stream.Len() > 1 {
 							break
 						}
+
 						readyCount++
+
 						if readyCount < length {
 							break
 						}
 					}
 
 					shouldComplete := false
+
 					for i := range streams {
 						stream := &streams[i]
 						values[i] = stream.Pop()
+
 						if stream.Len() == 0 {
 							readyCount--
+
 							if stream.Completed {
 								shouldComplete = true
 							}
 						}
 					}
+
 					sink.Next(values)
+
 					if shouldComplete {
 						sink.Complete()
 						return
@@ -95,11 +107,12 @@ func (observables zipObservable) Subscribe(ctx context.Context, sink Observer) {
 	}()
 
 	for i, obs := range observables {
-		index := i
+		i := i
+
 		go obs.Subscribe(ctx, func(t Notification) {
 			select {
 			case <-done:
-			case q <- zipElement{index, t}:
+			case q <- zipElement{i, t}:
 			}
 		})
 	}

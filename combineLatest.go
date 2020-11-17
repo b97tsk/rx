@@ -17,6 +17,7 @@ func CombineLatest(observables ...Observable) Observable {
 	if len(observables) == 0 {
 		return Empty()
 	}
+
 	return combineLatestObservable(observables).Subscribe
 }
 
@@ -29,8 +30,10 @@ type combineLatestElement struct {
 
 func (observables combineLatestObservable) Subscribe(ctx context.Context, sink Observer) {
 	ctx, cancel := context.WithCancel(ctx)
-	sink = sink.WithCancel(cancel)
 	done := ctx.Done()
+
+	sink = sink.WithCancel(cancel)
+
 	q := make(chan combineLatestElement)
 
 	go func() {
@@ -39,12 +42,14 @@ func (observables combineLatestObservable) Subscribe(ctx context.Context, sink O
 		hasValues := make([]bool, length)
 		hasValuesCount := 0
 		completeCount := 0
+
 		for {
 			select {
 			case <-done:
 				return
 			case t := <-q:
 				index := t.Index
+
 				switch {
 				case t.HasValue:
 					values[index] = t.Value
@@ -53,8 +58,10 @@ func (observables combineLatestObservable) Subscribe(ctx context.Context, sink O
 						if hasValues[index] {
 							break
 						}
+
 						hasValues[index] = true
 						hasValuesCount++
+
 						if hasValuesCount < length {
 							break
 						}
@@ -73,6 +80,7 @@ func (observables combineLatestObservable) Subscribe(ctx context.Context, sink O
 							break
 						}
 					}
+
 					sink(t.Notification)
 					return
 				}
@@ -81,11 +89,12 @@ func (observables combineLatestObservable) Subscribe(ctx context.Context, sink O
 	}()
 
 	for i, obs := range observables {
-		index := i
+		i := i
+
 		go obs.Subscribe(ctx, func(t Notification) {
 			select {
 			case <-done:
-			case q <- combineLatestElement{index, t}:
+			case q <- combineLatestElement{i, t}:
 			}
 		})
 	}

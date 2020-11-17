@@ -43,6 +43,7 @@ type windowTimeContext struct {
 
 func (obs windowTimeObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	ctx, cancel := context.WithCancel(ctx)
+
 	sink = sink.WithCancel(cancel)
 
 	var x struct {
@@ -55,18 +56,22 @@ func (obs windowTimeObservable) Subscribe(ctx context.Context, sink rx.Observer)
 	obsTimer := rx.Timer(obs.TimeSpan)
 	openContextLocked := func() {
 		ctx, cancel := context.WithCancel(ctx)
+
 		window := rx.Multicast()
+
 		newContext := &windowTimeContext{
 			Cancel: cancel,
 			Window: window.Observer,
 		}
 		x.Contexts = append(x.Contexts, newContext)
+
 		obsTimer.Subscribe(ctx, func(t rx.Notification) {
 			if t.HasValue {
 				return
 			}
 			closeContext(newContext)
 		})
+
 		sink.Next(window.Observable)
 	}
 
@@ -79,20 +84,26 @@ func (obs windowTimeObservable) Subscribe(ctx context.Context, sink rx.Observer)
 
 	closeContext = func(toBeClosed *windowTimeContext) {
 		toBeClosed.Cancel()
+
 		if critical.Enter(&x.Section) {
 			for i, c := range x.Contexts {
 				if c == toBeClosed {
 					copy(x.Contexts[i:], x.Contexts[i+1:])
+
 					n := len(x.Contexts)
 					x.Contexts[n-1] = nil
 					x.Contexts = x.Contexts[:n-1]
+
 					toBeClosed.Window.Complete()
+
 					if obs.CreationInterval <= 0 {
 						openContextLocked()
 					}
+
 					break
 				}
 			}
+
 			critical.Leave(&x.Section)
 		}
 	}
@@ -112,9 +123,11 @@ func (obs windowTimeObservable) Subscribe(ctx context.Context, sink rx.Observer)
 			switch {
 			case t.HasValue:
 				var windowFullContexts []*windowTimeContext
+
 				for _, c := range x.Contexts {
 					c.Size++
 					c.Window.Sink(t)
+
 					if c.Size == obs.MaxWindowSize {
 						windowFullContexts = append(windowFullContexts, c)
 					}
@@ -128,10 +141,12 @@ func (obs windowTimeObservable) Subscribe(ctx context.Context, sink rx.Observer)
 
 			default:
 				critical.Close(&x.Section)
+
 				for _, c := range x.Contexts {
 					c.Cancel()
 					c.Window.Sink(t)
 				}
+
 				sink(t)
 			}
 		}

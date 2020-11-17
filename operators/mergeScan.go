@@ -30,9 +30,11 @@ func (configure MergeScanConfigure) Make() rx.Operator {
 	if configure.Accumulator == nil {
 		panic("MergeScan: Accumulator is nil")
 	}
+
 	if configure.Concurrency == 0 {
 		configure.Concurrency = -1
 	}
+
 	return func(source rx.Observable) rx.Observable {
 		return mergeScanObservable{source, configure}.Subscribe
 	}
@@ -45,6 +47,7 @@ type mergeScanObservable struct {
 
 func (obs mergeScanObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	ctx, cancel := context.WithCancel(ctx)
+
 	sink = sink.WithCancel(cancel).Mutex()
 
 	x := struct {
@@ -57,9 +60,12 @@ func (obs mergeScanObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 	}{Seed: obs.Seed}
 
 	var subscribeLocked func()
+
 	subscribeLocked = func() {
 		sourceValue := x.Queue.Pop()
+
 		obs1 := obs.Accumulator(x.Seed, sourceValue)
+
 		go obs1.Subscribe(ctx, func(t rx.Notification) {
 			switch {
 			case t.HasValue:
@@ -76,10 +82,12 @@ func (obs mergeScanObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 			default:
 				x.Lock()
 				defer x.Unlock()
+
 				if x.Queue.Len() > 0 {
 					subscribeLocked()
 				} else {
 					x.Workers--
+
 					if x.Completed && x.Workers == 0 {
 						if !x.HasValue {
 							sink.Next(x.Seed)
@@ -96,7 +104,9 @@ func (obs mergeScanObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 		case t.HasValue:
 			x.Lock()
 			defer x.Unlock()
+
 			x.Queue.Push(t.Value)
+
 			if x.Workers != obs.Concurrency {
 				x.Workers++
 				subscribeLocked()
@@ -108,7 +118,9 @@ func (obs mergeScanObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 		default:
 			x.Lock()
 			defer x.Unlock()
+
 			x.Completed = true
+
 			if x.Workers == 0 {
 				if !x.HasValue {
 					sink.Next(x.Seed)

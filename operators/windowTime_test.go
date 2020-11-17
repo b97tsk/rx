@@ -13,8 +13,10 @@ func TestWindowTime(t *testing.T) {
 		if obs, ok := val.(rx.Observable); ok {
 			return obs.Pipe(operators.ToSlice())
 		}
+
 		return rx.Throw(rx.ErrNotObservable)
 	}
+
 	SubscribeN(
 		t,
 		[]rx.Observable{
@@ -43,7 +45,9 @@ func TestWindowTime(t *testing.T) {
 			{"[A B C]", "[D E F]", "[G]", Completed},
 		},
 	)
+
 	t.Log("----------")
+
 	SubscribeN(
 		t,
 		[]rx.Observable{
@@ -90,7 +94,9 @@ func TestWindowTime(t *testing.T) {
 			{"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", "[G]", "[]", Completed},
 		},
 	)
+
 	t.Log("----------")
+
 	SubscribeN(
 		t,
 		[]rx.Observable{

@@ -11,11 +11,12 @@ import (
 // If ctx was cancelled during the subscription, BlockingFirst immediately
 // returns nil plus ctx.Err().
 func (obs Observable) BlockingFirst(ctx context.Context) (interface{}, error) {
-	var (
-		result   Notification
-		observer Observer
-	)
 	childCtx, childCancel := context.WithCancel(ctx)
+
+	var observer Observer
+
+	var result Notification
+
 	observer = func(t Notification) {
 		switch {
 		case t.HasValue || t.HasError:
@@ -26,8 +27,11 @@ func (obs Observable) BlockingFirst(ctx context.Context) (interface{}, error) {
 		observer = Noop
 		childCancel()
 	}
+
 	obs.Subscribe(childCtx, observer.Sink)
+
 	<-childCtx.Done()
+
 	switch {
 	case ctx.Err() != nil:
 		return nil, ctx.Err()
@@ -61,8 +65,10 @@ func (obs Observable) BlockingFirstOrDefault(ctx context.Context, def interface{
 // If ctx was cancelled during the subscription, BlockingLast immediately
 // returns nil plus ctx.Err().
 func (obs Observable) BlockingLast(ctx context.Context) (interface{}, error) {
-	var result Notification
 	childCtx, childCancel := context.WithCancel(ctx)
+
+	var result Notification
+
 	obs.Subscribe(childCtx, func(t Notification) {
 		switch {
 		case t.HasValue || t.HasError:
@@ -76,7 +82,9 @@ func (obs Observable) BlockingLast(ctx context.Context) (interface{}, error) {
 			childCancel()
 		}
 	})
+
 	<-childCtx.Done()
+
 	switch {
 	case ctx.Err() != nil:
 		return nil, ctx.Err()
@@ -111,11 +119,12 @@ func (obs Observable) BlockingLastOrDefault(ctx context.Context, def interface{}
 // If ctx was cancelled during the subscription, BlockingSingle immediately
 // returns nil plus ctx.Err().
 func (obs Observable) BlockingSingle(ctx context.Context) (interface{}, error) {
-	var (
-		result   Notification
-		observer Observer
-	)
 	childCtx, childCancel := context.WithCancel(ctx)
+
+	var observer Observer
+
+	var result Notification
+
 	observer = func(t Notification) {
 		switch {
 		case t.HasValue:
@@ -137,8 +146,11 @@ func (obs Observable) BlockingSingle(ctx context.Context) (interface{}, error) {
 			childCancel()
 		}
 	}
+
 	obs.Subscribe(childCtx, observer.Sink)
+
 	<-childCtx.Done()
+
 	switch {
 	case ctx.Err() != nil:
 		return nil, ctx.Err()
@@ -158,8 +170,10 @@ func (obs Observable) BlockingSingle(ctx context.Context) (interface{}, error) {
 // If ctx was cancelled during the subscription, BlockingSubscribe immediately
 // returns ctx.Err() and sink may still be called after that.
 func (obs Observable) BlockingSubscribe(ctx context.Context, sink Observer) error {
-	var result Notification
 	childCtx, childCancel := context.WithCancel(ctx)
+
+	var result Notification
+
 	obs.Subscribe(childCtx, func(t Notification) {
 		if !t.HasValue {
 			defer childCancel()
@@ -167,7 +181,9 @@ func (obs Observable) BlockingSubscribe(ctx context.Context, sink Observer) erro
 		result = t
 		sink(t)
 	})
+
 	<-childCtx.Done()
+
 	switch {
 	case ctx.Err() != nil:
 		return ctx.Err()

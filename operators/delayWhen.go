@@ -26,6 +26,7 @@ type delayWhenObservable struct {
 
 func (obs delayWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	ctx, cancel := context.WithCancel(ctx)
+
 	sink = sink.WithCancel(cancel).Mutex()
 
 	sourceIndex := -1
@@ -35,23 +36,30 @@ func (obs delayWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 		switch {
 		case t.HasValue:
 			sourceIndex++
+
 			sourceValue := t.Value
+
 			workers.Add(1)
 
 			scheduleCtx, scheduleCancel := context.WithCancel(ctx)
 
 			var observer rx.Observer
+
 			observer = func(t rx.Notification) {
 				observer = rx.Noop
 				scheduleCancel()
+
 				switch {
 				case t.HasValue:
 					sink.Next(sourceValue)
+
 					if workers.Sub(1) == 0 {
 						sink.Complete()
 					}
+
 				case t.HasError:
 					sink(t)
+
 				default:
 					if workers.Sub(1) == 0 {
 						sink(t)

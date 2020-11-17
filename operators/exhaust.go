@@ -36,6 +36,7 @@ type exhaustMapObservable struct {
 
 func (obs exhaustMapObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	ctx, cancel := context.WithCancel(ctx)
+
 	sink = sink.WithCancel(cancel).Mutex()
 
 	sourceIndex := -1
@@ -45,6 +46,7 @@ func (obs exhaustMapObservable) Subscribe(ctx context.Context, sink rx.Observer)
 		switch {
 		case t.HasValue:
 			sourceIndex++
+
 			if workers.Cas(1, 2) {
 				obs1 := obs.Project(t.Value, sourceIndex)
 				obs1.Subscribe(ctx, func(t rx.Notification) {

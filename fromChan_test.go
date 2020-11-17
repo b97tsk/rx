@@ -11,23 +11,29 @@ import (
 func TestFromChan(t *testing.T) {
 	t.Run("#1", func(t *testing.T) {
 		c := make(chan interface{})
+
 		go func() {
 			c <- "A"
 			c <- "B"
 			c <- "C"
 			close(c)
 		}()
+
 		Subscribe(t, rx.FromChan(c), "A", "B", "C", Completed)
 	})
+
 	t.Run("#2", func(t *testing.T) {
 		c := make(chan interface{})
+
 		go func() {
 			c <- "A"
 			c <- "B"
 			c <- "C"
 			close(c)
 		}()
+
 		obs := rx.FromChan(c)
+
 		SubscribeN(
 			t,
 			[]rx.Observable{

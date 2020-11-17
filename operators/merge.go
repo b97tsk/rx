@@ -43,9 +43,11 @@ func (configure MergeConfigure) Make() rx.Operator {
 	if configure.Project == nil {
 		configure.Project = projectToObservable
 	}
+
 	if configure.Concurrency == 0 {
 		configure.Concurrency = -1
 	}
+
 	return func(source rx.Observable) rx.Observable {
 		return mergeObservable{source, configure}.Subscribe
 	}
@@ -58,6 +60,7 @@ type mergeObservable struct {
 
 func (obs mergeObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	ctx, cancel := context.WithCancel(ctx)
+
 	sink = sink.WithCancel(cancel).Mutex()
 
 	x := struct {
@@ -69,22 +72,29 @@ func (obs mergeObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	}{Index: -1}
 
 	var subscribeLocked func()
+
 	subscribeLocked = func() {
 		x.Index++
+
 		sourceIndex := x.Index
 		sourceValue := x.Queue.Pop()
+
 		obs1 := obs.Project(sourceValue, sourceIndex)
+
 		go obs1.Subscribe(ctx, func(t rx.Notification) {
 			if t.HasValue || t.HasError {
 				sink(t)
 				return
 			}
+
 			x.Lock()
 			defer x.Unlock()
+
 			if x.Queue.Len() > 0 {
 				subscribeLocked()
 			} else {
 				x.Workers--
+
 				if x.Completed && x.Workers == 0 {
 					sink(t)
 				}
@@ -97,7 +107,9 @@ func (obs mergeObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		case t.HasValue:
 			x.Lock()
 			defer x.Unlock()
+
 			x.Queue.Push(t.Value)
+
 			if x.Workers != obs.Concurrency {
 				x.Workers++
 				subscribeLocked()
@@ -109,7 +121,9 @@ func (obs mergeObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		default:
 			x.Lock()
 			defer x.Unlock()
+
 			x.Completed = true
+
 			if x.Workers == 0 {
 				sink(t)
 			}

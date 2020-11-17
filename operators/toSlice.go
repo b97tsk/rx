@@ -14,15 +14,16 @@ func ToSlice() rx.Operator {
 
 func toSlice(source rx.Observable) rx.Observable {
 	return func(ctx context.Context, sink rx.Observer) {
-		var values []interface{}
+		var slice []interface{}
+
 		source.Subscribe(ctx, func(t rx.Notification) {
 			switch {
 			case t.HasValue:
-				values = append(values, t.Value)
+				slice = append(slice, t.Value)
 			case t.HasError:
 				sink(t)
 			default:
-				sink.Next(values)
+				sink.Next(slice)
 				sink.Complete()
 			}
 		})

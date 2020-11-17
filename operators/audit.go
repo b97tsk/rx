@@ -28,6 +28,7 @@ func Audit(durationSelector func(interface{}) rx.Observable) rx.Operator {
 func AuditTime(d time.Duration) rx.Operator {
 	obsTimer := rx.Timer(d)
 	durationSelector := func(interface{}) rx.Observable { return obsTimer }
+
 	return Audit(durationSelector)
 }
 
@@ -38,6 +39,7 @@ type auditObservable struct {
 
 func (obs auditObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	ctx, cancel := context.WithCancel(ctx)
+
 	sink = sink.WithCancel(cancel)
 
 	var x struct {
@@ -50,36 +52,43 @@ func (obs auditObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		if critical.Enter(&x.Section) {
 			switch {
 			case t.HasValue:
-				x.LatestValue = t.Value
 				shouldSchedule := !x.Scheduled
+
+				x.LatestValue = t.Value
 				x.Scheduled = true
+
 				critical.Leave(&x.Section)
 
 				if shouldSchedule {
 					scheduleCtx, scheduleCancel := context.WithCancel(ctx)
 
 					var observer rx.Observer
+
 					observer = func(t rx.Notification) {
 						observer = rx.Noop
 						scheduleCancel()
+
 						if critical.Enter(&x.Section) {
 							if t.HasError {
 								critical.Close(&x.Section)
 								sink(t)
 								return
 							}
+
 							sink.Next(x.LatestValue)
 							x.Scheduled = false
+
 							critical.Leave(&x.Section)
 						}
 					}
 
-					obs := obs.DurationSelector(t.Value)
-					obs.Subscribe(scheduleCtx, observer.Sink)
+					obs1 := obs.DurationSelector(t.Value)
+					obs1.Subscribe(scheduleCtx, observer.Sink)
 				}
 
 			default:
 				critical.Close(&x.Section)
+
 				sink(t)
 			}
 		}
