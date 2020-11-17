@@ -7,6 +7,16 @@ import (
 	"github.com/b97tsk/rx/internal/critical"
 )
 
+// Buffer buffers the source Observable values until closingNotifier emits.
+//
+// Buffer collects values from the past as a slice, and emits that slice
+// only when another Observable emits.
+func Buffer(closingNotifier rx.Observable) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
+		return bufferObservable{source, closingNotifier}.Subscribe
+	}
+}
+
 type bufferObservable struct {
 	Source          rx.Observable
 	ClosingNotifier rx.Observable
@@ -51,14 +61,4 @@ func (obs bufferObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 			}
 		}
 	})
-}
-
-// Buffer buffers the source Observable values until closingNotifier emits.
-//
-// Buffer collects values from the past as a slice, and emits that slice
-// only when another Observable emits.
-func Buffer(closingNotifier rx.Observable) rx.Operator {
-	return func(source rx.Observable) rx.Observable {
-		return bufferObservable{source, closingNotifier}.Subscribe
-	}
 }

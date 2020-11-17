@@ -8,6 +8,14 @@ import (
 	"github.com/b97tsk/rx/internal/critical"
 )
 
+// BufferTime buffers the source Observable values for a specific time period.
+//
+// BufferTime collects values from the past as a slice, and emits those slices
+// periodically in time.
+func BufferTime(d time.Duration) rx.Operator {
+	return BufferTimeConfigure{TimeSpan: d}.Make()
+}
+
 // A BufferTimeConfigure is a configure for BufferTime.
 type BufferTimeConfigure struct {
 	TimeSpan         time.Duration
@@ -128,12 +136,4 @@ func (obs bufferTimeObservable) Subscribe(ctx context.Context, sink rx.Observer)
 			}
 		}
 	})
-}
-
-// BufferTime buffers the source Observable values for a specific time period.
-//
-// BufferTime collects values from the past as a slice, and emits those slices
-// periodically in time.
-func BufferTime(d time.Duration) rx.Operator {
-	return BufferTimeConfigure{TimeSpan: d}.Make()
 }

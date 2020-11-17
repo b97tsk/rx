@@ -6,6 +6,13 @@ import (
 	"github.com/b97tsk/rx"
 )
 
+// First creates an Observable that emits only the first value emitted by
+// the source Observable, if the source turns out to be empty, throws
+// rx.ErrEmpty.
+func First() rx.Operator {
+	return first
+}
+
 func first(source rx.Observable) rx.Observable {
 	return func(ctx context.Context, sink rx.Observer) {
 		ctx, cancel := context.WithCancel(ctx)
@@ -27,13 +34,6 @@ func first(source rx.Observable) rx.Observable {
 
 		source.Subscribe(ctx, observer.Sink)
 	}
-}
-
-// First creates an Observable that emits only the first value emitted by
-// the source Observable, if the source turns out to be empty, throws
-// rx.ErrEmpty.
-func First() rx.Operator {
-	return first
 }
 
 // FirstOrDefault creates an Observable that emits only the first value

@@ -4,6 +4,18 @@ import (
 	"context"
 )
 
+// ForkJoin creates an Observable that joins last values emitted by passed
+// Observables.
+//
+// ForkJoin waits for Observables to complete and then combine last values
+// they emitted.
+func ForkJoin(observables ...Observable) Observable {
+	if len(observables) == 0 {
+		return Empty()
+	}
+	return forkJoinObservable(observables).Subscribe
+}
+
 type forkJoinObservable []Observable
 
 type forkJoinElement struct {
@@ -67,16 +79,4 @@ func (observables forkJoinObservable) Subscribe(ctx context.Context, sink Observ
 			}
 		})
 	}
-}
-
-// ForkJoin creates an Observable that joins last values emitted by passed
-// Observables.
-//
-// ForkJoin waits for Observables to complete and then combine last values
-// they emitted.
-func ForkJoin(observables ...Observable) Observable {
-	if len(observables) == 0 {
-		return Empty()
-	}
-	return forkJoinObservable(observables).Subscribe
 }

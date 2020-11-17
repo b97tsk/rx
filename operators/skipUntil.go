@@ -7,6 +7,14 @@ import (
 	"github.com/b97tsk/rx/internal/atomic"
 )
 
+// SkipUntil creates an Observable that skips items emitted by the source
+// Observable until a second Observable emits an item.
+func SkipUntil(notifier rx.Observable) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
+		return skipUntilObservable{source, notifier}.Subscribe
+	}
+}
+
 type skipUntilObservable struct {
 	Source   rx.Observable
 	Notifier rx.Observable
@@ -65,13 +73,5 @@ func (obs skipUntilObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 		}
 
 		obs.Source.Subscribe(ctx, observer.Sink)
-	}
-}
-
-// SkipUntil creates an Observable that skips items emitted by the source
-// Observable until a second Observable emits an item.
-func SkipUntil(notifier rx.Observable) rx.Operator {
-	return func(source rx.Observable) rx.Observable {
-		return skipUntilObservable{source, notifier}.Subscribe
 	}
 }

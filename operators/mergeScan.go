@@ -8,6 +8,16 @@ import (
 	"github.com/b97tsk/rx/internal/queue"
 )
 
+// MergeScan applies an accumulator function over the source Observable where
+// the accumulator function itself returns an Observable, then each
+// intermediate Observable returned is merged into the output Observable.
+//
+// It's like Scan, but the Observables returned by the accumulator are merged
+// into the outer Observable.
+func MergeScan(accumulator func(interface{}, interface{}) rx.Observable, seed interface{}) rx.Operator {
+	return MergeScanConfigure{accumulator, seed, -1}.Make()
+}
+
 // A MergeScanConfigure is a configure for MergeScan.
 type MergeScanConfigure struct {
 	Accumulator func(interface{}, interface{}) rx.Observable
@@ -107,14 +117,4 @@ func (obs mergeScanObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 			}
 		}
 	})
-}
-
-// MergeScan applies an accumulator function over the source Observable where
-// the accumulator function itself returns an Observable, then each
-// intermediate Observable returned is merged into the output Observable.
-//
-// It's like Scan, but the Observables returned by the accumulator are merged
-// into the outer Observable.
-func MergeScan(accumulator func(interface{}, interface{}) rx.Observable, seed interface{}) rx.Operator {
-	return MergeScanConfigure{accumulator, seed, -1}.Make()
 }

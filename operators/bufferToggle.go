@@ -7,6 +7,18 @@ import (
 	"github.com/b97tsk/rx/internal/critical"
 )
 
+// BufferToggle buffers the source Observable values starting from an emission
+// from openings and ending when the output of closingSelector emits.
+//
+// BufferToggle collects values from the past as a slice, starts collecting
+// only when opening emits, and calls the closingSelector function to get an
+// Observable that tells when to close the buffer.
+func BufferToggle(openings rx.Observable, closingSelector func(interface{}) rx.Observable) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
+		return bufferToggleObservable{source, openings, closingSelector}.Subscribe
+	}
+}
+
 type bufferToggleObservable struct {
 	Source          rx.Observable
 	Openings        rx.Observable
@@ -104,16 +116,4 @@ func (obs bufferToggleObservable) Subscribe(ctx context.Context, sink rx.Observe
 			}
 		}
 	})
-}
-
-// BufferToggle buffers the source Observable values starting from an emission
-// from openings and ending when the output of closingSelector emits.
-//
-// BufferToggle collects values from the past as a slice, starts collecting
-// only when opening emits, and calls the closingSelector function to get an
-// Observable that tells when to close the buffer.
-func BufferToggle(openings rx.Observable, closingSelector func(interface{}) rx.Observable) rx.Operator {
-	return func(source rx.Observable) rx.Observable {
-		return bufferToggleObservable{source, openings, closingSelector}.Subscribe
-	}
 }

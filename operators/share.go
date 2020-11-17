@@ -8,6 +8,20 @@ import (
 	"github.com/b97tsk/rx/internal/ctxutil"
 )
 
+// Share returns a new Observable that multicasts (shares) the original
+// Observable. When subscribed multiple times, it guarantees that only one
+// subscription is made to the source Observable at the same time. When all
+// subscribers have unsubscribed it will unsubscribe from the source Observable.
+func Share(doubleFactory rx.DoubleFactory) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
+		obs := shareObservable{
+			source:        source,
+			doubleFactory: doubleFactory,
+		}
+		return obs.Subscribe
+	}
+}
+
 type shareObservable struct {
 	mu            sync.Mutex
 	cws           ctxutil.ContextWaitService
@@ -84,19 +98,5 @@ func (obs *shareObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 
 	for obs.cws == nil || !obs.cws.Submit(ctx, finalize) {
 		obs.cws = ctxutil.NewContextWaitService()
-	}
-}
-
-// Share returns a new Observable that multicasts (shares) the original
-// Observable. When subscribed multiple times, it guarantees that only one
-// subscription is made to the source Observable at the same time. When all
-// subscribers have unsubscribed it will unsubscribe from the source Observable.
-func Share(doubleFactory rx.DoubleFactory) rx.Operator {
-	return func(source rx.Observable) rx.Observable {
-		obs := shareObservable{
-			source:        source,
-			doubleFactory: doubleFactory,
-		}
-		return obs.Subscribe
 	}
 }

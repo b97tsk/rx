@@ -8,6 +8,30 @@ import (
 	"github.com/b97tsk/rx/internal/queue"
 )
 
+// MergeAll converts a higher-order Observable into a first-order Observable
+// which concurrently delivers all values that are emitted on the inner
+// Observables.
+func MergeAll() rx.Operator {
+	return MergeMap(projectToObservable)
+}
+
+// MergeMap creates an Observable that projects each source value to an
+// Observable which is merged in the output Observable.
+//
+// MergeMap maps each value to an Observable, then flattens all of these inner
+// Observables using MergeAll.
+func MergeMap(project func(interface{}, int) rx.Observable) rx.Operator {
+	return MergeConfigure{project, -1}.Make()
+}
+
+// MergeMapTo creates an Observable that projects each source value to the same
+// Observable which is merged multiple times in the output Observable.
+//
+// It's like MergeMap, but maps each value always to the same inner Observable.
+func MergeMapTo(inner rx.Observable) rx.Operator {
+	return MergeMap(func(interface{}, int) rx.Observable { return inner })
+}
+
 // A MergeConfigure is a configure for Merge.
 type MergeConfigure struct {
 	Project     func(interface{}, int) rx.Observable
@@ -91,28 +115,4 @@ func (obs mergeObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 			}
 		}
 	})
-}
-
-// MergeAll converts a higher-order Observable into a first-order Observable
-// which concurrently delivers all values that are emitted on the inner
-// Observables.
-func MergeAll() rx.Operator {
-	return MergeMap(projectToObservable)
-}
-
-// MergeMap creates an Observable that projects each source value to an
-// Observable which is merged in the output Observable.
-//
-// MergeMap maps each value to an Observable, then flattens all of these inner
-// Observables using MergeAll.
-func MergeMap(project func(interface{}, int) rx.Observable) rx.Operator {
-	return MergeConfigure{project, -1}.Make()
-}
-
-// MergeMapTo creates an Observable that projects each source value to the same
-// Observable which is merged multiple times in the output Observable.
-//
-// It's like MergeMap, but maps each value always to the same inner Observable.
-func MergeMapTo(inner rx.Observable) rx.Operator {
-	return MergeMap(func(interface{}, int) rx.Observable { return inner })
 }

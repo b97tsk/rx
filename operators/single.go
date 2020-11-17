@@ -6,6 +6,13 @@ import (
 	"github.com/b97tsk/rx"
 )
 
+// Single creates an Observable that emits the single item emitted by the
+// source Observable. If the source emits more than one item or no items,
+// throws rx.ErrNotSingle or rx.ErrEmpty respectively.
+func Single() rx.Operator {
+	return single
+}
+
 func single(source rx.Observable) rx.Observable {
 	return func(ctx context.Context, sink rx.Observer) {
 		ctx, cancel := context.WithCancel(ctx)
@@ -41,11 +48,4 @@ func single(source rx.Observable) rx.Observable {
 
 		source.Subscribe(ctx, observer.Sink)
 	}
-}
-
-// Single creates an Observable that emits the single item emitted by the
-// source Observable. If the source emits more than one item or no items,
-// throws rx.ErrNotSingle or rx.ErrEmpty respectively.
-func Single() rx.Operator {
-	return single
 }

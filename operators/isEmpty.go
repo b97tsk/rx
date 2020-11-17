@@ -6,6 +6,12 @@ import (
 	"github.com/b97tsk/rx"
 )
 
+// IsEmpty creates an Observable that emits true if the source Observable
+// emits no items, otherwise, it emits false.
+func IsEmpty() rx.Operator {
+	return isEmpty
+}
+
 func isEmpty(source rx.Observable) rx.Observable {
 	return func(ctx context.Context, sink rx.Observer) {
 		ctx, cancel := context.WithCancel(ctx)
@@ -28,10 +34,4 @@ func isEmpty(source rx.Observable) rx.Observable {
 
 		source.Subscribe(ctx, observer.Sink)
 	}
-}
-
-// IsEmpty creates an Observable that emits true if the source Observable
-// emits no items, otherwise, it emits false.
-func IsEmpty() rx.Operator {
-	return isEmpty
 }

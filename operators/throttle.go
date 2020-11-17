@@ -8,6 +8,34 @@ import (
 	"github.com/b97tsk/rx/internal/critical"
 )
 
+// Throttle creates an Observable that emits a value from the source
+// Observable, then ignores subsequent source values for a duration determined
+// by another Observable, then repeats this process.
+//
+// It's like ThrottleTime, but the silencing duration is determined by a second
+// Observable.
+func Throttle(durationSelector func(interface{}) rx.Observable) rx.Operator {
+	return ThrottleConfigure{
+		DurationSelector: durationSelector,
+		Leading:          true,
+		Trailing:         false,
+	}.Make()
+}
+
+// ThrottleTime creates an Observable that emits a value from the source
+// Observable, then ignores subsequent source values for a duration, then
+// repeats this process.
+//
+// ThrottleTime lets a value pass, then ignores source values for the next
+// duration time.
+func ThrottleTime(d time.Duration) rx.Operator {
+	return ThrottleTimeConfigure{
+		Duration: d,
+		Leading:  true,
+		Trailing: false,
+	}.Make()
+}
+
 // A ThrottleConfigure is a configure for Throttle.
 type ThrottleConfigure struct {
 	DurationSelector func(interface{}) rx.Observable
@@ -117,32 +145,4 @@ func (obs throttleObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 			}
 		}
 	})
-}
-
-// Throttle creates an Observable that emits a value from the source
-// Observable, then ignores subsequent source values for a duration determined
-// by another Observable, then repeats this process.
-//
-// It's like ThrottleTime, but the silencing duration is determined by a second
-// Observable.
-func Throttle(durationSelector func(interface{}) rx.Observable) rx.Operator {
-	return ThrottleConfigure{
-		DurationSelector: durationSelector,
-		Leading:          true,
-		Trailing:         false,
-	}.Make()
-}
-
-// ThrottleTime creates an Observable that emits a value from the source
-// Observable, then ignores subsequent source values for a duration, then
-// repeats this process.
-//
-// ThrottleTime lets a value pass, then ignores source values for the next
-// duration time.
-func ThrottleTime(d time.Duration) rx.Operator {
-	return ThrottleTimeConfigure{
-		Duration: d,
-		Leading:  true,
-		Trailing: false,
-	}.Make()
 }

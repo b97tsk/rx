@@ -6,6 +6,12 @@ import (
 	"github.com/b97tsk/rx"
 )
 
+// Dematerialize converts an Observable of Notification objects into the
+// emissions that they represent. It's the opposite of Materialize.
+func Dematerialize() rx.Operator {
+	return dematerialize
+}
+
 func dematerialize(source rx.Observable) rx.Observable {
 	return func(ctx context.Context, sink rx.Observer) {
 		ctx, cancel := context.WithCancel(ctx)
@@ -34,10 +40,4 @@ func dematerialize(source rx.Observable) rx.Observable {
 
 		source.Subscribe(ctx, observer.Sink)
 	}
-}
-
-// Dematerialize converts an Observable of Notification objects into the
-// emissions that they represent. It's the opposite of Materialize.
-func Dematerialize() rx.Operator {
-	return dematerialize
 }

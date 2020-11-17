@@ -4,6 +4,15 @@ import (
 	"context"
 )
 
+// Race creates an Observable that mirrors the first source Observable to emit
+// an item from the combination of this Observable and supplied Observables.
+func Race(observables ...Observable) Observable {
+	if len(observables) == 0 {
+		return Empty()
+	}
+	return raceObservable(observables).Subscribe
+}
+
 type raceObservable []Observable
 
 func (observables raceObservable) Subscribe(ctx context.Context, sink Observer) {
@@ -43,13 +52,4 @@ func (observables raceObservable) Subscribe(ctx context.Context, sink Observer) 
 		}
 		go obs.Subscribe(subscriptions[i].Context, observer.Sink)
 	}
-}
-
-// Race creates an Observable that mirrors the first source Observable to emit
-// an item from the combination of this Observable and supplied Observables.
-func Race(observables ...Observable) Observable {
-	if len(observables) == 0 {
-		return Empty()
-	}
-	return raceObservable(observables).Subscribe
 }

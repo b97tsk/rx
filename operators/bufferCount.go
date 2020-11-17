@@ -6,6 +6,18 @@ import (
 	"github.com/b97tsk/rx"
 )
 
+// BufferCount buffers the source Observable values until the size hits the
+// maximum bufferSize given.
+//
+// BufferCount collects values from the past as a slice, and emits that slice
+// only when its size reaches bufferSize.
+//
+// For the purpose of allocation avoidance, slices emitted by the output
+// Observable actually share the same underlying array.
+func BufferCount(bufferSize int) rx.Operator {
+	return BufferCountConfigure{BufferSize: bufferSize}.Make()
+}
+
 // A BufferCountConfigure is a configure for BufferCount.
 type BufferCountConfigure struct {
 	BufferSize       int
@@ -69,16 +81,4 @@ func (obs bufferCountObservable) Subscribe(ctx context.Context, sink rx.Observer
 			sink(t)
 		}
 	})
-}
-
-// BufferCount buffers the source Observable values until the size hits the
-// maximum bufferSize given.
-//
-// BufferCount collects values from the past as a slice, and emits that slice
-// only when its size reaches bufferSize.
-//
-// For the purpose of allocation avoidance, slices emitted by the output
-// Observable actually share the same underlying array.
-func BufferCount(bufferSize int) rx.Operator {
-	return BufferCountConfigure{BufferSize: bufferSize}.Make()
 }

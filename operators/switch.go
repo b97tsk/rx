@@ -7,6 +7,36 @@ import (
 	"github.com/b97tsk/rx/internal/atomic"
 )
 
+// SwitchAll converts a higher-order Observable into a first-order Observable
+// by subscribing to only the most recently emitted of those inner Observables.
+//
+// SwitchAll flattens an Observable-of-Observables by dropping the previous
+// inner Observable once a new one appears.
+func SwitchAll() rx.Operator {
+	return SwitchMap(projectToObservable)
+}
+
+// SwitchMap creates an Observable that projects each source value to an
+// Observable which is merged in the output Observable, emitting values only
+// from the most recently projected Observable.
+//
+// SwitchMap maps each value to an Observable, then flattens all of these inner
+// Observables using Switch.
+func SwitchMap(project func(interface{}, int) rx.Observable) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
+		return switchMapObservable{source, project}.Subscribe
+	}
+}
+
+// SwitchMapTo creates an Observable that projects each source value to the
+// same Observable which is flattened multiple times with Switch in the output
+// Observable.
+//
+// It's like SwitchMap, but maps each value always to the same inner Observable.
+func SwitchMapTo(inner rx.Observable) rx.Operator {
+	return SwitchMap(func(interface{}, int) rx.Observable { return inner })
+}
+
 type switchMapObservable struct {
 	Source  rx.Observable
 	Project func(interface{}, int) rx.Observable
@@ -63,34 +93,4 @@ func (obs switchMapObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 			}
 		}
 	})
-}
-
-// SwitchAll converts a higher-order Observable into a first-order Observable
-// by subscribing to only the most recently emitted of those inner Observables.
-//
-// SwitchAll flattens an Observable-of-Observables by dropping the previous
-// inner Observable once a new one appears.
-func SwitchAll() rx.Operator {
-	return SwitchMap(projectToObservable)
-}
-
-// SwitchMap creates an Observable that projects each source value to an
-// Observable which is merged in the output Observable, emitting values only
-// from the most recently projected Observable.
-//
-// SwitchMap maps each value to an Observable, then flattens all of these inner
-// Observables using Switch.
-func SwitchMap(project func(interface{}, int) rx.Observable) rx.Operator {
-	return func(source rx.Observable) rx.Observable {
-		return switchMapObservable{source, project}.Subscribe
-	}
-}
-
-// SwitchMapTo creates an Observable that projects each source value to the
-// same Observable which is flattened multiple times with Switch in the output
-// Observable.
-//
-// It's like SwitchMap, but maps each value always to the same inner Observable.
-func SwitchMapTo(inner rx.Observable) rx.Operator {
-	return SwitchMap(func(interface{}, int) rx.Observable { return inner })
 }

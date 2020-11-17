@@ -6,6 +6,16 @@ import (
 	"github.com/b97tsk/rx"
 )
 
+// Scan creates an Observable that applies an accumulator function over the
+// source Observable, and emits each intermediate result, with an optional
+// seed value.
+//
+// It's like Reduce, but emits the current accumulation whenever the source
+// emits a value.
+func Scan(accumulator func(interface{}, interface{}, int) interface{}) rx.Operator {
+	return ScanConfigure{Accumulator: accumulator}.Make()
+}
+
 // A ScanConfigure is a configure for Scan.
 type ScanConfigure struct {
 	Accumulator func(interface{}, interface{}, int) interface{}
@@ -52,14 +62,4 @@ func (obs scanObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 			sink(t)
 		}
 	})
-}
-
-// Scan creates an Observable that applies an accumulator function over the
-// source Observable, and emits each intermediate result, with an optional
-// seed value.
-//
-// It's like Reduce, but emits the current accumulation whenever the source
-// emits a value.
-func Scan(accumulator func(interface{}, interface{}, int) interface{}) rx.Operator {
-	return ScanConfigure{Accumulator: accumulator}.Make()
 }

@@ -9,6 +9,14 @@ import (
 	"github.com/b97tsk/rx/internal/queue"
 )
 
+// Delay delays the emission of items from the source Observable by a given
+// timeout.
+func Delay(d time.Duration) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
+		return delayObservable{source, d}.Subscribe
+	}
+}
+
 type delayObservable struct {
 	Source   rx.Observable
 	Duration time.Duration
@@ -91,12 +99,4 @@ func (obs delayObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 			}
 		}
 	})
-}
-
-// Delay delays the emission of items from the source Observable by a given
-// timeout.
-func Delay(d time.Duration) rx.Operator {
-	return func(source rx.Observable) rx.Observable {
-		return delayObservable{source, d}.Subscribe
-	}
 }

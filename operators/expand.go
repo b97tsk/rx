@@ -8,6 +8,15 @@ import (
 	"github.com/b97tsk/rx/internal/queue"
 )
 
+// Expand recursively projects each source value to an Observable which is
+// merged in the output Observable.
+//
+// It's similar to MergeMap, but applies the projection function to every
+// source value as well as every output value. It's recursive.
+func Expand(project func(interface{}) rx.Observable) rx.Operator {
+	return ExpandConfigure{project, -1}.Make()
+}
+
 // An ExpandConfigure is a configure for Expand.
 type ExpandConfigure struct {
 	Project     func(interface{}) rx.Observable
@@ -100,13 +109,4 @@ func (obs expandObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 			}
 		}
 	})
-}
-
-// Expand recursively projects each source value to an Observable which is
-// merged in the output Observable.
-//
-// It's similar to MergeMap, but applies the projection function to every
-// source value as well as every output value. It's recursive.
-func Expand(project func(interface{}) rx.Observable) rx.Operator {
-	return ExpandConfigure{project, -1}.Make()
 }

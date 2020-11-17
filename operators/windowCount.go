@@ -6,6 +6,14 @@ import (
 	"github.com/b97tsk/rx"
 )
 
+// WindowCount branches out the source Observable values as a nested Observable
+// with each nested Observable emitting at most windowSize values.
+//
+// It's like BufferCount, but emits a nested Observable instead of a slice.
+func WindowCount(windowSize int) rx.Operator {
+	return WindowCountConfigure{WindowSize: windowSize}.Make()
+}
+
 // A WindowCountConfigure is a configure for WindowCount.
 type WindowCountConfigure struct {
 	WindowSize       int
@@ -87,12 +95,4 @@ func (obs windowCountObservable) Subscribe(ctx context.Context, sink rx.Observer
 			sink(t)
 		}
 	})
-}
-
-// WindowCount branches out the source Observable values as a nested Observable
-// with each nested Observable emitting at most windowSize values.
-//
-// It's like BufferCount, but emits a nested Observable instead of a slice.
-func WindowCount(windowSize int) rx.Operator {
-	return WindowCountConfigure{WindowSize: windowSize}.Make()
 }

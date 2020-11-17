@@ -6,39 +6,6 @@ import (
 	"github.com/b97tsk/rx"
 )
 
-type congestingConcatObservable struct {
-	Source  rx.Observable
-	Project func(interface{}, int) rx.Observable
-}
-
-func (obs congestingConcatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
-	var observer rx.Observer
-
-	sourceIndex := -1
-
-	observer = func(t rx.Notification) {
-		switch {
-		case t.HasValue:
-			sourceIndex++
-
-			obs1 := obs.Project(t.Value, sourceIndex)
-			err := obs1.BlockingSubscribe(ctx, func(t rx.Notification) {
-				if t.HasValue || t.HasError {
-					sink(t)
-				}
-			})
-			if err != nil {
-				observer = rx.Noop
-			}
-
-		default:
-			sink(t)
-		}
-	}
-
-	obs.Source.Subscribe(ctx, observer.Sink)
-}
-
 // CongestingConcatAll creates an Observable that flattens a higher-order
 // Observable into a first-order Observable by concatenating the inner
 // Observables in order.
@@ -71,4 +38,37 @@ func CongestingConcatMap(project func(interface{}, int) rx.Observable) rx.Operat
 // It's like ConcatMapTo, but it congests the source.
 func CongestingConcatMapTo(inner rx.Observable) rx.Operator {
 	return CongestingConcatMap(func(interface{}, int) rx.Observable { return inner })
+}
+
+type congestingConcatObservable struct {
+	Source  rx.Observable
+	Project func(interface{}, int) rx.Observable
+}
+
+func (obs congestingConcatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
+	var observer rx.Observer
+
+	sourceIndex := -1
+
+	observer = func(t rx.Notification) {
+		switch {
+		case t.HasValue:
+			sourceIndex++
+
+			obs1 := obs.Project(t.Value, sourceIndex)
+			err := obs1.BlockingSubscribe(ctx, func(t rx.Notification) {
+				if t.HasValue || t.HasError {
+					sink(t)
+				}
+			})
+			if err != nil {
+				observer = rx.Noop
+			}
+
+		default:
+			sink(t)
+		}
+	}
+
+	obs.Source.Subscribe(ctx, observer.Sink)
 }

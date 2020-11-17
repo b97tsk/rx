@@ -7,6 +7,28 @@ import (
 	"github.com/b97tsk/rx/internal/atomic"
 )
 
+// ExhaustAll converts a higher-order Observable into a first-order Observable
+// by dropping inner Observables while the previous inner Observable has not
+// yet completed.
+//
+// ExhaustAll flattens an Observable-of-Observables by dropping the next inner
+// Observables while the current inner is still executing.
+func ExhaustAll() rx.Operator {
+	return ExhaustMap(projectToObservable)
+}
+
+// ExhaustMap creates an Observable that projects each source value to an
+// Observable which is merged in the output Observable only if the previous
+// projected Observable has completed.
+//
+// ExhaustMap maps each value to an Observable, then flattens all of these
+// inner Observables using Exhaust.
+func ExhaustMap(project func(interface{}, int) rx.Observable) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
+		return exhaustMapObservable{source, project}.Subscribe
+	}
+}
+
 type exhaustMapObservable struct {
 	Source  rx.Observable
 	Project func(interface{}, int) rx.Observable
@@ -45,26 +67,4 @@ func (obs exhaustMapObservable) Subscribe(ctx context.Context, sink rx.Observer)
 			}
 		}
 	})
-}
-
-// ExhaustAll converts a higher-order Observable into a first-order Observable
-// by dropping inner Observables while the previous inner Observable has not
-// yet completed.
-//
-// ExhaustAll flattens an Observable-of-Observables by dropping the next inner
-// Observables while the current inner is still executing.
-func ExhaustAll() rx.Operator {
-	return ExhaustMap(projectToObservable)
-}
-
-// ExhaustMap creates an Observable that projects each source value to an
-// Observable which is merged in the output Observable only if the previous
-// projected Observable has completed.
-//
-// ExhaustMap maps each value to an Observable, then flattens all of these
-// inner Observables using Exhaust.
-func ExhaustMap(project func(interface{}, int) rx.Observable) rx.Operator {
-	return func(source rx.Observable) rx.Observable {
-		return exhaustMapObservable{source, project}.Subscribe
-	}
 }

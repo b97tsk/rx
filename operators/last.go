@@ -6,6 +6,13 @@ import (
 	"github.com/b97tsk/rx"
 )
 
+// Last creates an Observable that emits only the last value emitted by
+// the source Observable, if the source turns out to be empty, throws
+// rx.ErrEmpty.
+func Last() rx.Operator {
+	return last
+}
+
 func last(source rx.Observable) rx.Observable {
 	return func(ctx context.Context, sink rx.Observer) {
 		var last struct {
@@ -29,13 +36,6 @@ func last(source rx.Observable) rx.Observable {
 			}
 		})
 	}
-}
-
-// Last creates an Observable that emits only the last value emitted by
-// the source Observable, if the source turns out to be empty, throws
-// rx.ErrEmpty.
-func Last() rx.Operator {
-	return last
 }
 
 // LastOrDefault creates an Observable that emits only the last value emitted

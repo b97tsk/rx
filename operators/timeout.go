@@ -7,6 +7,12 @@ import (
 	"github.com/b97tsk/rx"
 )
 
+// Timeout creates an Observable that mirrors the source Observable or throws
+// rx.ErrTimeout if the source does not emit a value in given time span.
+func Timeout(d time.Duration) rx.Operator {
+	return TimeoutConfigure{Duration: d}.Make()
+}
+
 // A TimeoutConfigure is a configure for Timeout.
 type TimeoutConfigure struct {
 	Duration   time.Duration
@@ -71,10 +77,4 @@ func (obs timeoutObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 			}
 		}
 	})
-}
-
-// Timeout creates an Observable that mirrors the source Observable or throws
-// rx.ErrTimeout if the source does not emit a value in given time span.
-func Timeout(d time.Duration) rx.Operator {
-	return TimeoutConfigure{Duration: d}.Make()
 }

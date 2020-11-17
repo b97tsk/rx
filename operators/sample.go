@@ -8,6 +8,23 @@ import (
 	"github.com/b97tsk/rx/internal/critical"
 )
 
+// Sample creates an Observable that emits the most recently emitted value from
+// the source Observable whenever another Observable, the notifier, emits.
+//
+// It's like SampleTime, but samples whenever the notifier Observable emits
+// something.
+func Sample(notifier rx.Observable) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
+		return sampleObservable{source, notifier}.Subscribe
+	}
+}
+
+// SampleTime creates an Observable that emits the most recently emitted value
+// from the source Observable within periodic time intervals.
+func SampleTime(d time.Duration) rx.Operator {
+	return Sample(rx.Ticker(d))
+}
+
 type sampleObservable struct {
 	Source   rx.Observable
 	Notifier rx.Observable
@@ -57,21 +74,4 @@ func (obs sampleObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 			}
 		}
 	})
-}
-
-// Sample creates an Observable that emits the most recently emitted value from
-// the source Observable whenever another Observable, the notifier, emits.
-//
-// It's like SampleTime, but samples whenever the notifier Observable emits
-// something.
-func Sample(notifier rx.Observable) rx.Operator {
-	return func(source rx.Observable) rx.Observable {
-		return sampleObservable{source, notifier}.Subscribe
-	}
-}
-
-// SampleTime creates an Observable that emits the most recently emitted value
-// from the source Observable within periodic time intervals.
-func SampleTime(d time.Duration) rx.Operator {
-	return Sample(rx.Ticker(d))
 }

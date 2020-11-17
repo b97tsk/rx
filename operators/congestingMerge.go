@@ -7,6 +7,39 @@ import (
 	"github.com/b97tsk/rx"
 )
 
+// CongestingMergeAll converts a higher-order Observable into a first-order
+// Observable which concurrently delivers all values that are emitted on the
+// inner Observables.
+//
+// It's like MergeAll, but it may congest the source due to concurrency limit.
+func CongestingMergeAll() rx.Operator {
+	return CongestingMergeMap(projectToObservable)
+}
+
+// CongestingMergeMap creates an Observable that projects each source value to
+// an Observable which is merged in the output Observable.
+//
+// CongestingMergeMap maps each value to an Observable, then flattens all of
+// these inner Observables using CongestingMergeAll.
+//
+// It's like MergeMap, but it may congest the source due to concurrency limit.
+func CongestingMergeMap(project func(interface{}, int) rx.Observable) rx.Operator {
+	return CongestingMergeConfigure{project, -1}.Make()
+}
+
+// CongestingMergeMapTo creates an Observable that projects each source value
+// to the same Observable which is merged multiple times in the output
+// Observable.
+//
+// It's like CongestingMergeMap, but maps each value always to the same inner
+// Observable.
+//
+// It's like MergeMapTo, but it may congest the source due to concurrency
+// limit.
+func CongestingMergeMapTo(inner rx.Observable) rx.Operator {
+	return CongestingMergeMap(func(interface{}, int) rx.Observable { return inner })
+}
+
 // A CongestingMergeConfigure is a configure for CongestingMerge.
 type CongestingMergeConfigure struct {
 	Project     func(interface{}, int) rx.Observable
@@ -97,37 +130,4 @@ func (obs congestingMergeObservable) Subscribe(ctx context.Context, sink rx.Obse
 	}
 
 	obs.Source.Subscribe(ctx, observer.Sink)
-}
-
-// CongestingMergeAll converts a higher-order Observable into a first-order
-// Observable which concurrently delivers all values that are emitted on the
-// inner Observables.
-//
-// It's like MergeAll, but it may congest the source due to concurrency limit.
-func CongestingMergeAll() rx.Operator {
-	return CongestingMergeMap(projectToObservable)
-}
-
-// CongestingMergeMap creates an Observable that projects each source value to
-// an Observable which is merged in the output Observable.
-//
-// CongestingMergeMap maps each value to an Observable, then flattens all of
-// these inner Observables using CongestingMergeAll.
-//
-// It's like MergeMap, but it may congest the source due to concurrency limit.
-func CongestingMergeMap(project func(interface{}, int) rx.Observable) rx.Operator {
-	return CongestingMergeConfigure{project, -1}.Make()
-}
-
-// CongestingMergeMapTo creates an Observable that projects each source value
-// to the same Observable which is merged multiple times in the output
-// Observable.
-//
-// It's like CongestingMergeMap, but maps each value always to the same inner
-// Observable.
-//
-// It's like MergeMapTo, but it may congest the source due to concurrency
-// limit.
-func CongestingMergeMapTo(inner rx.Observable) rx.Operator {
-	return CongestingMergeMap(func(interface{}, int) rx.Observable { return inner })
 }

@@ -6,6 +6,15 @@ import (
 	"github.com/b97tsk/rx/internal/norec"
 )
 
+// OnErrorResumeNext creates an Observable that concatenates the provided
+// Observables. It's like Concat, but errors are ignored.
+func OnErrorResumeNext(observables ...Observable) Observable {
+	if len(observables) == 0 {
+		return Empty()
+	}
+	return onErrorResumeNextObservable(observables).Subscribe
+}
+
 type onErrorResumeNextObservable []Observable
 
 func (observables onErrorResumeNextObservable) Subscribe(ctx context.Context, sink Observer) {
@@ -34,13 +43,4 @@ func (observables onErrorResumeNextObservable) Subscribe(ctx context.Context, si
 	}
 
 	subscribeToNext()
-}
-
-// OnErrorResumeNext creates an Observable that concatenates the provided
-// Observables. It's like Concat, but errors are ignored.
-func OnErrorResumeNext(observables ...Observable) Observable {
-	if len(observables) == 0 {
-		return Empty()
-	}
-	return onErrorResumeNextObservable(observables).Subscribe
 }

@@ -6,6 +6,17 @@ import (
 	"github.com/b97tsk/rx"
 )
 
+// SkipLast creates an Observable that skip the last count values emitted by
+// the source Observable.
+func SkipLast(count int) rx.Operator {
+	if count <= 0 {
+		return noop
+	}
+	return func(source rx.Observable) rx.Observable {
+		return skipLastObservable{source, count}.Subscribe
+	}
+}
+
 type skipLastObservable struct {
 	Source rx.Observable
 	Count  int
@@ -32,15 +43,4 @@ func (obs skipLastObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 			sink(t)
 		}
 	})
-}
-
-// SkipLast creates an Observable that skip the last count values emitted by
-// the source Observable.
-func SkipLast(count int) rx.Operator {
-	if count <= 0 {
-		return noop
-	}
-	return func(source rx.Observable) rx.Observable {
-		return skipLastObservable{source, count}.Subscribe
-	}
 }

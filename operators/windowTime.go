@@ -8,6 +8,14 @@ import (
 	"github.com/b97tsk/rx/internal/critical"
 )
 
+// WindowTime branches out the source Observable values as a nested Observable
+// periodically in time.
+//
+// It's like BufferTime, but emits a nested Observable instead of a slice.
+func WindowTime(d time.Duration) rx.Operator {
+	return WindowTimeConfigure{TimeSpan: d}.Make()
+}
+
 // A WindowTimeConfigure is a configure for WindowTime.
 type WindowTimeConfigure struct {
 	TimeSpan         time.Duration
@@ -128,12 +136,4 @@ func (obs windowTimeObservable) Subscribe(ctx context.Context, sink rx.Observer)
 			}
 		}
 	})
-}
-
-// WindowTime branches out the source Observable values as a nested Observable
-// periodically in time.
-//
-// It's like BufferTime, but emits a nested Observable instead of a slice.
-func WindowTime(d time.Duration) rx.Operator {
-	return WindowTimeConfigure{TimeSpan: d}.Make()
 }

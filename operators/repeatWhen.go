@@ -8,6 +8,17 @@ import (
 	"github.com/b97tsk/rx/internal/norec"
 )
 
+// RepeatWhen creates an Observable that mirrors the source Observable with
+// one exception: when the source completes, this operator will emit nil to
+// the Observable returned by the notifier. If that Observable emits a value,
+// this operator will resubscribe to the source; otherwise, this operator
+// will cause the child subscription to complete.
+func RepeatWhen(notifier rx.Operator) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
+		return repeatWhenObservable{source, notifier}.Subscribe
+	}
+}
+
 type repeatWhenObservable struct {
 	Source   rx.Observable
 	Notifier rx.Operator
@@ -59,15 +70,4 @@ func (obs repeatWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 	})
 
 	subscribeToSource()
-}
-
-// RepeatWhen creates an Observable that mirrors the source Observable with
-// one exception: when the source completes, this operator will emit nil to
-// the Observable returned by the notifier. If that Observable emits a value,
-// this operator will resubscribe to the source; otherwise, this operator
-// will cause the child subscription to complete.
-func RepeatWhen(notifier rx.Operator) rx.Operator {
-	return func(source rx.Observable) rx.Observable {
-		return repeatWhenObservable{source, notifier}.Subscribe
-	}
 }

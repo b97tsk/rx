@@ -7,6 +7,18 @@ import (
 	"github.com/b97tsk/rx/internal/atomic"
 )
 
+// DelayWhen creates an Observable that delays the emission of items from
+// the source Observable by a given time span determined by the emissions of
+// another Observable.
+//
+// It's like Delay, but the time span of the delay duration is determined by
+// a second Observable.
+func DelayWhen(durationSelector func(interface{}, int) rx.Observable) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
+		return delayWhenObservable{source, durationSelector}.Subscribe
+	}
+}
+
 type delayWhenObservable struct {
 	Source           rx.Observable
 	DurationSelector func(interface{}, int) rx.Observable
@@ -59,16 +71,4 @@ func (obs delayWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 			}
 		}
 	})
-}
-
-// DelayWhen creates an Observable that delays the emission of items from
-// the source Observable by a given time span determined by the emissions of
-// another Observable.
-//
-// It's like Delay, but the time span of the delay duration is determined by
-// a second Observable.
-func DelayWhen(durationSelector func(interface{}, int) rx.Observable) rx.Operator {
-	return func(source rx.Observable) rx.Observable {
-		return delayWhenObservable{source, durationSelector}.Subscribe
-	}
 }

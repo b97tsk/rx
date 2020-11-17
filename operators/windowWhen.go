@@ -8,6 +8,17 @@ import (
 	"github.com/b97tsk/rx/internal/norec"
 )
 
+// WindowWhen branches out the source Observable values as a nested Observable
+// using a factory function of closing Observables to determine when to start
+// a new window.
+//
+// It's like BufferWhen, but emits a nested Observable instead of a slice.
+func WindowWhen(closingSelector func() rx.Observable) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
+		return windowWhenObservable{source, closingSelector}.Subscribe
+	}
+}
+
 type windowWhenObservable struct {
 	Source          rx.Observable
 	ClosingSelector func() rx.Observable
@@ -78,15 +89,4 @@ func (obs windowWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 			}
 		}
 	})
-}
-
-// WindowWhen branches out the source Observable values as a nested Observable
-// using a factory function of closing Observables to determine when to start
-// a new window.
-//
-// It's like BufferWhen, but emits a nested Observable instead of a slice.
-func WindowWhen(closingSelector func() rx.Observable) rx.Operator {
-	return func(source rx.Observable) rx.Observable {
-		return windowWhenObservable{source, closingSelector}.Subscribe
-	}
 }
