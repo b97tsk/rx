@@ -66,8 +66,8 @@ func (sink Observer) Mutex() Observer {
 	}
 }
 
-// MutexContext creates an Observer that passes incoming emissions to sink in
-// a mutually exclusive way while ctx is active.
+// MutexContext creates an Observer that passes incoming emissions to sink
+// in a mutually exclusive way while ctx is not cancelled.
 func (sink Observer) MutexContext(ctx context.Context) Observer {
 	var s critical.Section
 	return func(t Notification) {

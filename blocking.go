@@ -8,8 +8,9 @@ import (
 // emitted by the source; if the source emits no items, it returns nil plus
 // ErrEmpty; if the source emits an error, it returns nil plus this error.
 //
-// If ctx was cancelled during the subscription, BlockingFirst immediately
+// If ctx is cancelled during the subscription, BlockingFirst immediately
 // returns nil plus ctx.Err().
+//
 func (obs Observable) BlockingFirst(ctx context.Context) (interface{}, error) {
 	childCtx, childCancel := context.WithCancel(ctx)
 
@@ -48,8 +49,9 @@ func (obs Observable) BlockingFirst(ctx context.Context) (interface{}, error) {
 // first item emitted by the source, or returns def if the source emits no
 // items or an error.
 //
-// If ctx was cancelled during the subscription, BlockingFirstOrDefault
+// If ctx is cancelled during the subscription, BlockingFirstOrDefault
 // immediately returns def.
+//
 func (obs Observable) BlockingFirstOrDefault(ctx context.Context, def interface{}) interface{} {
 	val, err := obs.BlockingFirst(ctx)
 	if err != nil {
@@ -62,8 +64,9 @@ func (obs Observable) BlockingFirstOrDefault(ctx context.Context, def interface{
 // emitted by the source; if the source emits no items, it returns nil plus
 // ErrEmpty; if the source emits an error, it returns nil plus this error.
 //
-// If ctx was cancelled during the subscription, BlockingLast immediately
+// If ctx is cancelled during the subscription, BlockingLast immediately
 // returns nil plus ctx.Err().
+//
 func (obs Observable) BlockingLast(ctx context.Context) (interface{}, error) {
 	childCtx, childCancel := context.WithCancel(ctx)
 
@@ -101,8 +104,9 @@ func (obs Observable) BlockingLast(ctx context.Context) (interface{}, error) {
 // item emitted by the source, or returns def if the source emits no items or
 // an error.
 //
-// If ctx was cancelled during the subscription, BlockingLastOrDefault
+// If ctx is cancelled during the subscription, BlockingLastOrDefault
 // immediately returns def.
+//
 func (obs Observable) BlockingLastOrDefault(ctx context.Context, def interface{}) interface{} {
 	val, err := obs.BlockingLast(ctx)
 	if err != nil {
@@ -116,8 +120,9 @@ func (obs Observable) BlockingLastOrDefault(ctx context.Context, def interface{}
 // it returns nil plus ErrNotSingle or ErrEmpty respectively; if the source
 // emits an error, it returns nil plus this error.
 //
-// If ctx was cancelled during the subscription, BlockingSingle immediately
+// If ctx is cancelled during the subscription, BlockingSingle immediately
 // returns nil plus ctx.Err().
+//
 func (obs Observable) BlockingSingle(ctx context.Context) (interface{}, error) {
 	childCtx, childCancel := context.WithCancel(ctx)
 
@@ -167,8 +172,9 @@ func (obs Observable) BlockingSingle(ctx context.Context) (interface{}, error) {
 // the source completes or emits an error; if the source completes, it returns
 // nil; if the source emits an error, it returns this error.
 //
-// If ctx was cancelled during the subscription, BlockingSubscribe immediately
-// returns ctx.Err() and sink may still be called after that.
+// If ctx is cancelled during the subscription, BlockingSubscribe immediately
+// returns ctx.Err() and sink may be called after.
+//
 func (obs Observable) BlockingSubscribe(ctx context.Context, sink Observer) error {
 	childCtx, childCancel := context.WithCancel(ctx)
 
@@ -188,7 +194,7 @@ func (obs Observable) BlockingSubscribe(ctx context.Context, sink Observer) erro
 	case ctx.Err() != nil:
 		return ctx.Err()
 	case result.HasValue: // Always false.
-		return childCtx.Err()
+		return childCtx.Err() // Unreachable.
 	case result.HasError:
 		return result.Error
 	default:

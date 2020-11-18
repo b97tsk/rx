@@ -9,10 +9,11 @@ import (
 // Observer.
 //
 // Observables are expected to be sequential. If you want parallel, you
-// will have to break the work you're going to do into pieces (Observables),
-// process (subscribe to) them concurrently, and then later or in the meantime,
-// merge (flatten) them together (into one sequential Observable). Typically,
-// these can be done by one single Operator, for example, MergeMap.
+// must divide the work (as an Observable) you're going to do into pieces
+// (Observables), process (subscribe to) them concurrently, and then later
+// or in the meantime, merge (flatten) them together (back into one sequential
+// Observable). Typically, these are done by one single Operator, for example,
+// MergeMap.
 //
 // Although it's easy to write your own Observable, you're responsible to
 // follow the Observable Contract that no more emissions pass to the specified
