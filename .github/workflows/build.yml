@@ -1,0 +1,22 @@
+name: build
+on:
+  push:
+    branches:
+      - master
+jobs:
+  test:
+    name: Test with coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '1.13'
+      - name: Run tests
+        run: go test -race -coverprofile=profile.cov -coverpkg=./... ./...
+      - name: Send coverage
+        uses: shogo82148/actions-goveralls@v1
+        with:
+          path-to-profile: profile.cov
