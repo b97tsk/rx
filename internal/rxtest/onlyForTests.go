@@ -86,6 +86,7 @@ func SubscribeN(t *testing.T, observables []rx.Observable, outputs [][]interface
 			func(n rx.Notification) {
 				if len(output) == 0 {
 					t.Fail()
+
 					switch {
 					case n.HasValue:
 						t.Logf("want nothing, but got %v", n.Value)
@@ -94,6 +95,7 @@ func SubscribeN(t *testing.T, observables []rx.Observable, outputs [][]interface
 					default:
 						t.Log("want nothing, but got completed")
 					}
+
 					return
 				}
 

@@ -28,6 +28,7 @@ func (obs Observable) Pipe(operators ...Operator) Observable {
 	for _, op := range operators {
 		obs = op(obs)
 	}
+
 	return obs
 }
 

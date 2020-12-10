@@ -28,6 +28,7 @@ func (observables congestingZipObservable) Subscribe(ctx context.Context, sink O
 	sink = sink.WithCancel(cancel)
 
 	channels := make([]chan Notification, len(observables))
+
 	for i := range channels {
 		channels[i] = make(chan Notification)
 	}
@@ -50,6 +51,7 @@ func (observables congestingZipObservable) Subscribe(ctx context.Context, sink O
 					}
 				}
 			}
+
 			sink.Next(values)
 		}
 	}()

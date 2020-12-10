@@ -54,6 +54,7 @@ func (obs windowTimeObservable) Subscribe(ctx context.Context, sink rx.Observer)
 	var closeContext func(*windowTimeContext)
 
 	obsTimer := rx.Timer(obs.TimeSpan)
+
 	openContextLocked := func() {
 		ctx, cancel := context.WithCancel(ctx)
 
@@ -69,6 +70,7 @@ func (obs windowTimeObservable) Subscribe(ctx context.Context, sink rx.Observer)
 			if t.HasValue {
 				return
 			}
+
 			closeContext(newContext)
 		})
 
@@ -126,6 +128,7 @@ func (obs windowTimeObservable) Subscribe(ctx context.Context, sink rx.Observer)
 
 				for _, c := range x.Contexts {
 					c.Size++
+
 					c.Window.Sink(t)
 
 					if c.Size == obs.MaxWindowSize {

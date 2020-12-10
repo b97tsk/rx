@@ -20,9 +20,11 @@ type ReplayOptions struct {
 // new emissions from Double's Observer part.
 func MulticastReplay(opts *ReplayOptions) Double {
 	d := &multicastReplay{}
+
 	if opts != nil {
 		d.ReplayOptions = *opts
 	}
+
 	return Double{
 		Observable: d.subscribe,
 		Observer:   d.sink,
@@ -49,20 +51,25 @@ type multicastReplayElement struct {
 
 func (d *multicastReplay) bufferForRead() (queue.Queue, *atomic.Uint32s) {
 	refs := d.bufferRefs
+
 	if refs == nil {
 		refs = new(atomic.Uint32s)
 		d.bufferRefs = refs
 	}
+
 	refs.Add(1)
+
 	return d.buffer, refs
 }
 
 func (d *multicastReplay) bufferForWrite() *queue.Queue {
 	refs := d.bufferRefs
+
 	if refs != nil && !refs.Equals(0) {
 		d.buffer = d.buffer.Clone()
 		d.bufferRefs = nil
 	}
+
 	return &d.buffer
 }
 
@@ -78,6 +85,7 @@ func (d *multicastReplay) trimBuffer(b *queue.Queue) {
 			if b.Front().(multicastReplayElement).Deadline.After(now) {
 				break
 			}
+
 			b.Pop()
 		}
 	}
@@ -95,6 +103,7 @@ func (d *multicastReplay) trimBuffer(b *queue.Queue) {
 
 func (d *multicastReplay) sink(t Notification) {
 	d.mu.Lock()
+
 	switch {
 	case d.err != nil:
 		d.mu.Unlock()
@@ -104,6 +113,7 @@ func (d *multicastReplay) sink(t Notification) {
 		defer lst.Release()
 
 		var deadline time.Time
+
 		if windowTime := d.WindowTime; windowTime > 0 {
 			deadline = time.Now().Add(windowTime)
 		}
@@ -127,9 +137,11 @@ func (d *multicastReplay) sink(t Notification) {
 
 		if t.HasError {
 			d.err = t.Error
+
 			if d.err == nil {
 				d.err = errNil
 			}
+
 			d.buffer.Init()
 		}
 
@@ -149,6 +161,7 @@ func (d *multicastReplay) subscribe(ctx context.Context, sink Observer) {
 		ctx, cancel := context.WithCancel(ctx)
 
 		observer := sink.WithCancel(cancel).MutexContext(ctx)
+
 		d.lst.Append(&observer)
 
 		finalize := func() {
@@ -173,6 +186,7 @@ func (d *multicastReplay) subscribe(ctx context.Context, sink Observer) {
 		if ctx.Err() != nil {
 			return
 		}
+
 		sink.Next(b.At(i).(multicastReplayElement).Value)
 	}
 
@@ -181,9 +195,11 @@ func (d *multicastReplay) subscribe(ctx context.Context, sink Observer) {
 			sink.Complete()
 			return
 		}
+
 		if err == errNil {
 			err = nil
 		}
+
 		sink.Error(err)
 	}
 }

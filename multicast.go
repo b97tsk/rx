@@ -27,6 +27,7 @@ type multicast struct {
 
 func (d *multicast) sink(t Notification) {
 	d.mu.Lock()
+
 	switch {
 	case d.err != nil:
 		d.mu.Unlock()
@@ -50,6 +51,7 @@ func (d *multicast) sink(t Notification) {
 
 		if t.HasError {
 			d.err = t.Error
+
 			if d.err == nil {
 				d.err = errNil
 			}
@@ -71,6 +73,7 @@ func (d *multicast) subscribe(ctx context.Context, sink Observer) {
 		ctx, cancel := context.WithCancel(ctx)
 
 		observer := sink.WithCancel(cancel).MutexContext(ctx)
+
 		d.lst.Append(&observer)
 
 		finalize := func() {
@@ -91,9 +94,11 @@ func (d *multicast) subscribe(ctx context.Context, sink Observer) {
 			sink.Complete()
 			return
 		}
+
 		if err == errNil {
 			err = nil
 		}
+
 		sink.Error(err)
 	}
 }

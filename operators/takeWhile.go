@@ -43,6 +43,7 @@ func (obs takeWhileObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 			}
 
 			observer = rx.Noop
+
 			sink.Complete()
 
 		default:

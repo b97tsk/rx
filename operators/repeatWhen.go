@@ -52,9 +52,11 @@ func (obs repeatWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 
 			if repeatSignal == nil {
 				d := rx.Unicast()
+
 				repeatSignal = d.Observer
 
 				obs1 := obs.Notifier(d.Observable)
+
 				obs1.Subscribe(ctx, func(t rx.Notification) {
 					switch {
 					case t.HasValue:

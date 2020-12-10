@@ -25,10 +25,13 @@ func first(source rx.Observable) rx.Observable {
 			switch {
 			case t.HasValue:
 				observer = rx.Noop
+
 				sink(t)
 				sink.Complete()
+
 			case t.HasError:
 				sink(t)
+
 			default:
 				sink.Error(rx.ErrEmpty)
 			}
@@ -54,10 +57,13 @@ func FirstOrDefault(def interface{}) rx.Operator {
 				switch {
 				case t.HasValue:
 					observer = rx.Noop
+
 					sink(t)
 					sink.Complete()
+
 				case t.HasError:
 					sink(t)
+
 				default:
 					sink.Next(def)
 					sink(t)

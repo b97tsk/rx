@@ -52,8 +52,10 @@ func (obs bufferToggleObservable) Subscribe(ctx context.Context, sink rx.Observe
 				critical.Leave(&x.Section)
 
 				var observer rx.Observer
+
 				observer = func(t rx.Notification) {
 					observer = rx.Noop
+
 					cancel()
 
 					if critical.Enter(&x.Section) {
@@ -121,7 +123,9 @@ func (obs bufferToggleObservable) Subscribe(ctx context.Context, sink rx.Observe
 					if ctx.Err() != nil {
 						return
 					}
+
 					c.Cancel()
+
 					sink.Next(c.Buffer)
 				}
 

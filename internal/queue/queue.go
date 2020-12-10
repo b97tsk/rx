@@ -31,6 +31,7 @@ func (q *Queue) Push(x interface{}) {
 		buf := append(q.buf[:qc], nil)
 		q.setbuf(buf[:cap(buf)])
 	}
+
 	if len(q.head) < cap(q.head) {
 		q.head = append(q.head, x)
 	} else {
@@ -42,17 +43,22 @@ func (q *Queue) Push(x interface{}) {
 func (q *Queue) Pop() interface{} {
 	if len(q.head) > 0 {
 		x := q.head[0]
+
 		q.head[0] = nil
 		q.head = q.head[1:]
+
 		if cap(q.head) == 0 {
 			q.head = q.buf
 			q.buf = q.buf[:0]
 		}
+
 		if ql, qc := q.Len(), q.Cap(); ql == qc>>2 && qc > smallSize { // Shrink if sparse.
 			q.setbuf(make([]interface{}, ql<<1))
 		}
+
 		return x
 	}
+
 	panic("queue: Pop called on empty Queue")
 }
 
@@ -60,14 +66,18 @@ func (q *Queue) Pop() interface{} {
 func (q *Queue) At(i int) interface{} {
 	if i >= 0 {
 		headsize := len(q.head)
+
 		if i < headsize {
 			return q.head[i]
 		}
+
 		i -= headsize
+
 		if i < len(q.buf) {
 			return q.buf[i]
 		}
 	}
+
 	panic("queue: At called with index out of range")
 }
 
@@ -76,6 +86,7 @@ func (q *Queue) Front() interface{} {
 	if len(q.head) > 0 {
 		return q.head[0]
 	}
+
 	panic("queue: Front called on empty Queue")
 }
 
@@ -84,9 +95,11 @@ func (q *Queue) Back() interface{} {
 	if n := len(q.buf); n > 0 {
 		return q.buf[n-1]
 	}
+
 	if n := len(q.head); n > 0 {
 		return q.head[n-1]
 	}
+
 	panic("queue: Back called on empty Queue")
 }
 
@@ -101,10 +114,12 @@ func (q *Queue) CopyTo(dst []interface{}) int {
 // Clone clones the Queue.
 func (q *Queue) Clone() Queue {
 	var buf []interface{}
+
 	if q.buf != nil {
 		buf = make([]interface{}, q.Len(), q.Cap())
 		q.CopyTo(buf)
 	}
+
 	return Queue{buf[:0], buf}
 }
 

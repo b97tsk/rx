@@ -12,8 +12,10 @@ func Range(low, high int) Observable {
 			if ctx.Err() != nil {
 				return
 			}
+
 			sink.Next(idx)
 		}
+
 		sink.Complete()
 	}
 }

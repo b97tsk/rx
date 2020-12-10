@@ -52,12 +52,15 @@ func (obs distinctUntilChangedObservable) Subscribe(ctx context.Context, sink rx
 	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		if t.HasValue {
 			keyValue := obs.KeySelector(t.Value)
+
 			if key.HasValue && obs.Compare(key.Value, keyValue) {
 				return
 			}
+
 			key.Value = keyValue
 			key.HasValue = true
 		}
+
 		sink(t)
 	})
 }

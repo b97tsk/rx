@@ -21,13 +21,17 @@ func DefaultIfEmpty(def interface{}) rx.Operator {
 				switch {
 				case t.HasValue:
 					hasValue = true
+
 					sink(t)
+
 				case t.HasError:
 					sink(t)
+
 				default:
 					if !hasValue {
 						sink.Next(def)
 					}
+
 					sink(t)
 				}
 			})

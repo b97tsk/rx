@@ -64,6 +64,7 @@ type ThrottleTimeConfigure struct {
 // Make creates an Operator from this configure.
 func (configure ThrottleTimeConfigure) Make() rx.Operator {
 	obsTimer := rx.Timer(configure.Duration)
+
 	durationSelector := func(interface{}) rx.Observable { return obsTimer }
 
 	return ThrottleConfigure{

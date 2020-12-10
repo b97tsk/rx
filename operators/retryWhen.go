@@ -55,9 +55,11 @@ func (obs retryWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 
 			if retrySignal == nil {
 				d := rx.Unicast()
+
 				retrySignal = d.Observer
 
 				obs1 := obs.Notifier(d.Observable)
+
 				obs1.Subscribe(ctx, func(t rx.Notification) {
 					switch {
 					case t.HasValue:

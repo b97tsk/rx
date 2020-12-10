@@ -27,6 +27,7 @@ func Audit(durationSelector func(interface{}) rx.Observable) rx.Operator {
 // duration, and then it emits the most recent value from the source.
 func AuditTime(d time.Duration) rx.Operator {
 	obsTimer := rx.Timer(d)
+
 	durationSelector := func(interface{}) rx.Observable { return obsTimer }
 
 	return Audit(durationSelector)
@@ -66,6 +67,7 @@ func (obs auditObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 
 					observer = func(t rx.Notification) {
 						observer = rx.Noop
+
 						scheduleCancel()
 
 						if critical.Enter(&x.Section) {

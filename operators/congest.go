@@ -63,6 +63,7 @@ func (obs congestObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 			)
 
 			length := queue.Len()
+
 			if length < obs.BufferSize {
 				in = cin
 			}

@@ -25,6 +25,7 @@ func (observables raceObservable) Subscribe(ctx context.Context, sink Observer) 
 	}
 
 	subscriptions := make([]Subscription, len(observables))
+
 	for i := range subscriptions {
 		ctx, cancel := context.WithCancel(ctx)
 		subscriptions[i] = Subscription{ctx, cancel}

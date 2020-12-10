@@ -84,6 +84,7 @@ func (obs bufferCountObservable) Subscribe(ctx context.Context, sink rx.Observer
 					sink.Next(buffer)
 					buffer = buffer[obs.StartBufferEvery:]
 				}
+
 				sink.Next(buffer)
 			}
 

@@ -94,6 +94,7 @@ func (sink Observer) WithCancel(cancel context.CancelFunc) Observer {
 		if !t.HasValue {
 			cancel()
 		}
+
 		sink(t)
 	}
 }

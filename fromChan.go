@@ -14,11 +14,13 @@ func FromChan(c <-chan interface{}) Observable {
 			select {
 			case <-done:
 				return
+
 			case val, ok := <-c:
 				if !ok {
 					sink.Complete()
 					return
 				}
+
 				sink.Next(val)
 			}
 		}

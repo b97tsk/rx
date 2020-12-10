@@ -24,10 +24,13 @@ func isEmpty(source rx.Observable) rx.Observable {
 			switch {
 			case t.HasValue:
 				observer = rx.Noop
+
 				sink.Next(false)
 				sink.Complete()
+
 			case t.HasError:
 				sink(t)
+
 			default:
 				sink.Next(true)
 				sink.Complete()

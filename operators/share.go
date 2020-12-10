@@ -72,12 +72,14 @@ func (obs *shareObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 			cancel()
 
 			obs.mu.Lock()
+
 			if connection == obs.connection {
 				obs.double = rx.Double{}
 				obs.connection = nil
 				obs.disconnect = nil
 				obs.shareCount = 0
 			}
+
 			obs.mu.Unlock()
 
 			sink(t)
@@ -88,8 +90,10 @@ func (obs *shareObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 
 	finalize := func() {
 		obs.mu.Lock()
+
 		if connection == obs.connection {
 			obs.shareCount--
+
 			if obs.shareCount == 0 {
 				obs.disconnect()
 				obs.double = rx.Double{}
@@ -97,6 +101,7 @@ func (obs *shareObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 				obs.disconnect = nil
 			}
 		}
+
 		obs.mu.Unlock()
 	}
 

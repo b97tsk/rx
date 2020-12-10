@@ -30,6 +30,7 @@ func (obs groupByObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 			key := obs.KeySelector(t.Value)
 
 			group, exists := groups[key]
+
 			if !exists {
 				d := obs.GroupFactory()
 

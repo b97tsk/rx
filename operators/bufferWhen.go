@@ -49,6 +49,7 @@ func (obs bufferWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 
 		observer = func(t rx.Notification) {
 			observer = rx.Noop
+
 			cancel()
 
 			if critical.Enter(&x.Section) {

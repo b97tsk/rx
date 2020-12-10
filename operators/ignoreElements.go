@@ -18,6 +18,7 @@ func ignoreElements(source rx.Observable) rx.Observable {
 			if t.HasValue {
 				return
 			}
+
 			sink(t)
 		})
 	}

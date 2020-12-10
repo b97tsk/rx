@@ -47,6 +47,7 @@ func (obs delayWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 
 			observer = func(t rx.Notification) {
 				observer = rx.Noop
+
 				scheduleCancel()
 
 				switch {

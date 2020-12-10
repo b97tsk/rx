@@ -12,11 +12,14 @@ type observerList struct {
 
 func (lst *observerList) Clone() observerList {
 	refs := lst.refs
+
 	if refs == nil {
 		refs = new(atomic.Uint32s)
 		lst.refs = refs
 	}
+
 	refs.Add(1)
+
 	return observerList{lst.Observers, refs}
 }
 
@@ -44,6 +47,7 @@ func (lst *observerList) Append(observer *Observer) {
 
 func (lst *observerList) Remove(observer *Observer) {
 	observers := lst.Observers
+
 	for i, sink := range observers {
 		if sink == observer {
 			n := len(observers)

@@ -17,14 +17,18 @@ func ThrowIfEmpty(e error) rx.Operator {
 				switch {
 				case t.HasValue:
 					hasValue = true
+
 					sink(t)
+
 				case t.HasError:
 					sink(t)
+
 				default:
 					if hasValue {
 						sink(t)
 						return
 					}
+
 					sink.Error(e)
 				}
 			})

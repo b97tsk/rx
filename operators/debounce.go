@@ -25,6 +25,7 @@ func Debounce(durationSelector func(interface{}) rx.Observable) rx.Operator {
 // source emission.
 func DebounceTime(d time.Duration) rx.Operator {
 	obsTimer := rx.Timer(d)
+
 	durationSelector := func(interface{}) rx.Observable { return obsTimer }
 
 	return Debounce(durationSelector)
@@ -64,12 +65,14 @@ func (obs debounceObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 				}
 
 				var scheduleCtx context.Context
+
 				scheduleCtx, scheduleCancel = context.WithCancel(ctx)
 
 				var observer rx.Observer
 
 				observer = func(t rx.Notification) {
 					observer = rx.Noop
+
 					scheduleCancel()
 
 					if critical.Enter(&x.Section) {

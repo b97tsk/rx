@@ -38,6 +38,7 @@ func NewContextWaitService() ContextWaitService {
 
 		for {
 			i, v, _ := reflect.Select(cases)
+
 			if i == 0 {
 				select {
 				case <-service:
@@ -45,7 +46,9 @@ func NewContextWaitService() ContextWaitService {
 						close(service)
 						return
 					}
+
 					service <- actionChan
+
 				default:
 				}
 
@@ -97,6 +100,7 @@ func NewContextWaitService() ContextWaitService {
 
 func (service ContextWaitService) Submit(ctx context.Context, cb func()) bool {
 	actionChan, serviceAvailable := <-service
+
 	if !serviceAvailable {
 		return false
 	}

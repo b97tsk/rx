@@ -34,6 +34,7 @@ func Timer(d time.Duration) Observable {
 		go func() {
 			timer := time.NewTimer(d)
 			defer timer.Stop()
+
 			select {
 			case <-ctx.Done():
 			case t := <-timer.C:

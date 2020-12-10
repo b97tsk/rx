@@ -76,6 +76,7 @@ func (observables combineLatestObservable) Subscribe(ctx context.Context, sink O
 				default:
 					if hasValues[index] {
 						completeCount++
+
 						if completeCount < length {
 							break
 						}

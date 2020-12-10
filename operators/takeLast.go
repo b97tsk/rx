@@ -47,6 +47,7 @@ func (obs takeLastObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 				if ctx.Err() != nil {
 					return
 				}
+
 				sink.Next(queue.At(i))
 			}
 

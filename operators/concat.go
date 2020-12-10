@@ -78,14 +78,17 @@ func (obs concatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		x.Unlock()
 
 		obs1 := obs.Project(sourceValue, sourceIndex)
+
 		obs1.Subscribe(ctx, func(t rx.Notification) {
 			if t.HasValue || t.HasError {
 				sink(t)
 				return
 			}
+
 			if ctx.Err() != nil {
 				return
 			}
+
 			subscribeToNext()
 		})
 	})
@@ -98,6 +101,7 @@ func (obs concatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 			x.Queue.Push(t.Value)
 
 			var subscribe bool
+
 			if !x.Working {
 				x.Working = true
 				subscribe = true

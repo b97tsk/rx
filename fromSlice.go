@@ -12,8 +12,10 @@ func FromSlice(slice []interface{}) Observable {
 			if ctx.Err() != nil {
 				return
 			}
+
 			sink.Next(val)
 		}
+
 		sink.Complete()
 	}
 }

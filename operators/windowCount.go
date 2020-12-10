@@ -80,6 +80,7 @@ func (obs windowCountObservable) Subscribe(ctx context.Context, sink rx.Observer
 				window.Complete()
 
 				windowSize = obs.WindowSize - obs.StartWindowEvery
+
 				if windowSize < 0 {
 					window := rx.Multicast()
 					windows = append(windows, window.Observer)

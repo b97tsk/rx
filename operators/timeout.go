@@ -51,6 +51,7 @@ func (obs timeoutObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		}
 
 		var scheduleCtx context.Context
+
 		scheduleCtx, scheduleCancel = context.WithCancel(childCtx)
 
 		obsTimer.Subscribe(scheduleCtx, func(t rx.Notification) {

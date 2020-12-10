@@ -28,6 +28,7 @@ func DoOnNext(onNext func(interface{})) rx.Operator {
 				if t.HasValue {
 					onNext(t.Value)
 				}
+
 				sink(t)
 			})
 		}
@@ -44,6 +45,7 @@ func DoOnError(onError func(error)) rx.Operator {
 				if t.HasError {
 					onError(t.Error)
 				}
+
 				sink(t)
 			})
 		}
@@ -60,6 +62,7 @@ func DoOnComplete(onComplete func()) rx.Operator {
 				if !t.HasValue && !t.HasError {
 					onComplete()
 				}
+
 				sink(t)
 			})
 		}
@@ -76,10 +79,13 @@ func DoAtLast(atLast func(error)) rx.Operator {
 					sink(t)
 					return
 				}
+
 				var e error
+
 				if t.HasError {
 					e = t.Error
 				}
+
 				sink(t)
 				atLast(e)
 			})

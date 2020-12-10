@@ -45,11 +45,14 @@ func (obs distinctObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		if t.HasValue {
 			key := obs.KeySelector(t.Value)
+
 			if _, exists := keys[key]; exists {
 				return
 			}
+
 			keys[key] = struct{}{}
 		}
+
 		sink(t)
 	})
 }

@@ -47,6 +47,7 @@ func (observables concatObservable) Subscribe(ctx context.Context, sink Observer
 			sink(t)
 			return
 		}
+
 		subscribeToNext()
 	}
 

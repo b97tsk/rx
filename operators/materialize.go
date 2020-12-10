@@ -16,6 +16,7 @@ func materialize(source rx.Observable) rx.Observable {
 	return func(ctx context.Context, sink rx.Observer) {
 		source.Subscribe(ctx, func(t rx.Notification) {
 			sink.Next(t)
+
 			if !t.HasValue {
 				sink.Complete()
 			}

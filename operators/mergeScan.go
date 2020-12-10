@@ -92,6 +92,7 @@ func (obs mergeScanObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 						if !x.HasValue {
 							sink.Next(x.Seed)
 						}
+
 						sink(t)
 					}
 				}
@@ -125,6 +126,7 @@ func (obs mergeScanObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 				if !x.HasValue {
 					sink.Next(x.Seed)
 				}
+
 				sink(t)
 			}
 		}

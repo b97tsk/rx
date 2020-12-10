@@ -22,7 +22,9 @@ func (obs Observable) BlockingFirst(ctx context.Context) (interface{}, error) {
 		if t.HasValue || t.HasError {
 			result = t
 		}
+
 		observer = Noop
+
 		childCancel()
 	}
 
@@ -54,6 +56,7 @@ func (obs Observable) BlockingFirstOrDefault(ctx context.Context, def interface{
 	if err != nil {
 		return def
 	}
+
 	return val
 }
 
@@ -73,6 +76,7 @@ func (obs Observable) BlockingLast(ctx context.Context) (interface{}, error) {
 		if t.HasValue || t.HasError {
 			result = t
 		}
+
 		if !t.HasValue {
 			childCancel()
 		}
@@ -104,6 +108,7 @@ func (obs Observable) BlockingLastOrDefault(ctx context.Context, def interface{}
 	if err != nil {
 		return def
 	}
+
 	return val
 }
 
@@ -129,9 +134,11 @@ func (obs Observable) BlockingSingle(ctx context.Context) (interface{}, error) {
 			childCancel()
 			return
 		}
+
 		if t.HasValue || t.HasError {
 			result = t
 		}
+
 		if !t.HasValue {
 			childCancel()
 		}
@@ -169,7 +176,9 @@ func (obs Observable) BlockingSubscribe(ctx context.Context, sink Observer) erro
 		if !t.HasValue {
 			defer childCancel()
 		}
+
 		result = t
+
 		sink(t)
 	})
 

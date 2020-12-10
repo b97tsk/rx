@@ -46,6 +46,7 @@ func (d *unicast) sink(t Notification) {
 
 		if t.HasError {
 			d.err = t.Error
+
 			if d.err == nil {
 				d.err = errNil
 			}
@@ -80,9 +81,11 @@ func (d *unicast) subscribe(ctx context.Context, sink Observer) {
 			sink.Complete()
 			return
 		}
+
 		if err == errNil {
 			err = nil
 		}
+
 		sink.Error(err)
 	}
 }

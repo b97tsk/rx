@@ -44,6 +44,7 @@ func (observables onErrorResumeNextObservable) Subscribe(ctx context.Context, si
 			sink(t)
 			return
 		}
+
 		subscribeToNext()
 	}
 

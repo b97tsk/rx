@@ -31,6 +31,7 @@ func (observables zipObservable) Subscribe(ctx context.Context, sink Observer) {
 	done := ctx.Done()
 
 	sink = sink.WithCancel(cancel)
+
 	q := make(chan zipElement)
 
 	go func() {
@@ -97,6 +98,7 @@ func (observables zipObservable) Subscribe(ctx context.Context, sink Observer) {
 				default:
 					stream := &streams[index]
 					stream.Completed = true
+
 					if stream.Len() == 0 {
 						sink(t.Notification)
 						return

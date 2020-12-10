@@ -68,6 +68,7 @@ func (obs windowToggleObservable) Subscribe(ctx context.Context, sink rx.Observe
 
 				observer = func(t rx.Notification) {
 					observer = rx.Noop
+
 					cancel()
 
 					if critical.Enter(&x.Section) {

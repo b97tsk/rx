@@ -64,6 +64,7 @@ func (obs bufferTimeObservable) Subscribe(ctx context.Context, sink rx.Observer)
 			if t.HasValue {
 				return
 			}
+
 			closeContext(newContext)
 		})
 	}
@@ -119,6 +120,7 @@ func (obs bufferTimeObservable) Subscribe(ctx context.Context, sink rx.Observer)
 
 				for _, c := range x.Contexts {
 					c.Buffer = append(c.Buffer, t.Value)
+
 					if len(c.Buffer) == obs.MaxBufferSize {
 						bufferFullContexts = append(bufferFullContexts, c)
 					}
@@ -142,7 +144,9 @@ func (obs bufferTimeObservable) Subscribe(ctx context.Context, sink rx.Observer)
 					if ctx.Err() != nil {
 						return
 					}
+
 					c.Cancel()
+
 					sink.Next(c.Buffer)
 				}
 
