@@ -16,14 +16,11 @@ func (obs Observable) BlockingFirst(ctx context.Context) (interface{}, error) {
 
 	var observer Observer
 
-	var result Notification
+	result := Notification{Error: ErrEmpty, HasError: true}
 
 	observer = func(t Notification) {
-		switch {
-		case t.HasValue || t.HasError:
+		if t.HasValue || t.HasError {
 			result = t
-		default:
-			result = Notification{Error: ErrEmpty, HasError: true}
 		}
 		observer = Noop
 		childCancel()
@@ -70,16 +67,11 @@ func (obs Observable) BlockingFirstOrDefault(ctx context.Context, def interface{
 func (obs Observable) BlockingLast(ctx context.Context) (interface{}, error) {
 	childCtx, childCancel := context.WithCancel(ctx)
 
-	var result Notification
+	result := Notification{Error: ErrEmpty, HasError: true}
 
 	obs.Subscribe(childCtx, func(t Notification) {
-		switch {
-		case t.HasValue || t.HasError:
+		if t.HasValue || t.HasError {
 			result = t
-		default:
-			if !result.HasValue {
-				result = Notification{Error: ErrEmpty, HasError: true}
-			}
 		}
 		if !t.HasValue {
 			childCancel()
@@ -128,24 +120,17 @@ func (obs Observable) BlockingSingle(ctx context.Context) (interface{}, error) {
 
 	var observer Observer
 
-	var result Notification
+	result := Notification{Error: ErrEmpty, HasError: true}
 
 	observer = func(t Notification) {
-		switch {
-		case t.HasValue:
-			if result.HasValue {
-				result = Notification{Error: ErrNotSingle, HasError: true}
-				observer = Noop
-				childCancel()
-			} else {
-				result = t
-			}
-		case t.HasError:
+		if t.HasValue && result.HasValue {
+			result = Notification{Error: ErrNotSingle, HasError: true}
+			observer = Noop
+			childCancel()
+			return
+		}
+		if t.HasValue || t.HasError {
 			result = t
-		default:
-			if !result.HasValue {
-				result = Notification{Error: ErrEmpty, HasError: true}
-			}
 		}
 		if !t.HasValue {
 			childCancel()

@@ -110,7 +110,6 @@ func (d *multicastReplay) sink(t Notification) {
 
 		b := d.bufferForWrite()
 		b.Push(multicastReplayElement{t.Value, deadline})
-
 		d.trimBuffer(b)
 
 		d.mu.Unlock()
@@ -127,11 +126,10 @@ func (d *multicastReplay) sink(t Notification) {
 		d.err = errCompleted
 
 		if t.HasError {
-			err := t.Error
-			if err == nil {
-				err = errNil
+			d.err = t.Error
+			if d.err == nil {
+				d.err = errNil
 			}
-			d.err = err
 			d.buffer.Init()
 		}
 
@@ -179,13 +177,13 @@ func (d *multicastReplay) subscribe(ctx context.Context, sink Observer) {
 	}
 
 	if err != nil {
-		if err != errCompleted {
-			if err == errNil {
-				err = nil
-			}
-			sink.Error(err)
-		} else {
+		if err == errCompleted {
 			sink.Complete()
+			return
 		}
+		if err == errNil {
+			err = nil
+		}
+		sink.Error(err)
 	}
 }

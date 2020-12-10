@@ -46,11 +46,10 @@ func (d *unicastLatest) sink(t Notification) {
 		d.err = errCompleted
 
 		if t.HasError {
-			err := t.Error
-			if err == nil {
-				err = errNil
+			d.err = t.Error
+			if d.err == nil {
+				d.err = errNil
 			}
-			d.err = err
 		}
 
 		obs := d.obs
@@ -81,13 +80,13 @@ func (d *unicastLatest) subscribe(ctx context.Context, sink Observer) {
 	d.mu.Unlock()
 
 	if err != nil {
-		if err != errCompleted {
-			if err == errNil {
-				err = nil
-			}
-			sink.Error(err)
-		} else {
+		if err == errCompleted {
 			sink.Complete()
+			return
 		}
+		if err == errNil {
+			err = nil
+		}
+		sink.Error(err)
 	}
 }

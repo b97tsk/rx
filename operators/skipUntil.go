@@ -43,8 +43,6 @@ func (obs skipUntilObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 				noSkipping.Store(1)
 			case t.HasError:
 				sink(t)
-			default:
-				// do nothing
 			}
 		}
 

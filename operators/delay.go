@@ -56,8 +56,8 @@ func (obs delayObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 					}
 
 					t := x.Queue.Front().(delayElement)
-					now := time.Now()
-					if t.Time.After(now) {
+
+					if now := time.Now(); t.Time.After(now) {
 						x.Scheduled = true
 						doSchedule(t.Time.Sub(now))
 						break
