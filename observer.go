@@ -86,7 +86,7 @@ func (sink Observer) MutexContext(ctx context.Context) Observer {
 	}
 }
 
-// WithCancel creates an Observer that passes incoming emissions to sink, and
+// WithCancel creates an Observer that passes incoming emissions to sink and,
 // when an error or a completion passes in, calls a specified function just
 // before passing it to sink.
 func (sink Observer) WithCancel(cancel context.CancelFunc) Observer {

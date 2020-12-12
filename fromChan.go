@@ -4,8 +4,8 @@ import (
 	"context"
 )
 
-// FromChan creates an Observable that emits values from a channel, and
-// completes when the channel closes.
+// FromChan creates an Observable that emits values received from a channel,
+// and completes when the channel closes.
 func FromChan(c <-chan interface{}) Observable {
 	return func(ctx context.Context, sink Observer) {
 		done := ctx.Done()
