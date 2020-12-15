@@ -6,46 +6,46 @@ import (
 	"github.com/b97tsk/rx"
 )
 
-// CongestingConcatAll creates an Observable that flattens a higher-order
+// ConcatSyncAll creates an Observable that flattens a higher-order
 // Observable into a first-order Observable by concatenating the inner
 // Observables in order.
 //
-// It's like ConcatAll, but it congests the source.
-func CongestingConcatAll() rx.Operator {
-	return CongestingConcatMap(projectToObservable)
+// It's like ConcatAll, but it does not buffer the source.
+func ConcatSyncAll() rx.Operator {
+	return ConcatSyncMap(projectToObservable)
 }
 
-// CongestingConcatMap creates an Observable that converts the source
-// Observable into a higher-order Observable, by projecting each source
-// value to an Observable, and flattens it into a first-order Observable
-// by concatenating the inner Observables in order.
+// ConcatSyncMap creates an Observable that converts the source Observable
+// into a higher-order Observable, by projecting each source value to an
+// Observable, and flattens it into a first-order Observable by concatenating
+// the inner Observables in order.
 //
-// It's like ConcatMap, but it congests the source.
-func CongestingConcatMap(project func(interface{}, int) rx.Observable) rx.Operator {
+// It's like ConcatMap, but it does not buffer the source.
+func ConcatSyncMap(project func(interface{}, int) rx.Observable) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
-		return congestingConcatObservable{source, project}.Subscribe
+		return concatSyncObservable{source, project}.Subscribe
 	}
 }
 
-// CongestingConcatMapTo creates an Observable that converts the source
-// Observable into a higher-order Observable, by projecting each source
-// value to the same Observable, and flattens it into a first-order
-// Observable by concatenating the inner Observables in order.
+// ConcatSyncMapTo creates an Observable that converts the source Observable
+// into a higher-order Observable, by projecting each source value to the same
+// Observable, and flattens it into a first-order Observable by concatenating
+// the inner Observables in order.
 //
-// It's like CongestingConcatMap, but maps each value always to the same
-// inner Observable.
+// It's like ConcatSyncMap, but maps each value always to the same inner
+// Observable.
 //
-// It's like ConcatMapTo, but it congests the source.
-func CongestingConcatMapTo(inner rx.Observable) rx.Operator {
-	return CongestingConcatMap(func(interface{}, int) rx.Observable { return inner })
+// It's like ConcatMapTo, but it does not buffer the source.
+func ConcatSyncMapTo(inner rx.Observable) rx.Operator {
+	return ConcatSyncMap(func(interface{}, int) rx.Observable { return inner })
 }
 
-type congestingConcatObservable struct {
+type concatSyncObservable struct {
 	Source  rx.Observable
 	Project func(interface{}, int) rx.Observable
 }
 
-func (obs congestingConcatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
+func (obs concatSyncObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	var observer rx.Observer
 
 	sourceIndex := -1
