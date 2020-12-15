@@ -7,47 +7,46 @@ import (
 	"github.com/b97tsk/rx"
 )
 
-// CongestingMergeAll converts a higher-order Observable into a first-order
-// Observable which concurrently delivers all values that are emitted on the
-// inner Observables.
+// MergeSyncAll converts a higher-order Observable into a first-order
+// Observable which concurrently delivers all values that are emitted on
+// the inner Observables.
 //
-// It's like MergeAll, but it may congest the source due to concurrency limit.
-func CongestingMergeAll() rx.Operator {
-	return CongestingMergeMap(projectToObservable)
+// It's like MergeAll, but it does not buffer the source.
+func MergeSyncAll() rx.Operator {
+	return MergeSyncMap(projectToObservable)
 }
 
-// CongestingMergeMap creates an Observable that projects each source value to
+// MergeSyncMap creates an Observable that projects each source value to
 // an Observable which is merged in the output Observable.
 //
-// CongestingMergeMap maps each value to an Observable, then flattens all of
-// these inner Observables using CongestingMergeAll.
+// MergeSyncMap maps each value to an Observable, then flattens all of these
+// inner Observables using MergeSyncAll.
 //
-// It's like MergeMap, but it may congest the source due to concurrency limit.
-func CongestingMergeMap(project func(interface{}, int) rx.Observable) rx.Operator {
-	return CongestingMergeConfigure{project, -1}.Make()
+// It's like MergeMap, but it does not buffer the source.
+func MergeSyncMap(project func(interface{}, int) rx.Observable) rx.Operator {
+	return MergeSyncConfigure{project, -1}.Make()
 }
 
-// CongestingMergeMapTo creates an Observable that projects each source value
+// MergeSyncMapTo creates an Observable that projects each source value
 // to the same Observable which is merged multiple times in the output
 // Observable.
 //
-// It's like CongestingMergeMap, but maps each value always to the same inner
+// It's like MergeMapSync, but maps each value always to the same inner
 // Observable.
 //
-// It's like MergeMapTo, but it may congest the source due to concurrency
-// limit.
-func CongestingMergeMapTo(inner rx.Observable) rx.Operator {
-	return CongestingMergeMap(func(interface{}, int) rx.Observable { return inner })
+// It's like MergeMapTo, but it does not buffer the source.
+func MergeSyncMapTo(inner rx.Observable) rx.Operator {
+	return MergeSyncMap(func(interface{}, int) rx.Observable { return inner })
 }
 
-// A CongestingMergeConfigure is a configure for CongestingMerge.
-type CongestingMergeConfigure struct {
+// A MergeSyncConfigure is a configure for MergeSync.
+type MergeSyncConfigure struct {
 	Project     func(interface{}, int) rx.Observable
 	Concurrency int
 }
 
 // Make creates an Operator from this configure.
-func (configure CongestingMergeConfigure) Make() rx.Operator {
+func (configure MergeSyncConfigure) Make() rx.Operator {
 	if configure.Project == nil {
 		configure.Project = projectToObservable
 	}
@@ -57,16 +56,16 @@ func (configure CongestingMergeConfigure) Make() rx.Operator {
 	}
 
 	return func(source rx.Observable) rx.Observable {
-		return congestingMergeObservable{source, configure}.Subscribe
+		return mergeSyncObservable{source, configure}.Subscribe
 	}
 }
 
-type congestingMergeObservable struct {
+type mergeSyncObservable struct {
 	Source rx.Observable
-	CongestingMergeConfigure
+	MergeSyncConfigure
 }
 
-func (obs congestingMergeObservable) Subscribe(ctx context.Context, sink rx.Observer) {
+func (obs mergeSyncObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 
