@@ -9,23 +9,13 @@ import (
 )
 
 func TestMergeSyncAll(t *testing.T) {
-	SubscribeN(
+	Subscribe(
 		t,
-		[]rx.Observable{
-			rx.Just(
-				rx.Just("A", "B").Pipe(AddLatencyToValues(3, 5)),
-				rx.Just("C", "D").Pipe(AddLatencyToValues(2, 4)),
-				rx.Just("E", "F").Pipe(AddLatencyToValues(1, 3)),
-			).Pipe(operators.MergeSyncAll()),
-			rx.Just(
-				rx.Just("A", "B").Pipe(AddLatencyToValues(3, 5)),
-				rx.Just("C", "D").Pipe(AddLatencyToValues(2, 4)),
-				rx.Just("E", "F").Pipe(AddLatencyToValues(1, 3)),
-			).Pipe(operators.MergeSyncConfigure{Concurrency: 1}.Make()),
-		},
-		[][]interface{}{
-			{"E", "C", "A", "F", "D", "B", Completed},
-			{"A", "B", "C", "D", "E", "F", Completed},
-		},
+		rx.Just(
+			rx.Just("A", "B").Pipe(AddLatencyToValues(3, 5)),
+			rx.Just("C", "D").Pipe(AddLatencyToValues(2, 4)),
+			rx.Just("E", "F").Pipe(AddLatencyToValues(1, 3)),
+		).Pipe(operators.MergeSyncAll(1)),
+		"A", "B", "C", "D", "E", "F", Completed,
 	)
 }
