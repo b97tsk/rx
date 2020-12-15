@@ -4,24 +4,24 @@ import (
 	"context"
 )
 
-// CongestingZip combines multiple Observables to create an Observable that
-// emits the values of each of its input Observables as a slice.
+// ZipSync combines multiple Observables to create an Observable that emits
+// the values of each of its input Observables as a slice.
 //
-// It's like Zip, but it congests subscribed Observables.
+// It's like Zip, but it does not buffer subscribed Observables.
 //
 // For the purpose of allocation avoidance, slices emitted by the output
 // Observable actually share the same underlying array.
-func CongestingZip(observables ...Observable) Observable {
+func ZipSync(observables ...Observable) Observable {
 	if len(observables) == 0 {
 		return Empty()
 	}
 
-	return congestingZipObservable(observables).Subscribe
+	return zipSyncObservable(observables).Subscribe
 }
 
-type congestingZipObservable []Observable
+type zipSyncObservable []Observable
 
-func (observables congestingZipObservable) Subscribe(ctx context.Context, sink Observer) {
+func (observables zipSyncObservable) Subscribe(ctx context.Context, sink Observer) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 
