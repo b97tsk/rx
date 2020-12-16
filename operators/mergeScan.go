@@ -14,35 +14,36 @@ import (
 //
 // It's like Scan, but the Observables returned by the accumulator are merged
 // into the outer Observable.
-func MergeScan(accumulator func(interface{}, interface{}) rx.Observable, seed interface{}) rx.Operator {
-	return MergeScanConfigure{accumulator, seed, -1}.Make()
-}
-
-// A MergeScanConfigure is a configure for MergeScan.
-type MergeScanConfigure struct {
-	Accumulator func(interface{}, interface{}) rx.Observable
-	Seed        interface{}
-	Concurrency int
-}
-
-// Make creates an Operator from this configure.
-func (configure MergeScanConfigure) Make() rx.Operator {
-	if configure.Accumulator == nil {
-		panic("MergeScan: Accumulator is nil")
+//
+// For unlimited concurrency, passes -1.
+func MergeScan(
+	accumulator func(interface{}, interface{}) rx.Observable,
+	seed interface{},
+	concurrency int,
+) rx.Operator {
+	if accumulator == nil {
+		panic("MergeScan: accumulator is nil")
 	}
 
-	if configure.Concurrency == 0 {
-		configure.Concurrency = -1
+	if concurrency == 0 {
+		concurrency = -1
 	}
 
 	return func(source rx.Observable) rx.Observable {
-		return mergeScanObservable{source, configure}.Subscribe
+		return mergeScanObservable{
+			Source:      source,
+			Accumulator: accumulator,
+			Seed:        seed,
+			Concurrency: concurrency,
+		}.Subscribe
 	}
 }
 
 type mergeScanObservable struct {
-	Source rx.Observable
-	MergeScanConfigure
+	Source      rx.Observable
+	Accumulator func(interface{}, interface{}) rx.Observable
+	Seed        interface{}
+	Concurrency int
 }
 
 func (obs mergeScanObservable) Subscribe(ctx context.Context, sink rx.Observer) {

@@ -20,6 +20,7 @@ func TestMergeScan(t *testing.T) {
 				return val.(rx.Observable)
 			},
 			nil,
+			-1,
 		)),
 		"E", "C", "A", "F", "D", "B", Completed,
 	)
