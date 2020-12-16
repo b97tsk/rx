@@ -123,7 +123,35 @@ func TestDoOnComplete(t *testing.T) {
 
 func TestDoAtLast(t *testing.T) {
 	n := 0
-	op := operators.DoAtLast(func(error) { n++ })
+	op := operators.DoAtLast(func() { n++ })
+	obs := rx.Observable(
+		func(ctx context.Context, sink rx.Observer) {
+			sink.Next(n)
+			sink.Complete()
+		},
+	)
+	SubscribeN(
+		t,
+		[]rx.Observable{
+			rx.Concat(rx.Empty().Pipe(op), obs),
+			rx.Concat(rx.Just("A").Pipe(op), obs),
+			rx.Concat(rx.Just("A", "B").Pipe(op), obs),
+			rx.Concat(rx.Concat(rx.Just("A", "B"), rx.Throw(ErrTest)).Pipe(op), obs),
+			obs,
+		},
+		[][]interface{}{
+			{1, Completed},
+			{"A", 2, Completed},
+			{"A", "B", 3, Completed},
+			{"A", "B", ErrTest},
+			{4, Completed},
+		},
+	)
+}
+
+func TestDoAtLastError(t *testing.T) {
+	n := 0
+	op := operators.DoAtLastError(func(error) { n++ })
 	obs := rx.Observable(
 		func(ctx context.Context, sink rx.Observer) {
 			sink.Next(n)
