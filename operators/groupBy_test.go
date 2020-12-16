@@ -31,6 +31,7 @@ func TestGroupBy(t *testing.T) {
 						operators.Delay(delay), // for ordered output
 					)
 				},
+				-1,
 			),
 			ToString(),
 		),

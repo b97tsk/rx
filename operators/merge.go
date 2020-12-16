@@ -11,8 +11,10 @@ import (
 // MergeAll converts a higher-order Observable into a first-order Observable
 // which concurrently delivers all values that are emitted on the inner
 // Observables.
-func MergeAll() rx.Operator {
-	return MergeMap(projectToObservable)
+//
+// For unlimited concurrency, passes -1.
+func MergeAll(concurrency int) rx.Operator {
+	return MergeMap(projectToObservable, concurrency)
 }
 
 // MergeMap creates an Observable that projects each source value to an
@@ -20,42 +22,41 @@ func MergeAll() rx.Operator {
 //
 // MergeMap maps each value to an Observable, then flattens all of these inner
 // Observables using MergeAll.
-func MergeMap(project func(interface{}, int) rx.Observable) rx.Operator {
-	return MergeConfigure{project, -1}.Make()
+//
+// For unlimited concurrency, passes -1.
+func MergeMap(
+	project func(interface{}, int) rx.Observable,
+	concurrency int,
+) rx.Operator {
+	if project == nil {
+		panic("MergeMap: project is nil")
+	}
+
+	if concurrency == 0 {
+		concurrency = -1
+	}
+
+	return func(source rx.Observable) rx.Observable {
+		return mergeObservable{source, project, concurrency}.Subscribe
+	}
 }
 
 // MergeMapTo creates an Observable that projects each source value to the same
 // Observable which is merged multiple times in the output Observable.
 //
 // It's like MergeMap, but maps each value always to the same inner Observable.
-func MergeMapTo(inner rx.Observable) rx.Operator {
-	return MergeMap(func(interface{}, int) rx.Observable { return inner })
-}
+//
+// For unlimited concurrency, passes -1.
+func MergeMapTo(inner rx.Observable, concurrency int) rx.Operator {
+	project := func(interface{}, int) rx.Observable { return inner }
 
-// A MergeConfigure is a configure for Merge.
-type MergeConfigure struct {
-	Project     func(interface{}, int) rx.Observable
-	Concurrency int
-}
-
-// Make creates an Operator from this configure.
-func (configure MergeConfigure) Make() rx.Operator {
-	if configure.Project == nil {
-		configure.Project = projectToObservable
-	}
-
-	if configure.Concurrency == 0 {
-		configure.Concurrency = -1
-	}
-
-	return func(source rx.Observable) rx.Observable {
-		return mergeObservable{source, configure}.Subscribe
-	}
+	return MergeMap(project, concurrency)
 }
 
 type mergeObservable struct {
-	Source rx.Observable
-	MergeConfigure
+	Source      rx.Observable
+	Project     func(interface{}, int) rx.Observable
+	Concurrency int
 }
 
 func (obs mergeObservable) Subscribe(ctx context.Context, sink rx.Observer) {

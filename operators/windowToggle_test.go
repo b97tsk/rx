@@ -26,7 +26,7 @@ func TestWindowToggle(t *testing.T) {
 					rx.Ticker(Step(2)),
 					func(interface{}) rx.Observable { return rx.Timer(Step(2)) },
 				),
-				operators.MergeMap(toSlice),
+				operators.MergeMap(toSlice, -1),
 				ToString(),
 			),
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
@@ -35,7 +35,7 @@ func TestWindowToggle(t *testing.T) {
 					rx.Ticker(Step(2)),
 					func(interface{}) rx.Observable { return rx.Timer(Step(4)) },
 				),
-				operators.MergeMap(toSlice),
+				operators.MergeMap(toSlice, -1),
 				ToString(),
 			),
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
@@ -44,7 +44,7 @@ func TestWindowToggle(t *testing.T) {
 					rx.Ticker(Step(4)),
 					func(interface{}) rx.Observable { return rx.Timer(Step(2)) },
 				),
-				operators.MergeMap(toSlice),
+				operators.MergeMap(toSlice, -1),
 				ToString(),
 			),
 			rx.Concat(rx.Just("A", "B", "C", "D", "E", "F", "G"), rx.Throw(ErrTest)).Pipe(
@@ -53,7 +53,7 @@ func TestWindowToggle(t *testing.T) {
 					rx.Ticker(Step(4)),
 					func(interface{}) rx.Observable { return rx.Timer(Step(2)) },
 				),
-				operators.MergeMap(toSlice),
+				operators.MergeMap(toSlice, -1),
 				ToString(),
 			),
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
@@ -73,7 +73,7 @@ func TestWindowToggle(t *testing.T) {
 						return rx.Timer(Step(2))
 					},
 				),
-				operators.MergeMap(toSlice),
+				operators.MergeMap(toSlice, -1),
 				ToString(),
 			),
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
@@ -82,7 +82,7 @@ func TestWindowToggle(t *testing.T) {
 					rx.Ticker(Step(4)).Pipe(operators.Take(2)),
 					func(interface{}) rx.Observable { return rx.Timer(Step(2)) },
 				),
-				operators.MergeMap(toSlice),
+				operators.MergeMap(toSlice, -1),
 				ToString(),
 			),
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
@@ -91,7 +91,7 @@ func TestWindowToggle(t *testing.T) {
 					rx.Concat(rx.Ticker(Step(4)).Pipe(operators.Take(2)), rx.Throw(ErrTest)),
 					func(interface{}) rx.Observable { return rx.Timer(Step(2)) },
 				),
-				operators.MergeMap(toSlice),
+				operators.MergeMap(toSlice, -1),
 				ToString(),
 			),
 		},

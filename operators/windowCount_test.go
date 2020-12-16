@@ -23,13 +23,13 @@ func TestWindowCount(t *testing.T) {
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
 				operators.WindowCount(2),
-				operators.MergeMap(toSlice),
+				operators.MergeMap(toSlice, -1),
 				ToString(),
 			),
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
 				AddLatencyToValues(1, 2),
 				operators.WindowCount(3),
-				operators.MergeMap(toSlice),
+				operators.MergeMap(toSlice, -1),
 				ToString(),
 			),
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
@@ -38,7 +38,7 @@ func TestWindowCount(t *testing.T) {
 					WindowSize:       3,
 					StartWindowEvery: 1,
 				}.Make(),
-				operators.MergeMap(toSlice),
+				operators.MergeMap(toSlice, -1),
 				ToString(),
 			),
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
@@ -47,7 +47,7 @@ func TestWindowCount(t *testing.T) {
 					WindowSize:       3,
 					StartWindowEvery: 2,
 				}.Make(),
-				operators.MergeMap(toSlice),
+				operators.MergeMap(toSlice, -1),
 				ToString(),
 			),
 			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
@@ -56,7 +56,7 @@ func TestWindowCount(t *testing.T) {
 					WindowSize:       3,
 					StartWindowEvery: 4,
 				}.Make(),
-				operators.MergeMap(toSlice),
+				operators.MergeMap(toSlice, -1),
 				ToString(),
 			),
 		},
