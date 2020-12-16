@@ -13,34 +13,29 @@ import (
 //
 // It's similar to MergeMap, but applies the projection function to every
 // source value as well as every output value. It's recursive.
-func Expand(project func(interface{}) rx.Observable) rx.Operator {
-	return ExpandConfigure{project, -1}.Make()
-}
-
-// An ExpandConfigure is a configure for Expand.
-type ExpandConfigure struct {
-	Project     func(interface{}) rx.Observable
-	Concurrency int
-}
-
-// Make creates an Operator from this configure.
-func (configure ExpandConfigure) Make() rx.Operator {
-	if configure.Project == nil {
-		panic("Expand: Project is nil")
+//
+// For unlimited concurrency, passes -1.
+func Expand(
+	project func(interface{}) rx.Observable,
+	concurrency int,
+) rx.Operator {
+	if project == nil {
+		panic("Expand: project is nil")
 	}
 
-	if configure.Concurrency == 0 {
-		configure.Concurrency = -1
+	if concurrency == 0 {
+		concurrency = -1
 	}
 
 	return func(source rx.Observable) rx.Observable {
-		return expandObservable{source, configure}.Subscribe
+		return expandObservable{source, project, concurrency}.Subscribe
 	}
 }
 
 type expandObservable struct {
-	Source rx.Observable
-	ExpandConfigure
+	Source      rx.Observable
+	Project     func(interface{}) rx.Observable
+	Concurrency int
 }
 
 func (obs expandObservable) Subscribe(ctx context.Context, sink rx.Observer) {
