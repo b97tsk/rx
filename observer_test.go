@@ -25,7 +25,7 @@ func TestObserver_ElementsOnly(t *testing.T) {
 		t,
 		rx.Observable(
 			func(ctx context.Context, sink rx.Observer) {
-				rx.Just("A", "B", "C").Subscribe(ctx, sink.ElementsOnly())
+				rx.Just("A", "B", "C").Subscribe(ctx, sink.ElementsOnly)
 			},
 		).Pipe(
 			operators.Timeout(Step(1)),

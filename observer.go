@@ -39,12 +39,10 @@ func (sink *Observer) Sink(t Notification) {
 	(*sink)(t)
 }
 
-// ElementsOnly creates an Observer that only passes values to sink.
-func (sink Observer) ElementsOnly() Observer {
-	return func(t Notification) {
-		if t.HasValue {
-			sink(t)
-		}
+// ElementsOnly passes t to sink if t represents a value.
+func (sink Observer) ElementsOnly(t Notification) {
+	if t.HasValue {
+		sink(t)
 	}
 }
 
