@@ -17,7 +17,7 @@ import (
 //
 // For unlimited concurrency, passes -1.
 func MergeScan(
-	accumulator func(interface{}, interface{}) rx.Observable,
+	accumulator func(interface{}, interface{}, int) rx.Observable,
 	seed interface{},
 	concurrency int,
 ) rx.Operator {
@@ -41,7 +41,7 @@ func MergeScan(
 
 type mergeScanObservable struct {
 	Source      rx.Observable
-	Accumulator func(interface{}, interface{}) rx.Observable
+	Accumulator func(interface{}, interface{}, int) rx.Observable
 	Seed        interface{}
 	Concurrency int
 }
@@ -54,24 +54,26 @@ func (obs mergeScanObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 	x := struct {
 		sync.Mutex
 		Queue     queue.Queue
+		Index     int
 		Workers   int
-		Seed      interface{}
-		HasValue  bool
+		State     interface{}
 		Completed bool
-	}{Seed: obs.Seed}
+	}{Index: -1, State: obs.Seed}
 
 	var subscribeLocked func()
 
 	subscribeLocked = func() {
+		x.Index++
+
+		sourceIndex := x.Index
 		sourceValue := x.Queue.Pop()
 
-		obs1 := obs.Accumulator(x.Seed, sourceValue)
+		obs1 := obs.Accumulator(x.State, sourceValue, sourceIndex)
 
 		go obs1.Subscribe(ctx, func(t rx.Notification) {
 			if t.HasValue {
 				x.Lock()
-				x.Seed = t.Value
-				x.HasValue = true
+				x.State = t.Value
 				x.Unlock()
 			}
 
@@ -89,10 +91,6 @@ func (obs mergeScanObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 				x.Workers--
 
 				if x.Completed && x.Workers == 0 {
-					if !x.HasValue {
-						sink.Next(x.Seed)
-					}
-
 					sink(t)
 				}
 			}
@@ -122,10 +120,6 @@ func (obs mergeScanObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 			x.Completed = true
 
 			if x.Workers == 0 {
-				if !x.HasValue {
-					sink.Next(x.Seed)
-				}
-
 				sink(t)
 			}
 		}

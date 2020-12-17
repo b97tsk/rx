@@ -16,7 +16,7 @@ func TestMergeScan(t *testing.T) {
 			rx.Just("C", "D").Pipe(AddLatencyToValues(2, 4)),
 			rx.Just("E", "F").Pipe(AddLatencyToValues(1, 3)),
 		).Pipe(operators.MergeScan(
-			func(acc, val interface{}) rx.Observable {
+			func(acc, val interface{}, idx int) rx.Observable {
 				return val.(rx.Observable)
 			},
 			nil,
