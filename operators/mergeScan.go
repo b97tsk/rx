@@ -68,34 +68,32 @@ func (obs mergeScanObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 		obs1 := obs.Accumulator(x.Seed, sourceValue)
 
 		go obs1.Subscribe(ctx, func(t rx.Notification) {
-			switch {
-			case t.HasValue:
+			if t.HasValue {
 				x.Lock()
 				x.Seed = t.Value
 				x.HasValue = true
 				x.Unlock()
+			}
 
+			if t.HasValue || t.HasError {
 				sink(t)
+				return
+			}
 
-			case t.HasError:
-				sink(t)
+			x.Lock()
+			defer x.Unlock()
 
-			default:
-				x.Lock()
-				defer x.Unlock()
+			if x.Queue.Len() > 0 {
+				subscribeLocked()
+			} else {
+				x.Workers--
 
-				if x.Queue.Len() > 0 {
-					subscribeLocked()
-				} else {
-					x.Workers--
-
-					if x.Completed && x.Workers == 0 {
-						if !x.HasValue {
-							sink.Next(x.Seed)
-						}
-
-						sink(t)
+				if x.Completed && x.Workers == 0 {
+					if !x.HasValue {
+						sink.Next(x.Seed)
 					}
+
+					sink(t)
 				}
 			}
 		})
