@@ -13,7 +13,7 @@ import (
 //
 // It's like MergeAll, but it does not buffer the source.
 //
-// Concurrency should be positive, otherwise, It works just like MergeAll.
+// Concurrency should be positive, otherwise, it works just like MergeAll.
 func MergeSyncAll(concurrency int) rx.Operator {
 	return MergeSyncMap(projectToObservable, concurrency)
 }
@@ -26,7 +26,7 @@ func MergeSyncAll(concurrency int) rx.Operator {
 //
 // It's like MergeMap, but it does not buffer the source.
 //
-// Concurrency should be positive, otherwise, It works just like MergeMap.
+// Concurrency should be positive, otherwise, it works just like MergeMap.
 func MergeSyncMap(
 	project func(interface{}, int) rx.Observable,
 	concurrency int,
@@ -53,7 +53,7 @@ func MergeSyncMap(
 //
 // It's like MergeMapTo, but it does not buffer the source.
 //
-// Concurrency should be positive, otherwise, It works just like MergeMapTo.
+// Concurrency should be positive, otherwise, it works just like MergeMapTo.
 func MergeSyncMapTo(inner rx.Observable, concurrency int) rx.Operator {
 	project := func(interface{}, int) rx.Observable { return inner }
 
