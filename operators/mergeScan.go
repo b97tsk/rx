@@ -3,6 +3,7 @@ package operators
 import (
 	"context"
 	"sync"
+	"sync/atomic"
 
 	"github.com/b97tsk/rx"
 	"github.com/b97tsk/rx/internal/queue"
@@ -46,6 +47,10 @@ type mergeScanObservable struct {
 	Concurrency int
 }
 
+type mergeScanState struct {
+	Value interface{}
+}
+
 func (obs mergeScanObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	ctx, cancel := context.WithCancel(ctx)
 
@@ -56,9 +61,11 @@ func (obs mergeScanObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 		Queue     queue.Queue
 		Index     int
 		Workers   int
-		State     interface{}
+		State     atomic.Value
 		Completed bool
-	}{Index: -1, State: obs.Seed}
+	}{Index: -1}
+
+	x.State.Store(mergeScanState{obs.Seed})
 
 	var subscribeLocked func()
 
@@ -68,13 +75,13 @@ func (obs mergeScanObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 		sourceIndex := x.Index
 		sourceValue := x.Queue.Pop()
 
-		obs1 := obs.Accumulator(x.State, sourceValue, sourceIndex)
+		state := x.State.Load().(mergeScanState).Value
+
+		obs1 := obs.Accumulator(state, sourceValue, sourceIndex)
 
 		go obs1.Subscribe(ctx, func(t rx.Notification) {
 			if t.HasValue {
-				x.Lock()
-				x.State = t.Value
-				x.Unlock()
+				x.State.Store(mergeScanState{t.Value})
 			}
 
 			if t.HasValue || t.HasError {
