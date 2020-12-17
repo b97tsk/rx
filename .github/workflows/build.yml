@@ -3,6 +3,8 @@ on:
   push:
     branches:
       - master
+    tags:
+      - '*'
 jobs:
   test:
     name: Test with coverage
