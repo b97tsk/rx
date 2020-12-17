@@ -69,8 +69,61 @@ func ToString() rx.Operator {
 	)
 }
 
-func Subscribe(t *testing.T, obs rx.Observable, output ...interface{}) {
-	SubscribeN(t, []rx.Observable{obs}, [][]interface{}{output})
+func Subscribe(t *testing.T, source rx.Observable, output ...interface{}) {
+	_ = source.BlockingSubscribe(
+		context.Background(),
+		func(n rx.Notification) {
+			if len(output) == 0 {
+				t.Fail()
+
+				switch {
+				case n.HasValue:
+					t.Logf("want nothing, but got %v", n.Value)
+				case n.HasError:
+					t.Logf("want nothing, but got %v", n.Error)
+				default:
+					t.Log("want nothing, but got completed")
+				}
+
+				return
+			}
+
+			wanted := output[0]
+			output = output[1:]
+
+			switch {
+			case n.HasValue:
+				if wanted != n.Value {
+					t.Fail()
+					t.Logf("want %v, but got %v", wanted, n.Value)
+				} else {
+					t.Logf("want %v", wanted)
+				}
+			case n.HasError:
+				if wanted != n.Error {
+					t.Fail()
+					t.Logf("want %v, but got %v", wanted, n.Error)
+				} else {
+					t.Logf("want %v", wanted)
+				}
+			default:
+				if wanted != Completed {
+					t.Fail()
+					t.Logf("want %v, but got completed", wanted)
+				} else {
+					t.Log("want completed")
+				}
+			}
+		},
+	)
+
+	if len(output) > 0 {
+		t.Fail()
+
+		for _, wanted := range output {
+			t.Logf("want %v, but got nothing", wanted)
+		}
+	}
 }
 
 func SubscribeN(t *testing.T, observables []rx.Observable, outputs [][]interface{}) {
@@ -79,61 +132,6 @@ func SubscribeN(t *testing.T, observables []rx.Observable, outputs [][]interface
 	}
 
 	for i, source := range observables {
-		output := outputs[i]
-
-		_ = source.BlockingSubscribe(
-			context.Background(),
-			func(n rx.Notification) {
-				if len(output) == 0 {
-					t.Fail()
-
-					switch {
-					case n.HasValue:
-						t.Logf("want nothing, but got %v", n.Value)
-					case n.HasError:
-						t.Logf("want nothing, but got %v", n.Error)
-					default:
-						t.Log("want nothing, but got completed")
-					}
-
-					return
-				}
-
-				wanted := output[0]
-				output = output[1:]
-
-				switch {
-				case n.HasValue:
-					if wanted != n.Value {
-						t.Fail()
-						t.Logf("want %v, but got %v", wanted, n.Value)
-					} else {
-						t.Logf("want %v", wanted)
-					}
-				case n.HasError:
-					if wanted != n.Error {
-						t.Fail()
-						t.Logf("want %v, but got %v", wanted, n.Error)
-					} else {
-						t.Logf("want %v", wanted)
-					}
-				default:
-					if wanted != Completed {
-						t.Fail()
-						t.Logf("want %v, but got completed", wanted)
-					} else {
-						t.Log("want completed")
-					}
-				}
-			},
-		)
-
-		if len(output) > 0 {
-			t.Fail()
-
-			for _, wanted := range output {
-				t.Logf("want %v, but got nothing", wanted)
-			}
-		}
+		Subscribe(t, source, outputs[i]...)
 	}
 }
