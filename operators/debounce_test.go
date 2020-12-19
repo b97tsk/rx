@@ -24,10 +24,30 @@ func TestDebounce(t *testing.T) {
 					return rx.Timer(Step(2))
 				}),
 			),
+			rx.Just("A", "B", "C").Pipe(
+				AddLatencyToValues(1, 3),
+				operators.Debounce(func(interface{}) rx.Observable {
+					return rx.Empty()
+				}),
+			),
+			rx.Just("A", "B", "C").Pipe(
+				AddLatencyToValues(1, 3),
+				operators.Debounce(func(interface{}) rx.Observable {
+					return rx.Throw(ErrTest)
+				}),
+			),
+			rx.Throw(ErrTest).Pipe(
+				operators.Debounce(func(interface{}) rx.Observable {
+					return rx.Timer(Step(1))
+				}),
+			),
 		},
 		[][]interface{}{
 			{"C", Completed},
 			{"A", "B", "C", Completed},
+			{"C", Completed},
+			{ErrTest},
+			{ErrTest},
 		},
 	)
 }

@@ -76,22 +76,32 @@ func (obs debounceObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 					scheduleCancel()
 
 					if critical.Enter(&x.Section) {
-						if t.HasError {
+						switch {
+						case t.HasValue:
+							defer critical.Leave(&x.Section)
+
+							if x.Latest.HasValue {
+								value := x.Latest.Value
+
+								x.Latest.Value = nil
+								x.Latest.HasValue = false
+
+								sink.Next(value)
+							}
+
+						case t.HasError:
 							critical.Close(&x.Section)
+
 							sink(t)
-							return
-						}
 
-						if x.Latest.HasValue {
-							x.Latest.HasValue = false
-							sink.Next(x.Latest.Value)
+						default:
+							critical.Leave(&x.Section)
 						}
-
-						critical.Leave(&x.Section)
 					}
 				}
 
 				obs1 := obs.DurationSelector(t.Value)
+
 				obs1.Subscribe(scheduleCtx, observer.Sink)
 
 			case t.HasError:
@@ -103,7 +113,12 @@ func (obs debounceObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 				critical.Close(&x.Section)
 
 				if x.Latest.HasValue {
-					sink.Next(x.Latest.Value)
+					value := x.Latest.Value
+
+					x.Latest.Value = nil
+					x.Latest.HasValue = false
+
+					sink.Next(value)
 				}
 
 				sink(t)
