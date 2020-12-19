@@ -45,18 +45,27 @@ func (obs sampleObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 
 	obs.Notifier.Subscribe(ctx, func(t rx.Notification) {
 		if critical.Enter(&x.Section) {
-			if t.HasError {
+			switch {
+			case t.HasValue:
+				defer critical.Leave(&x.Section)
+
+				if x.Latest.HasValue {
+					value := x.Latest.Value
+
+					x.Latest.Value = nil
+					x.Latest.HasValue = false
+
+					sink.Next(value)
+				}
+
+			case t.HasError:
 				critical.Close(&x.Section)
+
 				sink(t)
-				return
-			}
 
-			if x.Latest.HasValue {
-				x.Latest.HasValue = false
-				sink.Next(x.Latest.Value)
+			default:
+				critical.Leave(&x.Section)
 			}
-
-			critical.Leave(&x.Section)
 		}
 	})
 
@@ -72,6 +81,9 @@ func (obs sampleObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 				x.Latest.HasValue = true
 
 				critical.Leave(&x.Section)
+
+			case t.HasError:
+				fallthrough
 
 			default:
 				critical.Close(&x.Section)
