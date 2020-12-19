@@ -47,6 +47,7 @@ func (obs auditObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		critical.Section
 		LatestValue interface{}
 		Scheduled   bool
+		Completed   bool
 	}
 
 	obs.Source.Subscribe(ctx, func(t rx.Notification) {
@@ -71,24 +72,52 @@ func (obs auditObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 						scheduleCancel()
 
 						if critical.Enter(&x.Section) {
-							if t.HasError {
-								critical.Close(&x.Section)
-								sink(t)
-								return
-							}
-
-							sink.Next(x.LatestValue)
 							x.Scheduled = false
 
-							critical.Leave(&x.Section)
+							switch {
+							case t.HasValue:
+								defer critical.Leave(&x.Section)
+
+								sink.Next(x.LatestValue)
+
+								if x.Completed {
+									sink.Complete()
+								}
+
+							case t.HasError:
+								critical.Close(&x.Section)
+
+								sink(t)
+
+							default:
+								defer critical.Leave(&x.Section)
+
+								if x.Completed {
+									sink(t)
+								}
+							}
 						}
 					}
 
 					obs1 := obs.DurationSelector(t.Value)
+
 					obs1.Subscribe(scheduleCtx, observer.Sink)
 				}
 
+			case t.HasError:
+				critical.Close(&x.Section)
+
+				sink(t)
+
 			default:
+				x.Completed = true
+
+				if x.Scheduled {
+					critical.Leave(&x.Section)
+
+					break
+				}
+
 				critical.Close(&x.Section)
 
 				sink(t)
