@@ -90,40 +90,59 @@ func (obs throttleObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 			Value    interface{}
 			HasValue bool
 		}
+		Throttling bool
+		Completed  bool
 	}
 
-	var (
-		doThrottle  func(interface{})
-		throttleCtx context.Context
-	)
+	var doThrottle func(interface{})
 
 	doThrottle = func(val interface{}) {
-		ctx, cancel := context.WithCancel(ctx)
+		x.Throttling = true
 
-		throttleCtx = ctx
+		throttleCtx, throttleCancel := context.WithCancel(ctx)
 
 		var observer rx.Observer
 
 		observer = func(t rx.Notification) {
 			observer = rx.Noop
 
-			defer cancel()
+			throttleCancel()
 
-			if obs.Trailing || t.HasError {
-				if critical.Enter(&x.Section) {
-					if t.HasError {
-						critical.Close(&x.Section)
-						sink(t)
-						return
-					}
+			if critical.Enter(&x.Section) {
+				x.Throttling = false
 
-					if x.Trailing.HasValue {
+				switch {
+				case t.HasValue:
+					defer critical.Leave(&x.Section)
+
+					if obs.Trailing && x.Trailing.HasValue {
+						value := x.Trailing.Value
+
+						x.Trailing.Value = nil
 						x.Trailing.HasValue = false
-						sink.Next(x.Trailing.Value)
-						doThrottle(x.Trailing.Value)
+
+						sink.Next(value)
+
+						if !x.Completed {
+							doThrottle(value)
+						}
 					}
 
-					critical.Leave(&x.Section)
+					if x.Completed {
+						sink.Complete()
+					}
+
+				case t.HasError:
+					critical.Close(&x.Section)
+
+					sink(t)
+
+				default:
+					defer critical.Leave(&x.Section)
+
+					if x.Completed {
+						sink(t)
+					}
 				}
 			}
 		}
@@ -137,26 +156,37 @@ func (obs throttleObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		if critical.Enter(&x.Section) {
 			switch {
 			case t.HasValue:
+				defer critical.Leave(&x.Section)
+
 				x.Trailing.Value = t.Value
 				x.Trailing.HasValue = true
 
-				if throttleCtx == nil || throttleCtx.Err() != nil {
+				if !x.Throttling {
 					doThrottle(t.Value)
 
 					if obs.Leading {
+						x.Trailing.Value = nil
 						x.Trailing.HasValue = false
+
 						sink(t)
 					}
 				}
 
-				critical.Leave(&x.Section)
-
-			default:
+			case t.HasError:
 				critical.Close(&x.Section)
 
-				if x.Trailing.HasValue {
-					sink.Next(x.Trailing.Value)
+				sink(t)
+
+			default:
+				x.Completed = true
+
+				if obs.Trailing && x.Trailing.HasValue && x.Throttling {
+					critical.Leave(&x.Section)
+
+					break
 				}
+
+				critical.Close(&x.Section)
 
 				sink(t)
 			}
