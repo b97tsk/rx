@@ -12,26 +12,30 @@ func TestBufferTime(t *testing.T) {
 	SubscribeN(
 		t,
 		[]rx.Observable{
-			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+			rx.Just("A", "B", "C", "D", "E").Pipe(
 				AddLatencyToValues(1, 2),
 				operators.BufferTime(Step(2)),
 				ToString(),
 			),
-			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+			rx.Just("A", "B", "C", "D", "E").Pipe(
 				AddLatencyToValues(1, 2),
 				operators.BufferTime(Step(4)),
 				ToString(),
 			),
-			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+			rx.Just("A", "B", "C", "D", "E").Pipe(
 				AddLatencyToValues(1, 2),
 				operators.BufferTime(Step(6)),
 				ToString(),
 			),
+			rx.Throw(ErrTest).Pipe(
+				operators.BufferTime(Step(1)),
+			),
 		},
 		[][]interface{}{
-			{"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", "[G]", Completed},
-			{"[A B]", "[C D]", "[E F]", "[G]", Completed},
-			{"[A B C]", "[D E F]", "[G]", Completed},
+			{"[A]", "[B]", "[C]", "[D]", "[E]", Completed},
+			{"[A B]", "[C D]", "[E]", Completed},
+			{"[A B C]", "[D E]", Completed},
+			{ErrTest},
 		},
 	)
 
@@ -40,14 +44,14 @@ func TestBufferTime(t *testing.T) {
 	SubscribeN(
 		t,
 		[]rx.Observable{
-			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+			rx.Just("A", "B", "C", "D", "E").Pipe(
 				AddLatencyToValues(1, 2),
 				operators.BufferTimeConfigure{
 					TimeSpan: Step(8),
 				}.Make(),
 				ToString(),
 			),
-			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+			rx.Just("A", "B", "C", "D", "E").Pipe(
 				AddLatencyToValues(1, 2),
 				operators.BufferTimeConfigure{
 					TimeSpan:      Step(8),
@@ -55,7 +59,7 @@ func TestBufferTime(t *testing.T) {
 				}.Make(),
 				ToString(),
 			),
-			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+			rx.Just("A", "B", "C", "D", "E").Pipe(
 				AddLatencyToValues(1, 2),
 				operators.BufferTimeConfigure{
 					TimeSpan:      Step(8),
@@ -63,7 +67,7 @@ func TestBufferTime(t *testing.T) {
 				}.Make(),
 				ToString(),
 			),
-			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+			rx.Just("A", "B", "C", "D", "E").Pipe(
 				AddLatencyToValues(1, 2),
 				operators.BufferTimeConfigure{
 					TimeSpan:      Step(8),
@@ -73,10 +77,10 @@ func TestBufferTime(t *testing.T) {
 			),
 		},
 		[][]interface{}{
-			{"[A B C D]", "[E F G]", Completed},
-			{"[A B C]", "[D E F]", "[G]", Completed},
-			{"[A B]", "[C D]", "[E F]", "[G]", Completed},
-			{"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", "[G]", "[]", Completed},
+			{"[A B C D]", "[E]", Completed},
+			{"[A B C]", "[D E]", Completed},
+			{"[A B]", "[C D]", "[E]", Completed},
+			{"[A]", "[B]", "[C]", "[D]", "[E]", "[]", Completed},
 		},
 	)
 
@@ -85,7 +89,7 @@ func TestBufferTime(t *testing.T) {
 	SubscribeN(
 		t,
 		[]rx.Observable{
-			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+			rx.Just("A", "B", "C", "D", "E").Pipe(
 				AddLatencyToValues(1, 2),
 				operators.BufferTimeConfigure{
 					TimeSpan:         Step(2),
@@ -93,7 +97,7 @@ func TestBufferTime(t *testing.T) {
 				}.Make(),
 				ToString(),
 			),
-			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+			rx.Just("A", "B", "C", "D", "E").Pipe(
 				AddLatencyToValues(1, 2),
 				operators.BufferTimeConfigure{
 					TimeSpan:         Step(2),
@@ -101,7 +105,7 @@ func TestBufferTime(t *testing.T) {
 				}.Make(),
 				ToString(),
 			),
-			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+			rx.Just("A", "B", "C", "D", "E").Pipe(
 				AddLatencyToValues(1, 2),
 				operators.BufferTimeConfigure{
 					TimeSpan:         Step(4),
@@ -111,9 +115,9 @@ func TestBufferTime(t *testing.T) {
 			),
 		},
 		[][]interface{}{
-			{"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", "[G]", Completed},
-			{"[A]", "[C]", "[E]", "[G]", Completed},
-			{"[A B]", "[B C]", "[C D]", "[D E]", "[E F]", "[F G]", "[G]", Completed},
+			{"[A]", "[B]", "[C]", "[D]", "[E]", Completed},
+			{"[A]", "[C]", "[E]", Completed},
+			{"[A B]", "[B C]", "[C D]", "[D E]", "[E]", Completed},
 		},
 	)
 }
