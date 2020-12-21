@@ -37,12 +37,16 @@ func TestBuffer(t *testing.T) {
 				operators.Buffer(rx.Throw(ErrTest)),
 				ToString(),
 			),
+			rx.Throw(ErrTest).Pipe(
+				operators.Buffer(rx.Throw(ErrTest).Pipe(DelaySubscription(1))),
+			),
 		},
 		[][]interface{}{
 			{"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", Completed},
 			{"[A B]", "[C D]", "[E F]", Completed},
 			{"[A B C]", "[D E F]", Completed},
 			{"[A B C D]", Completed},
+			{ErrTest},
 			{ErrTest},
 		},
 	)

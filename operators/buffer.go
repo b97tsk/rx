@@ -36,11 +36,14 @@ func (obs bufferObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		if critical.Enter(&x.Section) {
 			switch {
 			case t.HasValue:
+				defer critical.Leave(&x.Section)
+
 				sink.Next(x.Buffer)
 
 				x.Buffer = nil
 
-				critical.Leave(&x.Section)
+			case t.HasError:
+				fallthrough
 
 			default:
 				critical.Close(&x.Section)
@@ -61,6 +64,9 @@ func (obs bufferObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 				x.Buffer = append(x.Buffer, t.Value)
 
 				critical.Leave(&x.Section)
+
+			case t.HasError:
+				fallthrough
 
 			default:
 				critical.Close(&x.Section)
