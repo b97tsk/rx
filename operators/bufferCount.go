@@ -57,6 +57,7 @@ func (obs bufferCountObservable) Subscribe(ctx context.Context, sink rx.Observer
 		case t.HasValue:
 			if skipCount > 0 {
 				skipCount--
+
 				break
 			}
 
