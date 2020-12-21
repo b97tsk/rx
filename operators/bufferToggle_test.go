@@ -12,7 +12,7 @@ func TestBufferToggle(t *testing.T) {
 	SubscribeN(
 		t,
 		[]rx.Observable{
-			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+			rx.Just("A", "B", "C", "D", "E").Pipe(
 				AddLatencyToValues(1, 2),
 				operators.BufferToggle(
 					rx.Ticker(Step(2)),
@@ -20,7 +20,7 @@ func TestBufferToggle(t *testing.T) {
 				),
 				ToString(),
 			),
-			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+			rx.Just("A", "B", "C", "D", "E").Pipe(
 				AddLatencyToValues(1, 2),
 				operators.BufferToggle(
 					rx.Ticker(Step(2)),
@@ -28,7 +28,7 @@ func TestBufferToggle(t *testing.T) {
 				),
 				ToString(),
 			),
-			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+			rx.Just("A", "B", "C", "D", "E").Pipe(
 				AddLatencyToValues(1, 2),
 				operators.BufferToggle(
 					rx.Ticker(Step(4)),
@@ -36,7 +36,7 @@ func TestBufferToggle(t *testing.T) {
 				),
 				ToString(),
 			),
-			rx.Concat(rx.Just("A", "B", "C", "D", "E", "F", "G"), rx.Throw(ErrTest)).Pipe(
+			rx.Concat(rx.Just("A", "B", "C", "D", "E"), rx.Throw(ErrTest)).Pipe(
 				AddLatencyToNotifications(1, 2),
 				operators.BufferToggle(
 					rx.Ticker(Step(4)),
@@ -44,7 +44,7 @@ func TestBufferToggle(t *testing.T) {
 				),
 				ToString(),
 			),
-			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+			rx.Just("A", "B", "C", "D", "E").Pipe(
 				AddLatencyToValues(1, 2),
 				operators.BufferToggle(
 					rx.Ticker(Step(4)).Pipe(
@@ -55,7 +55,26 @@ func TestBufferToggle(t *testing.T) {
 						),
 					),
 					func(val interface{}) rx.Observable {
-						if val.(int) > 1 {
+						if val.(int) > 0 {
+							return rx.Empty()
+						}
+						return rx.Timer(Step(2))
+					},
+				),
+				ToString(),
+			),
+			rx.Just("A", "B", "C", "D", "E").Pipe(
+				AddLatencyToValues(1, 2),
+				operators.BufferToggle(
+					rx.Ticker(Step(4)).Pipe(
+						operators.Map(
+							func(val interface{}, idx int) interface{} {
+								return idx
+							},
+						),
+					),
+					func(val interface{}) rx.Observable {
+						if val.(int) > 0 {
 							return rx.Throw(ErrTest)
 						}
 						return rx.Timer(Step(2))
@@ -63,31 +82,32 @@ func TestBufferToggle(t *testing.T) {
 				),
 				ToString(),
 			),
-			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+			rx.Just("A", "B", "C", "D", "E").Pipe(
 				AddLatencyToValues(1, 2),
 				operators.BufferToggle(
-					rx.Ticker(Step(4)).Pipe(operators.Take(2)),
+					rx.Ticker(Step(4)).Pipe(operators.Take(1)),
 					func(interface{}) rx.Observable { return rx.Timer(Step(2)) },
 				),
 				ToString(),
 			),
-			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+			rx.Just("A", "B", "C", "D", "E").Pipe(
 				AddLatencyToValues(1, 2),
 				operators.BufferToggle(
-					rx.Concat(rx.Ticker(Step(4)).Pipe(operators.Take(2)), rx.Throw(ErrTest)),
+					rx.Concat(rx.Ticker(Step(4)).Pipe(operators.Take(1)), rx.Throw(ErrTest)),
 					func(interface{}) rx.Observable { return rx.Timer(Step(2)) },
 				),
 				ToString(),
 			),
 		},
 		[][]interface{}{
-			{"[B]", "[C]", "[D]", "[E]", "[F]", "[G]", Completed},
-			{"[B C]", "[C D]", "[D E]", "[E F]", "[F G]", "[G]", Completed},
-			{"[C]", "[E]", "[G]", Completed},
-			{"[C]", "[E]", "[G]", ErrTest},
+			{"[B]", "[C]", "[D]", "[E]", Completed},
+			{"[B C]", "[C D]", "[D E]", "[E]", Completed},
+			{"[C]", "[E]", Completed},
 			{"[C]", "[E]", ErrTest},
 			{"[C]", "[E]", Completed},
 			{"[C]", ErrTest},
+			{"[C]", Completed},
+			{ErrTest},
 		},
 	)
 }

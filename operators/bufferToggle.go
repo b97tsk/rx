@@ -59,31 +59,37 @@ func (obs bufferToggleObservable) Subscribe(ctx context.Context, sink rx.Observe
 					cancel()
 
 					if critical.Enter(&x.Section) {
-						if t.HasError {
-							critical.Close(&x.Section)
-							sink(t)
-							return
-						}
+						switch {
+						case t.HasValue:
+							defer critical.Leave(&x.Section)
 
-						for i, c := range x.Contexts {
-							if c == newContext {
-								copy(x.Contexts[i:], x.Contexts[i+1:])
+							for i, c := range x.Contexts {
+								if c == newContext {
+									copy(x.Contexts[i:], x.Contexts[i+1:])
 
-								n := len(x.Contexts)
-								x.Contexts[n-1] = nil
-								x.Contexts = x.Contexts[:n-1]
+									n := len(x.Contexts)
+									x.Contexts[n-1] = nil
+									x.Contexts = x.Contexts[:n-1]
 
-								sink.Next(newContext.Buffer)
+									sink.Next(newContext.Buffer)
 
-								break
+									break
+								}
 							}
-						}
 
-						critical.Leave(&x.Section)
+						case t.HasError:
+							critical.Close(&x.Section)
+
+							sink(t)
+
+						default:
+							critical.Leave(&x.Section)
+						}
 					}
 				}
 
 				closingNotifier := obs.ClosingSelector(t.Value)
+
 				closingNotifier.Subscribe(ctx, observer.Sink)
 
 			case t.HasError:
