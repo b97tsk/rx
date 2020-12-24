@@ -53,22 +53,29 @@ func (obs bufferWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 			cancel()
 
 			if critical.Enter(&x.Section) {
-				if t.HasError {
+				switch {
+				case t.HasValue:
+					buffer := x.Buffer
+					x.Buffer = nil
+					sink.Next(buffer)
+
+					critical.Leave(&x.Section)
+
+					openBuffer()
+
+				case t.HasError:
 					critical.Close(&x.Section)
+
 					sink(t)
-					return
+
+				default:
+					critical.Leave(&x.Section)
 				}
-
-				sink.Next(x.Buffer)
-				x.Buffer = nil
-
-				critical.Leave(&x.Section)
-
-				openBuffer()
 			}
 		}
 
 		closingNotifier := obs.ClosingSelector()
+
 		closingNotifier.Subscribe(ctx, observer.Sink)
 	})
 
@@ -85,6 +92,11 @@ func (obs bufferWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 				x.Buffer = append(x.Buffer, t.Value)
 
 				critical.Leave(&x.Section)
+
+			case t.HasError:
+				critical.Close(&x.Section)
+
+				sink(t)
 
 			default:
 				critical.Close(&x.Section)
