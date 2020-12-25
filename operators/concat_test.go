@@ -1,6 +1,7 @@
 package operators_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/b97tsk/rx"
@@ -8,7 +9,7 @@ import (
 	"github.com/b97tsk/rx/operators"
 )
 
-func TestConcatAll(t *testing.T) {
+func TestConcat(t *testing.T) {
 	Subscribe(
 		t,
 		rx.Just(
@@ -18,4 +19,32 @@ func TestConcatAll(t *testing.T) {
 		).Pipe(operators.ConcatAll()),
 		"A", "B", "C", "D", "E", "F", Completed,
 	)
+	Subscribe(
+		t,
+		rx.Timer(Step(1)).Pipe(
+			operators.ConcatMapTo(rx.Just("A")),
+		),
+		"A", Completed,
+	)
+	Subscribe(
+		t,
+		rx.Throw(ErrTest).Pipe(
+			operators.ConcatAll(),
+		),
+		ErrTest,
+	)
+
+	ctx, cancel := context.WithTimeout(context.Background(), Step(1))
+	defer cancel()
+
+	_ = rx.Just(
+		func(_ context.Context, sink rx.Observer) {
+			_ = rx.Timer(Step(2)).BlockingSubscribe(context.Background(), sink)
+		},
+		func(context.Context, rx.Observer) {
+			t.Fatal("should not happen")
+		},
+	).Pipe(
+		operators.ConcatAll(),
+	).BlockingSubscribe(ctx, rx.Noop)
 }
