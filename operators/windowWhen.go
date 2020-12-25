@@ -55,26 +55,32 @@ func (obs windowWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 			cancel()
 
 			if critical.Enter(&x.Section) {
-				if t.HasError {
+				switch {
+				case t.HasValue:
+					x.Window.Complete()
+
+					window := rx.Multicast()
+					x.Window = window.Observer
+					sink.Next(window.Observable)
+
+					critical.Leave(&x.Section)
+
+					openWindow()
+
+				case t.HasError:
 					critical.Close(&x.Section)
+
 					x.Window.Sink(t)
 					sink(t)
-					return
+
+				default:
+					critical.Leave(&x.Section)
 				}
-
-				x.Window.Complete()
-
-				window := rx.Multicast()
-				x.Window = window.Observer
-				sink.Next(window.Observable)
-
-				critical.Leave(&x.Section)
-
-				openWindow()
 			}
 		}
 
 		closingNotifier := obs.ClosingSelector()
+
 		closingNotifier.Subscribe(ctx, observer.Sink)
 	})
 
@@ -91,6 +97,9 @@ func (obs windowWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 				x.Window.Sink(t)
 
 				critical.Leave(&x.Section)
+
+			case t.HasError:
+				fallthrough
 
 			default:
 				critical.Close(&x.Section)
