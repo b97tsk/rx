@@ -1,6 +1,8 @@
 package operators
 
 import (
+	"context"
+
 	"github.com/b97tsk/rx"
 )
 
@@ -9,9 +11,12 @@ func noop(source rx.Observable) rx.Observable {
 }
 
 func projectToObservable(val interface{}, idx int) rx.Observable {
-	if obs, ok := val.(rx.Observable); ok {
+	switch obs := val.(type) {
+	case rx.Observable:
 		return obs
+	case func(context.Context, rx.Observer):
+		return obs
+	default:
+		return rx.Throw(rx.ErrNotObservable)
 	}
-
-	return rx.Throw(rx.ErrNotObservable)
 }
