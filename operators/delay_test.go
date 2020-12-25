@@ -9,18 +9,37 @@ import (
 )
 
 func TestDelay(t *testing.T) {
-	SubscribeN(
+	Subscribe(
 		t,
-		[]rx.Observable{
-			rx.Range(1, 5).Pipe(operators.Delay(Step(3))),
-			rx.Concat(rx.Range(1, 5), rx.Throw(ErrTest)).Pipe(
-				AddLatencyToNotifications(0, 3),
-				operators.Delay(Step(1)),
-			),
-		},
-		[][]interface{}{
-			{1, 2, 3, 4, Completed},
-			{1, 2, 3, 4, ErrTest},
-		},
+		rx.Just("A", "B", "C", "D", "E").Pipe(
+			operators.Delay(Step(1)),
+		),
+		"A", "B", "C", "D", "E", Completed,
+	)
+	Subscribe(
+		t,
+		rx.Just("A", "B", "C", "D", "E").Pipe(
+			AddLatencyToValues(0, 1),
+			operators.Delay(Step(2)),
+		),
+		"A", "B", "C", "D", "E", Completed,
+	)
+	Subscribe(
+		t,
+		rx.Concat(
+			rx.Just("A", "B", "C", "D", "E"),
+			rx.Throw(ErrTest),
+		).Pipe(
+			AddLatencyToNotifications(0, 2),
+			operators.Delay(Step(1)),
+		),
+		"A", "B", "C", "D", "E", ErrTest,
+	)
+	Subscribe(
+		t,
+		rx.Empty().Pipe(
+			operators.Delay(Step(1)),
+		),
+		Completed,
 	)
 }

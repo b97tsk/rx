@@ -57,9 +57,10 @@ func (obs delayObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 
 					t := x.Queue.Front().(delayElement)
 
-					if now := time.Now(); t.Time.After(now) {
+					if d := time.Until(t.Time); d > 0 {
 						x.Scheduled = true
-						doSchedule(t.Time.Sub(now))
+						doSchedule(d)
+
 						break
 					}
 
@@ -107,6 +108,7 @@ func (obs delayObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 
 				if x.Queue.Len() > 0 {
 					critical.Leave(&x.Section)
+
 					break
 				}
 
