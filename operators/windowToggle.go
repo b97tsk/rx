@@ -72,32 +72,38 @@ func (obs windowToggleObservable) Subscribe(ctx context.Context, sink rx.Observe
 					cancel()
 
 					if critical.Enter(&x.Section) {
-						if t.HasError {
+						switch {
+						case t.HasValue:
+							defer critical.Leave(&x.Section)
+
+							for i, c := range x.Contexts {
+								if c == newContext {
+									copy(x.Contexts[i:], x.Contexts[i+1:])
+
+									n := len(x.Contexts)
+									x.Contexts[n-1] = nil
+									x.Contexts = x.Contexts[:n-1]
+
+									newContext.Window.Complete()
+
+									break
+								}
+							}
+
+						case t.HasError:
 							critical.Close(&x.Section)
+
 							cleanupContexts(t)
 							sink(t)
-							return
+
+						default:
+							critical.Leave(&x.Section)
 						}
-
-						for i, c := range x.Contexts {
-							if c == newContext {
-								copy(x.Contexts[i:], x.Contexts[i+1:])
-
-								n := len(x.Contexts)
-								x.Contexts[n-1] = nil
-								x.Contexts = x.Contexts[:n-1]
-
-								newContext.Window.Complete()
-
-								break
-							}
-						}
-
-						critical.Leave(&x.Section)
 					}
 				}
 
 				closingNotifier := obs.ClosingSelector(t.Value)
+
 				closingNotifier.Subscribe(ctx, observer.Sink)
 
 			case t.HasError:
@@ -125,6 +131,9 @@ func (obs windowToggleObservable) Subscribe(ctx context.Context, sink rx.Observe
 				}
 
 				critical.Leave(&x.Section)
+
+			case t.HasError:
+				fallthrough
 
 			default:
 				critical.Close(&x.Section)
