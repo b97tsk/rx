@@ -59,6 +59,7 @@ func (obs windowCountObservable) Subscribe(ctx context.Context, sink rx.Observer
 		case t.HasValue:
 			if windowSize < 0 {
 				windowSize++
+
 				break
 			}
 
@@ -95,6 +96,9 @@ func (obs windowCountObservable) Subscribe(ctx context.Context, sink rx.Observer
 					sink.Next(window.Observable)
 				}
 			}
+
+		case t.HasError:
+			fallthrough
 
 		default:
 			for _, window := range windows {
