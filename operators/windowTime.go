@@ -79,8 +79,9 @@ func (obs windowTimeObservable) Subscribe(ctx context.Context, sink rx.Observer)
 
 	openContext := func() {
 		if critical.Enter(&x.Section) {
+			defer critical.Leave(&x.Section)
+
 			openContextLocked()
-			critical.Leave(&x.Section)
 		}
 	}
 
@@ -88,6 +89,8 @@ func (obs windowTimeObservable) Subscribe(ctx context.Context, sink rx.Observer)
 		toBeClosed.Cancel()
 
 		if critical.Enter(&x.Section) {
+			defer critical.Leave(&x.Section)
+
 			for i, c := range x.Contexts {
 				if c == toBeClosed {
 					copy(x.Contexts[i:], x.Contexts[i+1:])
@@ -105,8 +108,6 @@ func (obs windowTimeObservable) Subscribe(ctx context.Context, sink rx.Observer)
 					break
 				}
 			}
-
-			critical.Leave(&x.Section)
 		}
 	}
 
@@ -141,6 +142,9 @@ func (obs windowTimeObservable) Subscribe(ctx context.Context, sink rx.Observer)
 				for _, c := range windowFullContexts {
 					closeContext(c)
 				}
+
+			case t.HasError:
+				fallthrough
 
 			default:
 				critical.Close(&x.Section)
