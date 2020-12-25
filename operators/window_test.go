@@ -20,42 +20,48 @@ func TestWindow(t *testing.T) {
 	SubscribeN(
 		t,
 		[]rx.Observable{
-			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+			rx.Just("A", "B", "C", "D", "E").Pipe(
 				AddLatencyToValues(1, 2),
 				operators.Window(rx.Ticker(Step(2))),
 				operators.MergeMap(toSlice, -1),
 				ToString(),
 			),
-			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+			rx.Just("A", "B", "C", "D", "E").Pipe(
 				AddLatencyToValues(1, 2),
 				operators.Window(rx.Ticker(Step(4))),
 				operators.MergeMap(toSlice, -1),
 				ToString(),
 			),
-			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+			rx.Just("A", "B", "C", "D", "E").Pipe(
 				AddLatencyToValues(1, 2),
 				operators.Window(rx.Ticker(Step(6))),
 				operators.MergeMap(toSlice, -1),
 				ToString(),
 			),
-			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+			rx.Just("A", "B", "C", "D", "E").Pipe(
 				AddLatencyToValues(1, 2),
 				operators.Window(rx.Ticker(Step(8))),
 				operators.MergeMap(toSlice, -1),
 				ToString(),
 			),
-			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+			rx.Just("A", "B", "C", "D", "E").Pipe(
 				AddLatencyToValues(1, 2),
 				operators.Window(rx.Throw(ErrTest)),
 				operators.MergeMap(toSlice, -1),
 				ToString(),
 			),
+			rx.Throw(ErrTest).Pipe(
+				operators.Window(rx.Ticker(Step(1))),
+				operators.MergeMap(toSlice, -1),
+				ToString(),
+			),
 		},
 		[][]interface{}{
-			{"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", "[G]", Completed},
-			{"[A B]", "[C D]", "[E F]", "[G]", Completed},
-			{"[A B C]", "[D E F]", "[G]", Completed},
-			{"[A B C D]", "[E F G]", Completed},
+			{"[A]", "[B]", "[C]", "[D]", "[E]", Completed},
+			{"[A B]", "[C D]", "[E]", Completed},
+			{"[A B C]", "[D E]", Completed},
+			{"[A B C D]", "[E]", Completed},
+			{ErrTest},
 			{ErrTest},
 		},
 	)

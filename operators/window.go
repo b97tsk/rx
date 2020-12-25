@@ -40,13 +40,16 @@ func (obs windowObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		if critical.Enter(&x.Section) {
 			switch {
 			case t.HasValue:
+				defer critical.Leave(&x.Section)
+
 				x.Window.Complete()
 
 				window := rx.Multicast()
 				x.Window = window.Observer
 				sink.Next(window.Observable)
 
-				critical.Leave(&x.Section)
+			case t.HasError:
+				fallthrough
 
 			default:
 				critical.Close(&x.Section)
@@ -68,6 +71,9 @@ func (obs windowObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 				x.Window.Sink(t)
 
 				critical.Leave(&x.Section)
+
+			case t.HasError:
+				fallthrough
 
 			default:
 				critical.Close(&x.Section)
