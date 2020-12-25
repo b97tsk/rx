@@ -66,6 +66,9 @@ func (obs concatSyncObservable) Subscribe(ctx context.Context, sink rx.Observer)
 				observer = rx.Noop
 			}
 
+		case t.HasError:
+			sink(t)
+
 		default:
 			sink(t)
 		}
