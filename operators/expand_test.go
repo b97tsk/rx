@@ -9,19 +9,62 @@ import (
 )
 
 func TestExpand(t *testing.T) {
+	sum := func(seed, val interface{}, idx int) interface{} {
+		return seed.(int) + val.(int)
+	}
+
 	NewTestSuite(t).Case(
-		rx.Just(8).Pipe(
+		rx.Just(5).Pipe(
 			operators.Expand(
 				func(val interface{}) rx.Observable {
 					i := val.(int)
 					if i < 1 {
 						return rx.Empty()
 					}
+
+					return rx.Just(i-1, i-1).Pipe(
+						AddLatencyToValues(1, 1),
+					)
+				},
+				3,
+			),
+			operators.Reduce(sum),
+		),
+		57, Completed,
+	).Case(
+		rx.Just(5).Pipe(
+			operators.Expand(
+				func(val interface{}) rx.Observable {
+					i := val.(int)
+					if i < 1 {
+						return rx.Throw(ErrTest)
+					}
+
 					return rx.Just(i - 1)
 				},
 				-1,
 			),
 		),
-		8, 7, 6, 5, 4, 3, 2, 1, 0, Completed,
+		5, 4, 3, 2, 1, 0, ErrTest,
+	).Case(
+		rx.Empty().Pipe(
+			operators.Expand(
+				func(interface{}) rx.Observable {
+					return rx.Throw(ErrTest)
+				},
+				-1,
+			),
+		),
+		Completed,
+	).Case(
+		rx.Throw(ErrTest).Pipe(
+			operators.Expand(
+				func(interface{}) rx.Observable {
+					return rx.Throw(ErrTest)
+				},
+				-1,
+			),
+		),
+		ErrTest,
 	).TestAll()
 }
