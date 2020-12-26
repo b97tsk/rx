@@ -42,5 +42,15 @@ func TestExhaustAll(t *testing.T) {
 			operators.ExhaustAll(),
 		),
 		"A", "B", "C", "D", "I", "J", "K", "L", ErrTest,
+	).Case(
+		rx.Empty().Pipe(
+			operators.ExhaustAll(),
+		),
+		Completed,
+	).Case(
+		rx.Throw(ErrTest).Pipe(
+			operators.ExhaustAll(),
+		),
+		ErrTest,
 	).TestAll()
 }
