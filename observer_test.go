@@ -10,8 +10,7 @@ import (
 )
 
 func TestObserver_ElementsOnly(t *testing.T) {
-	Subscribe(
-		t,
+	NewTestSuite(t).Case(
 		rx.Observable(
 			func(ctx context.Context, sink rx.Observer) {
 				rx.Just("A", "B", "C").Subscribe(ctx, sink)
@@ -20,9 +19,7 @@ func TestObserver_ElementsOnly(t *testing.T) {
 			operators.Timeout(Step(1)),
 		),
 		"A", "B", "C", Completed,
-	)
-	Subscribe(
-		t,
+	).Case(
 		rx.Observable(
 			func(ctx context.Context, sink rx.Observer) {
 				rx.Just("A", "B", "C").Subscribe(ctx, sink.ElementsOnly)
@@ -31,5 +28,5 @@ func TestObserver_ElementsOnly(t *testing.T) {
 			operators.Timeout(Step(1)),
 		),
 		"A", "B", "C", rx.ErrTimeout,
-	)
+	).TestAll()
 }

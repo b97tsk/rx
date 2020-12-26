@@ -9,29 +9,33 @@ import (
 )
 
 func TestToSlice(t *testing.T) {
-	observables := [...]rx.Observable{
-		rx.Just("A", "B", "C"),
-		rx.Just("A"),
-		rx.Empty(),
-		rx.Throw(ErrTest),
-	}
-
-	for i, obs := range observables {
-		observables[i] = obs.Pipe(
+	NewTestSuite(t).Case(
+		rx.Just("A", "B", "C").Pipe(
 			operators.ToSlice(),
 			operators.Single(),
 			ToString(),
-		)
-	}
-
-	SubscribeN(
-		t,
-		observables[:],
-		[][]interface{}{
-			{"[A B C]", Completed},
-			{"[A]", Completed},
-			{"[]", Completed},
-			{ErrTest},
-		},
-	)
+		),
+		"[A B C]", Completed,
+	).Case(
+		rx.Just("A").Pipe(
+			operators.ToSlice(),
+			operators.Single(),
+			ToString(),
+		),
+		"[A]", Completed,
+	).Case(
+		rx.Empty().Pipe(
+			operators.ToSlice(),
+			operators.Single(),
+			ToString(),
+		),
+		"[]", Completed,
+	).Case(
+		rx.Throw(ErrTest).Pipe(
+			operators.ToSlice(),
+			operators.Single(),
+			ToString(),
+		),
+		ErrTest,
+	).TestAll()
 }

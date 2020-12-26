@@ -9,29 +9,48 @@ import (
 )
 
 func TestRetryWhen(t *testing.T) {
-	var (
-		retryNever = operators.Take(0)
-		retryOnce  = operators.Take(1)
-		retryTwice = operators.Take(2)
-	)
+	retryNever := operators.Take(0)
+	retryOnce := operators.Take(1)
+	retryTwice := operators.Take(2)
 
-	SubscribeN(
-		t,
-		[]rx.Observable{
-			rx.Range(1, 4).Pipe(operators.RetryWhen(retryNever)),
-			rx.Range(1, 4).Pipe(operators.RetryWhen(retryOnce)),
-			rx.Range(1, 4).Pipe(operators.RetryWhen(retryTwice)),
-			rx.Concat(rx.Range(1, 4), rx.Throw(ErrTest)).Pipe(operators.RetryWhen(retryNever)),
-			rx.Concat(rx.Range(1, 4), rx.Throw(ErrTest)).Pipe(operators.RetryWhen(retryOnce)),
-			rx.Concat(rx.Range(1, 4), rx.Throw(ErrTest)).Pipe(operators.RetryWhen(retryTwice)),
-		},
-		[][]interface{}{
-			{1, 2, 3, Completed},
-			{1, 2, 3, Completed},
-			{1, 2, 3, Completed},
-			{1, 2, 3, ErrTest},
-			{1, 2, 3, 1, 2, 3, ErrTest},
-			{1, 2, 3, 1, 2, 3, 1, 2, 3, ErrTest},
-		},
-	)
+	NewTestSuite(t).Case(
+		rx.Range(1, 4).Pipe(
+			operators.RetryWhen(retryNever),
+		),
+		1, 2, 3, Completed,
+	).Case(
+		rx.Range(1, 4).Pipe(
+			operators.RetryWhen(retryOnce),
+		),
+		1, 2, 3, Completed,
+	).Case(
+		rx.Range(1, 4).Pipe(
+			operators.RetryWhen(retryTwice),
+		),
+		1, 2, 3, Completed,
+	).Case(
+		rx.Concat(
+			rx.Range(1, 4),
+			rx.Throw(ErrTest),
+		).Pipe(
+			operators.RetryWhen(retryNever),
+		),
+		1, 2, 3, ErrTest,
+	).Case(
+		rx.Concat(
+			rx.Range(1, 4),
+			rx.Throw(ErrTest),
+		).Pipe(
+			operators.RetryWhen(retryOnce),
+		),
+		1, 2, 3, 1, 2, 3, ErrTest,
+	).Case(
+		rx.Concat(
+			rx.Range(1, 4),
+			rx.Throw(ErrTest),
+		).Pipe(
+			operators.RetryWhen(retryTwice),
+		),
+		1, 2, 3, 1, 2, 3, 1, 2, 3, ErrTest,
+	).TestAll()
 }

@@ -11,168 +11,270 @@ import (
 
 func TestDo(t *testing.T) {
 	n := 0
-	op := operators.Do(func(rx.Notification) { n++ })
+
+	do := operators.Do(func(rx.Notification) { n++ })
+
 	obs := rx.Observable(
 		func(ctx context.Context, sink rx.Observer) {
 			sink.Next(n)
 			sink.Complete()
 		},
 	)
-	SubscribeN(
-		t,
-		[]rx.Observable{
-			rx.Concat(rx.Empty().Pipe(op), obs),
-			rx.Concat(rx.Just("A").Pipe(op), obs),
-			rx.Concat(rx.Just("A", "B").Pipe(op), obs),
-			rx.Concat(rx.Concat(rx.Just("A", "B"), rx.Throw(ErrTest)).Pipe(op), obs),
+
+	NewTestSuite(t).Case(
+		rx.Concat(
+			rx.Empty().Pipe(do),
 			obs,
-		},
-		[][]interface{}{
-			{1, Completed},
-			{"A", 3, Completed},
-			{"A", "B", 6, Completed},
-			{"A", "B", ErrTest},
-			{9, Completed},
-		},
-	)
+		),
+		1, Completed,
+	).Case(
+		rx.Concat(
+			rx.Just("A").Pipe(do),
+			obs,
+		),
+		"A", 3, Completed,
+	).Case(
+		rx.Concat(
+			rx.Just("A", "B").Pipe(do),
+			obs,
+		),
+		"A", "B", 6, Completed,
+	).Case(
+		rx.Concat(
+			rx.Concat(
+				rx.Just("A", "B"),
+				rx.Throw(ErrTest),
+			).Pipe(do),
+			obs,
+		),
+		"A", "B", ErrTest,
+	).Case(
+		obs,
+		9, Completed,
+	).TestAll()
 }
 
 func TestDoOnNext(t *testing.T) {
 	n := 0
-	op := operators.DoOnNext(func(interface{}) { n++ })
+
+	do := operators.DoOnNext(func(interface{}) { n++ })
+
 	obs := rx.Observable(
 		func(ctx context.Context, sink rx.Observer) {
 			sink.Next(n)
 			sink.Complete()
 		},
 	)
-	SubscribeN(
-		t,
-		[]rx.Observable{
-			rx.Concat(rx.Empty().Pipe(op), obs),
-			rx.Concat(rx.Just("A").Pipe(op), obs),
-			rx.Concat(rx.Just("A", "B").Pipe(op), obs),
-			rx.Concat(rx.Concat(rx.Just("A", "B"), rx.Throw(ErrTest)).Pipe(op), obs),
+
+	NewTestSuite(t).Case(
+		rx.Concat(
+			rx.Empty().Pipe(do),
 			obs,
-		},
-		[][]interface{}{
-			{0, Completed},
-			{"A", 1, Completed},
-			{"A", "B", 3, Completed},
-			{"A", "B", ErrTest},
-			{5, Completed},
-		},
-	)
+		),
+		0, Completed,
+	).Case(
+		rx.Concat(
+			rx.Just("A").Pipe(do),
+			obs,
+		),
+		"A", 1, Completed,
+	).Case(
+		rx.Concat(
+			rx.Just("A", "B").Pipe(do),
+			obs,
+		),
+		"A", "B", 3, Completed,
+	).Case(
+		rx.Concat(
+			rx.Concat(
+				rx.Just("A", "B"),
+				rx.Throw(ErrTest),
+			).Pipe(do),
+			obs,
+		),
+		"A", "B", ErrTest,
+	).Case(
+		obs,
+		5, Completed,
+	).TestAll()
 }
 
 func TestDoOnError(t *testing.T) {
 	n := 0
-	op := operators.DoOnError(func(error) { n++ })
+
+	do := operators.DoOnError(func(error) { n++ })
+
 	obs := rx.Observable(
 		func(ctx context.Context, sink rx.Observer) {
 			sink.Next(n)
 			sink.Complete()
 		},
 	)
-	SubscribeN(
-		t,
-		[]rx.Observable{
-			rx.Concat(rx.Empty().Pipe(op), obs),
-			rx.Concat(rx.Just("A").Pipe(op), obs),
-			rx.Concat(rx.Just("A", "B").Pipe(op), obs),
-			rx.Concat(rx.Concat(rx.Just("A", "B"), rx.Throw(ErrTest)).Pipe(op), obs),
+
+	NewTestSuite(t).Case(
+		rx.Concat(
+			rx.Empty().Pipe(do),
 			obs,
-		},
-		[][]interface{}{
-			{0, Completed},
-			{"A", 0, Completed},
-			{"A", "B", 0, Completed},
-			{"A", "B", ErrTest},
-			{1, Completed},
-		},
-	)
+		),
+		0, Completed,
+	).Case(
+		rx.Concat(
+			rx.Just("A").Pipe(do),
+			obs,
+		),
+		"A", 0, Completed,
+	).Case(
+		rx.Concat(
+			rx.Just("A", "B").Pipe(do),
+			obs,
+		),
+		"A", "B", 0, Completed,
+	).Case(
+		rx.Concat(
+			rx.Concat(
+				rx.Just("A", "B"),
+				rx.Throw(ErrTest),
+			).Pipe(do),
+			obs,
+		),
+		"A", "B", ErrTest,
+	).Case(
+		obs,
+		1, Completed,
+	).TestAll()
 }
 
 func TestDoOnComplete(t *testing.T) {
 	n := 0
-	op := operators.DoOnComplete(func() { n++ })
+
+	do := operators.DoOnComplete(func() { n++ })
+
 	obs := rx.Observable(
 		func(ctx context.Context, sink rx.Observer) {
 			sink.Next(n)
 			sink.Complete()
 		},
 	)
-	SubscribeN(
-		t,
-		[]rx.Observable{
-			rx.Concat(rx.Empty().Pipe(op), obs),
-			rx.Concat(rx.Just("A").Pipe(op), obs),
-			rx.Concat(rx.Just("A", "B").Pipe(op), obs),
-			rx.Concat(rx.Concat(rx.Just("A", "B"), rx.Throw(ErrTest)).Pipe(op), obs),
+
+	NewTestSuite(t).Case(
+		rx.Concat(
+			rx.Empty().Pipe(do),
 			obs,
-		},
-		[][]interface{}{
-			{1, Completed},
-			{"A", 2, Completed},
-			{"A", "B", 3, Completed},
-			{"A", "B", ErrTest},
-			{3, Completed},
-		},
-	)
+		),
+		1, Completed,
+	).Case(
+		rx.Concat(
+			rx.Just("A").Pipe(do),
+			obs,
+		),
+		"A", 2, Completed,
+	).Case(
+		rx.Concat(
+			rx.Just("A", "B").Pipe(do),
+			obs,
+		),
+		"A", "B", 3, Completed,
+	).Case(
+		rx.Concat(
+			rx.Concat(
+				rx.Just("A", "B"),
+				rx.Throw(ErrTest),
+			).Pipe(do),
+			obs,
+		),
+		"A", "B", ErrTest,
+	).Case(
+		obs,
+		3, Completed,
+	).TestAll()
 }
 
 func TestDoAtLast(t *testing.T) {
 	n := 0
-	op := operators.DoAtLast(func() { n++ })
+
+	do := operators.DoAtLast(func() { n++ })
+
 	obs := rx.Observable(
 		func(ctx context.Context, sink rx.Observer) {
 			sink.Next(n)
 			sink.Complete()
 		},
 	)
-	SubscribeN(
-		t,
-		[]rx.Observable{
-			rx.Concat(rx.Empty().Pipe(op), obs),
-			rx.Concat(rx.Just("A").Pipe(op), obs),
-			rx.Concat(rx.Just("A", "B").Pipe(op), obs),
-			rx.Concat(rx.Concat(rx.Just("A", "B"), rx.Throw(ErrTest)).Pipe(op), obs),
+
+	NewTestSuite(t).Case(
+		rx.Concat(
+			rx.Empty().Pipe(do),
 			obs,
-		},
-		[][]interface{}{
-			{1, Completed},
-			{"A", 2, Completed},
-			{"A", "B", 3, Completed},
-			{"A", "B", ErrTest},
-			{4, Completed},
-		},
-	)
+		),
+		1, Completed,
+	).Case(
+		rx.Concat(
+			rx.Just("A").Pipe(do),
+			obs,
+		),
+		"A", 2, Completed,
+	).Case(
+		rx.Concat(
+			rx.Just("A", "B").Pipe(do),
+			obs,
+		),
+		"A", "B", 3, Completed,
+	).Case(
+		rx.Concat(
+			rx.Concat(
+				rx.Just("A", "B"),
+				rx.Throw(ErrTest),
+			).Pipe(do),
+			obs,
+		),
+		"A", "B", ErrTest,
+	).Case(
+		obs,
+		4, Completed,
+	).TestAll()
 }
 
 func TestDoAtLastError(t *testing.T) {
 	n := 0
-	op := operators.DoAtLastError(func(error) { n++ })
+
+	do := operators.DoAtLastError(func(error) { n++ })
+
 	obs := rx.Observable(
 		func(ctx context.Context, sink rx.Observer) {
 			sink.Next(n)
 			sink.Complete()
 		},
 	)
-	SubscribeN(
-		t,
-		[]rx.Observable{
-			rx.Concat(rx.Empty().Pipe(op), obs),
-			rx.Concat(rx.Just("A").Pipe(op), obs),
-			rx.Concat(rx.Just("A", "B").Pipe(op), obs),
-			rx.Concat(rx.Concat(rx.Just("A", "B"), rx.Throw(ErrTest)).Pipe(op), obs),
+
+	NewTestSuite(t).Case(
+		rx.Concat(
+			rx.Empty().Pipe(do),
 			obs,
-		},
-		[][]interface{}{
-			{1, Completed},
-			{"A", 2, Completed},
-			{"A", "B", 3, Completed},
-			{"A", "B", ErrTest},
-			{4, Completed},
-		},
-	)
+		),
+		1, Completed,
+	).Case(
+		rx.Concat(
+			rx.Just("A").Pipe(do),
+			obs,
+		),
+		"A", 2, Completed,
+	).Case(
+		rx.Concat(
+			rx.Just("A", "B").Pipe(do),
+			obs,
+		),
+		"A", "B", 3, Completed,
+	).Case(
+		rx.Concat(
+			rx.Concat(
+				rx.Just("A", "B"),
+				rx.Throw(ErrTest),
+			).Pipe(do),
+			obs,
+		),
+		"A", "B", ErrTest,
+	).Case(
+		obs,
+		4, Completed,
+	).TestAll()
 }

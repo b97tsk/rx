@@ -9,9 +9,10 @@ import (
 )
 
 func TestDistinct(t *testing.T) {
-	Subscribe(
-		t,
-		rx.Just("A", "B", "B", "A", "C", "C", "A").Pipe(operators.Distinct()),
+	NewTestSuite(t).Case(
+		rx.Just("A", "B", "B", "A", "C", "C", "A").Pipe(
+			operators.Distinct(),
+		),
 		"A", "B", "C", Completed,
-	)
+	).TestAll()
 }

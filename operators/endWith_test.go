@@ -9,19 +9,25 @@ import (
 )
 
 func TestEndWith(t *testing.T) {
-	SubscribeN(
-		t,
-		[]rx.Observable{
-			rx.Just("A", "B", "C").Pipe(operators.EndWith("D", "E")),
-			rx.Empty().Pipe(operators.EndWith("D", "E")),
-			rx.Throw(ErrTest).Pipe(operators.EndWith("D", "E")),
-			rx.Throw(ErrTest).Pipe(operators.EndWith()),
-		},
-		[][]interface{}{
-			{"A", "B", "C", "D", "E", Completed},
-			{"D", "E", Completed},
-			{ErrTest},
-			{ErrTest},
-		},
-	)
+	NewTestSuite(t).Case(
+		rx.Just("A", "B", "C").Pipe(
+			operators.EndWith("D", "E"),
+		),
+		"A", "B", "C", "D", "E", Completed,
+	).Case(
+		rx.Empty().Pipe(
+			operators.EndWith("D", "E"),
+		),
+		"D", "E", Completed,
+	).Case(
+		rx.Throw(ErrTest).Pipe(
+			operators.EndWith("D", "E"),
+		),
+		ErrTest,
+	).Case(
+		rx.Throw(ErrTest).Pipe(
+			operators.EndWith(),
+		),
+		ErrTest,
+	).TestAll()
 }

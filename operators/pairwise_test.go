@@ -9,29 +9,44 @@ import (
 )
 
 func TestPairwise(t *testing.T) {
-	observables := [...]rx.Observable{
-		rx.Empty(),
-		rx.Just("A"),
-		rx.Just("A", "B"),
-		rx.Just("A", "B", "C"),
-		rx.Just("A", "B", "C", "D"),
-		rx.Concat(rx.Just("A", "B", "C", "D"), rx.Throw(ErrTest)),
-	}
-
-	for i, obs := range observables {
-		observables[i] = obs.Pipe(operators.Pairwise(), ToString())
-	}
-
-	SubscribeN(
-		t,
-		observables[:],
-		[][]interface{}{
-			{Completed},
-			{Completed},
-			{"{A B}", Completed},
-			{"{A B}", "{B C}", Completed},
-			{"{A B}", "{B C}", "{C D}", Completed},
-			{"{A B}", "{B C}", "{C D}", ErrTest},
-		},
-	)
+	NewTestSuite(t).Case(
+		rx.Empty().Pipe(
+			operators.Pairwise(),
+			ToString(),
+		),
+		Completed,
+	).Case(
+		rx.Just("A").Pipe(
+			operators.Pairwise(),
+			ToString(),
+		),
+		Completed,
+	).Case(
+		rx.Just("A", "B").Pipe(
+			operators.Pairwise(),
+			ToString(),
+		),
+		"{A B}", Completed,
+	).Case(
+		rx.Just("A", "B", "C").Pipe(
+			operators.Pairwise(),
+			ToString(),
+		),
+		"{A B}", "{B C}", Completed,
+	).Case(
+		rx.Just("A", "B", "C", "D").Pipe(
+			operators.Pairwise(),
+			ToString(),
+		),
+		"{A B}", "{B C}", "{C D}", Completed,
+	).Case(
+		rx.Concat(
+			rx.Just("A", "B", "C", "D"),
+			rx.Throw(ErrTest),
+		).Pipe(
+			operators.Pairwise(),
+			ToString(),
+		),
+		"{A B}", "{B C}", "{C D}", ErrTest,
+	).TestAll()
 }

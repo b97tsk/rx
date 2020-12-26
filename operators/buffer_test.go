@@ -9,45 +9,45 @@ import (
 )
 
 func TestBuffer(t *testing.T) {
-	SubscribeN(
-		t,
-		[]rx.Observable{
-			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
-				AddLatencyToValues(1, 2),
-				operators.Buffer(rx.Ticker(Step(2))),
-				ToString(),
-			),
-			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
-				AddLatencyToValues(1, 2),
-				operators.Buffer(rx.Ticker(Step(4))),
-				ToString(),
-			),
-			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
-				AddLatencyToValues(1, 2),
-				operators.Buffer(rx.Ticker(Step(6))),
-				ToString(),
-			),
-			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
-				AddLatencyToValues(1, 2),
-				operators.Buffer(rx.Ticker(Step(8))),
-				ToString(),
-			),
-			rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
-				AddLatencyToValues(1, 2),
-				operators.Buffer(rx.Throw(ErrTest)),
-				ToString(),
-			),
-			rx.Throw(ErrTest).Pipe(
-				operators.Buffer(rx.Throw(ErrTest).Pipe(DelaySubscription(1))),
-			),
-		},
-		[][]interface{}{
-			{"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", Completed},
-			{"[A B]", "[C D]", "[E F]", Completed},
-			{"[A B C]", "[D E F]", Completed},
-			{"[A B C D]", Completed},
-			{ErrTest},
-			{ErrTest},
-		},
-	)
+	NewTestSuite(t).Case(
+		rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+			AddLatencyToValues(1, 2),
+			operators.Buffer(rx.Ticker(Step(2))),
+			ToString(),
+		),
+		"[A]", "[B]", "[C]", "[D]", "[E]", "[F]", Completed,
+	).Case(
+		rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+			AddLatencyToValues(1, 2),
+			operators.Buffer(rx.Ticker(Step(4))),
+			ToString(),
+		),
+		"[A B]", "[C D]", "[E F]", Completed,
+	).Case(
+		rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+			AddLatencyToValues(1, 2),
+			operators.Buffer(rx.Ticker(Step(6))),
+			ToString(),
+		),
+		"[A B C]", "[D E F]", Completed,
+	).Case(
+		rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+			AddLatencyToValues(1, 2),
+			operators.Buffer(rx.Ticker(Step(8))),
+			ToString(),
+		),
+		"[A B C D]", Completed,
+	).Case(
+		rx.Just("A", "B", "C", "D", "E", "F", "G").Pipe(
+			AddLatencyToValues(1, 2),
+			operators.Buffer(rx.Throw(ErrTest)),
+			ToString(),
+		),
+		ErrTest,
+	).Case(
+		rx.Throw(ErrTest).Pipe(
+			operators.Buffer(rx.Throw(ErrTest).Pipe(DelaySubscription(1))),
+		),
+		ErrTest,
+	).TestAll()
 }

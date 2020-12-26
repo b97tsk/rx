@@ -9,47 +9,81 @@ import (
 )
 
 func TestFirst(t *testing.T) {
-	first := operators.First()
-	SubscribeN(
-		t,
-		[]rx.Observable{
-			rx.Empty().Pipe(first),
-			rx.Throw(ErrTest).Pipe(first),
-			rx.Just(1).Pipe(first),
-			rx.Just(1, 2).Pipe(first),
-			rx.Concat(rx.Just(1), rx.Throw(ErrTest)).Pipe(first),
-			rx.Concat(rx.Just(1, 2), rx.Throw(ErrTest)).Pipe(first),
-		},
-		[][]interface{}{
-			{rx.ErrEmpty},
-			{ErrTest},
-			{1, Completed},
-			{1, Completed},
-			{1, Completed},
-			{1, Completed},
-		},
-	)
+	NewTestSuite(t).Case(
+		rx.Empty().Pipe(
+			operators.First(),
+		),
+		rx.ErrEmpty,
+	).Case(
+		rx.Throw(ErrTest).Pipe(
+			operators.First(),
+		),
+		ErrTest,
+	).Case(
+		rx.Just(1).Pipe(
+			operators.First(),
+		),
+		1, Completed,
+	).Case(
+		rx.Just(1, 2).Pipe(
+			operators.First(),
+		),
+		1, Completed,
+	).Case(
+		rx.Concat(
+			rx.Just(1),
+			rx.Throw(ErrTest),
+		).Pipe(
+			operators.First(),
+		),
+		1, Completed,
+	).Case(
+		rx.Concat(
+			rx.Just(1, 2),
+			rx.Throw(ErrTest),
+		).Pipe(
+			operators.First(),
+		),
+		1, Completed,
+	).TestAll()
 }
 
 func TestFirstOrDefault(t *testing.T) {
-	first := operators.FirstOrDefault(404)
-	SubscribeN(
-		t,
-		[]rx.Observable{
-			rx.Empty().Pipe(first),
-			rx.Throw(ErrTest).Pipe(first),
-			rx.Just(1).Pipe(first),
-			rx.Just(1, 2).Pipe(first),
-			rx.Concat(rx.Just(1), rx.Throw(ErrTest)).Pipe(first),
-			rx.Concat(rx.Just(1, 2), rx.Throw(ErrTest)).Pipe(first),
-		},
-		[][]interface{}{
-			{404, Completed},
-			{ErrTest},
-			{1, Completed},
-			{1, Completed},
-			{1, Completed},
-			{1, Completed},
-		},
-	)
+	NewTestSuite(t).Case(
+		rx.Empty().Pipe(
+			operators.FirstOrDefault(404),
+		),
+		404, Completed,
+	).Case(
+		rx.Throw(ErrTest).Pipe(
+			operators.FirstOrDefault(404),
+		),
+		ErrTest,
+	).Case(
+		rx.Just(1).Pipe(
+			operators.FirstOrDefault(404),
+		),
+		1, Completed,
+	).Case(
+		rx.Just(1, 2).Pipe(
+			operators.FirstOrDefault(404),
+		),
+		1, Completed,
+	).Case(
+		rx.Concat(
+			rx.Just(1),
+			rx.Throw(ErrTest),
+		).Pipe(
+			operators.FirstOrDefault(404),
+		),
+		1, Completed,
+	).Case(
+		rx.Concat(
+			rx.Just(1, 2),
+			rx.Throw(ErrTest),
+		).Pipe(
+			operators.FirstOrDefault(404),
+		),
+		1, Completed,
+	).TestAll()
 }

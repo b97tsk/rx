@@ -8,33 +8,71 @@ import (
 )
 
 func TestZipSync(t *testing.T) {
-	delay := DelaySubscription(1)
-
-	observables := [...]rx.Observable{
-		rx.ZipSync(rx.Just("A", "B"), rx.Range(1, 4)),
-		rx.ZipSync(rx.Just("A", "B", "C"), rx.Range(1, 4)),
-		rx.ZipSync(rx.Just("A", "B", "C", "D"), rx.Range(1, 4)),
-		rx.ZipSync(rx.Just("A", "B"), rx.Concat(rx.Range(1, 4), rx.Throw(ErrTest)).Pipe(delay)),
-		rx.ZipSync(rx.Just("A", "B", "C"), rx.Concat(rx.Range(1, 4), rx.Throw(ErrTest)).Pipe(delay)),
-		rx.ZipSync(rx.Just("A", "B", "C", "D"), rx.Concat(rx.Range(1, 4), rx.Throw(ErrTest)).Pipe(delay)),
-	}
-
-	for i, obs := range observables {
-		observables[i] = obs.Pipe(ToString())
-	}
-
-	SubscribeN(
-		t,
-		observables[:],
-		[][]interface{}{
-			{"[A 1]", "[B 2]", Completed},
-			{"[A 1]", "[B 2]", "[C 3]", Completed},
-			{"[A 1]", "[B 2]", "[C 3]", Completed},
-			{"[A 1]", "[B 2]", Completed},
-			{"[A 1]", "[B 2]", "[C 3]", Completed},
-			{"[A 1]", "[B 2]", "[C 3]", ErrTest},
-		},
-	)
-
-	Subscribe(t, rx.ZipSync(), Completed)
+	NewTestSuite(t).Case(
+		rx.ZipSync(
+			rx.Just("A", "B"),
+			rx.Range(1, 4),
+		).Pipe(
+			ToString(),
+		),
+		"[A 1]", "[B 2]", Completed,
+	).Case(
+		rx.ZipSync(
+			rx.Just("A", "B", "C"),
+			rx.Range(1, 4),
+		).Pipe(
+			ToString(),
+		),
+		"[A 1]", "[B 2]", "[C 3]", Completed,
+	).Case(
+		rx.ZipSync(
+			rx.Just("A", "B", "C", "D"),
+			rx.Range(1, 4),
+		).Pipe(
+			ToString(),
+		),
+		"[A 1]", "[B 2]", "[C 3]", Completed,
+	).Case(
+		rx.ZipSync(
+			rx.Just("A", "B"),
+			rx.Concat(
+				rx.Range(1, 4),
+				rx.Throw(ErrTest),
+			).Pipe(
+				DelaySubscription(1),
+			),
+		).Pipe(
+			ToString(),
+		),
+		"[A 1]", "[B 2]", Completed,
+	).Case(
+		rx.ZipSync(
+			rx.Just("A", "B", "C"),
+			rx.Concat(
+				rx.Range(1, 4),
+				rx.Throw(ErrTest),
+			).Pipe(
+				DelaySubscription(1),
+			),
+		).Pipe(
+			ToString(),
+		),
+		"[A 1]", "[B 2]", "[C 3]", Completed,
+	).Case(
+		rx.ZipSync(
+			rx.Just("A", "B", "C", "D"),
+			rx.Concat(
+				rx.Range(1, 4),
+				rx.Throw(ErrTest),
+			).Pipe(
+				DelaySubscription(1),
+			),
+		).Pipe(
+			ToString(),
+		),
+		"[A 1]", "[B 2]", "[C 3]", ErrTest,
+	).Case(
+		rx.ZipSync(),
+		Completed,
+	).TestAll()
 }

@@ -9,19 +9,25 @@ import (
 )
 
 func TestSingle(t *testing.T) {
-	SubscribeN(
-		t,
-		[]rx.Observable{
-			rx.Just("A", "B").Pipe(operators.Single()),
-			rx.Just("A").Pipe(operators.Single()),
-			rx.Empty().Pipe(operators.Single()),
-			rx.Throw(ErrTest).Pipe(operators.Single()),
-		},
-		[][]interface{}{
-			{rx.ErrNotSingle},
-			{"A", Completed},
-			{rx.ErrEmpty},
-			{ErrTest},
-		},
-	)
+	NewTestSuite(t).Case(
+		rx.Just("A", "B").Pipe(
+			operators.Single(),
+		),
+		rx.ErrNotSingle,
+	).Case(
+		rx.Just("A").Pipe(
+			operators.Single(),
+		),
+		"A", Completed,
+	).Case(
+		rx.Empty().Pipe(
+			operators.Single(),
+		),
+		rx.ErrEmpty,
+	).Case(
+		rx.Throw(ErrTest).Pipe(
+			operators.Single(),
+		),
+		ErrTest,
+	).TestAll()
 }

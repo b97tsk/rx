@@ -9,19 +9,25 @@ import (
 )
 
 func TestStartWith(t *testing.T) {
-	SubscribeN(
-		t,
-		[]rx.Observable{
-			rx.Just("D", "E").Pipe(operators.StartWith("A", "B", "C")),
-			rx.Empty().Pipe(operators.StartWith("A", "B", "C")),
-			rx.Throw(ErrTest).Pipe(operators.StartWith("A", "B", "C")),
-			rx.Throw(ErrTest).Pipe(operators.StartWith()),
-		},
-		[][]interface{}{
-			{"A", "B", "C", "D", "E", Completed},
-			{"A", "B", "C", Completed},
-			{"A", "B", "C", ErrTest},
-			{ErrTest},
-		},
-	)
+	NewTestSuite(t).Case(
+		rx.Just("D", "E").Pipe(
+			operators.StartWith("A", "B", "C"),
+		),
+		"A", "B", "C", "D", "E", Completed,
+	).Case(
+		rx.Empty().Pipe(
+			operators.StartWith("A", "B", "C"),
+		),
+		"A", "B", "C", Completed,
+	).Case(
+		rx.Throw(ErrTest).Pipe(
+			operators.StartWith("A", "B", "C"),
+		),
+		"A", "B", "C", ErrTest,
+	).Case(
+		rx.Throw(ErrTest).Pipe(
+			operators.StartWith(),
+		),
+		ErrTest,
+	).TestAll()
 }

@@ -9,8 +9,7 @@ import (
 )
 
 func TestGroupBy(t *testing.T) {
-	Subscribe(
-		t,
+	NewTestSuite(t).Case(
 		rx.Just("A", "B", "B", "A", "C", "C", "D", "A").Pipe(
 			AddLatencyToValues(0, 1),
 			operators.GroupBy(
@@ -36,5 +35,5 @@ func TestGroupBy(t *testing.T) {
 			ToString(),
 		),
 		"[A 3]", "[B 2]", "[C 2]", "[D 1]", Completed,
-	)
+	).TestAll()
 }

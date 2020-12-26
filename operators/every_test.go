@@ -9,26 +9,40 @@ import (
 )
 
 func TestEvery(t *testing.T) {
-	everyLessThan5 := operators.Every(
-		func(val interface{}, idx int) bool {
-			return val.(int) < 5
-		},
-	)
-	SubscribeN(
-		t,
-		[]rx.Observable{
-			rx.Range(1, 9).Pipe(everyLessThan5),
-			rx.Range(1, 5).Pipe(everyLessThan5),
-			rx.Empty().Pipe(everyLessThan5),
-			rx.Concat(rx.Range(1, 9), rx.Throw(ErrTest)).Pipe(everyLessThan5),
-			rx.Concat(rx.Range(1, 5), rx.Throw(ErrTest)).Pipe(everyLessThan5),
-		},
-		[][]interface{}{
-			{false, Completed},
-			{true, Completed},
-			{true, Completed},
-			{false, Completed},
-			{ErrTest},
-		},
-	)
+	lessThanFive := func(val interface{}, idx int) bool {
+		return val.(int) < 5
+	}
+
+	NewTestSuite(t).Case(
+		rx.Range(1, 9).Pipe(
+			operators.Every(lessThanFive),
+		),
+		false, Completed,
+	).Case(
+		rx.Range(1, 5).Pipe(
+			operators.Every(lessThanFive),
+		),
+		true, Completed,
+	).Case(
+		rx.Empty().Pipe(
+			operators.Every(lessThanFive),
+		),
+		true, Completed,
+	).Case(
+		rx.Concat(
+			rx.Range(1, 9),
+			rx.Throw(ErrTest),
+		).Pipe(
+			operators.Every(lessThanFive),
+		),
+		false, Completed,
+	).Case(
+		rx.Concat(
+			rx.Range(1, 5),
+			rx.Throw(ErrTest),
+		).Pipe(
+			operators.Every(lessThanFive),
+		),
+		ErrTest,
+	).TestAll()
 }

@@ -9,34 +9,47 @@ import (
 )
 
 func TestSkipUntil(t *testing.T) {
-	addLatency := AddLatencyToValues(0, 2)
-	delay := DelaySubscription(3)
-	SubscribeN(
-		t,
-		[]rx.Observable{
-			rx.Just("A", "B", "C").Pipe(addLatency, operators.SkipUntil(rx.Just(42))),
-			rx.Just("A", "B", "C").Pipe(addLatency, operators.SkipUntil(rx.Empty())),
-			rx.Just("A", "B", "C").Pipe(addLatency, operators.SkipUntil(rx.Throw(ErrTest))),
-			rx.Just("A", "B", "C").Pipe(addLatency, operators.SkipUntil(rx.Never())),
-		},
-		[][]interface{}{
-			{"A", "B", "C", Completed},
-			{Completed},
-			{ErrTest},
-			{Completed},
-		},
-	)
-	SubscribeN(
-		t,
-		[]rx.Observable{
-			rx.Just("A", "B", "C").Pipe(addLatency, operators.SkipUntil(rx.Just(42).Pipe(delay))),
-			rx.Just("A", "B", "C").Pipe(addLatency, operators.SkipUntil(rx.Empty().Pipe(delay))),
-			rx.Just("A", "B", "C").Pipe(addLatency, operators.SkipUntil(rx.Throw(ErrTest).Pipe(delay))),
-		},
-		[][]interface{}{
-			{"C", Completed},
-			{Completed},
-			{ErrTest},
-		},
-	)
+	NewTestSuite(t).Case(
+		rx.Just("A", "B", "C").Pipe(
+			AddLatencyToValues(0, 2),
+			operators.SkipUntil(rx.Just(42)),
+		),
+		"A", "B", "C", Completed,
+	).Case(
+		rx.Just("A", "B", "C").Pipe(
+			AddLatencyToValues(0, 2),
+			operators.SkipUntil(rx.Empty()),
+		),
+		Completed,
+	).Case(
+		rx.Just("A", "B", "C").Pipe(
+			AddLatencyToValues(0, 2),
+			operators.SkipUntil(rx.Throw(ErrTest)),
+		),
+		ErrTest,
+	).Case(
+		rx.Just("A", "B", "C").Pipe(
+			AddLatencyToValues(0, 2),
+			operators.SkipUntil(rx.Never()),
+		),
+		Completed,
+	).Case(
+		rx.Just("A", "B", "C").Pipe(
+			AddLatencyToValues(0, 2),
+			operators.SkipUntil(rx.Just(42).Pipe(DelaySubscription(3))),
+		),
+		"C", Completed,
+	).Case(
+		rx.Just("A", "B", "C").Pipe(
+			AddLatencyToValues(0, 2),
+			operators.SkipUntil(rx.Empty().Pipe(DelaySubscription(3))),
+		),
+		Completed,
+	).Case(
+		rx.Just("A", "B", "C").Pipe(
+			AddLatencyToValues(0, 2),
+			operators.SkipUntil(rx.Throw(ErrTest).Pipe(DelaySubscription(3))),
+		),
+		ErrTest,
+	).TestAll()
 }

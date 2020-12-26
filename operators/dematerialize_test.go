@@ -9,34 +9,57 @@ import (
 )
 
 func TestDematerialize(t *testing.T) {
-	SubscribeN(
-		t,
-		[]rx.Observable{
-			rx.Empty().Pipe(operators.Materialize(), operators.Dematerialize()),
-			rx.Throw(ErrTest).Pipe(operators.Materialize(), operators.Dematerialize()),
-			rx.Just("A", "B", "C").Pipe(operators.Materialize(), operators.Dematerialize()),
-			rx.Concat(rx.Just("A", "B", "C"), rx.Throw(ErrTest)).Pipe(operators.Materialize(), operators.Dematerialize()),
-		},
-		[][]interface{}{
-			{Completed},
-			{ErrTest},
-			{"A", "B", "C", Completed},
-			{"A", "B", "C", ErrTest},
-		},
-	)
-	SubscribeN(
-		t,
-		[]rx.Observable{
-			rx.Empty().Pipe(operators.Dematerialize()),
-			rx.Throw(ErrTest).Pipe(operators.Dematerialize()),
-			rx.Just("A", "B", "C").Pipe(operators.Dematerialize()),
-			rx.Concat(rx.Just("A", "B", "C"), rx.Throw(ErrTest)).Pipe(operators.Dematerialize()),
-		},
-		[][]interface{}{
-			{Completed},
-			{ErrTest},
-			{rx.ErrNotNotification},
-			{rx.ErrNotNotification},
-		},
-	)
+	NewTestSuite(t).Case(
+		rx.Empty().Pipe(
+			operators.Materialize(),
+			operators.Dematerialize(),
+		),
+		Completed,
+	).Case(
+		rx.Throw(ErrTest).Pipe(
+			operators.Materialize(),
+			operators.Dematerialize(),
+		),
+		ErrTest,
+	).Case(
+		rx.Just("A", "B", "C").Pipe(
+			operators.Materialize(),
+			operators.Dematerialize(),
+		),
+		"A", "B", "C", Completed,
+	).Case(
+		rx.Concat(
+			rx.Just("A", "B", "C"),
+			rx.Throw(ErrTest),
+		).Pipe(
+			operators.Materialize(),
+			operators.Dematerialize(),
+		),
+		"A", "B", "C", ErrTest,
+	).TestAll()
+
+	NewTestSuite(t).Case(
+		rx.Empty().Pipe(
+			operators.Dematerialize(),
+		),
+		Completed,
+	).Case(
+		rx.Throw(ErrTest).Pipe(
+			operators.Dematerialize(),
+		),
+		ErrTest,
+	).Case(
+		rx.Just("A", "B", "C").Pipe(
+			operators.Dematerialize(),
+		),
+		rx.ErrNotNotification,
+	).Case(
+		rx.Concat(
+			rx.Just("A", "B", "C"),
+			rx.Throw(ErrTest),
+		).Pipe(
+			operators.Dematerialize(),
+		),
+		rx.ErrNotNotification,
+	).TestAll()
 }

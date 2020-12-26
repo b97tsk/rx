@@ -9,39 +9,61 @@ import (
 )
 
 func TestElementAt(t *testing.T) {
-	findFifth := operators.ElementAt(4)
-	SubscribeN(
-		t,
-		[]rx.Observable{
-			rx.Range(1, 9).Pipe(findFifth),
-			rx.Range(1, 5).Pipe(findFifth),
-			rx.Concat(rx.Range(1, 9), rx.Throw(ErrTest)).Pipe(findFifth),
-			rx.Concat(rx.Range(1, 5), rx.Throw(ErrTest)).Pipe(findFifth),
-		},
-		[][]interface{}{
-			{5, Completed},
-			{rx.ErrOutOfRange},
-			{5, Completed},
-			{ErrTest},
-		},
-	)
+	NewTestSuite(t).Case(
+		rx.Range(1, 9).Pipe(
+			operators.ElementAt(4),
+		),
+		5, Completed,
+	).Case(
+		rx.Range(1, 5).Pipe(
+			operators.ElementAt(4),
+		),
+		rx.ErrOutOfRange,
+	).Case(
+		rx.Concat(
+			rx.Range(1, 9),
+			rx.Throw(ErrTest),
+		).Pipe(
+			operators.ElementAt(4),
+		),
+		5, Completed,
+	).Case(
+		rx.Concat(
+			rx.Range(1, 5),
+			rx.Throw(ErrTest),
+		).Pipe(
+			operators.ElementAt(4),
+		),
+		ErrTest,
+	).TestAll()
 }
 
 func TestElementAtOrDefault(t *testing.T) {
-	findFifth := operators.ElementAtOrDefault(4, 404)
-	SubscribeN(
-		t,
-		[]rx.Observable{
-			rx.Range(1, 9).Pipe(findFifth),
-			rx.Range(1, 5).Pipe(findFifth),
-			rx.Concat(rx.Range(1, 9), rx.Throw(ErrTest)).Pipe(findFifth),
-			rx.Concat(rx.Range(1, 5), rx.Throw(ErrTest)).Pipe(findFifth),
-		},
-		[][]interface{}{
-			{5, Completed},
-			{404, Completed},
-			{5, Completed},
-			{ErrTest},
-		},
-	)
+	NewTestSuite(t).Case(
+		rx.Range(1, 9).Pipe(
+			operators.ElementAtOrDefault(4, 404),
+		),
+		5, Completed,
+	).Case(
+		rx.Range(1, 5).Pipe(
+			operators.ElementAtOrDefault(4, 404),
+		),
+		404, Completed,
+	).Case(
+		rx.Concat(
+			rx.Range(1, 9),
+			rx.Throw(ErrTest),
+		).Pipe(
+			operators.ElementAtOrDefault(4, 404),
+		),
+		5, Completed,
+	).Case(
+		rx.Concat(
+			rx.Range(1, 5),
+			rx.Throw(ErrTest),
+		).Pipe(
+			operators.ElementAtOrDefault(4, 404),
+		),
+		ErrTest,
+	).TestAll()
 }

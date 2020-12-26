@@ -8,44 +8,42 @@ import (
 	"github.com/b97tsk/rx/operators"
 )
 
-func TestFromChan(t *testing.T) {
-	t.Run("#1", func(t *testing.T) {
-		c := make(chan interface{})
+func TestFromChan1(t *testing.T) {
+	c := make(chan interface{})
 
-		go func() {
-			c <- "A"
-			c <- "B"
-			c <- "C"
-			close(c)
-		}()
+	go func() {
+		c <- "A"
+		c <- "B"
+		c <- "C"
+		close(c)
+	}()
 
-		Subscribe(t, rx.FromChan(c), "A", "B", "C", Completed)
-	})
+	NewTestSuite(t).Case(
+		rx.FromChan(c),
+		"A", "B", "C", Completed,
+	).TestAll()
+}
 
-	t.Run("#2", func(t *testing.T) {
-		c := make(chan interface{})
+func TestFromChan2(t *testing.T) {
+	c := make(chan interface{})
 
-		go func() {
-			c <- "A"
-			c <- "B"
-			c <- "C"
-			close(c)
-		}()
+	go func() {
+		c <- "A"
+		c <- "B"
+		c <- "C"
+		close(c)
+	}()
 
-		obs := rx.FromChan(c)
+	obs := rx.FromChan(c)
 
-		SubscribeN(
-			t,
-			[]rx.Observable{
-				obs.Pipe(operators.Take(1)),
-				obs.Pipe(operators.Take(2)),
-				obs,
-			},
-			[][]interface{}{
-				{"A", Completed},
-				{"B", "C", Completed},
-				{Completed},
-			},
-		)
-	})
+	NewTestSuite(t).Case(
+		obs.Pipe(operators.Take(1)),
+		"A", Completed,
+	).Case(
+		obs.Pipe(operators.Take(2)),
+		"B", "C", Completed,
+	).Case(
+		obs,
+		Completed,
+	).TestAll()
 }

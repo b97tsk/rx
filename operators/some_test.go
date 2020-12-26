@@ -9,26 +9,40 @@ import (
 )
 
 func TestSome(t *testing.T) {
-	someGreaterThan4 := operators.Some(
-		func(val interface{}, idx int) bool {
-			return val.(int) > 4
-		},
-	)
-	SubscribeN(
-		t,
-		[]rx.Observable{
-			rx.Range(1, 9).Pipe(someGreaterThan4),
-			rx.Range(1, 5).Pipe(someGreaterThan4),
-			rx.Empty().Pipe(someGreaterThan4),
-			rx.Concat(rx.Range(1, 9), rx.Throw(ErrTest)).Pipe(someGreaterThan4),
-			rx.Concat(rx.Range(1, 5), rx.Throw(ErrTest)).Pipe(someGreaterThan4),
-		},
-		[][]interface{}{
-			{true, Completed},
-			{false, Completed},
-			{false, Completed},
-			{true, Completed},
-			{ErrTest},
-		},
-	)
+	greaterThanFour := func(val interface{}, idx int) bool {
+		return val.(int) > 4
+	}
+
+	NewTestSuite(t).Case(
+		rx.Range(1, 9).Pipe(
+			operators.Some(greaterThanFour),
+		),
+		true, Completed,
+	).Case(
+		rx.Range(1, 5).Pipe(
+			operators.Some(greaterThanFour),
+		),
+		false, Completed,
+	).Case(
+		rx.Empty().Pipe(
+			operators.Some(greaterThanFour),
+		),
+		false, Completed,
+	).Case(
+		rx.Concat(
+			rx.Range(1, 9),
+			rx.Throw(ErrTest),
+		).Pipe(
+			operators.Some(greaterThanFour),
+		),
+		true, Completed,
+	).Case(
+		rx.Concat(
+			rx.Range(1, 5),
+			rx.Throw(ErrTest),
+		).Pipe(
+			operators.Some(greaterThanFour),
+		),
+		ErrTest,
+	).TestAll()
 }

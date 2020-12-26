@@ -9,8 +9,7 @@ import (
 )
 
 func TestAudit(t *testing.T) {
-	Subscribe(
-		t,
+	NewTestSuite(t).Case(
 		rx.Just("A", "B", "C", "D", "E").Pipe(
 			AddLatencyToValues(1, 2),
 			operators.Audit(func(interface{}) rx.Observable {
@@ -18,9 +17,7 @@ func TestAudit(t *testing.T) {
 			}),
 		),
 		"B", "D", "E", Completed,
-	)
-	Subscribe(
-		t,
+	).Case(
 		rx.Just("A", "B", "C", "D", "E").Pipe(
 			DelaySubscription(1),
 			operators.Audit(func(interface{}) rx.Observable {
@@ -28,9 +25,7 @@ func TestAudit(t *testing.T) {
 			}),
 		),
 		Completed,
-	)
-	Subscribe(
-		t,
+	).Case(
 		rx.Just("A", "B", "C", "D", "E").Pipe(
 			DelaySubscription(1),
 			operators.Audit(func(interface{}) rx.Observable {
@@ -38,9 +33,7 @@ func TestAudit(t *testing.T) {
 			}),
 		),
 		Completed,
-	)
-	Subscribe(
-		t,
+	).Case(
 		rx.Just("A", "B", "C", "D", "E").Pipe(
 			DelaySubscription(1),
 			operators.Audit(func(interface{}) rx.Observable {
@@ -48,28 +41,28 @@ func TestAudit(t *testing.T) {
 			}),
 		),
 		ErrTest,
-	)
-	Subscribe(
-		t,
+	).Case(
 		rx.Just("A", "B", "C", "D", "E").Pipe(
 			operators.Audit(func(interface{}) rx.Observable {
 				return rx.Throw(ErrTest).Pipe(DelaySubscription(1))
 			}),
 		),
 		ErrTest,
-	)
-}
-
-func TestAuditTime(t *testing.T) {
-	audit := operators.AuditTime(Step(3))
-	Subscribe(
-		t,
+	).Case(
 		rx.Just("A", "B", "C", "D", "E").Pipe(
 			AddLatencyToValues(1, 2),
-			audit,
+			operators.AuditTime(Step(3)),
 		),
 		"B", "D", "E", Completed,
-	)
-	Subscribe(t, rx.Empty().Pipe(audit), Completed)
-	Subscribe(t, rx.Throw(ErrTest).Pipe(audit), ErrTest)
+	).Case(
+		rx.Empty().Pipe(
+			operators.AuditTime(Step(3)),
+		),
+		Completed,
+	).Case(
+		rx.Throw(ErrTest).Pipe(
+			operators.AuditTime(Step(3)),
+		),
+		ErrTest,
+	).TestAll()
 }

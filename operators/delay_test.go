@@ -9,23 +9,18 @@ import (
 )
 
 func TestDelay(t *testing.T) {
-	Subscribe(
-		t,
+	NewTestSuite(t).Case(
 		rx.Just("A", "B", "C", "D", "E").Pipe(
 			operators.Delay(Step(1)),
 		),
 		"A", "B", "C", "D", "E", Completed,
-	)
-	Subscribe(
-		t,
+	).Case(
 		rx.Just("A", "B", "C", "D", "E").Pipe(
 			AddLatencyToValues(0, 1),
 			operators.Delay(Step(2)),
 		),
 		"A", "B", "C", "D", "E", Completed,
-	)
-	Subscribe(
-		t,
+	).Case(
 		rx.Concat(
 			rx.Just("A", "B", "C", "D", "E"),
 			rx.Throw(ErrTest),
@@ -34,12 +29,10 @@ func TestDelay(t *testing.T) {
 			operators.Delay(Step(1)),
 		),
 		"A", "B", "C", "D", "E", ErrTest,
-	)
-	Subscribe(
-		t,
+	).Case(
 		rx.Empty().Pipe(
 			operators.Delay(Step(1)),
 		),
 		Completed,
-	)
+	).TestAll()
 }

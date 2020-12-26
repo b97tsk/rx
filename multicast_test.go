@@ -21,34 +21,41 @@ func TestMulticast(t *testing.T) {
 			AddLatencyToValues(1, 1),
 		).Subscribe(context.Background(), d.Observer)
 
-		Subscribe(
-			t,
+		NewTestSuite(t).Case(
 			rx.Zip(
 				d.Observable,
 				d.Pipe(operators.Scan(sum)),
-			).Pipe(ToString()),
+			).Pipe(
+				ToString(),
+			),
 			"[3 3]", "[4 7]", "[5 12]", Completed,
-		)
-
-		Subscribe(t, d.Observable, Completed)
+		).Case(
+			d.Observable,
+			Completed,
+		).TestAll()
 	})
 
 	t.Run("Error", func(t *testing.T) {
 		d := rx.Multicast()
 
-		rx.Concat(rx.Just(3, 4, 5), rx.Throw(ErrTest)).Pipe(
+		rx.Concat(
+			rx.Just(3, 4, 5),
+			rx.Throw(ErrTest),
+		).Pipe(
 			AddLatencyToNotifications(1, 1),
 		).Subscribe(context.Background(), d.Observer)
 
-		Subscribe(
-			t,
+		NewTestSuite(t).Case(
 			rx.Zip(
 				d.Observable,
 				d.Pipe(operators.Scan(sum)),
-			).Pipe(ToString()),
+			).Pipe(
+				ToString(),
+			),
 			"[3 3]", "[4 7]", "[5 12]", ErrTest,
-		)
-
-		Subscribe(t, d.Observable, ErrTest)
+		).Case(
+			d.Observable,
+			ErrTest,
+		).TestAll()
 	})
 }

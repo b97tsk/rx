@@ -9,115 +9,108 @@ import (
 )
 
 func TestBufferTime(t *testing.T) {
-	SubscribeN(
-		t,
-		[]rx.Observable{
-			rx.Just("A", "B", "C", "D", "E").Pipe(
-				AddLatencyToValues(1, 2),
-				operators.BufferTime(Step(2)),
-				ToString(),
-			),
-			rx.Just("A", "B", "C", "D", "E").Pipe(
-				AddLatencyToValues(1, 2),
-				operators.BufferTime(Step(4)),
-				ToString(),
-			),
-			rx.Just("A", "B", "C", "D", "E").Pipe(
-				AddLatencyToValues(1, 2),
-				operators.BufferTime(Step(6)),
-				ToString(),
-			),
-			rx.Throw(ErrTest).Pipe(
-				operators.BufferTime(Step(1)),
-			),
-		},
-		[][]interface{}{
-			{"[A]", "[B]", "[C]", "[D]", "[E]", Completed},
-			{"[A B]", "[C D]", "[E]", Completed},
-			{"[A B C]", "[D E]", Completed},
-			{ErrTest},
-		},
-	)
+	NewTestSuite(t).Case(
+		rx.Just("A", "B", "C", "D", "E").Pipe(
+			AddLatencyToValues(1, 2),
+			operators.BufferTime(Step(2)),
+			ToString(),
+		),
+		"[A]", "[B]", "[C]", "[D]", "[E]", Completed,
+	).Case(
+		rx.Just("A", "B", "C", "D", "E").Pipe(
+			AddLatencyToValues(1, 2),
+			operators.BufferTime(Step(4)),
+			ToString(),
+		),
+		"[A B]", "[C D]", "[E]", Completed,
+	).Case(
+		rx.Just("A", "B", "C", "D", "E").Pipe(
+			AddLatencyToValues(1, 2),
+			operators.BufferTime(Step(6)),
+			ToString(),
+		),
+		"[A B C]", "[D E]", Completed,
+	).Case(
+		rx.Throw(ErrTest).Pipe(
+			operators.BufferTime(Step(1)),
+		),
+		ErrTest,
+	).TestAll()
 
 	t.Log("----------")
 
-	SubscribeN(
-		t,
-		[]rx.Observable{
-			rx.Just("A", "B", "C", "D", "E").Pipe(
-				AddLatencyToValues(1, 2),
-				operators.BufferTimeConfigure{
-					TimeSpan: Step(8),
-				}.Make(),
-				ToString(),
-			),
-			rx.Just("A", "B", "C", "D", "E").Pipe(
-				AddLatencyToValues(1, 2),
-				operators.BufferTimeConfigure{
-					TimeSpan:      Step(8),
-					MaxBufferSize: 3,
-				}.Make(),
-				ToString(),
-			),
-			rx.Just("A", "B", "C", "D", "E").Pipe(
-				AddLatencyToValues(1, 2),
-				operators.BufferTimeConfigure{
-					TimeSpan:      Step(8),
-					MaxBufferSize: 2,
-				}.Make(),
-				ToString(),
-			),
-			rx.Just("A", "B", "C", "D", "E").Pipe(
-				AddLatencyToValues(1, 2),
-				operators.BufferTimeConfigure{
-					TimeSpan:      Step(8),
-					MaxBufferSize: 1,
-				}.Make(),
-				ToString(),
-			),
-		},
-		[][]interface{}{
-			{"[A B C D]", "[E]", Completed},
-			{"[A B C]", "[D E]", Completed},
-			{"[A B]", "[C D]", "[E]", Completed},
-			{"[A]", "[B]", "[C]", "[D]", "[E]", "[]", Completed},
-		},
-	)
+	NewTestSuite(t).Case(
+		rx.Just("A", "B", "C", "D", "E").Pipe(
+			AddLatencyToValues(1, 2),
+			operators.BufferTimeConfigure{
+				TimeSpan: Step(8),
+			}.Make(),
+			ToString(),
+		),
+		"[A B C D]", "[E]", Completed,
+	).Case(
+		rx.Just("A", "B", "C", "D", "E").Pipe(
+			AddLatencyToValues(1, 2),
+			operators.BufferTimeConfigure{
+				TimeSpan:      Step(8),
+				MaxBufferSize: 3,
+			}.Make(),
+			ToString(),
+		),
+		"[A B C]", "[D E]", Completed,
+	).Case(
+		rx.Just("A", "B", "C", "D", "E").Pipe(
+			AddLatencyToValues(1, 2),
+			operators.BufferTimeConfigure{
+				TimeSpan:      Step(8),
+				MaxBufferSize: 2,
+			}.Make(),
+			ToString(),
+		),
+		"[A B]", "[C D]", "[E]", Completed,
+	).Case(
+		rx.Just("A", "B", "C", "D", "E").Pipe(
+			AddLatencyToValues(1, 2),
+			operators.BufferTimeConfigure{
+				TimeSpan:      Step(8),
+				MaxBufferSize: 1,
+			}.Make(),
+			ToString(),
+		),
+		"[A]", "[B]", "[C]", "[D]", "[E]", "[]", Completed,
+	).TestAll()
 
 	t.Log("----------")
 
-	SubscribeN(
-		t,
-		[]rx.Observable{
-			rx.Just("A", "B", "C", "D", "E").Pipe(
-				AddLatencyToValues(1, 2),
-				operators.BufferTimeConfigure{
-					TimeSpan:         Step(2),
-					CreationInterval: Step(2),
-				}.Make(),
-				ToString(),
-			),
-			rx.Just("A", "B", "C", "D", "E").Pipe(
-				AddLatencyToValues(1, 2),
-				operators.BufferTimeConfigure{
-					TimeSpan:         Step(2),
-					CreationInterval: Step(4),
-				}.Make(),
-				ToString(),
-			),
-			rx.Just("A", "B", "C", "D", "E").Pipe(
-				AddLatencyToValues(1, 2),
-				operators.BufferTimeConfigure{
-					TimeSpan:         Step(4),
-					CreationInterval: Step(2),
-				}.Make(),
-				ToString(),
-			),
-		},
-		[][]interface{}{
-			{"[A]", "[B]", "[C]", "[D]", "[E]", Completed},
-			{"[A]", "[C]", "[E]", Completed},
-			{"[A B]", "[B C]", "[C D]", "[D E]", "[E]", Completed},
-		},
-	)
+	NewTestSuite(t).Case(
+		rx.Just("A", "B", "C", "D", "E").Pipe(
+			AddLatencyToValues(1, 2),
+			operators.BufferTimeConfigure{
+				TimeSpan:         Step(2),
+				CreationInterval: Step(2),
+			}.Make(),
+			ToString(),
+		),
+		"[A]", "[B]", "[C]", "[D]", "[E]", Completed,
+	).Case(
+		rx.Just("A", "B", "C", "D", "E").Pipe(
+			AddLatencyToValues(1, 2),
+			operators.BufferTimeConfigure{
+				TimeSpan:         Step(2),
+				CreationInterval: Step(4),
+			}.Make(),
+			ToString(),
+		),
+		"[A]", "[C]", "[E]", Completed,
+	).Case(
+		rx.Just("A", "B", "C", "D", "E").Pipe(
+			AddLatencyToValues(1, 2),
+			operators.BufferTimeConfigure{
+				TimeSpan:         Step(4),
+				CreationInterval: Step(2),
+			}.Make(),
+			ToString(),
+		),
+		"[A B]", "[B C]", "[C D]", "[D E]", "[E]", Completed,
+	).TestAll()
 }

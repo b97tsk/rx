@@ -9,19 +9,25 @@ import (
 )
 
 func TestIsEmpty(t *testing.T) {
-	SubscribeN(
-		t,
-		[]rx.Observable{
-			rx.Just("A", "B").Pipe(operators.IsEmpty()),
-			rx.Just("A").Pipe(operators.IsEmpty()),
-			rx.Empty().Pipe(operators.IsEmpty()),
-			rx.Throw(ErrTest).Pipe(operators.IsEmpty()),
-		},
-		[][]interface{}{
-			{false, Completed},
-			{false, Completed},
-			{true, Completed},
-			{ErrTest},
-		},
-	)
+	NewTestSuite(t).Case(
+		rx.Just("A", "B").Pipe(
+			operators.IsEmpty(),
+		),
+		false, Completed,
+	).Case(
+		rx.Just("A").Pipe(
+			operators.IsEmpty(),
+		),
+		false, Completed,
+	).Case(
+		rx.Empty().Pipe(
+			operators.IsEmpty(),
+		),
+		true, Completed,
+	).Case(
+		rx.Throw(ErrTest).Pipe(
+			operators.IsEmpty(),
+		),
+		ErrTest,
+	).TestAll()
 }

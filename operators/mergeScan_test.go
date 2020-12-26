@@ -9,19 +9,20 @@ import (
 )
 
 func TestMergeScan(t *testing.T) {
-	Subscribe(
-		t,
+	NewTestSuite(t).Case(
 		rx.Just(
 			rx.Just("A", "B").Pipe(AddLatencyToValues(3, 5)),
 			rx.Just("C", "D").Pipe(AddLatencyToValues(2, 4)),
 			rx.Just("E", "F").Pipe(AddLatencyToValues(1, 3)),
-		).Pipe(operators.MergeScan(
-			func(acc, val interface{}, idx int) rx.Observable {
-				return val.(rx.Observable)
-			},
-			nil,
-			-1,
-		)),
+		).Pipe(
+			operators.MergeScan(
+				func(acc, val interface{}, idx int) rx.Observable {
+					return val.(rx.Observable)
+				},
+				nil,
+				-1,
+			),
+		),
 		"E", "C", "A", "F", "D", "B", Completed,
-	)
+	).TestAll()
 }

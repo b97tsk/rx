@@ -17,113 +17,118 @@ func TestWindowToggle(t *testing.T) {
 		return rx.Throw(rx.ErrNotObservable)
 	}
 
-	SubscribeN(
-		t,
-		[]rx.Observable{
-			rx.Just("A", "B", "C", "D", "E").Pipe(
-				AddLatencyToValues(1, 2),
-				operators.WindowToggle(
-					rx.Ticker(Step(2)),
-					func(interface{}) rx.Observable { return rx.Timer(Step(2)) },
-				),
-				operators.MergeMap(toSlice, -1),
-				ToString(),
+	NewTestSuite(t).Case(
+		rx.Just("A", "B", "C", "D", "E").Pipe(
+			AddLatencyToValues(1, 2),
+			operators.WindowToggle(
+				rx.Ticker(Step(2)),
+				func(interface{}) rx.Observable { return rx.Timer(Step(2)) },
 			),
-			rx.Just("A", "B", "C", "D", "E").Pipe(
-				AddLatencyToValues(1, 2),
-				operators.WindowToggle(
-					rx.Ticker(Step(2)),
-					func(interface{}) rx.Observable { return rx.Timer(Step(4)) },
-				),
-				operators.MergeMap(toSlice, -1),
-				ToString(),
+			operators.MergeMap(toSlice, -1),
+			ToString(),
+		),
+		"[B]", "[C]", "[D]", "[E]", Completed,
+	).Case(
+		rx.Just("A", "B", "C", "D", "E").Pipe(
+			AddLatencyToValues(1, 2),
+			operators.WindowToggle(
+				rx.Ticker(Step(2)),
+				func(interface{}) rx.Observable { return rx.Timer(Step(4)) },
 			),
-			rx.Just("A", "B", "C", "D", "E").Pipe(
-				AddLatencyToValues(1, 2),
-				operators.WindowToggle(
-					rx.Ticker(Step(4)),
-					func(interface{}) rx.Observable { return rx.Timer(Step(2)) },
-				),
-				operators.MergeMap(toSlice, -1),
-				ToString(),
+			operators.MergeMap(toSlice, -1),
+			ToString(),
+		),
+		"[B C]", "[C D]", "[D E]", "[E]", Completed,
+	).Case(
+		rx.Just("A", "B", "C", "D", "E").Pipe(
+			AddLatencyToValues(1, 2),
+			operators.WindowToggle(
+				rx.Ticker(Step(4)),
+				func(interface{}) rx.Observable { return rx.Timer(Step(2)) },
 			),
-			rx.Concat(rx.Just("A", "B", "C", "D", "E"), rx.Throw(ErrTest)).Pipe(
-				AddLatencyToNotifications(1, 2),
-				operators.WindowToggle(
-					rx.Ticker(Step(4)),
-					func(interface{}) rx.Observable { return rx.Timer(Step(2)) },
-				),
-				operators.MergeMap(toSlice, -1),
-				ToString(),
+			operators.MergeMap(toSlice, -1),
+			ToString(),
+		),
+		"[C]", "[E]", Completed,
+	).Case(
+		rx.Concat(rx.Just("A", "B", "C", "D", "E"), rx.Throw(ErrTest)).Pipe(
+			AddLatencyToNotifications(1, 2),
+			operators.WindowToggle(
+				rx.Ticker(Step(4)),
+				func(interface{}) rx.Observable { return rx.Timer(Step(2)) },
 			),
-			rx.Just("A", "B", "C", "D", "E").Pipe(
-				AddLatencyToValues(1, 2),
-				operators.WindowToggle(
-					rx.Ticker(Step(4)).Pipe(
-						operators.Map(
-							func(val interface{}, idx int) interface{} {
-								return idx
-							},
-						),
+			operators.MergeMap(toSlice, -1),
+			ToString(),
+		),
+		"[C]", "[E]", ErrTest,
+	).Case(
+		rx.Just("A", "B", "C", "D", "E").Pipe(
+			AddLatencyToValues(1, 2),
+			operators.WindowToggle(
+				rx.Ticker(Step(4)).Pipe(
+					operators.Map(
+						func(val interface{}, idx int) interface{} {
+							return idx
+						},
 					),
-					func(val interface{}) rx.Observable {
-						if val.(int) > 0 {
-							return rx.Empty()
-						}
-						return rx.Timer(Step(2))
-					},
 				),
-				operators.MergeMap(toSlice, -1),
-				ToString(),
+				func(val interface{}) rx.Observable {
+					if val.(int) > 0 {
+						return rx.Empty()
+					}
+					return rx.Timer(Step(2))
+				},
 			),
-			rx.Just("A", "B", "C", "D", "E").Pipe(
-				AddLatencyToValues(1, 2),
-				operators.WindowToggle(
-					rx.Ticker(Step(4)).Pipe(
-						operators.Map(
-							func(val interface{}, idx int) interface{} {
-								return idx
-							},
-						),
+			operators.MergeMap(toSlice, -1),
+			ToString(),
+		),
+		"[C]", "[E]", Completed,
+	).Case(
+		rx.Just("A", "B", "C", "D", "E").Pipe(
+			AddLatencyToValues(1, 2),
+			operators.WindowToggle(
+				rx.Ticker(Step(4)).Pipe(
+					operators.Map(
+						func(val interface{}, idx int) interface{} {
+							return idx
+						},
 					),
-					func(val interface{}) rx.Observable {
-						if val.(int) > 0 {
-							return rx.Throw(ErrTest)
-						}
-						return rx.Timer(Step(2))
-					},
 				),
-				operators.MergeMap(toSlice, -1),
-				ToString(),
+				func(val interface{}) rx.Observable {
+					if val.(int) > 0 {
+						return rx.Throw(ErrTest)
+					}
+					return rx.Timer(Step(2))
+				},
 			),
-			rx.Just("A", "B", "C", "D", "E").Pipe(
-				AddLatencyToValues(1, 2),
-				operators.WindowToggle(
+			operators.MergeMap(toSlice, -1),
+			ToString(),
+		),
+		"[C]", ErrTest,
+	).Case(
+		rx.Just("A", "B", "C", "D", "E").Pipe(
+			AddLatencyToValues(1, 2),
+			operators.WindowToggle(
+				rx.Ticker(Step(4)).Pipe(operators.Take(1)),
+				func(interface{}) rx.Observable { return rx.Timer(Step(2)) },
+			),
+			operators.MergeMap(toSlice, -1),
+			ToString(),
+		),
+		"[C]", Completed,
+	).Case(
+		rx.Just("A", "B", "C", "D", "E").Pipe(
+			AddLatencyToValues(1, 2),
+			operators.WindowToggle(
+				rx.Concat(
 					rx.Ticker(Step(4)).Pipe(operators.Take(1)),
-					func(interface{}) rx.Observable { return rx.Timer(Step(2)) },
+					rx.Throw(ErrTest),
 				),
-				operators.MergeMap(toSlice, -1),
-				ToString(),
+				func(interface{}) rx.Observable { return rx.Timer(Step(2)) },
 			),
-			rx.Just("A", "B", "C", "D", "E").Pipe(
-				AddLatencyToValues(1, 2),
-				operators.WindowToggle(
-					rx.Concat(rx.Ticker(Step(4)).Pipe(operators.Take(1)), rx.Throw(ErrTest)),
-					func(interface{}) rx.Observable { return rx.Timer(Step(2)) },
-				),
-				operators.MergeMap(toSlice, -1),
-				ToString(),
-			),
-		},
-		[][]interface{}{
-			{"[B]", "[C]", "[D]", "[E]", Completed},
-			{"[B C]", "[C D]", "[D E]", "[E]", Completed},
-			{"[C]", "[E]", Completed},
-			{"[C]", "[E]", ErrTest},
-			{"[C]", "[E]", Completed},
-			{"[C]", ErrTest},
-			{"[C]", Completed},
-			{ErrTest},
-		},
-	)
+			operators.MergeMap(toSlice, -1),
+			ToString(),
+		),
+		ErrTest,
+	).TestAll()
 }

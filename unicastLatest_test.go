@@ -16,8 +16,17 @@ func TestUnicastLatest(t *testing.T) {
 		AddLatencyToNotifications(1, 1),
 	).Subscribe(context.Background(), d.Observer)
 
-	Subscribe(t, d.Observable.Pipe(operators.Take(2)), "A", "B", Completed)
-	Subscribe(t, rx.Merge(d.Observable, d.Observable), rx.ErrDropped)
-	Subscribe(t, d.Observable, "C", Completed)
-	Subscribe(t, d.Observable, Completed)
+	NewTestSuite(t).Case(
+		d.Observable.Pipe(operators.Take(2)),
+		"A", "B", Completed,
+	).Case(
+		rx.Merge(d.Observable, d.Observable),
+		rx.ErrDropped,
+	).Case(
+		d.Observable,
+		"C", Completed,
+	).Case(
+		d.Observable,
+		Completed,
+	).TestAll()
 }

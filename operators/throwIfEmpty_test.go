@@ -9,24 +9,41 @@ import (
 )
 
 func TestThrowIfEmpty(t *testing.T) {
-	throwIfEmpty := operators.ThrowIfEmpty(rx.ErrEmpty)
-	SubscribeN(
-		t,
-		[]rx.Observable{
-			rx.Empty().Pipe(throwIfEmpty),
-			rx.Throw(ErrTest).Pipe(throwIfEmpty),
-			rx.Just(1).Pipe(throwIfEmpty),
-			rx.Just(1, 2).Pipe(throwIfEmpty),
-			rx.Concat(rx.Just(1), rx.Throw(ErrTest)).Pipe(throwIfEmpty),
-			rx.Concat(rx.Just(1, 2), rx.Throw(ErrTest)).Pipe(throwIfEmpty),
-		},
-		[][]interface{}{
-			{rx.ErrEmpty},
-			{ErrTest},
-			{1, Completed},
-			{1, 2, Completed},
-			{1, ErrTest},
-			{1, 2, ErrTest},
-		},
-	)
+	NewTestSuite(t).Case(
+		rx.Empty().Pipe(
+			operators.ThrowIfEmpty(rx.ErrEmpty),
+		),
+		rx.ErrEmpty,
+	).Case(
+		rx.Throw(ErrTest).Pipe(
+			operators.ThrowIfEmpty(rx.ErrEmpty),
+		),
+		ErrTest,
+	).Case(
+		rx.Just(1).Pipe(
+			operators.ThrowIfEmpty(rx.ErrEmpty),
+		),
+		1, Completed,
+	).Case(
+		rx.Just(1, 2).Pipe(
+			operators.ThrowIfEmpty(rx.ErrEmpty),
+		),
+		1, 2, Completed,
+	).Case(
+		rx.Concat(
+			rx.Just(1),
+			rx.Throw(ErrTest),
+		).Pipe(
+			operators.ThrowIfEmpty(rx.ErrEmpty),
+		),
+		1, ErrTest,
+	).Case(
+		rx.Concat(
+			rx.Just(1, 2),
+			rx.Throw(ErrTest),
+		).Pipe(
+			operators.ThrowIfEmpty(rx.ErrEmpty),
+		),
+		1, 2, ErrTest,
+	).TestAll()
 }

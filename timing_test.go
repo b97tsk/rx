@@ -9,8 +9,7 @@ import (
 )
 
 func TestTicker(t *testing.T) {
-	Subscribe(
-		t,
+	NewTestSuite(t).Case(
 		rx.Ticker(Step(1)).Pipe(
 			operators.Map(
 				func(val interface{}, idx int) interface{} {
@@ -20,13 +19,12 @@ func TestTicker(t *testing.T) {
 			operators.Take(3),
 		),
 		0, 1, 2, Completed,
-	)
+	).TestAll()
 }
 
 func TestTimer(t *testing.T) {
-	Subscribe(
-		t,
+	NewTestSuite(t).Case(
 		rx.Timer(Step(1)).Pipe(operators.MapTo(42)),
 		42, Completed,
-	)
+	).TestAll()
 }

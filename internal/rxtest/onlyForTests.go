@@ -11,8 +11,10 @@ import (
 	"github.com/b97tsk/rx/operators"
 )
 
+var errCompleted = errors.New("completed")
+
 var (
-	Completed = errors.New("completed")
+	Completed = errCompleted
 	ErrTest   = errors.New("test")
 )
 
@@ -69,7 +71,7 @@ func ToString() rx.Operator {
 	)
 }
 
-func Subscribe(t *testing.T, source rx.Observable, output ...interface{}) {
+func Test(t *testing.T, source rx.Observable, output ...interface{}) {
 	_ = source.BlockingSubscribe(
 		context.Background(),
 		func(n rx.Notification) {
@@ -126,12 +128,28 @@ func Subscribe(t *testing.T, source rx.Observable, output ...interface{}) {
 	}
 }
 
-func SubscribeN(t *testing.T, observables []rx.Observable, outputs [][]interface{}) {
-	if len(observables) != len(outputs) {
-		panic("SubscribeN: len(observables) != len(outputs)")
-	}
+type TestCase struct {
+	Source rx.Observable
+	Output []interface{}
+}
 
-	for i, source := range observables {
-		Subscribe(t, source, outputs[i]...)
+type TestSuite struct {
+	t     *testing.T
+	cases []TestCase
+}
+
+func NewTestSuite(t *testing.T) *TestSuite {
+	return &TestSuite{t: t}
+}
+
+func (s *TestSuite) Case(source rx.Observable, output ...interface{}) *TestSuite {
+	s.cases = append(s.cases, TestCase{source, output})
+
+	return s
+}
+
+func (s *TestSuite) TestAll() {
+	for _, c := range s.cases {
+		Test(s.t, c.Source, c.Output...)
 	}
 }

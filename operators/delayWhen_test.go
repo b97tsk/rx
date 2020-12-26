@@ -9,8 +9,7 @@ import (
 )
 
 func TestDelayWhen(t *testing.T) {
-	Subscribe(
-		t,
+	NewTestSuite(t).Case(
 		rx.Just("A", "B", "C", "D", "E").Pipe(
 			operators.DelayWhen(
 				func(val interface{}, idx int) rx.Observable {
@@ -19,9 +18,7 @@ func TestDelayWhen(t *testing.T) {
 			),
 		),
 		"A", "B", "C", "D", "E", Completed,
-	)
-	Subscribe(
-		t,
+	).Case(
 		rx.Just("A", "B", "C", "D", "E").Pipe(
 			AddLatencyToNotifications(0, 2),
 			operators.DelayWhen(
@@ -31,9 +28,7 @@ func TestDelayWhen(t *testing.T) {
 			),
 		),
 		"A", "B", "C", "D", "E", Completed,
-	)
-	Subscribe(
-		t,
+	).Case(
 		rx.Just("A", "B", "C", "D", "E").Pipe(
 			operators.DelayWhen(
 				func(interface{}, int) rx.Observable {
@@ -42,9 +37,7 @@ func TestDelayWhen(t *testing.T) {
 			),
 		),
 		Completed,
-	)
-	Subscribe(
-		t,
+	).Case(
 		rx.Just("A", "B", "C", "D", "E").Pipe(
 			operators.DelayWhen(
 				func(interface{}, int) rx.Observable {
@@ -53,9 +46,7 @@ func TestDelayWhen(t *testing.T) {
 			),
 		),
 		ErrTest,
-	)
-	Subscribe(
-		t,
+	).Case(
 		rx.Throw(ErrTest).Pipe(
 			operators.DelayWhen(
 				func(interface{}, int) rx.Observable {
@@ -64,5 +55,5 @@ func TestDelayWhen(t *testing.T) {
 			),
 		),
 		ErrTest,
-	)
+	).TestAll()
 }

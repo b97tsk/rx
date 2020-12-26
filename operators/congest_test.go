@@ -9,13 +9,12 @@ import (
 )
 
 func TestCongest(t *testing.T) {
-	Subscribe(
-		t,
+	NewTestSuite(t).Case(
 		rx.Range(1, 9).Pipe(
 			AddLatencyToValues(1, 1),
 			operators.Congest(3),
 			AddLatencyToValues(3, 4),
 		),
 		1, 2, 3, 4, 5, 6, 7, 8, Completed,
-	)
+	).TestAll()
 }

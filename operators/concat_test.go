@@ -10,29 +10,26 @@ import (
 )
 
 func TestConcat(t *testing.T) {
-	Subscribe(
-		t,
+	NewTestSuite(t).Case(
 		rx.Just(
 			rx.Just("A", "B").Pipe(AddLatencyToValues(3, 5)),
 			rx.Just("C", "D").Pipe(AddLatencyToValues(2, 4)),
 			rx.Just("E", "F").Pipe(AddLatencyToValues(1, 3)),
-		).Pipe(operators.ConcatAll()),
+		).Pipe(
+			operators.ConcatAll(),
+		),
 		"A", "B", "C", "D", "E", "F", Completed,
-	)
-	Subscribe(
-		t,
+	).Case(
 		rx.Timer(Step(1)).Pipe(
 			operators.ConcatMapTo(rx.Just("A")),
 		),
 		"A", Completed,
-	)
-	Subscribe(
-		t,
+	).Case(
 		rx.Throw(ErrTest).Pipe(
 			operators.ConcatAll(),
 		),
 		ErrTest,
-	)
+	).TestAll()
 
 	ctx, cancel := context.WithTimeout(context.Background(), Step(1))
 	defer cancel()

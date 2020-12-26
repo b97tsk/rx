@@ -13,32 +13,50 @@ func TestReduce(t *testing.T) {
 		if seed.(int) > val.(int) {
 			return seed
 		}
+
 		return val
 	}
+
 	sum := func(seed, val interface{}, idx int) interface{} {
 		return seed.(int) + val.(int)
 	}
-	SubscribeN(
-		t,
-		[]rx.Observable{
-			rx.Range(1, 7).Pipe(operators.Reduce(max)),
-			rx.Just(42).Pipe(operators.Reduce(max)),
-			rx.Empty().Pipe(operators.Reduce(max)),
-			rx.Range(1, 7).Pipe(operators.Reduce(sum)),
-			rx.Just(42).Pipe(operators.Reduce(sum)),
-			rx.Empty().Pipe(operators.Reduce(sum)),
-			rx.Throw(ErrTest).Pipe(operators.Reduce(sum)),
-		},
-		[][]interface{}{
-			{6, Completed},
-			{42, Completed},
-			{Completed},
-			{21, Completed},
-			{42, Completed},
-			{Completed},
-			{ErrTest},
-		},
-	)
+
+	NewTestSuite(t).Case(
+		rx.Range(1, 7).Pipe(
+			operators.Reduce(max),
+		),
+		6, Completed,
+	).Case(
+		rx.Just(42).Pipe(
+			operators.Reduce(max),
+		),
+		42, Completed,
+	).Case(
+		rx.Empty().Pipe(
+			operators.Reduce(max),
+		),
+		Completed,
+	).Case(
+		rx.Range(1, 7).Pipe(
+			operators.Reduce(sum),
+		),
+		21, Completed,
+	).Case(
+		rx.Just(42).Pipe(
+			operators.Reduce(sum),
+		),
+		42, Completed,
+	).Case(
+		rx.Empty().Pipe(
+			operators.Reduce(sum),
+		),
+		Completed,
+	).Case(
+		rx.Throw(ErrTest).Pipe(
+			operators.Reduce(sum),
+		),
+		ErrTest,
+	).TestAll()
 }
 
 func TestFold(t *testing.T) {
@@ -46,30 +64,48 @@ func TestFold(t *testing.T) {
 		if seed.(int) > val.(int) {
 			return seed
 		}
+
 		return val
 	}
+
 	sum := func(seed, val interface{}, idx int) interface{} {
 		return seed.(int) + val.(int)
 	}
-	SubscribeN(
-		t,
-		[]rx.Observable{
-			rx.Range(1, 7).Pipe(operators.Fold(-1, max)),
-			rx.Just(42).Pipe(operators.Fold(-1, max)),
-			rx.Empty().Pipe(operators.Fold(-1, max)),
-			rx.Range(1, 7).Pipe(operators.Fold(-1, sum)),
-			rx.Just(42).Pipe(operators.Fold(-1, sum)),
-			rx.Empty().Pipe(operators.Fold(-1, sum)),
-			rx.Throw(ErrTest).Pipe(operators.Fold(-1, sum)),
-		},
-		[][]interface{}{
-			{6, Completed},
-			{42, Completed},
-			{-1, Completed},
-			{20, Completed},
-			{41, Completed},
-			{-1, Completed},
-			{ErrTest},
-		},
-	)
+
+	NewTestSuite(t).Case(
+		rx.Range(1, 7).Pipe(
+			operators.Fold(-1, max),
+		),
+		6, Completed,
+	).Case(
+		rx.Just(42).Pipe(
+			operators.Fold(-1, max),
+		),
+		42, Completed,
+	).Case(
+		rx.Empty().Pipe(
+			operators.Fold(-1, max),
+		),
+		-1, Completed,
+	).Case(
+		rx.Range(1, 7).Pipe(
+			operators.Fold(-1, sum),
+		),
+		20, Completed,
+	).Case(
+		rx.Just(42).Pipe(
+			operators.Fold(-1, sum),
+		),
+		41, Completed,
+	).Case(
+		rx.Empty().Pipe(
+			operators.Fold(-1, sum),
+		),
+		-1, Completed,
+	).Case(
+		rx.Throw(ErrTest).Pipe(
+			operators.Fold(-1, sum),
+		),
+		ErrTest,
+	).TestAll()
 }
