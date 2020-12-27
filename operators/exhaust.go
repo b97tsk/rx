@@ -22,7 +22,7 @@ func ExhaustAll() rx.Operator {
 // projected Observable has completed.
 //
 // ExhaustMap maps each value to an Observable, then flattens all of these
-// inner Observables using Exhaust.
+// inner Observables using ExhaustAll.
 func ExhaustMap(project func(interface{}, int) rx.Observable) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		return exhaustMapObservable{source, project}.Subscribe
