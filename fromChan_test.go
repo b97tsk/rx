@@ -1,6 +1,7 @@
 package rx_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/b97tsk/rx"
@@ -8,33 +9,26 @@ import (
 	"github.com/b97tsk/rx/operators"
 )
 
-func TestFromChan1(t *testing.T) {
-	c := make(chan interface{})
+func TestFromChan(t *testing.T) {
+	makeChan := func() <-chan interface{} {
+		c := make(chan interface{})
 
-	go func() {
-		c <- "A"
-		c <- "B"
-		c <- "C"
-		close(c)
-	}()
+		go func() {
+			c <- "A"
+			c <- "B"
+			c <- "C"
+			close(c)
+		}()
+
+		return c
+	}
 
 	NewTestSuite(t).Case(
-		rx.FromChan(c),
+		rx.FromChan(makeChan()),
 		"A", "B", "C", Completed,
 	).TestAll()
-}
 
-func TestFromChan2(t *testing.T) {
-	c := make(chan interface{})
-
-	go func() {
-		c <- "A"
-		c <- "B"
-		c <- "C"
-		close(c)
-	}()
-
-	obs := rx.FromChan(c)
+	obs := rx.FromChan(makeChan())
 
 	NewTestSuite(t).Case(
 		obs.Pipe(operators.Take(1)),
@@ -46,4 +40,9 @@ func TestFromChan2(t *testing.T) {
 		obs,
 		Completed,
 	).TestAll()
+
+	ctx, cancel := context.WithTimeout(context.Background(), Step(1))
+	defer cancel()
+
+	rx.FromChan(nil).Subscribe(ctx, rx.Noop)
 }
