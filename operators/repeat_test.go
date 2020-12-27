@@ -10,23 +10,23 @@ import (
 
 func TestRepeat(t *testing.T) {
 	NewTestSuite(t).Case(
-		rx.Range(1, 4).Pipe(
+		rx.Just("A", "B", "C").Pipe(
 			operators.Repeat(0),
 		),
 		Completed,
 	).Case(
-		rx.Range(1, 4).Pipe(
+		rx.Just("A", "B", "C").Pipe(
 			operators.Repeat(1),
 		),
-		1, 2, 3, Completed,
+		"A", "B", "C", Completed,
 	).Case(
-		rx.Range(1, 4).Pipe(
+		rx.Just("A", "B", "C").Pipe(
 			operators.Repeat(2),
 		),
-		1, 2, 3, 1, 2, 3, Completed,
+		"A", "B", "C", "A", "B", "C", Completed,
 	).Case(
 		rx.Concat(
-			rx.Range(1, 4),
+			rx.Just("A", "B", "C"),
 			rx.Throw(ErrTest),
 		).Pipe(
 			operators.Repeat(0),
@@ -34,19 +34,27 @@ func TestRepeat(t *testing.T) {
 		Completed,
 	).Case(
 		rx.Concat(
-			rx.Range(1, 4),
+			rx.Just("A", "B", "C"),
 			rx.Throw(ErrTest),
 		).Pipe(
 			operators.Repeat(1),
 		),
-		1, 2, 3, ErrTest,
+		"A", "B", "C", ErrTest,
 	).Case(
 		rx.Concat(
-			rx.Range(1, 4),
+			rx.Just("A", "B", "C"),
 			rx.Throw(ErrTest),
 		).Pipe(
 			operators.Repeat(2),
 		),
-		1, 2, 3, ErrTest,
+		"A", "B", "C", ErrTest,
+	).Case(
+		rx.Concat(
+			rx.Just("A", "B", "C"),
+			rx.Throw(ErrTest),
+		).Pipe(
+			operators.RepeatForever(),
+		),
+		"A", "B", "C", ErrTest,
 	).TestAll()
 }
