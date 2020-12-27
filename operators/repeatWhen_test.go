@@ -13,30 +13,39 @@ func TestRepeatWhen(t *testing.T) {
 	repeatTwice := operators.Take(1)
 
 	NewTestSuite(t).Case(
-		rx.Range(1, 4).Pipe(
+		rx.Just("A", "B", "C").Pipe(
 			operators.RepeatWhen(repeatOnce),
 		),
-		1, 2, 3, Completed,
+		"A", "B", "C", Completed,
 	).Case(
-		rx.Range(1, 4).Pipe(
+		rx.Just("A", "B", "C").Pipe(
 			operators.RepeatWhen(repeatTwice),
 		),
-		1, 2, 3, 1, 2, 3, Completed,
+		"A", "B", "C", "A", "B", "C", Completed,
+	).Case(
+		rx.Just("A", "B", "C").Pipe(
+			operators.RepeatWhen(
+				func(rx.Observable) rx.Observable {
+					return rx.Throw(ErrTest)
+				},
+			),
+		),
+		"A", "B", "C", ErrTest,
 	).Case(
 		rx.Concat(
-			rx.Range(1, 4),
+			rx.Just("A", "B", "C"),
 			rx.Throw(ErrTest),
 		).Pipe(
 			operators.RepeatWhen(repeatOnce),
 		),
-		1, 2, 3, ErrTest,
+		"A", "B", "C", ErrTest,
 	).Case(
 		rx.Concat(
-			rx.Range(1, 4),
+			rx.Just("A", "B", "C"),
 			rx.Throw(ErrTest),
 		).Pipe(
 			operators.RepeatWhen(repeatTwice),
 		),
-		1, 2, 3, ErrTest,
+		"A", "B", "C", ErrTest,
 	).TestAll()
 }
