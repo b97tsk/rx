@@ -48,6 +48,7 @@ func (observables withLatestFromObservable) Subscribe(ctx context.Context, sink 
 			select {
 			case <-done:
 				return
+
 			case t := <-q:
 				index := t.Index
 
@@ -76,6 +77,7 @@ func (observables withLatestFromObservable) Subscribe(ctx context.Context, sink 
 
 				case t.HasError:
 					sink(t.Notification)
+
 					return
 
 				default:
@@ -84,6 +86,7 @@ func (observables withLatestFromObservable) Subscribe(ctx context.Context, sink 
 					}
 
 					sink(t.Notification)
+
 					return
 				}
 			}
