@@ -81,11 +81,8 @@ func (obs switchMapObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 					return
 				}
 
-				if !activeIndex.Cas(int64(sourceIndex), -1) {
-					return
-				}
-
-				if sourceCompleted.Equals(1) && activeIndex.Equals(-1) {
+				if activeIndex.Cas(int64(sourceIndex), -1) &&
+					sourceCompleted.Equals(1) && activeIndex.Equals(-1) {
 					sink(t)
 				}
 			})

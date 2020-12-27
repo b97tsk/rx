@@ -8,7 +8,7 @@ import (
 	"github.com/b97tsk/rx/operators"
 )
 
-func TestSwitchAll(t *testing.T) {
+func TestSwitch(t *testing.T) {
 	NewTestSuite(t).Case(
 		rx.Just(
 			rx.Just("A", "B", "C", "D").Pipe(AddLatencyToValues(0, 2)),
@@ -41,5 +41,15 @@ func TestSwitchAll(t *testing.T) {
 			operators.SwitchAll(),
 		),
 		"A", "B", "C", "E", "F", "I", "J", "K", ErrTest,
+	).Case(
+		rx.Just("A").Pipe(
+			operators.SwitchMapTo(rx.Empty()),
+		),
+		Completed,
+	).Case(
+		rx.Throw(ErrTest).Pipe(
+			operators.SwitchAll(),
+		),
+		ErrTest,
 	).TestAll()
 }
