@@ -1,7 +1,6 @@
 package rx_test
 
 import (
-	"context"
 	"math/rand"
 	"testing"
 	"time"
@@ -27,13 +26,12 @@ func TestRace(t *testing.T) {
 		observables[i], observables[j] = observables[j], observables[i]
 	})
 
-	winner, err := rx.Race(observables[:]...).BlockingSingle(context.Background())
-	if err != nil {
-		t.Error(err)
-	}
-
-	if winner != Step(1) {
-		t.Log("Winner:", winner)
-		t.Fail()
-	}
+	NewTestSuite(t).Case(
+		rx.Race(observables[:]...),
+		Step(1),
+		Completed,
+	).Case(
+		rx.Race(),
+		Completed,
+	).TestAll()
 }
