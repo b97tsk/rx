@@ -9,78 +9,112 @@ import (
 	. "github.com/b97tsk/rx/internal/rxtest"
 )
 
-func TestMulticastReplay1(t *testing.T) {
-	d := rx.MulticastReplay(&rx.ReplayOptions{BufferSize: 3})
+func TestMulticastReplay(t *testing.T) {
+	t.Run("BufferSize", func(t *testing.T) {
+		d := rx.MulticastReplay(&rx.ReplayOptions{BufferSize: 3})
 
-	subscribeThenComplete := rx.Observable(
-		func(ctx context.Context, sink rx.Observer) {
-			sink = sink.Mutex()
-			d.Subscribe(ctx, sink)
-			sink.Complete()
-		},
-	)
+		subscribeThenComplete := rx.Observable(
+			func(ctx context.Context, sink rx.Observer) {
+				sink = sink.Mutex()
+				d.Subscribe(ctx, sink)
+				sink.Complete()
+			},
+		)
 
-	d.Next("A")
+		d.Next("A")
 
-	Test(t, subscribeThenComplete, "A", Completed)
+		Test(t, subscribeThenComplete, "A", Completed)
 
-	d.Next("B")
+		d.Next("B")
 
-	Test(t, subscribeThenComplete, "A", "B", Completed)
+		Test(t, subscribeThenComplete, "A", "B", Completed)
 
-	d.Next("C")
+		d.Next("C")
 
-	Test(t, subscribeThenComplete, "A", "B", "C", Completed)
+		Test(t, subscribeThenComplete, "A", "B", "C", Completed)
 
-	d.Next("D")
+		d.Next("D")
 
-	Test(t, subscribeThenComplete, "B", "C", "D", Completed)
+		Test(t, subscribeThenComplete, "B", "C", "D", Completed)
 
-	d.Error(ErrTest)
+		d.Error(ErrTest)
 
-	Test(t, subscribeThenComplete, ErrTest)
-}
+		Test(t, subscribeThenComplete, ErrTest)
+	})
 
-func TestMulticastReplay2(t *testing.T) {
-	d := rx.MulticastReplay(&rx.ReplayOptions{WindowTime: Step(5)})
+	t.Run("WindowTime", func(t *testing.T) {
+		d := rx.MulticastReplay(&rx.ReplayOptions{WindowTime: Step(5)})
 
-	subscribeThenComplete := rx.Observable(
-		func(ctx context.Context, sink rx.Observer) {
-			sink = sink.Mutex()
-			d.Subscribe(ctx, sink)
-			sink.Complete()
-		},
-	)
+		subscribeThenComplete := rx.Observable(
+			func(ctx context.Context, sink rx.Observer) {
+				sink = sink.Mutex()
+				d.Subscribe(ctx, sink)
+				sink.Complete()
+			},
+		)
 
-	d.Next("A")
+		d.Next("A")
 
-	Test(t, subscribeThenComplete, "A", Completed)
+		Test(t, subscribeThenComplete, "A", Completed)
 
-	time.Sleep(Step(2))
-	d.Next("B")
+		time.Sleep(Step(2))
+		d.Next("B")
 
-	Test(t, subscribeThenComplete, "A", "B", Completed)
+		Test(t, subscribeThenComplete, "A", "B", Completed)
 
-	time.Sleep(Step(2))
-	d.Next("C")
+		time.Sleep(Step(2))
+		d.Next("C")
 
-	Test(t, subscribeThenComplete, "A", "B", "C", Completed)
+		Test(t, subscribeThenComplete, "A", "B", "C", Completed)
 
-	time.Sleep(Step(2))
-	d.Next("D")
-	d.Complete()
+		time.Sleep(Step(2))
+		d.Next("D")
+		d.Complete()
 
-	Test(t, subscribeThenComplete, "B", "C", "D", Completed)
+		Test(t, subscribeThenComplete, "B", "C", "D", Completed)
 
-	time.Sleep(Step(2))
+		time.Sleep(Step(2))
 
-	Test(t, subscribeThenComplete, "C", "D", Completed)
+		Test(t, subscribeThenComplete, "C", "D", Completed)
 
-	time.Sleep(Step(2))
+		time.Sleep(Step(2))
 
-	Test(t, subscribeThenComplete, "D", Completed)
+		Test(t, subscribeThenComplete, "D", Completed)
 
-	time.Sleep(Step(2))
+		time.Sleep(Step(2))
 
-	Test(t, subscribeThenComplete, Completed)
+		Test(t, subscribeThenComplete, Completed)
+	})
+
+	t.Run("AfterComplete", func(t *testing.T) {
+		d := rx.MulticastReplay(nil)
+
+		d.Complete()
+
+		Test(t, d.Observable, Completed)
+
+		d.Error(ErrTest)
+
+		Test(t, d.Observable, Completed)
+	})
+
+	t.Run("AfterError", func(t *testing.T) {
+		d := rx.MulticastReplay(nil)
+
+		d.Error(ErrTest)
+
+		Test(t, d.Observable, ErrTest)
+
+		d.Complete()
+
+		Test(t, d.Observable, ErrTest)
+	})
+
+	t.Run("NilError", func(t *testing.T) {
+		d := rx.MulticastReplay(nil)
+
+		rx.Throw(nil).Subscribe(context.Background(), d.Observer)
+
+		Test(t, d.Observable, nil)
+	})
 }
