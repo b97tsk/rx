@@ -8,7 +8,7 @@ import (
 	"github.com/b97tsk/rx/operators"
 )
 
-func TestExhaustAll(t *testing.T) {
+func TestExhaust(t *testing.T) {
 	NewTestSuite(t).Case(
 		rx.Just(
 			rx.Just("A", "B", "C", "D").Pipe(AddLatencyToValues(0, 2)),
@@ -43,8 +43,8 @@ func TestExhaustAll(t *testing.T) {
 		),
 		"A", "B", "C", "D", "I", "J", "K", "L", ErrTest,
 	).Case(
-		rx.Empty().Pipe(
-			operators.ExhaustAll(),
+		rx.Just("A").Pipe(
+			operators.ExhaustMapTo(rx.Empty()),
 		),
 		Completed,
 	).Case(

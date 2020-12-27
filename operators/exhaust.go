@@ -29,6 +29,16 @@ func ExhaustMap(project func(interface{}, int) rx.Observable) rx.Operator {
 	}
 }
 
+// ExhaustMapTo creates an Observable that projects each source value to the
+// same Observable which is flattened multiple times with ExhaustAll in the
+// output Observable.
+//
+// It's like ExhaustMap, but maps each value always to the same inner
+// Observable.
+func ExhaustMapTo(inner rx.Observable) rx.Operator {
+	return ExhaustMap(func(interface{}, int) rx.Observable { return inner })
+}
+
 type exhaustMapObservable struct {
 	Source  rx.Observable
 	Project func(interface{}, int) rx.Observable
