@@ -41,12 +41,15 @@ func (observables zipSyncObservable) Subscribe(ctx context.Context, sink Observe
 				select {
 				case <-done:
 					return
+
 				case t := <-channels[i]:
 					switch {
 					case t.HasValue:
 						values[i] = t.Value
+
 					default:
 						sink(t)
+
 						return
 					}
 				}

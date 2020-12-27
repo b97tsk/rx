@@ -131,7 +131,9 @@ func (obs Observable) BlockingSingle(ctx context.Context) (interface{}, error) {
 		if t.HasValue && result.HasValue {
 			result = Notification{Error: ErrNotSingle, HasError: true}
 			observer = Noop
+
 			childCancel()
+
 			return
 		}
 

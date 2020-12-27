@@ -50,6 +50,7 @@ func (sink Observer) ElementsOnly(t Notification) {
 // mutually exclusive way.
 func (sink Observer) Mutex() Observer {
 	var s critical.Section
+
 	return func(t Notification) {
 		if critical.Enter(&s) {
 			switch {
@@ -68,6 +69,7 @@ func (sink Observer) Mutex() Observer {
 // in a mutually exclusive way while ctx is not cancelled.
 func (sink Observer) MutexContext(ctx context.Context) Observer {
 	var s critical.Section
+
 	return func(t Notification) {
 		if critical.Enter(&s) {
 			switch {

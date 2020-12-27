@@ -55,6 +55,7 @@ func (obs elementAtObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 
 			if index == -1 {
 				observer = rx.Noop
+
 				sink(t)
 				sink.Complete()
 			}

@@ -44,6 +44,7 @@ func NewContextWaitService() ContextWaitService {
 				case <-service:
 					if len(actionChan) == 0 {
 						close(service)
+
 						return
 					}
 
@@ -74,18 +75,22 @@ func NewContextWaitService() ContextWaitService {
 
 			{
 				cases[i].Chan = reflect.ValueOf(nil)
+
 				j := len(cases) - 1
 				cases[i], cases[j] = cases[j], cases[i]
 				cases = cases[:j]
 			}
 
 			{
-				i := i - 2
+				i := i - 2 //nolint:gomnd
+
 				action := actions[i]
 				actions[i] = ContextWaitAction{}
+
 				j := len(actions) - 1
 				actions[i], actions[j] = actions[j], actions[i]
 				actions = actions[:j]
+
 				go action.Callback()
 			}
 

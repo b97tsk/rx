@@ -76,6 +76,7 @@ func TestWindowToggle(t *testing.T) {
 					if val.(int) > 0 {
 						return rx.Empty()
 					}
+
 					return rx.Timer(Step(2))
 				},
 			),
@@ -98,6 +99,7 @@ func TestWindowToggle(t *testing.T) {
 					if val.(int) > 0 {
 						return rx.Throw(ErrTest)
 					}
+
 					return rx.Timer(Step(2))
 				},
 			),

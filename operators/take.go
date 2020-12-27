@@ -39,9 +39,11 @@ func (obs takeObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		case t.HasValue:
 			if count > 1 {
 				count--
+
 				sink(t)
 			} else {
 				observer = rx.Noop
+
 				sink(t)
 				sink.Complete()
 			}

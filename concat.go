@@ -29,6 +29,7 @@ func (observables concatObservable) Subscribe(ctx context.Context, sink Observer
 	subscribeToNext := norec.Wrap(func() {
 		if len(remainder) == 0 {
 			sink.Complete()
+
 			return
 		}
 
@@ -45,6 +46,7 @@ func (observables concatObservable) Subscribe(ctx context.Context, sink Observer
 	observer = func(t Notification) {
 		if t.HasValue || t.HasError {
 			sink(t)
+
 			return
 		}
 

@@ -108,6 +108,7 @@ func (q *Queue) Back() interface{} {
 // q.Len() and len(dst).
 func (q *Queue) CopyTo(dst []interface{}) int {
 	n := copy(dst, q.head)
+
 	return n + copy(dst[n:], q.buf)
 }
 

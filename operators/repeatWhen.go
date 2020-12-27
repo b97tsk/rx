@@ -40,6 +40,7 @@ func (obs repeatWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 		obs.Source.Subscribe(ctx, func(t rx.Notification) {
 			if t.HasValue || t.HasError {
 				sink(t)
+
 				return
 			}
 
@@ -47,6 +48,7 @@ func (obs repeatWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 
 			if repeatWorking.Equals(0) {
 				sink(t)
+
 				return
 			}
 

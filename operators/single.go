@@ -31,11 +31,14 @@ func single(source rx.Observable) rx.Observable {
 			case t.HasValue:
 				if hasValue {
 					observer = rx.Noop
+
 					sink.Error(rx.ErrNotSingle)
-				} else {
-					value = t.Value
-					hasValue = true
+
+					return
 				}
+
+				value = t.Value
+				hasValue = true
 
 			case t.HasError:
 				sink(t)

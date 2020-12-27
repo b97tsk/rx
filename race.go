@@ -49,7 +49,9 @@ func (observables raceObservable) Subscribe(ctx context.Context, sink Observer) 
 				critical.Close(&race)
 
 				observer = sink
+
 				sink(t)
+
 				return
 			}
 

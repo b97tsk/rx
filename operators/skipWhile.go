@@ -32,6 +32,7 @@ func (obs skipWhileObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 
 			if !obs.Predicate(t.Value, sourceIndex) {
 				observer = sink
+
 				sink(t)
 			}
 

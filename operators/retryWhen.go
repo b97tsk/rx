@@ -42,14 +42,17 @@ func (obs retryWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 		obs.Source.Subscribe(ctx, func(t rx.Notification) {
 			if !t.HasError {
 				sink(t)
+
 				return
 			}
 
 			lastError = t.Error
+
 			sourceWorking.Store(0)
 
 			if retryWorking.Equals(0) {
 				sink(t)
+
 				return
 			}
 

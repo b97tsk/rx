@@ -80,6 +80,7 @@ func DoAtLast(atLast func()) rx.Operator {
 			source.Subscribe(ctx, func(t rx.Notification) {
 				if t.HasValue {
 					sink(t)
+
 					return
 				}
 
@@ -100,6 +101,7 @@ func DoAtLastError(atLast func(error)) rx.Operator {
 			source.Subscribe(ctx, func(t rx.Notification) {
 				if t.HasValue {
 					sink(t)
+
 					return
 				}
 

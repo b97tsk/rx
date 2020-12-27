@@ -37,6 +37,7 @@ func (obs everyObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 
 			if !obs.Predicate(t.Value, sourceIndex) {
 				observer = rx.Noop
+
 				sink.Next(false)
 				sink.Complete()
 			}

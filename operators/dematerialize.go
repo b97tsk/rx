@@ -27,14 +27,20 @@ func dematerialize(source rx.Observable) rx.Observable {
 					switch {
 					case t.HasValue:
 						sink(t)
+
 					default:
 						observer = rx.Noop
+
 						sink(t)
 					}
-				} else {
-					observer = rx.Noop
-					sink.Error(rx.ErrNotNotification)
+
+					return
 				}
+
+				observer = rx.Noop
+
+				sink.Error(rx.ErrNotNotification)
+
 			default:
 				sink(t)
 			}

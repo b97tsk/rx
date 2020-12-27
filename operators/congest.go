@@ -38,12 +38,15 @@ func (obs congestObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 			select {
 			case <-done:
 				return
+
 			case t := <-cout:
 				switch {
 				case t.HasValue:
 					sink(t)
+
 				default:
 					sink(t)
+
 					return
 				}
 			}

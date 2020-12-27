@@ -24,9 +24,9 @@ func (lst *observerList) Clone() observerList {
 }
 
 func (lst *observerList) Release() {
-	refs := lst.refs
-	if refs != nil {
+	if refs := lst.refs; refs != nil {
 		refs.Sub(1)
+
 		lst.refs = nil
 	}
 }

@@ -66,6 +66,7 @@ func (obs *shareObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		go obs.source.Subscribe(ctx, func(t rx.Notification) {
 			if t.HasValue {
 				sink(t)
+
 				return
 			}
 
@@ -96,6 +97,7 @@ func (obs *shareObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 
 			if obs.shareCount == 0 {
 				obs.disconnect()
+
 				obs.double = rx.Double{}
 				obs.connection = nil
 				obs.disconnect = nil

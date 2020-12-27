@@ -20,6 +20,7 @@ func TestGroupBy(t *testing.T) {
 				func(val interface{}, idx int) rx.Observable {
 					group := val.(rx.GroupedObservable)
 					delay := Step(int([]rune(group.Key.(string))[0] - 'A'))
+
 					return group.Pipe(
 						operators.Count(),
 						operators.Map(

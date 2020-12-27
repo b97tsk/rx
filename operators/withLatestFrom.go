@@ -19,6 +19,7 @@ import (
 func WithLatestFrom(observables ...rx.Observable) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		observables = append([]rx.Observable{source}, observables...)
+
 		return withLatestFromObservable(observables).Subscribe
 	}
 }
