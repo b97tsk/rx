@@ -1,6 +1,7 @@
 package rx_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/b97tsk/rx"
@@ -75,4 +76,9 @@ func TestZipSync(t *testing.T) {
 		rx.ZipSync(),
 		Completed,
 	).TestAll()
+
+	ctx, cancel := context.WithTimeout(context.Background(), Step(1))
+	defer cancel()
+
+	rx.ZipSync(rx.Never()).Subscribe(ctx, rx.Noop)
 }
