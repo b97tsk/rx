@@ -10,6 +10,7 @@ import (
 // Double's Observer part; the others will immediately receive an ErrDropped.
 func Unicast() Double {
 	d := &unicast{}
+
 	return Double{
 		Observable: d.subscribe,
 		Observer:   d.sink,
@@ -31,6 +32,7 @@ func (d *unicast) sink(t Notification) {
 
 	switch {
 	case d.err != nil:
+		break
 
 	case t.HasValue:
 		if ctx := d.obs.ctx; ctx != nil {
@@ -79,6 +81,7 @@ func (d *unicast) subscribe(ctx context.Context, sink Observer) {
 	if err != nil {
 		if err == errCompleted {
 			sink.Complete()
+
 			return
 		}
 
