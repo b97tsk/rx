@@ -1,6 +1,7 @@
 package rx_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/b97tsk/rx"
@@ -37,5 +38,13 @@ func TestOperators_ForkJoin(t *testing.T) {
 			ToString(),
 		),
 		ErrTest,
+	).Case(
+		rx.ForkJoin(),
+		Completed,
 	).TestAll()
+
+	ctx, cancel := context.WithTimeout(context.Background(), Step(1))
+	defer cancel()
+
+	rx.ForkJoin(rx.Never()).Subscribe(ctx, rx.Noop)
 }

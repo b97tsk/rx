@@ -42,6 +42,7 @@ func (observables forkJoinObservable) Subscribe(ctx context.Context, sink Observ
 			select {
 			case <-done:
 				return
+
 			case t := <-q:
 				index := t.Index
 
@@ -52,6 +53,7 @@ func (observables forkJoinObservable) Subscribe(ctx context.Context, sink Observ
 
 				case t.HasError:
 					sink(t.Notification)
+
 					return
 
 				default:
@@ -59,6 +61,7 @@ func (observables forkJoinObservable) Subscribe(ctx context.Context, sink Observ
 
 					if !hasValues[index] {
 						sink(t.Notification)
+
 						return
 					}
 
@@ -68,6 +71,7 @@ func (observables forkJoinObservable) Subscribe(ctx context.Context, sink Observ
 
 					sink.Next(values)
 					sink.Complete()
+
 					return
 				}
 			}
