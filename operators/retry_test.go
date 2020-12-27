@@ -10,43 +10,48 @@ import (
 
 func TestRetry(t *testing.T) {
 	NewTestSuite(t).Case(
-		rx.Range(1, 4).Pipe(
+		rx.Just("A", "B", "C").Pipe(
 			operators.Retry(0),
 		),
-		1, 2, 3, Completed,
+		"A", "B", "C", Completed,
 	).Case(
-		rx.Range(1, 4).Pipe(
+		rx.Just("A", "B", "C").Pipe(
 			operators.Retry(1),
 		),
-		1, 2, 3, Completed,
+		"A", "B", "C", Completed,
 	).Case(
-		rx.Range(1, 4).Pipe(
+		rx.Just("A", "B", "C").Pipe(
 			operators.Retry(2),
 		),
-		1, 2, 3, Completed,
+		"A", "B", "C", Completed,
+	).Case(
+		rx.Just("A", "B", "C").Pipe(
+			operators.RetryForever(),
+		),
+		"A", "B", "C", Completed,
 	).Case(
 		rx.Concat(
-			rx.Range(1, 4),
+			rx.Just("A", "B", "C"),
 			rx.Throw(ErrTest),
 		).Pipe(
 			operators.Retry(0),
 		),
-		1, 2, 3, ErrTest,
+		"A", "B", "C", ErrTest,
 	).Case(
 		rx.Concat(
-			rx.Range(1, 4),
+			rx.Just("A", "B", "C"),
 			rx.Throw(ErrTest),
 		).Pipe(
 			operators.Retry(1),
 		),
-		1, 2, 3, 1, 2, 3, ErrTest,
+		"A", "B", "C", "A", "B", "C", ErrTest,
 	).Case(
 		rx.Concat(
-			rx.Range(1, 4),
+			rx.Just("A", "B", "C"),
 			rx.Throw(ErrTest),
 		).Pipe(
 			operators.Retry(2),
 		),
-		1, 2, 3, 1, 2, 3, 1, 2, 3, ErrTest,
+		"A", "B", "C", "A", "B", "C", "A", "B", "C", ErrTest,
 	).TestAll()
 }
