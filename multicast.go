@@ -12,6 +12,7 @@ import (
 // Double's Observer part.
 func Multicast() Double {
 	d := &multicast{}
+
 	return Double{
 		Observable: d.subscribe,
 		Observer:   d.sink,
@@ -92,6 +93,7 @@ func (d *multicast) subscribe(ctx context.Context, sink Observer) {
 	if err != nil {
 		if err == errCompleted {
 			sink.Complete()
+
 			return
 		}
 

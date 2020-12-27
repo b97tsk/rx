@@ -14,7 +14,7 @@ func TestMulticast(t *testing.T) {
 		return acc.(int) + val.(int)
 	}
 
-	t.Run("Completed", func(t *testing.T) {
+	t.Run("Normal", func(t *testing.T) {
 		d := rx.Multicast()
 
 		rx.Just(3, 4, 5).Pipe(
@@ -57,5 +57,37 @@ func TestMulticast(t *testing.T) {
 			d.Observable,
 			ErrTest,
 		).TestAll()
+	})
+
+	t.Run("AfterComplete", func(t *testing.T) {
+		d := rx.Multicast()
+
+		d.Complete()
+
+		Test(t, d.Observable, Completed)
+
+		d.Error(ErrTest)
+
+		Test(t, d.Observable, Completed)
+	})
+
+	t.Run("AfterError", func(t *testing.T) {
+		d := rx.Multicast()
+
+		d.Error(ErrTest)
+
+		Test(t, d.Observable, ErrTest)
+
+		d.Complete()
+
+		Test(t, d.Observable, ErrTest)
+	})
+
+	t.Run("NilError", func(t *testing.T) {
+		d := rx.Multicast()
+
+		rx.Throw(nil).Subscribe(context.Background(), d.Observer)
+
+		Test(t, d.Observable, nil)
 	})
 }
