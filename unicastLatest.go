@@ -11,6 +11,7 @@ import (
 // receive an ErrDropped.
 func UnicastLatest() Double {
 	d := &unicastLatest{}
+
 	return Double{
 		Observable: d.subscribe,
 		Observer:   d.sink,
@@ -32,6 +33,7 @@ func (d *unicastLatest) sink(t Notification) {
 
 	switch {
 	case d.err != nil:
+		break
 
 	case t.HasValue:
 		if ctx := d.obs.ctx; ctx != nil {
@@ -83,6 +85,7 @@ func (d *unicastLatest) subscribe(ctx context.Context, sink Observer) {
 	if err != nil {
 		if err == errCompleted {
 			sink.Complete()
+
 			return
 		}
 
