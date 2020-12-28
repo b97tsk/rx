@@ -14,8 +14,16 @@ func TestFlat(t *testing.T) {
 			rx.Just("A", "B").Pipe(AddLatencyToValues(3, 5)),
 			rx.Just("C", "D").Pipe(AddLatencyToValues(2, 4)),
 			rx.Just("E", "F").Pipe(AddLatencyToValues(1, 3)),
-		).Pipe(operators.Flat(rx.CombineLatest), ToString()),
+		).Pipe(
+			operators.Flat(rx.CombineLatest),
+			ToString(),
+		),
 		"[A C E]", "[A C F]", "[A D F]", "[B D F]", Completed,
+	).Case(
+		rx.Throw(ErrTest).Pipe(
+			operators.Flat(rx.CombineLatest),
+		),
+		ErrTest,
 	).TestAll()
 
 	NewTestSuite(t).Case(
