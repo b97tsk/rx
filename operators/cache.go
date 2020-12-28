@@ -7,25 +7,27 @@ import (
 	"github.com/b97tsk/rx/internal/queue"
 )
 
-// Congest creates an Observable that mirrors the source Observable, caches
-// emissions if the source emits too fast, and congests the source if the cache
-// is full.
-func Congest(bufferSize int) rx.Operator {
-	if bufferSize < 1 {
+// Cache creates an Observable that mirrors the source Observable, caches
+// emissions if the source emits too fast, and blocks the source if the
+// cache is full.
+//
+// Cache has no effect if cacheSize < 1.
+func Cache(cacheSize int) rx.Operator {
+	if cacheSize < 1 {
 		return noop
 	}
 
 	return func(source rx.Observable) rx.Observable {
-		return congestObservable{source, bufferSize}.Subscribe
+		return cacheObservable{source, cacheSize}.Subscribe
 	}
 }
 
-type congestObservable struct {
-	Source     rx.Observable
-	BufferSize int
+type cacheObservable struct {
+	Source    rx.Observable
+	CacheSize int
 }
 
-func (obs congestObservable) Subscribe(ctx context.Context, sink rx.Observer) {
+func (obs cacheObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 
@@ -67,7 +69,7 @@ func (obs congestObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 
 			length := queue.Len()
 
-			if length < obs.BufferSize {
+			if length < obs.CacheSize {
 				in = cin
 			}
 
