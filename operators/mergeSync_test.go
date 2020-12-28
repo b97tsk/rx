@@ -46,8 +46,5 @@ func TestMergeSync(t *testing.T) {
 			},
 			3,
 		),
-		operators.DoOnComplete(
-			func() { t.Fatal("should not happen") },
-		),
-	).Subscribe(ctx, rx.Noop)
+	).Subscribe(ctx, func(rx.Notification) { t.Fatal("should not happen") })
 }

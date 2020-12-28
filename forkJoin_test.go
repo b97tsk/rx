@@ -46,5 +46,7 @@ func TestForkJoin(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), Step(1))
 	defer cancel()
 
-	rx.ForkJoin(rx.Never()).Subscribe(ctx, rx.Noop)
+	rx.ForkJoin(
+		rx.Timer(Step(2)),
+	).Subscribe(ctx, func(rx.Notification) { t.Fatal("should not happen") })
 }

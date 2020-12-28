@@ -25,8 +25,5 @@ func TestCache(t *testing.T) {
 
 	rx.Timer(Step(2)).Pipe(
 		operators.Cache(3),
-		operators.DoOnComplete(
-			func() { t.Fatal("should not happen") },
-		),
-	).Subscribe(ctx, rx.Noop)
+	).Subscribe(ctx, func(rx.Notification) { t.Fatal("should not happen") })
 }

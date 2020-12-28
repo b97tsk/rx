@@ -110,7 +110,7 @@ func TestWithLatestFrom(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), Step(1))
 	defer cancel()
 
-	rx.Never().Pipe(
-		operators.WithLatestFrom(rx.Never()),
-	).Subscribe(ctx, rx.Noop)
+	rx.Timer(Step(2)).Pipe(
+		operators.WithLatestFrom(rx.Timer(Step(2))),
+	).Subscribe(ctx, func(rx.Notification) { t.Fatal("should not happen") })
 }

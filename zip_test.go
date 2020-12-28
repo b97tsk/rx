@@ -80,5 +80,7 @@ func TestZip(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), Step(1))
 	defer cancel()
 
-	rx.Zip(rx.Never()).Subscribe(ctx, rx.Noop)
+	rx.Zip(
+		rx.Timer(Step(2)),
+	).Subscribe(ctx, func(rx.Notification) { t.Fatal("should not happen") })
 }
