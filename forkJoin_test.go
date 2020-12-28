@@ -8,7 +8,7 @@ import (
 	. "github.com/b97tsk/rx/internal/rxtest"
 )
 
-func TestOperators_ForkJoin(t *testing.T) {
+func TestForkJoin(t *testing.T) {
 	NewTestSuite(t).Case(
 		rx.ForkJoin(
 			rx.Just("A", "B", "C").Pipe(AddLatencyToValues(0, 3)),
