@@ -18,6 +18,7 @@ func WindowCount(windowSize int) rx.Operator {
 type WindowCountConfigure struct {
 	WindowSize       int
 	StartWindowEvery int
+	WindowFactory    rx.DoubleFactory
 }
 
 // Make creates an Operator from this configure.
@@ -32,6 +33,10 @@ func (configure WindowCountConfigure) Make() rx.Operator {
 
 	if configure.StartWindowEvery == 0 {
 		configure.StartWindowEvery = configure.WindowSize
+	}
+
+	if configure.WindowFactory == nil {
+		configure.WindowFactory = rx.Multicast
 	}
 
 	return func(source rx.Observable) rx.Observable {
@@ -50,7 +55,7 @@ func (obs windowCountObservable) Subscribe(ctx context.Context, sink rx.Observer
 		windowSize int
 	)
 
-	window := rx.Multicast()
+	window := obs.WindowFactory()
 	windows = append(windows, window.Observer)
 	sink.Next(window.Observable)
 
@@ -83,7 +88,7 @@ func (obs windowCountObservable) Subscribe(ctx context.Context, sink rx.Observer
 				windowSize = obs.WindowSize - obs.StartWindowEvery
 
 				if windowSize < 0 {
-					window := rx.Multicast()
+					window := obs.WindowFactory()
 					windows = append(windows, window.Observer)
 					sink.Next(window.Observable)
 				}
@@ -91,7 +96,7 @@ func (obs windowCountObservable) Subscribe(ctx context.Context, sink rx.Observer
 
 			if obs.StartWindowEvery <= obs.WindowSize {
 				if windowSize%obs.StartWindowEvery == 0 {
-					window := rx.Multicast()
+					window := obs.WindowFactory()
 					windows = append(windows, window.Observer)
 					sink.Next(window.Observable)
 				}

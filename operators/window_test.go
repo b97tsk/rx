@@ -65,4 +65,18 @@ func TestWindow(t *testing.T) {
 		),
 		ErrTest,
 	).TestAll()
+
+	panictest := func(f func(), msg string) {
+		defer func() {
+			if recover() == nil {
+				t.Log(msg)
+				t.FailNow()
+			}
+		}()
+		f()
+	}
+	panictest(
+		func() { operators.Window(nil) },
+		"Window with nil window boundaries didn't panic.",
+	)
 }

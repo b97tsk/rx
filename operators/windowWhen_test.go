@@ -73,4 +73,18 @@ func TestWindowWhen(t *testing.T) {
 		),
 		ErrTest,
 	).TestAll()
+
+	panictest := func(f func(), msg string) {
+		defer func() {
+			if recover() == nil {
+				t.Log(msg)
+				t.FailNow()
+			}
+		}()
+		f()
+	}
+	panictest(
+		func() { operators.WindowWhen(nil) },
+		"WindowWhen with nil closing selector didn't panic.",
+	)
 }

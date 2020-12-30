@@ -133,4 +133,34 @@ func TestWindowToggle(t *testing.T) {
 		),
 		ErrTest,
 	).TestAll()
+
+	panictest := func(f func(), msg string) {
+		defer func() {
+			if recover() == nil {
+				t.Log(msg)
+				t.FailNow()
+			}
+		}()
+		f()
+	}
+	panictest(
+		func() {
+			operators.WindowToggle(
+				nil,
+				func(interface{}) rx.Observable {
+					return rx.Throw(ErrTest)
+				},
+			)
+		},
+		"WindowToggle with nil openings didn't panic.",
+	)
+	panictest(
+		func() {
+			operators.WindowToggle(
+				rx.Throw(ErrTest),
+				nil,
+			)
+		},
+		"WindowToggle with nil closing selector didn't panic.",
+	)
 }

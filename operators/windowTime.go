@@ -21,10 +21,15 @@ type WindowTimeConfigure struct {
 	TimeSpan         time.Duration
 	CreationInterval time.Duration
 	MaxWindowSize    int
+	WindowFactory    rx.DoubleFactory
 }
 
 // Make creates an Operator from this configure.
 func (configure WindowTimeConfigure) Make() rx.Operator {
+	if configure.WindowFactory == nil {
+		configure.WindowFactory = rx.Multicast
+	}
+
 	return func(source rx.Observable) rx.Observable {
 		return windowTimeObservable{source, configure}.Subscribe
 	}
@@ -58,7 +63,7 @@ func (obs windowTimeObservable) Subscribe(ctx context.Context, sink rx.Observer)
 	openContextLocked := func() {
 		ctx, cancel := context.WithCancel(ctx)
 
-		window := rx.Multicast()
+		window := obs.WindowFactory()
 
 		newContext := &windowTimeContext{
 			Cancel: cancel,

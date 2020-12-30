@@ -12,14 +12,33 @@ import (
 //
 // It's like Buffer, but emits a nested Observable instead of a slice.
 func Window(windowBoundaries rx.Observable) rx.Operator {
+	return WindowConfigure{WindowBoundaries: windowBoundaries}.Make()
+}
+
+// A WindowConfigure is a configure for Window.
+type WindowConfigure struct {
+	WindowBoundaries rx.Observable
+	WindowFactory    rx.DoubleFactory
+}
+
+// Make creates an Operator from this configure.
+func (configure WindowConfigure) Make() rx.Operator {
+	if configure.WindowBoundaries == nil {
+		panic("Window: WindowBoundaries is nil")
+	}
+
+	if configure.WindowFactory == nil {
+		configure.WindowFactory = rx.Multicast
+	}
+
 	return func(source rx.Observable) rx.Observable {
-		return windowObservable{source, windowBoundaries}.Subscribe
+		return windowObservable{source, configure}.Subscribe
 	}
 }
 
 type windowObservable struct {
-	Source           rx.Observable
-	WindowBoundaries rx.Observable
+	Source rx.Observable
+	WindowConfigure
 }
 
 func (obs windowObservable) Subscribe(ctx context.Context, sink rx.Observer) {
@@ -32,7 +51,7 @@ func (obs windowObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		Window rx.Observer
 	}
 
-	window := rx.Multicast()
+	window := obs.WindowFactory()
 	x.Window = window.Observer
 	sink.Next(window.Observable)
 
@@ -44,7 +63,7 @@ func (obs windowObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 
 				x.Window.Complete()
 
-				window := rx.Multicast()
+				window := obs.WindowFactory()
 				x.Window = window.Observer
 				sink.Next(window.Observable)
 

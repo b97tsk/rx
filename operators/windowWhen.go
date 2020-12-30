@@ -14,14 +14,33 @@ import (
 //
 // It's like BufferWhen, but emits a nested Observable instead of a slice.
 func WindowWhen(closingSelector func() rx.Observable) rx.Operator {
+	return WindowWhenConfigure{ClosingSelector: closingSelector}.Make()
+}
+
+// A WindowWhenConfigure is a configure for WindowWhen.
+type WindowWhenConfigure struct {
+	ClosingSelector func() rx.Observable
+	WindowFactory   rx.DoubleFactory
+}
+
+// Make creates an Operator from this configure.
+func (configure WindowWhenConfigure) Make() rx.Operator {
+	if configure.ClosingSelector == nil {
+		panic("WindowWhen: ClosingSelector is nil")
+	}
+
+	if configure.WindowFactory == nil {
+		configure.WindowFactory = rx.Multicast
+	}
+
 	return func(source rx.Observable) rx.Observable {
-		return windowWhenObservable{source, closingSelector}.Subscribe
+		return windowWhenObservable{source, configure}.Subscribe
 	}
 }
 
 type windowWhenObservable struct {
-	Source          rx.Observable
-	ClosingSelector func() rx.Observable
+	Source rx.Observable
+	WindowWhenConfigure
 }
 
 func (obs windowWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) {
@@ -34,7 +53,7 @@ func (obs windowWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 		Window rx.Observer
 	}
 
-	window := rx.Multicast()
+	window := obs.WindowFactory()
 	x.Window = window.Observer
 	sink.Next(window.Observable)
 
@@ -59,7 +78,7 @@ func (obs windowWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 				case t.HasValue:
 					x.Window.Complete()
 
-					window := rx.Multicast()
+					window := obs.WindowFactory()
 					x.Window = window.Observer
 					sink.Next(window.Observable)
 
