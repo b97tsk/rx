@@ -74,4 +74,31 @@ func TestWindowCount(t *testing.T) {
 		),
 		ErrTest,
 	).TestAll()
+
+	panictest := func(f func(), msg string) {
+		defer func() {
+			if recover() == nil {
+				t.Log(msg)
+				t.FailNow()
+			}
+		}()
+		f()
+	}
+	panictest(
+		func() { operators.WindowCount(-1) },
+		"WindowCount with negative window size didn't panic.",
+	)
+	panictest(
+		func() { operators.WindowCount(0) },
+		"WindowCount with zero window size didn't panic.",
+	)
+	panictest(
+		func() {
+			operators.WindowCountConfigure{
+				WindowSize:       1,
+				StartWindowEvery: -1,
+			}.Make()
+		},
+		"WindowCountConfigure with negative StartWindowEvery didn't panic.",
+	)
 }

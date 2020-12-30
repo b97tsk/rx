@@ -67,4 +67,29 @@ func TestExpand(t *testing.T) {
 		),
 		ErrTest,
 	).TestAll()
+
+	panictest := func(f func(), msg string) {
+		defer func() {
+			if recover() == nil {
+				t.Log(msg)
+				t.FailNow()
+			}
+		}()
+		f()
+	}
+	panictest(
+		func() { operators.Expand(nil, -1) },
+		"Expand with nil project didn't panic.",
+	)
+	panictest(
+		func() {
+			operators.Expand(
+				func(interface{}) rx.Observable {
+					return rx.Throw(ErrTest)
+				},
+				0,
+			)
+		},
+		"Expand with zero concurrency didn't panic.",
+	)
 }

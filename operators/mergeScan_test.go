@@ -49,4 +49,30 @@ func TestMergeScan(t *testing.T) {
 		),
 		ErrTest,
 	).TestAll()
+
+	panictest := func(f func(), msg string) {
+		defer func() {
+			if recover() == nil {
+				t.Log(msg)
+				t.FailNow()
+			}
+		}()
+		f()
+	}
+	panictest(
+		func() { operators.MergeScan(nil, nil, -1) },
+		"MergeScan with nil accumulator didn't panic.",
+	)
+	panictest(
+		func() {
+			operators.MergeScan(
+				func(interface{}, interface{}, int) rx.Observable {
+					return rx.Throw(ErrTest)
+				},
+				nil,
+				0,
+			)
+		},
+		"MergeScan with zero concurrency didn't panic.",
+	)
 }

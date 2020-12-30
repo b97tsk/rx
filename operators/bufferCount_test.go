@@ -54,4 +54,31 @@ func TestBufferCount(t *testing.T) {
 		),
 		ErrTest,
 	).TestAll()
+
+	panictest := func(f func(), msg string) {
+		defer func() {
+			if recover() == nil {
+				t.Log(msg)
+				t.FailNow()
+			}
+		}()
+		f()
+	}
+	panictest(
+		func() { operators.BufferCount(-1) },
+		"BufferCount with negative buffer size didn't panic.",
+	)
+	panictest(
+		func() { operators.BufferCount(0) },
+		"BufferCount with zero buffer size didn't panic.",
+	)
+	panictest(
+		func() {
+			operators.BufferCountConfigure{
+				BufferSize:       1,
+				StartBufferEvery: -1,
+			}.Make()
+		},
+		"BufferCountConfigure with negative StartBufferEvery didn't panic.",
+	)
 }

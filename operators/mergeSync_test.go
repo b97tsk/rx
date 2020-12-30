@@ -47,4 +47,29 @@ func TestMergeSync(t *testing.T) {
 			3,
 		),
 	).Subscribe(ctx, func(rx.Notification) { t.Fatal("should not happen") })
+
+	panictest := func(f func(), msg string) {
+		defer func() {
+			if recover() == nil {
+				t.Log(msg)
+				t.FailNow()
+			}
+		}()
+		f()
+	}
+	panictest(
+		func() { operators.MergeSyncMap(nil, -1) },
+		"MergeSyncMap with nil project didn't panic.",
+	)
+	panictest(
+		func() {
+			operators.MergeSyncMap(
+				func(interface{}, int) rx.Observable {
+					return rx.Throw(ErrTest)
+				},
+				0,
+			)
+		},
+		"MergeSyncMap with zero concurrency didn't panic.",
+	)
 }

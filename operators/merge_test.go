@@ -49,4 +49,29 @@ func TestMerge(t *testing.T) {
 		),
 		ErrTest,
 	).TestAll()
+
+	panictest := func(f func(), msg string) {
+		defer func() {
+			if recover() == nil {
+				t.Log(msg)
+				t.FailNow()
+			}
+		}()
+		f()
+	}
+	panictest(
+		func() { operators.MergeMap(nil, -1) },
+		"MergeMap with nil project didn't panic.",
+	)
+	panictest(
+		func() {
+			operators.MergeMap(
+				func(interface{}, int) rx.Observable {
+					return rx.Throw(ErrTest)
+				},
+				0,
+			)
+		},
+		"MergeMap with zero concurrency didn't panic.",
+	)
 }

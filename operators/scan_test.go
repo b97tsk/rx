@@ -57,4 +57,22 @@ func TestScan(t *testing.T) {
 		),
 		ErrTest,
 	).TestAll()
+
+	panictest := func(f func(), msg string) {
+		defer func() {
+			if recover() == nil {
+				t.Log(msg)
+				t.FailNow()
+			}
+		}()
+		f()
+	}
+	panictest(
+		func() {
+			operators.ScanConfigure{
+				Accumulator: nil,
+			}.Make()
+		},
+		"ScanConfigure with nil Accumulator didn't panic.",
+	)
 }

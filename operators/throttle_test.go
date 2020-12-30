@@ -103,4 +103,18 @@ func TestThrottle(t *testing.T) {
 		),
 		"A", "C", "E", Completed,
 	).TestAll()
+
+	panictest := func(f func(), msg string) {
+		defer func() {
+			if recover() == nil {
+				t.Log(msg)
+				t.FailNow()
+			}
+		}()
+		f()
+	}
+	panictest(
+		func() { operators.Throttle(nil) },
+		"Throttle with nil duration selector didn't panic.",
+	)
 }

@@ -22,4 +22,18 @@ func TestTimeout(t *testing.T) {
 		),
 		"A", rx.ErrTimeout,
 	).TestAll()
+
+	panictest := func(f func(), msg string) {
+		defer func() {
+			if recover() == nil {
+				t.Log(msg)
+				t.FailNow()
+			}
+		}()
+		f()
+	}
+	panictest(
+		func() { operators.TimeoutWith(0, nil) },
+		"TimeoutWith with nil Observable didn't panic.",
+	)
 }
