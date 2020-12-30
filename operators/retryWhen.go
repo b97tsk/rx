@@ -29,8 +29,8 @@ func (obs retryWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 
 	sink = sink.WithCancel(cancel).Mutex()
 
-	retryWorking := atomic.FromUint32(1)
-	sourceWorking := atomic.FromUint32(1)
+	retryWorking := atomic.FromBool(true)
+	sourceWorking := atomic.FromBool(true)
 
 	var lastError error
 
@@ -48,9 +48,9 @@ func (obs retryWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 
 			lastError = t.Error
 
-			sourceWorking.Store(0)
+			sourceWorking.Store(false)
 
-			if retryWorking.Equals(0) {
+			if retryWorking.False() {
 				sink(t)
 
 				return
@@ -66,7 +66,7 @@ func (obs retryWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 				obs1.Subscribe(ctx, func(t rx.Notification) {
 					switch {
 					case t.HasValue:
-						if sourceWorking.Cas(0, 1) {
+						if sourceWorking.Cas(false, true) {
 							subscribeToSource()
 						}
 
@@ -74,9 +74,9 @@ func (obs retryWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 						sink(t)
 
 					default:
-						retryWorking.Store(0)
+						retryWorking.Store(false)
 
-						if sourceWorking.Equals(0) {
+						if sourceWorking.False() {
 							sink.Error(lastError)
 						}
 					}

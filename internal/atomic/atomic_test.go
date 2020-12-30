@@ -6,6 +6,21 @@ import (
 	"github.com/b97tsk/rx/internal/atomic"
 )
 
+func TestBool(t *testing.T) {
+	b := atomic.FromBool(true)
+
+	assert(t, b.Load(), "Load didn't work.")
+
+	assert(t, b.Cas(true, false), "Cas didn't report a swap.")
+	assert(t, b.False(), "Cas didn't work.")
+
+	assert(t, !b.Swap(true), "Swap didn't return the old value.")
+	assert(t, b.True(), "Swap didn't work.")
+
+	b.Store(false)
+	assert(t, b.Equals(false), "Store didn't work.")
+}
+
 func TestInt32(t *testing.T) {
 	i := atomic.FromInt32(42)
 

@@ -27,7 +27,7 @@ func (obs skipUntilObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 
 	sink = sink.WithCancel(cancel).Mutex()
 
-	noSkipping := atomic.FromUint32(0)
+	var noSkipping atomic.Bool
 
 	{
 		ctx, cancel := context.WithCancel(ctx)
@@ -41,7 +41,7 @@ func (obs skipUntilObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 
 			switch {
 			case t.HasValue:
-				noSkipping.Store(1)
+				noSkipping.Store(true)
 			case t.HasError:
 				sink(t)
 			}
@@ -54,7 +54,7 @@ func (obs skipUntilObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 		return
 	}
 
-	if noSkipping.Equals(1) {
+	if noSkipping.True() {
 		obs.Source.Subscribe(ctx, originalSink)
 
 		return
@@ -66,7 +66,7 @@ func (obs skipUntilObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 		observer = func(t rx.Notification) {
 			switch {
 			case t.HasValue:
-				if noSkipping.Equals(1) {
+				if noSkipping.True() {
 					observer = originalSink
 					observer.Sink(t)
 				}
