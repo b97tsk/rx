@@ -7,14 +7,14 @@ import (
 type observerList struct {
 	Observers []*Observer
 
-	refs *atomic.Uint32s
+	refs *atomic.Uint32
 }
 
 func (lst *observerList) Clone() observerList {
 	refs := lst.refs
 
 	if refs == nil {
-		refs = new(atomic.Uint32s)
+		refs = new(atomic.Uint32)
 		lst.refs = refs
 	}
 

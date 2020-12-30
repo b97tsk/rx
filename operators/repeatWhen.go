@@ -29,8 +29,8 @@ func (obs repeatWhenObservable) Subscribe(ctx context.Context, sink rx.Observer)
 
 	sink = sink.WithCancel(cancel).Mutex()
 
-	repeatWorking := atomic.Uint32(1)
-	sourceWorking := atomic.Uint32(1)
+	repeatWorking := atomic.FromUint32(1)
+	sourceWorking := atomic.FromUint32(1)
 
 	var repeatSignal rx.Observer
 

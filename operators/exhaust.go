@@ -50,7 +50,7 @@ func (obs exhaustMapObservable) Subscribe(ctx context.Context, sink rx.Observer)
 	sink = sink.WithCancel(cancel).Mutex()
 
 	sourceIndex := -1
-	workers := atomic.Uint32(1)
+	workers := atomic.FromUint32(1)
 
 	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		switch {

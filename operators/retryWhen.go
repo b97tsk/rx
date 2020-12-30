@@ -29,8 +29,8 @@ func (obs retryWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 
 	sink = sink.WithCancel(cancel).Mutex()
 
-	retryWorking := atomic.Uint32(1)
-	sourceWorking := atomic.Uint32(1)
+	retryWorking := atomic.FromUint32(1)
+	sourceWorking := atomic.FromUint32(1)
 
 	var lastError error
 

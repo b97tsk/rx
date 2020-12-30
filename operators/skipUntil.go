@@ -27,7 +27,7 @@ func (obs skipUntilObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 
 	sink = sink.WithCancel(cancel).Mutex()
 
-	noSkipping := atomic.Uint32(0)
+	noSkipping := atomic.FromUint32(0)
 
 	{
 		ctx, cancel := context.WithCancel(ctx)

@@ -26,7 +26,7 @@ func (observables mergeObservable) Subscribe(ctx context.Context, sink Observer)
 
 	sink = sink.WithCancel(cancel).Mutex()
 
-	active := atomic.Uint32(uint32(len(observables)))
+	active := atomic.FromUint32(uint32(len(observables)))
 
 	observer := func(t Notification) {
 		if t.HasValue || t.HasError || active.Sub(1) == 0 {

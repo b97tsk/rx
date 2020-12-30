@@ -41,7 +41,7 @@ type multicastReplay struct {
 	ReplayOptions
 	multicast
 	buffer     queue.Queue
-	bufferRefs *atomic.Uint32s
+	bufferRefs *atomic.Uint32
 }
 
 type multicastReplayElement struct {
@@ -49,11 +49,11 @@ type multicastReplayElement struct {
 	Deadline time.Time
 }
 
-func (d *multicastReplay) bufferForRead() (queue.Queue, *atomic.Uint32s) {
+func (d *multicastReplay) bufferForRead() (queue.Queue, *atomic.Uint32) {
 	refs := d.bufferRefs
 
 	if refs == nil {
-		refs = new(atomic.Uint32s)
+		refs = new(atomic.Uint32)
 		d.bufferRefs = refs
 	}
 

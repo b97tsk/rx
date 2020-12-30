@@ -49,9 +49,9 @@ func (obs switchMapObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 
 	var childCancel context.CancelFunc
 
-	activeIndex := atomic.Int64(-1)
+	activeIndex := atomic.FromInt64(-1)
 	sourceIndex := -1
-	sourceCompleted := atomic.Uint32(0)
+	sourceCompleted := atomic.FromUint32(0)
 
 	obs.Source.Subscribe(ctx, func(t rx.Notification) {
 		switch {
