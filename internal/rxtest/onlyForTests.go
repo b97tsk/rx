@@ -71,7 +71,7 @@ func ToString() rx.Operator {
 	)
 }
 
-func Test(t *testing.T, source rx.Observable, output ...interface{}) {
+func Test(t testing.TB, source rx.Observable, output ...interface{}) {
 	_ = source.BlockingSubscribe(
 		context.Background(),
 		func(n rx.Notification) {
