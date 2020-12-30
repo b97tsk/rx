@@ -103,15 +103,23 @@ func NewContextWaitService() ContextWaitService {
 	return service
 }
 
-func (service ContextWaitService) Submit(ctx context.Context, cb func()) bool {
-	actionChan, serviceAvailable := <-service
+func (s *ContextWaitService) Submit(ctx context.Context, cb func()) {
+	var (
+		actionChan       chan<- ContextWaitAction
+		serviceAvailable bool
+	)
+
+	service := *s
+	if service != nil {
+		actionChan, serviceAvailable = <-service
+	}
 
 	if !serviceAvailable {
-		return false
+		service = NewContextWaitService()
+		actionChan = <-service
+		*s = service
 	}
 
 	actionChan <- ContextWaitAction{ctx, cb}
 	service <- actionChan
-
-	return true
 }

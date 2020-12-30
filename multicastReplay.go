@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/b97tsk/rx/internal/atomic"
-	"github.com/b97tsk/rx/internal/ctxutil"
 	"github.com/b97tsk/rx/internal/queue"
 )
 
@@ -164,15 +163,11 @@ func (d *multicastReplay) subscribe(ctx context.Context, sink Observer) {
 
 		d.lst.Append(&observer)
 
-		finalize := func() {
+		d.cws.Submit(ctx, func() {
 			d.mu.Lock()
 			d.lst.Remove(&observer)
 			d.mu.Unlock()
-		}
-
-		for d.cws == nil || !d.cws.Submit(ctx, finalize) {
-			d.cws = ctxutil.NewContextWaitService()
-		}
+		})
 	}
 
 	d.trimBuffer(nil)

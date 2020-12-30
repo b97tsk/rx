@@ -89,7 +89,7 @@ func (obs *shareObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 
 	obs.shareCount++
 
-	finalize := func() {
+	obs.cws.Submit(ctx, func() {
 		obs.mu.Lock()
 
 		if connection == obs.connection {
@@ -105,9 +105,5 @@ func (obs *shareObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		}
 
 		obs.mu.Unlock()
-	}
-
-	for obs.cws == nil || !obs.cws.Submit(ctx, finalize) {
-		obs.cws = ctxutil.NewContextWaitService()
-	}
+	})
 }

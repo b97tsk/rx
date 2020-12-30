@@ -77,15 +77,11 @@ func (d *multicast) subscribe(ctx context.Context, sink Observer) {
 
 		d.lst.Append(&observer)
 
-		finalize := func() {
+		d.cws.Submit(ctx, func() {
 			d.mu.Lock()
 			d.lst.Remove(&observer)
 			d.mu.Unlock()
-		}
-
-		for d.cws == nil || !d.cws.Submit(ctx, finalize) {
-			d.cws = ctxutil.NewContextWaitService()
-		}
+		})
 	}
 
 	d.mu.Unlock()
