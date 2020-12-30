@@ -36,7 +36,7 @@ func MergeSyncMap(
 	}
 
 	if concurrency == 0 {
-		concurrency = -1
+		panic("MergeSyncMap: concurrency is zero")
 	}
 
 	return func(source rx.Observable) rx.Observable {

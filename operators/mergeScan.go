@@ -27,7 +27,7 @@ func MergeScan(
 	}
 
 	if concurrency == 0 {
-		concurrency = -1
+		panic("MergeScan: concurrency is zero")
 	}
 
 	return func(source rx.Observable) rx.Observable {

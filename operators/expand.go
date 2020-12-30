@@ -24,7 +24,7 @@ func Expand(
 	}
 
 	if concurrency == 0 {
-		concurrency = -1
+		panic("Expand: concurrency is zero")
 	}
 
 	return func(source rx.Observable) rx.Observable {
