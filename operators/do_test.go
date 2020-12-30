@@ -188,3 +188,48 @@ func TestDoOnComplete(t *testing.T) {
 		3, Completed,
 	).TestAll()
 }
+
+func TestDoOnErrorOrComplete(t *testing.T) {
+	n := 0
+
+	do := operators.DoOnErrorOrComplete(func() { n++ })
+
+	obs := rx.Observable(
+		func(ctx context.Context, sink rx.Observer) {
+			sink.Next(n)
+			sink.Complete()
+		},
+	)
+
+	NewTestSuite(t).Case(
+		rx.Concat(
+			rx.Empty().Pipe(do),
+			obs,
+		),
+		1, Completed,
+	).Case(
+		rx.Concat(
+			rx.Just("A").Pipe(do),
+			obs,
+		),
+		"A", 2, Completed,
+	).Case(
+		rx.Concat(
+			rx.Just("A", "B").Pipe(do),
+			obs,
+		),
+		"A", "B", 3, Completed,
+	).Case(
+		rx.Concat(
+			rx.Concat(
+				rx.Just("A", "B"),
+				rx.Throw(ErrTest),
+			).Pipe(do),
+			obs,
+		),
+		"A", "B", ErrTest,
+	).Case(
+		obs,
+		4, Completed,
+	).TestAll()
+}

@@ -21,12 +21,12 @@ func Do(tap rx.Observer) rx.Operator {
 
 // DoOnNext creates an Observable that mirrors the source Observable, but
 // performs a side effect before each value.
-func DoOnNext(onNext func(interface{})) rx.Operator {
+func DoOnNext(f func(interface{})) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		return func(ctx context.Context, sink rx.Observer) {
 			source.Subscribe(ctx, func(t rx.Notification) {
 				if t.HasValue {
-					onNext(t.Value)
+					f(t.Value)
 				}
 
 				sink(t)
@@ -38,12 +38,12 @@ func DoOnNext(onNext func(interface{})) rx.Operator {
 // DoOnError creates an Observable that mirrors the source Observable and,
 // when the source emits an error, performs a side effect before mirroring
 // this error.
-func DoOnError(onError func(error)) rx.Operator {
+func DoOnError(f func(error)) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		return func(ctx context.Context, sink rx.Observer) {
 			source.Subscribe(ctx, func(t rx.Notification) {
 				if t.HasError {
-					onError(t.Error)
+					f(t.Error)
 				}
 
 				sink(t)
@@ -55,12 +55,29 @@ func DoOnError(onError func(error)) rx.Operator {
 // DoOnComplete creates an Observable that mirrors the source Observable
 // and, when the source completes, performs a side effect before mirroring
 // this completion.
-func DoOnComplete(onComplete func()) rx.Operator {
+func DoOnComplete(f func()) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		return func(ctx context.Context, sink rx.Observer) {
 			source.Subscribe(ctx, func(t rx.Notification) {
 				if !t.HasValue && !t.HasError {
-					onComplete()
+					f()
+				}
+
+				sink(t)
+			})
+		}
+	}
+}
+
+// DoOnErrorOrComplete creates an Observable that mirrors the source Observable
+// and, when the source emits an error or completes, performs a side effect
+// before mirroring this error or completion.
+func DoOnErrorOrComplete(f func()) rx.Operator {
+	return func(source rx.Observable) rx.Observable {
+		return func(ctx context.Context, sink rx.Observer) {
+			source.Subscribe(ctx, func(t rx.Notification) {
+				if !t.HasValue {
+					f()
 				}
 
 				sink(t)
