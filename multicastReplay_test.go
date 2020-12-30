@@ -7,6 +7,7 @@ import (
 
 	"github.com/b97tsk/rx"
 	. "github.com/b97tsk/rx/internal/rxtest"
+	"github.com/b97tsk/rx/operators"
 )
 
 func TestMulticastReplay(t *testing.T) {
@@ -33,7 +34,22 @@ func TestMulticastReplay(t *testing.T) {
 
 		Test(t, subscribeThenComplete, "A", "B", "C", Completed)
 
+		ctx, cancel := context.WithTimeout(context.Background(), Step(2))
+		defer cancel()
+
+		go d.Observable.Pipe(
+			operators.DoOnNext(
+				func(interface{}) {
+					time.Sleep(Step(2))
+				},
+			),
+		).Subscribe(ctx, rx.Noop)
+
+		time.Sleep(Step(1))
+
 		d.Next("D")
+
+		time.Sleep(Step(2))
 
 		Test(t, subscribeThenComplete, "B", "C", "D", Completed)
 
@@ -111,7 +127,7 @@ func TestMulticastReplay(t *testing.T) {
 	})
 
 	t.Run("NilError", func(t *testing.T) {
-		d := rx.MulticastReplay(nil)
+		d := rx.MulticastReplayFactory(nil)()
 
 		rx.Throw(nil).Subscribe(context.Background(), d.Observer)
 
