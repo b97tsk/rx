@@ -16,20 +16,20 @@ func Timeout(d time.Duration) rx.Operator {
 
 // TimeoutWith creates an Observable that mirrors the source Observable or
 // specified Observable if the source does not emit a value in given time span.
-func TimeoutWith(d time.Duration, obs rx.Observable) rx.Operator {
-	if obs == nil {
-		panic("TimeoutWith: obs is nil")
+func TimeoutWith(d time.Duration, switchTo rx.Observable) rx.Operator {
+	if switchTo == nil {
+		panic("TimeoutWith: switchTo is nil")
 	}
 
 	return func(source rx.Observable) rx.Observable {
-		return timeoutObservable{source, d, obs}.Subscribe
+		return timeoutObservable{source, d, switchTo}.Subscribe
 	}
 }
 
 type timeoutObservable struct {
-	Source     rx.Observable
-	Duration   time.Duration
-	Observable rx.Observable
+	Source   rx.Observable
+	Duration time.Duration
+	SwitchTo rx.Observable
 }
 
 func (obs timeoutObservable) Subscribe(ctx context.Context, sink rx.Observer) {
@@ -58,7 +58,7 @@ func (obs timeoutObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 			if critical.Enter(&race) {
 				critical.Close(&race)
 				childCancel()
-				obs.Observable.Subscribe(ctx, sink)
+				obs.SwitchTo.Subscribe(ctx, sink)
 			}
 		})
 	}
