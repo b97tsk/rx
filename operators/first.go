@@ -6,9 +6,8 @@ import (
 	"github.com/b97tsk/rx"
 )
 
-// First creates an Observable that emits only the first value emitted by
-// the source Observable, if the source turns out to be empty, throws
-// rx.ErrEmpty.
+// First emits only the first value emitted by the source, if the source
+// turns out to be empty, throws ErrEmpty.
 func First() rx.Operator {
 	return first
 }
@@ -41,9 +40,8 @@ func first(source rx.Observable) rx.Observable {
 	}
 }
 
-// FirstOrDefault creates an Observable that emits only the first value
-// emitted by the source Observable, if the source turns out to be empty,
-// emits a specified default value.
+// FirstOrDefault emits only the first value emitted by the source, if the
+// source turns out to be empty, emits a specified default value.
 func FirstOrDefault(def interface{}) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		return func(ctx context.Context, sink rx.Observer) {

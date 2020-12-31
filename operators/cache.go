@@ -7,9 +7,8 @@ import (
 	"github.com/b97tsk/rx/internal/queue"
 )
 
-// Cache creates an Observable that mirrors the source Observable, caches
-// emissions if the source emits too fast, and blocks the source if the
-// cache is full.
+// Cache mirrors the source, caches emissions if the source emits too fast,
+// and blocks the source if the cache is full.
 //
 // Cache has no effect if cacheSize < 1.
 func Cache(cacheSize int) rx.Operator {

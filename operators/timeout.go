@@ -8,14 +8,14 @@ import (
 	"github.com/b97tsk/rx/internal/critical"
 )
 
-// Timeout creates an Observable that mirrors the source Observable or throws
-// rx.ErrTimeout if the source does not emit a value in given time span.
+// Timeout mirrors the source or throws ErrTimeout if the source does not
+// emit a value in given time span.
 func Timeout(d time.Duration) rx.Operator {
 	return TimeoutWith(d, rx.Throw(rx.ErrTimeout))
 }
 
-// TimeoutWith creates an Observable that mirrors the source Observable or
-// specified Observable if the source does not emit a value in given time span.
+// TimeoutWith mirrors the source or specified Observable if the source does
+// not emit a value in given time span.
 func TimeoutWith(d time.Duration, switchTo rx.Observable) rx.Operator {
 	if switchTo == nil {
 		panic("TimeoutWith: switchTo is nil")

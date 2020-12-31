@@ -7,9 +7,8 @@ import (
 	"github.com/b97tsk/rx/internal/atomic"
 )
 
-// DelayWhen creates an Observable that delays the emission of items from
-// the source Observable by a given time span determined by the emissions of
-// another Observable.
+// DelayWhen delays the emission of items from the source by a given time span
+// determined by the emissions of another Observable.
 //
 // It's like Delay, but the time span of the delay duration is determined by
 // a second Observable.

@@ -6,11 +6,12 @@ import (
 	"github.com/b97tsk/rx/internal/queue"
 )
 
-// Zip combines multiple Observables to create an Observable that emits the
-// values of each of its input Observables as a slice.
+// Zip creates an Observable that combines multiple Observables to create
+// an Observable that emits the values of each of its input Observables as
+// a slice.
 //
 // For the purpose of allocation avoidance, slices emitted by the output
-// Observable actually share the same underlying array.
+// Observable actually share a same underlying array.
 func Zip(observables ...Observable) Observable {
 	if len(observables) == 0 {
 		return Empty()

@@ -6,19 +6,17 @@ import (
 	"github.com/b97tsk/rx"
 )
 
-// ConcatSyncAll creates an Observable that flattens a higher-order
-// Observable into a first-order Observable by concatenating the inner
-// Observables in order.
+// ConcatSyncAll flattens a higher-order Observable into a first-order
+// Observable by concatenating the inner Observables in order.
 //
 // It's like ConcatAll, but it does not buffer the source.
 func ConcatSyncAll() rx.Operator {
 	return ConcatSyncMap(projectToObservable)
 }
 
-// ConcatSyncMap creates an Observable that converts the source Observable
-// into a higher-order Observable, by projecting each source value to an
-// Observable, and flattens it into a first-order Observable by concatenating
-// the inner Observables in order.
+// ConcatSyncMap converts the source into a higher-order Observable, by
+// projecting each source value to an Observable, and flattens it into a
+// first-order Observable by concatenating the inner Observables in order.
 //
 // It's like ConcatMap, but it does not buffer the source.
 func ConcatSyncMap(project func(interface{}, int) rx.Observable) rx.Operator {
@@ -27,10 +25,9 @@ func ConcatSyncMap(project func(interface{}, int) rx.Observable) rx.Operator {
 	}
 }
 
-// ConcatSyncMapTo creates an Observable that converts the source Observable
-// into a higher-order Observable, by projecting each source value to the same
-// Observable, and flattens it into a first-order Observable by concatenating
-// the inner Observables in order.
+// ConcatSyncMapTo converts the source into a higher-order Observable, by
+// projecting each source value to the same Observable, and flattens it into
+// a first-order Observable by concatenating the inner Observables in order.
 //
 // It's like ConcatSyncMap, but maps each value always to the same inner
 // Observable.

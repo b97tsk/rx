@@ -7,8 +7,8 @@ import (
 	"github.com/b97tsk/rx/internal/norec"
 )
 
-// Repeat creates an Observable that repeats the stream of items emitted by the
-// source Observable at most count times.
+// Repeat repeats the stream of items emitted by the source at most count
+// times.
 func Repeat(count int) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		if count == 0 {
@@ -27,8 +27,7 @@ func Repeat(count int) rx.Operator {
 	}
 }
 
-// RepeatForever creates an Observable that repeats the stream of items emitted
-// by the source Observable forever.
+// RepeatForever repeats the stream of items emitted by the source forever.
 func RepeatForever() rx.Operator {
 	return Repeat(-1)
 }

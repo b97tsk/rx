@@ -6,9 +6,9 @@ import (
 	"github.com/b97tsk/rx"
 )
 
-// Single creates an Observable that emits the single item emitted by the
-// source Observable. If the source emits more than one item or no items,
-// throws rx.ErrNotSingle or rx.ErrEmpty respectively.
+// Single emits the single item emitted by the source. If the source
+// emits more than one item or no items, throws ErrNotSingle or ErrEmpty
+// respectively.
 func Single() rx.Operator {
 	return single
 }

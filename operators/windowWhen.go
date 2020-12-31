@@ -8,8 +8,8 @@ import (
 	"github.com/b97tsk/rx/internal/norec"
 )
 
-// WindowWhen branches out the source Observable values as a nested Observable
-// using a factory function of closing Observables to determine when to start
+// WindowWhen branches out the source values as a nested Observable using
+// a factory function of closing Observables to determine when to start
 // a new window.
 //
 // It's like BufferWhen, but emits a nested Observable instead of a slice.

@@ -6,12 +6,9 @@ import (
 	"github.com/b97tsk/rx"
 )
 
-// TakeWhile creates an Observable that emits values emitted by the source
-// Observable so long as each value satisfies the given predicate, and then
-// completes as soon as this predicate is not satisfied.
-//
-// TakeWhile takes values from the source only while they pass the condition
-// given. When the first value does not satisfy, it completes.
+// TakeWhile emits values emitted by the source so long as each value satisfies
+// the given predicate, and then completes as soon as this predicate is not
+// satisfied.
 func TakeWhile(predicate func(interface{}, int) bool) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		return takeWhileObservable{source, predicate}.Subscribe

@@ -6,16 +6,16 @@ import (
 	"github.com/b97tsk/rx"
 )
 
-// WithLatestFrom combines the source Observable with other Observables to
-// create an Observable that emits the latest values of each as a slice, only
-// when the source emits.
+// WithLatestFrom combines the source with other Observables to create an
+// Observable that emits the latest values of each as a slice, only when
+// the source emits.
 //
 // To ensure output slice has always the same length, WithLatestFrom will
 // actually wait for all input Observables to emit at least once, before it
 // starts emitting results.
 //
 // For the purpose of allocation avoidance, slices emitted by the output
-// Observable actually share the same underlying array.
+// Observable actually share a same underlying array.
 func WithLatestFrom(observables ...rx.Observable) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		observables = append([]rx.Observable{source}, observables...)

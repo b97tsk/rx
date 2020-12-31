@@ -6,8 +6,7 @@ import (
 	"github.com/b97tsk/rx"
 )
 
-// Do creates an Observable that mirrors the source Observable, but performs
-// a side effect before each emission.
+// Do mirrors the source, but performs a side effect before each emission.
 func Do(tap rx.Observer) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		return func(ctx context.Context, sink rx.Observer) {
@@ -19,8 +18,7 @@ func Do(tap rx.Observer) rx.Operator {
 	}
 }
 
-// DoOnNext creates an Observable that mirrors the source Observable, but
-// performs a side effect before each value.
+// DoOnNext mirrors the source, but performs a side effect before each value.
 func DoOnNext(f func(interface{})) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		return func(ctx context.Context, sink rx.Observer) {
@@ -35,9 +33,8 @@ func DoOnNext(f func(interface{})) rx.Operator {
 	}
 }
 
-// DoOnError creates an Observable that mirrors the source Observable and,
-// when the source emits an error, performs a side effect before mirroring
-// this error.
+// DoOnError mirrors the source and, when the source throws an error, performs
+// a side effect before mirroring this error.
 func DoOnError(f func(error)) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		return func(ctx context.Context, sink rx.Observer) {
@@ -52,9 +49,8 @@ func DoOnError(f func(error)) rx.Operator {
 	}
 }
 
-// DoOnComplete creates an Observable that mirrors the source Observable
-// and, when the source completes, performs a side effect before mirroring
-// this completion.
+// DoOnComplete mirrors the source and, when the source completes, performs
+// a side effect before mirroring this completion.
 func DoOnComplete(f func()) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		return func(ctx context.Context, sink rx.Observer) {
@@ -69,9 +65,9 @@ func DoOnComplete(f func()) rx.Operator {
 	}
 }
 
-// DoOnErrorOrComplete creates an Observable that mirrors the source Observable
-// and, when the source emits an error or completes, performs a side effect
-// before mirroring this error or completion.
+// DoOnErrorOrComplete mirrors the source and, when the source throws an
+// error or completes, performs a side effect before mirroring this error
+// or completion.
 func DoOnErrorOrComplete(f func()) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		return func(ctx context.Context, sink rx.Observer) {

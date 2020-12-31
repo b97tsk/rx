@@ -6,8 +6,8 @@ import (
 	"github.com/b97tsk/rx"
 )
 
-// Count creates an Observable that counts the number of values on the source
-// and emits that number when the source completes.
+// Count counts the number of values on the source and emits that number
+// when the source completes.
 func Count() rx.Operator {
 	return count
 }

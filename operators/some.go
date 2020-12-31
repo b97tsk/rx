@@ -6,8 +6,8 @@ import (
 	"github.com/b97tsk/rx"
 )
 
-// Some creates an Observable that emits whether or not any item of the source
-// satisfies a specified predicate.
+// Some emits whether or not any item of the source satisfies a specified
+// predicate.
 //
 // Some emits true or false, then completes.
 func Some(predicate func(interface{}, int) bool) rx.Operator {

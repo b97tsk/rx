@@ -7,7 +7,7 @@ import (
 	"github.com/b97tsk/rx/internal/critical"
 )
 
-// Buffer buffers the source Observable values until closingNotifier emits.
+// Buffer buffers the source values until closingNotifier emits.
 //
 // Buffer collects values from the past as a slice, and emits that slice
 // only when another Observable emits.

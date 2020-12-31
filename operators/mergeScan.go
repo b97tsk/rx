@@ -9,9 +9,9 @@ import (
 	"github.com/b97tsk/rx/internal/queue"
 )
 
-// MergeScan applies an accumulator function over the source Observable where
-// the accumulator function itself returns an Observable, then each
-// intermediate Observable returned is merged into the output Observable.
+// MergeScan applies an accumulator function over the source where the
+// accumulator function itself returns an Observable, then each intermediate
+// Observable returned is merged into the output Observable.
 //
 // It's like Scan, but the Observables returned by the accumulator are merged
 // into the outer Observable.

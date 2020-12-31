@@ -6,14 +6,14 @@ import (
 	"github.com/b97tsk/rx"
 )
 
-// BufferCount buffers the source Observable values until the size hits the
-// maximum bufferSize given.
+// BufferCount buffers the source values until the size hits the maximum
+// bufferSize given.
 //
 // BufferCount collects values from the past as a slice, and emits that slice
 // only when its size reaches bufferSize.
 //
 // For the purpose of allocation avoidance, slices emitted by the output
-// Observable actually share the same underlying array.
+// Observable actually share a same underlying array.
 func BufferCount(bufferSize int) rx.Operator {
 	return BufferCountConfigure{BufferSize: bufferSize}.Make()
 }

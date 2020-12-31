@@ -6,8 +6,8 @@ import (
 	"github.com/b97tsk/rx"
 )
 
-// Materialize creates an Observable that represents all of the Notifications
-// from the source Observable as values, and then completes.
+// Materialize represents all of the Notifications from the source as values,
+// and then completes.
 func Materialize() rx.Operator {
 	return materialize
 }

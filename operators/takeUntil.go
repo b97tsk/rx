@@ -6,11 +6,7 @@ import (
 	"github.com/b97tsk/rx"
 )
 
-// TakeUntil creates an Observable that emits the values emitted by the source
-// Observable until a notifier Observable emits a value.
-//
-// TakeUntil lets values pass until a second Observable, notifier, emits
-// something. Then, it completes.
+// TakeUntil mirrors the source until a second Observable emits a value.
 func TakeUntil(notifier rx.Observable) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		return takeUntilObservable{source, notifier}.Subscribe

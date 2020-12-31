@@ -6,10 +6,7 @@ import (
 	"github.com/b97tsk/rx"
 )
 
-// Take creates an Observable that emits only the first count values emitted
-// by the source Observable.
-//
-// Take takes the first count values from the source, then completes.
+// Take emits only the first count values emitted by the source.
 func Take(count int) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		if count <= 0 {

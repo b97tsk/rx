@@ -7,10 +7,9 @@ import (
 	"github.com/b97tsk/rx/internal/norec"
 )
 
-// Retry creates an Observable that mirrors the source Observable with one
-// exception: when the source emits an error, this operator will resubscribe
-// to the source for a maximum of count resubscriptions rather than propagating
-// this error.
+// Retry mirrors the source with one exception: when the source throws an
+// error, this operator will resubscribe to the source for a maximum of count
+// resubscriptions rather than propagating this error.
 func Retry(count int) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		if count == 0 {
@@ -21,9 +20,9 @@ func Retry(count int) rx.Operator {
 	}
 }
 
-// RetryForever creates an Observable that mirrors the source Observable with
-// one exception: when the source emits an error, this operator will always
-// resubscribe to the source rather than propagating this error.
+// RetryForever mirrors the source with one exception: when the source throws
+// an error, this operator will always resubscribe to the source rather than
+// propagating this error.
 func RetryForever() rx.Operator {
 	return Retry(-1)
 }

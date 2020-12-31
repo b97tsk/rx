@@ -6,9 +6,8 @@ import (
 	"github.com/b97tsk/rx"
 )
 
-// Last creates an Observable that emits only the last value emitted by
-// the source Observable, if the source turns out to be empty, throws
-// rx.ErrEmpty.
+// Last emits only the last value emitted by the source, if the source turns
+// out to be empty, throws ErrEmpty.
 func Last() rx.Operator {
 	return last
 }
@@ -41,9 +40,8 @@ func last(source rx.Observable) rx.Observable {
 	}
 }
 
-// LastOrDefault creates an Observable that emits only the last value emitted
-// by the source Observable, if the source turns out to be empty, emits a
-// specified default value.
+// LastOrDefault emits only the last value emitted by the source, if the
+// source turns out to be empty, emits a specified default value.
 func LastOrDefault(def interface{}) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		return func(ctx context.Context, sink rx.Observer) {

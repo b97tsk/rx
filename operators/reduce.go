@@ -6,9 +6,8 @@ import (
 	"github.com/b97tsk/rx"
 )
 
-// Reduce creates an Observable that applies an accumulator function over
-// the source Observable, and emits the accumulated result when the source
-// completes.
+// Reduce applies an accumulator function over the source, and emits the
+// accumulated result when the source completes.
 //
 // It's like Fold, but no need to specify an initial value.
 func Reduce(accumulator func(interface{}, interface{}, int) interface{}) rx.Operator {
@@ -20,9 +19,8 @@ func Reduce(accumulator func(interface{}, interface{}, int) interface{}) rx.Oper
 	}
 }
 
-// Fold creates an Observable that applies an accumulator function over
-// the source Observable, and emits the accumulated result when the source
-// completes, given an initial value.
+// Fold applies an accumulator function over the source, and emits the
+// accumulated result when the source completes, given an initial value.
 //
 // It's like Reduce, but you could specify an initial value.
 func Fold(init interface{}, accumulator func(interface{}, interface{}, int) interface{}) rx.Operator {

@@ -6,8 +6,7 @@ import (
 	"github.com/b97tsk/rx"
 )
 
-// Skip creates an Observable that skips the first count items emitted by the
-// source Observable.
+// Skip skips the first count items emitted by the source.
 func Skip(count int) rx.Operator {
 	if count <= 0 {
 		return noop

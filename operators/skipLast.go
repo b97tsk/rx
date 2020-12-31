@@ -6,8 +6,7 @@ import (
 	"github.com/b97tsk/rx"
 )
 
-// SkipLast creates an Observable that skip the last count values emitted by
-// the source Observable.
+// SkipLast skip the last count values emitted by the source.
 func SkipLast(count int) rx.Operator {
 	if count <= 0 {
 		return noop

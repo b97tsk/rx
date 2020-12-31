@@ -6,14 +6,14 @@ import (
 	"github.com/b97tsk/rx"
 )
 
-// Distinct creates an Observable that emits all items emitted by the source
-// Observable that are distinct by comparison from previous items.
+// Distinct emits all items emitted by the source that are distinct by
+// comparison from previous items.
 //
-// If a keySelector function is provided, then it will project each value from
-// the source Observable into a new value that it will check for equality with
-// previously projected values. If a keySelector function is not provided, it
-// will use each value from the source Observable directly with an equality
-// check against previous values.
+// If a keySelector function is provided, then it will project each value
+// from the source into a new value that it will check for equality with
+// previously projected values. If a keySelector function is not provided,
+// it will use each value from the source directly with an equality check
+// against previous values.
 func Distinct() rx.Operator {
 	return DistinctConfigure{}.Make()
 }

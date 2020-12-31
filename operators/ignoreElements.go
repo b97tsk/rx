@@ -6,8 +6,8 @@ import (
 	"github.com/b97tsk/rx"
 )
 
-// IgnoreElements creates an Observable that ignores all values emitted by
-// the source Observable and only passes errors or completions.
+// IgnoreElements ignores all values emitted by the source and only passes
+// errors or completions.
 func IgnoreElements() rx.Operator {
 	return ignoreElements
 }

@@ -6,9 +6,8 @@ import (
 	"github.com/b97tsk/rx"
 )
 
-// Scan creates an Observable that applies an accumulator function over the
-// source Observable, and emits each intermediate result, with an optional
-// seed value.
+// Scan applies an accumulator function over the source, and emits each
+// intermediate result, with an optional seed value.
 //
 // It's like Reduce, but emits the current accumulation whenever the source
 // emits a value.

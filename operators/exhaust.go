@@ -17,9 +17,9 @@ func ExhaustAll() rx.Operator {
 	return ExhaustMap(projectToObservable)
 }
 
-// ExhaustMap creates an Observable that projects each source value to an
-// Observable which is merged in the output Observable only if the previous
-// projected Observable has completed.
+// ExhaustMap projects each source value to an Observable which is merged
+// in the output Observable only if the previous projected Observable has
+// completed.
 //
 // ExhaustMap maps each value to an Observable, then flattens all of these
 // inner Observables using ExhaustAll.
@@ -29,9 +29,8 @@ func ExhaustMap(project func(interface{}, int) rx.Observable) rx.Operator {
 	}
 }
 
-// ExhaustMapTo creates an Observable that projects each source value to the
-// same Observable which is flattened multiple times with ExhaustAll in the
-// output Observable.
+// ExhaustMapTo projects each source value to the same Observable which is
+// flattened multiple times with ExhaustAll in the output Observable.
 //
 // It's like ExhaustMap, but maps each value always to the same inner
 // Observable.

@@ -8,11 +8,11 @@ import (
 	"github.com/b97tsk/rx/internal/norec"
 )
 
-// RetryWhen creates an Observable that mirrors the source Observable with
-// one exception: when the source emits an error, this operator will emit
-// this error to the Observable returned by the notifier. If that Observable
-// emits a value, this operator will resubscribe to the source; otherwise,
-// this operator will emit the last error on the child subscription.
+// RetryWhen mirrors the source with one exception: when the source throws an
+// error, this operator will emit this error to the Observable returned by the
+// notifier. If that Observable emits a value, this operator will resubscribe
+// to the source; otherwise, this operator will emit the last error on the
+// child subscription.
 func RetryWhen(notifier rx.Operator) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		return retryWhenObservable{source, notifier}.Subscribe

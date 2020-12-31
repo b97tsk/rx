@@ -8,7 +8,7 @@ import (
 	"github.com/b97tsk/rx/internal/critical"
 )
 
-// WindowTime branches out the source Observable values as a nested Observable
+// WindowTime branches out the source values as a nested Observable
 // periodically in time.
 //
 // It's like BufferTime, but emits a nested Observable instead of a slice.

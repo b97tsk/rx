@@ -7,11 +7,7 @@ import (
 	"github.com/b97tsk/rx/internal/queue"
 )
 
-// TakeLast creates an Observable that emits only the last count values emitted
-// by the source Observable.
-//
-// TakeLast remembers the latest count values, then emits those only when the
-// source completes.
+// TakeLast emits only the last count values emitted by the source.
 func TakeLast(count int) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		if count <= 0 {

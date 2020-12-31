@@ -6,11 +6,9 @@ import (
 	"github.com/b97tsk/rx/internal/norec"
 )
 
-// Concat creates an output Observable which sequentially emits all values
-// from given Observable and then moves on to the next.
-//
-// Concat concatenates multiple Observables together by sequentially emitting
-// their values, one Observable after the other.
+// Concat creates an Observable that concatenates multiple Observables
+// together by sequentially emitting their values, one Observable after
+// the other.
 func Concat(observables ...Observable) Observable {
 	if len(observables) == 0 {
 		return Empty()

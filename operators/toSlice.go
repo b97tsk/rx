@@ -6,8 +6,8 @@ import (
 	"github.com/b97tsk/rx"
 )
 
-// ToSlice creates an Observable that collects all the values the source emits,
-// then emits them as a slice when the source completes.
+// ToSlice collects all the values the source emits, and then emits them as
+// a slice when the source completes.
 func ToSlice() rx.Operator {
 	return toSlice
 }

@@ -16,9 +16,9 @@ func SwitchAll() rx.Operator {
 	return SwitchMap(projectToObservable)
 }
 
-// SwitchMap creates an Observable that projects each source value to an
-// Observable which is merged in the output Observable, emitting values only
-// from the most recently projected Observable.
+// SwitchMap projects each source value to an Observable which is merged in
+// the output Observable, emitting values only from the most recently projected
+// Observable.
 //
 // SwitchMap maps each value to an Observable, then flattens all of these inner
 // Observables using SwitchAll.
@@ -28,9 +28,8 @@ func SwitchMap(project func(interface{}, int) rx.Observable) rx.Operator {
 	}
 }
 
-// SwitchMapTo creates an Observable that projects each source value to the
-// same Observable which is flattened multiple times with SwitchAll in the
-// output Observable.
+// SwitchMapTo projects each source value to the same Observable which is
+// flattened multiple times with SwitchAll in the output Observable.
 //
 // It's like SwitchMap, but maps each value always to the same inner Observable.
 func SwitchMapTo(inner rx.Observable) rx.Operator {

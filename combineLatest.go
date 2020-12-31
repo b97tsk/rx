@@ -4,15 +4,16 @@ import (
 	"context"
 )
 
-// CombineLatest combines multiple Observables to create an Observable that
-// emits the latest values of each of its input Observables as a slice.
+// CombineLatest creates an Observable that combines multiple Observables to
+// create an Observable that emits the latest values of each of its input
+// Observables as a slice.
 //
 // To ensure output slice has always the same length, CombineLatest will
 // actually wait for all input Observables to emit at least once, before it
 // starts emitting results.
 //
 // For the purpose of allocation avoidance, slices emitted by the output
-// Observable actually share the same underlying array.
+// Observable actually share a same underlying array.
 func CombineLatest(observables ...Observable) Observable {
 	if len(observables) == 0 {
 		return Empty()

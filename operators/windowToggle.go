@@ -7,9 +7,9 @@ import (
 	"github.com/b97tsk/rx/internal/critical"
 )
 
-// WindowToggle branches out the source Observable values as a nested
-// Observable starting from an emission from openings and ending when
-// the output of closingSelector emits.
+// WindowToggle branches out the source values as a nested Observable
+// starting from an emission from openings and ending when the output of
+// closingSelector emits.
 //
 // It's like BufferToggle, but emits a nested Observable instead of a slice.
 func WindowToggle(openings rx.Observable, closingSelector func(interface{}) rx.Observable) rx.Operator {

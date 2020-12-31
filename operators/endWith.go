@@ -4,8 +4,8 @@ import (
 	"github.com/b97tsk/rx"
 )
 
-// EndWith creates an Observable that emits the items you specify as arguments
-// after it finishes emitting items emitted by the source Observable.
+// EndWith mirrors the source, emits the items you specify as arguments when
+// the source completes.
 func EndWith(values ...interface{}) rx.Operator {
 	if len(values) == 0 {
 		return noop

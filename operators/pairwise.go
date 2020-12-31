@@ -6,8 +6,8 @@ import (
 	"github.com/b97tsk/rx"
 )
 
-// Pairwise creates an Observable that groups pairs of consecutive emissions
-// together and emits them as rx.Pairs.
+// Pairwise groups pairs of consecutive emissions together and emits them
+// as rx.Pairs.
 func Pairwise() rx.Operator {
 	return pairwise
 }

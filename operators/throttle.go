@@ -8,9 +8,9 @@ import (
 	"github.com/b97tsk/rx/internal/critical"
 )
 
-// Throttle creates an Observable that emits a value from the source
-// Observable, then ignores subsequent source values for a duration determined
-// by another Observable, then repeats this process.
+// Throttle emits a value from the source, then ignores subsequent source
+// values for a duration determined by another Observable, then repeats this
+// process.
 //
 // It's like ThrottleTime, but the silencing duration is determined by a second
 // Observable.
@@ -22,9 +22,8 @@ func Throttle(durationSelector func(interface{}) rx.Observable) rx.Operator {
 	}.Make()
 }
 
-// ThrottleTime creates an Observable that emits a value from the source
-// Observable, then ignores subsequent source values for a duration, then
-// repeats this process.
+// ThrottleTime emits a value from the source, then ignores subsequent source
+// values for a duration, then repeats this process.
 //
 // ThrottleTime lets a value pass, then ignores source values for the next
 // duration time.

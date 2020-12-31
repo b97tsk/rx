@@ -6,9 +6,9 @@ import (
 	"github.com/b97tsk/rx"
 )
 
-// ElementAt creates an Observable that emits the single value at a specified
-// index in a sequence of emissions from the source Observable, if the
-// specified index is out of range, throws rx.ErrOutOfRange.
+// ElementAt emits the single value at a specified index in a sequence of
+// emissions from the source, if the specified index is out of range, throws
+// ErrOutOfRange.
 func ElementAt(idx int) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		return elementAtObservable{
@@ -18,9 +18,9 @@ func ElementAt(idx int) rx.Operator {
 	}
 }
 
-// ElementAtOrDefault creates an Observable that emits the single value at a
-// specified index in a sequence of emissions from the source Observable, if
-// the specified index is out of range, emits the provided default value.
+// ElementAtOrDefault emits the single value at a specified index in a sequence
+// of emissions from the source, if the specified index is out of range, emits
+// the provided default value.
 func ElementAtOrDefault(idx int, def interface{}) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		return elementAtObservable{

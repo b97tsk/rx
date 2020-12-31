@@ -8,9 +8,9 @@ import (
 	"github.com/b97tsk/rx/internal/critical"
 )
 
-// Debounce creates an Observable that emits a value from the source Observable
-// only after a particular time span, determined by another Observable, has
-// passed without another source emission.
+// Debounce emits a value from the source only after a particular time span,
+// determined by another Observable, has passed without another source
+// emission.
 //
 // It's like DebounceTime, but the time span of emission silence is determined
 // by a second Observable.
@@ -20,9 +20,8 @@ func Debounce(durationSelector func(interface{}) rx.Observable) rx.Operator {
 	}
 }
 
-// DebounceTime creates an Observable that emits a value from the source
-// Observable only after a particular time span has passed without another
-// source emission.
+// DebounceTime emits a value from the source only after a particular time
+// span has passed without another source emission.
 func DebounceTime(d time.Duration) rx.Operator {
 	obsTimer := rx.Timer(d)
 

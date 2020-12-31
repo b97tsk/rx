@@ -6,8 +6,8 @@ import (
 	"github.com/b97tsk/rx"
 )
 
-// Map creates an Observable that applies a given project function to each
-// value emitted by the source Observable, then emits the resulting values.
+// Map applies a given project function to each value emitted by the source,
+// then emits the resulting values.
 func Map(project func(interface{}, int) interface{}) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		return func(ctx context.Context, sink rx.Observer) {
@@ -28,8 +28,8 @@ func Map(project func(interface{}, int) interface{}) rx.Operator {
 	}
 }
 
-// MapTo creates an Observable that emits the given constant value on the
-// output Observable every time the source Observable emits a value.
+// MapTo emits the given constant value on the output Observable every time
+// the source emits a value.
 //
 // It's like Map, but it maps every source value to the same output value
 // every time.

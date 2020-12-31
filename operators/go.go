@@ -6,7 +6,7 @@ import (
 	"github.com/b97tsk/rx"
 )
 
-// Go creates an Observable that mirrors the source Observable in a goroutine.
+// Go mirrors the source in a goroutine.
 func Go() rx.Operator {
 	return go1
 }

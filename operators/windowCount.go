@@ -6,8 +6,8 @@ import (
 	"github.com/b97tsk/rx"
 )
 
-// WindowCount branches out the source Observable values as a nested Observable
-// with each nested Observable emitting at most windowSize values.
+// WindowCount branches out the source values as a nested Observable with
+// each nested Observable emitting at most windowSize values.
 //
 // It's like BufferCount, but emits a nested Observable instead of a slice.
 func WindowCount(windowSize int) rx.Operator {

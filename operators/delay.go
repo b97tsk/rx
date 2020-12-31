@@ -9,8 +9,7 @@ import (
 	"github.com/b97tsk/rx/internal/queue"
 )
 
-// Delay delays the emission of items from the source Observable by a given
-// timeout.
+// Delay delays the emission of items from the source by a given timeout.
 func Delay(d time.Duration) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		return delayObservable{source, d}.Subscribe

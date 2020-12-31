@@ -8,9 +8,8 @@ import (
 	"github.com/b97tsk/rx/internal/norec"
 )
 
-// BufferWhen buffers the source Observable values, using a factory function
-// of closing Observables to determine when to close, emit, and reset the
-// buffer.
+// BufferWhen buffers the source values, using a factory function of closing
+// Observables to determine when to close, emit, and reset the buffer.
 //
 // BufferWhen collects values from the past as a slice. When it starts
 // collecting values, it calls a function that returns an Observable that

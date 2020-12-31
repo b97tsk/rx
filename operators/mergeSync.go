@@ -13,20 +13,20 @@ import (
 //
 // It's like MergeAll, but it does not buffer the source.
 //
-// Concurrency should be positive, otherwise, it works just like MergeAll.
+// Concurrency should be positive, otherwise it works just like MergeAll.
 func MergeSyncAll(concurrency int) rx.Operator {
 	return MergeSyncMap(projectToObservable, concurrency)
 }
 
-// MergeSyncMap creates an Observable that projects each source value to
-// an Observable which is merged in the output Observable.
+// MergeSyncMap projects each source value to an Observable which is merged
+// in the output Observable.
 //
 // MergeSyncMap maps each value to an Observable, then flattens all of these
 // inner Observables using MergeSyncAll.
 //
 // It's like MergeMap, but it does not buffer the source.
 //
-// Concurrency should be positive, otherwise, it works just like MergeMap.
+// Concurrency should be positive, otherwise it works just like MergeMap.
 func MergeSyncMap(
 	project func(interface{}, int) rx.Observable,
 	concurrency int,
@@ -44,16 +44,15 @@ func MergeSyncMap(
 	}
 }
 
-// MergeSyncMapTo creates an Observable that projects each source value
-// to the same Observable which is merged multiple times in the output
-// Observable.
+// MergeSyncMapTo projects each source value to the same Observable which
+// is merged multiple times in the output Observable.
 //
 // It's like MergeMapSync, but maps each value always to the same inner
 // Observable.
 //
 // It's like MergeMapTo, but it does not buffer the source.
 //
-// Concurrency should be positive, otherwise, it works just like MergeMapTo.
+// Concurrency should be positive, otherwise it works just like MergeMapTo.
 func MergeSyncMapTo(inner rx.Observable, concurrency int) rx.Operator {
 	project := func(interface{}, int) rx.Observable { return inner }
 

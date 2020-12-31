@@ -4,11 +4,8 @@ import (
 	"context"
 )
 
-// ForkJoin creates an Observable that joins last values emitted by passed
-// Observables.
-//
-// ForkJoin waits for Observables to complete and then combine last values
-// they emitted.
+// ForkJoin creates an Observable that joins last values emitted by given
+// input Observables, emits them as a slice, and then completes.
 func ForkJoin(observables ...Observable) Observable {
 	if len(observables) == 0 {
 		return Empty()

@@ -6,8 +6,8 @@ import (
 	"github.com/b97tsk/rx"
 )
 
-// Find creates an Observable that emits only the first value emitted by the
-// source Observable that meets some condition.
+// Find emits only the first value emitted by the source that meets some
+// condition.
 func Find(predicate func(interface{}, int) bool) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		return findObservable{source, predicate}.Subscribe

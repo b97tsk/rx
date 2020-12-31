@@ -10,8 +10,8 @@ import (
 
 // Share returns a new Observable that multicasts (shares) the original
 // Observable. When subscribed multiple times, it guarantees that only one
-// subscription is made to the source Observable at the same time. When all
-// subscribers have unsubscribed it will unsubscribe from the source Observable.
+// subscription is made to the source at the same time. When all subscribers
+// have unsubscribed it will unsubscribe from the source.
 func Share(doubleFactory rx.DoubleFactory) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		obs := shareObservable{

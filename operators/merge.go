@@ -17,8 +17,8 @@ func MergeAll(concurrency int) rx.Operator {
 	return MergeMap(projectToObservable, concurrency)
 }
 
-// MergeMap creates an Observable that projects each source value to an
-// Observable which is merged in the output Observable.
+// MergeMap projects each source value to an Observable which is merged in
+// the output Observable.
 //
 // MergeMap maps each value to an Observable, then flattens all of these inner
 // Observables using MergeAll.
@@ -41,8 +41,8 @@ func MergeMap(
 	}
 }
 
-// MergeMapTo creates an Observable that projects each source value to the same
-// Observable which is merged multiple times in the output Observable.
+// MergeMapTo projects each source value to the same Observable which is merged
+// multiple times in the output Observable.
 //
 // It's like MergeMap, but maps each value always to the same inner Observable.
 //

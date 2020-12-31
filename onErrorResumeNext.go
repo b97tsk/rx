@@ -6,8 +6,9 @@ import (
 	"github.com/b97tsk/rx/internal/norec"
 )
 
-// OnErrorResumeNext creates an Observable that concatenates the provided
-// Observables. It's like Concat, but errors are ignored.
+// OnErrorResumeNext creates an Observable that concatenates multiple
+// Observables together by sequentially emitting their values, one Observable
+// after the other. It's like Concat, but errors are ignored.
 func OnErrorResumeNext(observables ...Observable) Observable {
 	if len(observables) == 0 {
 		return Empty()

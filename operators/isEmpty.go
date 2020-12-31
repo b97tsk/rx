@@ -6,8 +6,7 @@ import (
 	"github.com/b97tsk/rx"
 )
 
-// IsEmpty creates an Observable that emits true if the source Observable
-// emits no items, otherwise, it emits false.
+// IsEmpty emits true if the source emits no items, otherwise it emits false.
 func IsEmpty() rx.Operator {
 	return isEmpty
 }

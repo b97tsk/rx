@@ -6,9 +6,9 @@ import (
 	"github.com/b97tsk/rx"
 )
 
-// SkipWhile creates an Observable that skips all items emitted by the source
-// Observable as long as a specified condition holds true, but emits all
-// further source items as soon as the condition becomes false.
+// SkipWhile skips all items emitted by the source as long as a specified
+// condition holds true, but emits all further source items as soon as the
+// condition becomes false.
 func SkipWhile(predicate func(interface{}, int) bool) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		return skipWhileObservable{source, predicate}.Subscribe

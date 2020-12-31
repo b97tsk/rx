@@ -6,8 +6,8 @@ import (
 	"github.com/b97tsk/rx/internal/critical"
 )
 
-// Race creates an Observable that mirrors the first source Observable to emit
-// an item from the combination of this Observable and supplied Observables.
+// Race creates an Observable that mirrors the first Observable to emit an
+// item from given input Observables.
 func Race(observables ...Observable) Observable {
 	if len(observables) == 0 {
 		return Empty()

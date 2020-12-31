@@ -4,8 +4,8 @@ import (
 	"github.com/b97tsk/rx"
 )
 
-// StartWith creates an Observable that emits the items you specify as
-// arguments before it begins to emit items emitted by the source Observable.
+// StartWith emits the items you specify as arguments before it begins to
+// mirrors the source.
 func StartWith(values ...interface{}) rx.Operator {
 	if len(values) == 0 {
 		return noop

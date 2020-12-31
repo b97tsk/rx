@@ -7,8 +7,8 @@ import (
 	"github.com/b97tsk/rx/internal/atomic"
 )
 
-// SkipUntil creates an Observable that skips items emitted by the source
-// Observable until a second Observable emits an item.
+// SkipUntil skips items emitted by the source until a second Observable
+// emits an item.
 func SkipUntil(notifier rx.Observable) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		return skipUntilObservable{source, notifier}.Subscribe

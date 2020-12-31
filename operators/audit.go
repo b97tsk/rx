@@ -9,8 +9,7 @@ import (
 )
 
 // Audit ignores source values for a duration determined by another Observable,
-// then emits the most recent value from the source Observable, then repeats
-// this process.
+// then emits the most recent value from the source, then repeats this process.
 //
 // It's like AuditTime, but the silencing duration is determined by a second
 // Observable.
@@ -21,7 +20,7 @@ func Audit(durationSelector func(interface{}) rx.Observable) rx.Operator {
 }
 
 // AuditTime ignores source values for a duration, then emits the most recent
-// value from the source Observable, then repeats this process.
+// value from the source, then repeats this process.
 //
 // When it sees a source values, it ignores that plus the next ones for a
 // duration, and then it emits the most recent value from the source.

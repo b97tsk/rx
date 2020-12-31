@@ -9,26 +9,24 @@ import (
 	"github.com/b97tsk/rx/internal/queue"
 )
 
-// ConcatAll creates an Observable that flattens a higher-order Observable into
-// a first-order Observable by concatenating the inner Observables in order.
+// ConcatAll flattens a higher-order Observable into a first-order Observable
+// by concatenating the inner Observables in order.
 func ConcatAll() rx.Operator {
 	return ConcatMap(projectToObservable)
 }
 
-// ConcatMap creates an Observable that converts the source Observable into a
-// higher-order Observable, by projecting each source value to an Observable,
-// and flattens it into a first-order Observable by concatenating the inner
-// Observables in order.
+// ConcatMap converts the source into a higher-order Observable, by projecting
+// each source value to an Observable, and flattens it into a first-order
+// Observable by concatenating the inner Observables in order.
 func ConcatMap(project func(interface{}, int) rx.Observable) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		return concatObservable{source, project}.Subscribe
 	}
 }
 
-// ConcatMapTo creates an Observable that converts the source Observable into
-// a higher-order Observable, by projecting each source value to the same
-// Observable, and flattens it into a first-order Observable by concatenating
-// the inner Observables in order.
+// ConcatMapTo converts the source into a higher-order Observable, by
+// projecting each source value to the same Observable, and flattens it into
+// a first-order Observable by concatenating the inner Observables in order.
 //
 // It's like ConcatMap, but maps each value always to the same inner Observable.
 func ConcatMapTo(inner rx.Observable) rx.Operator {

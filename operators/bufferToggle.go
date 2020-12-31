@@ -7,8 +7,8 @@ import (
 	"github.com/b97tsk/rx/internal/critical"
 )
 
-// BufferToggle buffers the source Observable values starting from an emission
-// from openings and ending when the output of closingSelector emits.
+// BufferToggle buffers the source values starting from an emission from
+// openings and ending when the output of closingSelector emits.
 //
 // BufferToggle collects values from the past as a slice, starts collecting
 // only when opening emits, and calls the closingSelector function to get an

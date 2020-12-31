@@ -7,8 +7,8 @@ import (
 	"github.com/b97tsk/rx/internal/critical"
 )
 
-// Window branches out the source Observable values as a nested Observable
-// whenever windowBoundaries emits.
+// Window branches out the source values as a nested Observable whenever
+// windowBoundaries emits.
 //
 // It's like Buffer, but emits a nested Observable instead of a slice.
 func Window(windowBoundaries rx.Observable) rx.Operator {
