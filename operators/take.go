@@ -32,20 +32,14 @@ func (obs takeObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	count := obs.Count
 
 	observer = func(t rx.Notification) {
-		switch {
-		case t.HasValue:
-			if count > 1 {
-				count--
+		sink(t)
 
-				sink(t)
-			} else {
+		if t.HasValue {
+			if count--; count == 0 {
 				observer = rx.Noop
 
-				sink(t)
 				sink.Complete()
 			}
-		default:
-			sink(t)
 		}
 	}
 

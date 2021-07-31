@@ -93,12 +93,13 @@ func (obs mergeObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 
 			if x.Queue.Len() > 0 {
 				subscribeLocked()
-			} else {
-				x.Workers--
+				return
+			}
 
-				if x.Completed && x.Workers == 0 {
-					sink(t)
-				}
+			x.Workers--
+
+			if x.Completed && x.Workers == 0 {
+				sink(t)
 			}
 		})
 	}

@@ -30,9 +30,7 @@ func (obs skipObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	observer = func(t rx.Notification) {
 		switch {
 		case t.HasValue:
-			if count > 1 {
-				count--
-			} else {
+			if count--; count == 0 {
 				observer = sink
 			}
 		default:
