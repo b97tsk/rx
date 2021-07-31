@@ -48,7 +48,7 @@ func TestWindowTime(t *testing.T) {
 	NewTestSuite(t).Case(
 		rx.Just("A", "B", "C", "D", "E").Pipe(
 			AddLatencyToValues(1, 2),
-			operators.WindowTimeConfigure{
+			operators.WindowTimeConfig{
 				TimeSpan: Step(8),
 			}.Make(),
 			operators.MergeMap(toSlice, -1),
@@ -58,7 +58,7 @@ func TestWindowTime(t *testing.T) {
 	).Case(
 		rx.Just("A", "B", "C", "D", "E").Pipe(
 			AddLatencyToValues(1, 2),
-			operators.WindowTimeConfigure{
+			operators.WindowTimeConfig{
 				TimeSpan:      Step(8),
 				MaxWindowSize: 3,
 			}.Make(),
@@ -69,7 +69,7 @@ func TestWindowTime(t *testing.T) {
 	).Case(
 		rx.Just("A", "B", "C", "D", "E").Pipe(
 			AddLatencyToValues(1, 2),
-			operators.WindowTimeConfigure{
+			operators.WindowTimeConfig{
 				TimeSpan:      Step(8),
 				MaxWindowSize: 2,
 			}.Make(),
@@ -80,7 +80,7 @@ func TestWindowTime(t *testing.T) {
 	).Case(
 		rx.Just("A", "B", "C", "D", "E").Pipe(
 			AddLatencyToValues(1, 2),
-			operators.WindowTimeConfigure{
+			operators.WindowTimeConfig{
 				TimeSpan:      Step(8),
 				MaxWindowSize: 1,
 			}.Make(),
@@ -95,7 +95,7 @@ func TestWindowTime(t *testing.T) {
 	NewTestSuite(t).Case(
 		rx.Just("A", "B", "C", "D", "E").Pipe(
 			AddLatencyToValues(1, 2),
-			operators.WindowTimeConfigure{
+			operators.WindowTimeConfig{
 				TimeSpan:         Step(2),
 				CreationInterval: Step(2),
 			}.Make(),
@@ -106,7 +106,7 @@ func TestWindowTime(t *testing.T) {
 	).Case(
 		rx.Just("A", "B", "C", "D", "E").Pipe(
 			AddLatencyToValues(1, 2),
-			operators.WindowTimeConfigure{
+			operators.WindowTimeConfig{
 				TimeSpan:         Step(2),
 				CreationInterval: Step(4),
 			}.Make(),
@@ -117,7 +117,7 @@ func TestWindowTime(t *testing.T) {
 	).Case(
 		rx.Just("A", "B", "C", "D", "E").Pipe(
 			AddLatencyToValues(1, 2),
-			operators.WindowTimeConfigure{
+			operators.WindowTimeConfig{
 				TimeSpan:         Step(4),
 				CreationInterval: Step(2),
 			}.Make(),

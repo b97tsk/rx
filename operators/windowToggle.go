@@ -13,41 +13,41 @@ import (
 //
 // It's like BufferToggle, but emits a nested Observable instead of a slice.
 func WindowToggle(openings rx.Observable, closingSelector func(interface{}) rx.Observable) rx.Operator {
-	return WindowToggleConfigure{
+	return WindowToggleConfig{
 		Openings:        openings,
 		ClosingSelector: closingSelector,
 	}.Make()
 }
 
-// A WindowToggleConfigure is a configure for WindowToggle.
-type WindowToggleConfigure struct {
+// A WindowToggleConfig is a configuration for WindowToggle.
+type WindowToggleConfig struct {
 	Openings        rx.Observable
 	ClosingSelector func(interface{}) rx.Observable
 	WindowFactory   rx.SubjectFactory
 }
 
-// Make creates an Operator from this configure.
-func (configure WindowToggleConfigure) Make() rx.Operator {
-	if configure.Openings == nil {
+// Make creates an Operator from this configuration.
+func (config WindowToggleConfig) Make() rx.Operator {
+	if config.Openings == nil {
 		panic("WindowToggle: Openings is nil")
 	}
 
-	if configure.ClosingSelector == nil {
+	if config.ClosingSelector == nil {
 		panic("WindowToggle: ClosingSelector is nil")
 	}
 
-	if configure.WindowFactory == nil {
-		configure.WindowFactory = rx.Multicast
+	if config.WindowFactory == nil {
+		config.WindowFactory = rx.Multicast
 	}
 
 	return func(source rx.Observable) rx.Observable {
-		return windowToggleObservable{source, configure}.Subscribe
+		return windowToggleObservable{source, config}.Subscribe
 	}
 }
 
 type windowToggleObservable struct {
 	Source rx.Observable
-	WindowToggleConfigure
+	WindowToggleConfig
 }
 
 type windowToggleContext struct {

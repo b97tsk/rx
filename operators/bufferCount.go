@@ -15,37 +15,37 @@ import (
 // For the purpose of allocation avoidance, slices emitted by the output
 // Observable actually share a same underlying array.
 func BufferCount(bufferSize int) rx.Operator {
-	return BufferCountConfigure{BufferSize: bufferSize}.Make()
+	return BufferCountConfig{BufferSize: bufferSize}.Make()
 }
 
-// A BufferCountConfigure is a configure for BufferCount.
-type BufferCountConfigure struct {
+// A BufferCountConfig is a configuration for BufferCount.
+type BufferCountConfig struct {
 	BufferSize       int
 	StartBufferEvery int
 }
 
-// Make creates an Operator from this configure.
-func (configure BufferCountConfigure) Make() rx.Operator {
-	if configure.BufferSize <= 0 {
+// Make creates an Operator from this configuration.
+func (config BufferCountConfig) Make() rx.Operator {
+	if config.BufferSize <= 0 {
 		panic("BufferCount: BufferSize is negative or zero")
 	}
 
-	if configure.StartBufferEvery < 0 {
+	if config.StartBufferEvery < 0 {
 		panic("BufferCount: StartBufferEvery is negative")
 	}
 
-	if configure.StartBufferEvery == 0 {
-		configure.StartBufferEvery = configure.BufferSize
+	if config.StartBufferEvery == 0 {
+		config.StartBufferEvery = config.BufferSize
 	}
 
 	return func(source rx.Observable) rx.Observable {
-		return bufferCountObservable{source, configure}.Subscribe
+		return bufferCountObservable{source, config}.Subscribe
 	}
 }
 
 type bufferCountObservable struct {
 	Source rx.Observable
-	BufferCountConfigure
+	BufferCountConfig
 }
 
 func (obs bufferCountObservable) Subscribe(ctx context.Context, sink rx.Observer) {

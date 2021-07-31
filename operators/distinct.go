@@ -15,28 +15,28 @@ import (
 // it will use each value from the source directly with an equality check
 // against previous values.
 func Distinct() rx.Operator {
-	return DistinctConfigure{}.Make()
+	return DistinctConfig{}.Make()
 }
 
-// A DistinctConfigure is a configure for Distinct.
-type DistinctConfigure struct {
+// A DistinctConfig is a configuration for Distinct.
+type DistinctConfig struct {
 	KeySelector func(interface{}) interface{}
 }
 
-// Make creates an Operator from this configure.
-func (configure DistinctConfigure) Make() rx.Operator {
-	if configure.KeySelector == nil {
-		configure.KeySelector = func(val interface{}) interface{} { return val }
+// Make creates an Operator from this configuration.
+func (config DistinctConfig) Make() rx.Operator {
+	if config.KeySelector == nil {
+		config.KeySelector = func(val interface{}) interface{} { return val }
 	}
 
 	return func(source rx.Observable) rx.Observable {
-		return distinctObservable{source, configure}.Subscribe
+		return distinctObservable{source, config}.Subscribe
 	}
 }
 
 type distinctObservable struct {
 	Source rx.Observable
-	DistinctConfigure
+	DistinctConfig
 }
 
 func (obs distinctObservable) Subscribe(ctx context.Context, sink rx.Observer) {

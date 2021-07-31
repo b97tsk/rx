@@ -28,7 +28,7 @@ func TestThrottle(t *testing.T) {
 	).Case(
 		rx.Just("A", "B", "C", "D", "E").Pipe(
 			AddLatencyToValues(0, 2),
-			operators.ThrottleConfigure{
+			operators.ThrottleConfig{
 				DurationSelector: func(interface{}) rx.Observable {
 					return rx.Empty().Pipe(DelaySubscription(5))
 				},
@@ -55,7 +55,7 @@ func TestThrottle(t *testing.T) {
 	).Case(
 		rx.Just("A", "B", "C", "D", "E").Pipe(
 			AddLatencyToValues(0, 4),
-			operators.ThrottleConfigure{
+			operators.ThrottleConfig{
 				DurationSelector: func(interface{}) rx.Observable {
 					return rx.Timer(Step(9))
 				},
@@ -67,7 +67,7 @@ func TestThrottle(t *testing.T) {
 	).Case(
 		rx.Just("A", "B", "C", "D", "E").Pipe(
 			AddLatencyToValues(0, 4),
-			operators.ThrottleConfigure{
+			operators.ThrottleConfig{
 				DurationSelector: func(interface{}) rx.Observable {
 					return rx.Timer(Step(9))
 				},
@@ -85,7 +85,7 @@ func TestThrottle(t *testing.T) {
 	).Case(
 		rx.Just("A", "B", "C", "D", "E").Pipe(
 			AddLatencyToValues(0, 4),
-			operators.ThrottleTimeConfigure{
+			operators.ThrottleTimeConfig{
 				Duration: Step(9),
 				Leading:  false,
 				Trailing: true,
@@ -95,7 +95,7 @@ func TestThrottle(t *testing.T) {
 	).Case(
 		rx.Just("A", "B", "C", "D", "E").Pipe(
 			AddLatencyToValues(0, 4),
-			operators.ThrottleTimeConfigure{
+			operators.ThrottleTimeConfig{
 				Duration: Step(9),
 				Leading:  true,
 				Trailing: true,

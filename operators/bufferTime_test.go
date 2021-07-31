@@ -42,7 +42,7 @@ func TestBufferTime(t *testing.T) {
 	NewTestSuite(t).Case(
 		rx.Just("A", "B", "C", "D", "E").Pipe(
 			AddLatencyToValues(1, 2),
-			operators.BufferTimeConfigure{
+			operators.BufferTimeConfig{
 				TimeSpan: Step(8),
 			}.Make(),
 			ToString(),
@@ -51,7 +51,7 @@ func TestBufferTime(t *testing.T) {
 	).Case(
 		rx.Just("A", "B", "C", "D", "E").Pipe(
 			AddLatencyToValues(1, 2),
-			operators.BufferTimeConfigure{
+			operators.BufferTimeConfig{
 				TimeSpan:      Step(8),
 				MaxBufferSize: 3,
 			}.Make(),
@@ -61,7 +61,7 @@ func TestBufferTime(t *testing.T) {
 	).Case(
 		rx.Just("A", "B", "C", "D", "E").Pipe(
 			AddLatencyToValues(1, 2),
-			operators.BufferTimeConfigure{
+			operators.BufferTimeConfig{
 				TimeSpan:      Step(8),
 				MaxBufferSize: 2,
 			}.Make(),
@@ -71,7 +71,7 @@ func TestBufferTime(t *testing.T) {
 	).Case(
 		rx.Just("A", "B", "C", "D", "E").Pipe(
 			AddLatencyToValues(1, 2),
-			operators.BufferTimeConfigure{
+			operators.BufferTimeConfig{
 				TimeSpan:      Step(8),
 				MaxBufferSize: 1,
 			}.Make(),
@@ -85,7 +85,7 @@ func TestBufferTime(t *testing.T) {
 	NewTestSuite(t).Case(
 		rx.Just("A", "B", "C", "D", "E").Pipe(
 			AddLatencyToValues(1, 2),
-			operators.BufferTimeConfigure{
+			operators.BufferTimeConfig{
 				TimeSpan:         Step(2),
 				CreationInterval: Step(2),
 			}.Make(),
@@ -95,7 +95,7 @@ func TestBufferTime(t *testing.T) {
 	).Case(
 		rx.Just("A", "B", "C", "D", "E").Pipe(
 			AddLatencyToValues(1, 2),
-			operators.BufferTimeConfigure{
+			operators.BufferTimeConfig{
 				TimeSpan:         Step(2),
 				CreationInterval: Step(4),
 			}.Make(),
@@ -105,7 +105,7 @@ func TestBufferTime(t *testing.T) {
 	).Case(
 		rx.Just("A", "B", "C", "D", "E").Pipe(
 			AddLatencyToValues(1, 2),
-			operators.BufferTimeConfigure{
+			operators.BufferTimeConfig{
 				TimeSpan:         Step(4),
 				CreationInterval: Step(2),
 			}.Make(),

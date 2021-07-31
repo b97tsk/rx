@@ -12,30 +12,30 @@ import (
 // It's like Reduce, but emits the current accumulation whenever the source
 // emits a value.
 func Scan(accumulator func(interface{}, interface{}, int) interface{}) rx.Operator {
-	return ScanConfigure{Accumulator: accumulator}.Make()
+	return ScanConfig{Accumulator: accumulator}.Make()
 }
 
-// A ScanConfigure is a configure for Scan.
-type ScanConfigure struct {
+// A ScanConfig is a configuration for Scan.
+type ScanConfig struct {
 	Accumulator func(interface{}, interface{}, int) interface{}
 	Seed        interface{}
 	HasSeed     bool
 }
 
-// Make creates an Operator from this configure.
-func (configure ScanConfigure) Make() rx.Operator {
-	if configure.Accumulator == nil {
+// Make creates an Operator from this configuration.
+func (config ScanConfig) Make() rx.Operator {
+	if config.Accumulator == nil {
 		panic("Scan: Accumulator is nil")
 	}
 
 	return func(source rx.Observable) rx.Observable {
-		return scanObservable{source, configure}.Subscribe
+		return scanObservable{source, config}.Subscribe
 	}
 }
 
 type scanObservable struct {
 	Source rx.Observable
-	ScanConfigure
+	ScanConfig
 }
 
 func (obs scanObservable) Subscribe(ctx context.Context, sink rx.Observer) {

@@ -69,10 +69,10 @@ func TestScan(t *testing.T) {
 	}
 	panictest(
 		func() {
-			operators.ScanConfigure{
+			operators.ScanConfig{
 				Accumulator: nil,
 			}.Make()
 		},
-		"ScanConfigure with nil Accumulator didn't panic.",
+		"ScanConfig with nil Accumulator didn't panic.",
 	)
 }

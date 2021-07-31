@@ -13,31 +13,31 @@ import (
 //
 // It's like BufferTime, but emits a nested Observable instead of a slice.
 func WindowTime(d time.Duration) rx.Operator {
-	return WindowTimeConfigure{TimeSpan: d}.Make()
+	return WindowTimeConfig{TimeSpan: d}.Make()
 }
 
-// A WindowTimeConfigure is a configure for WindowTime.
-type WindowTimeConfigure struct {
+// A WindowTimeConfig is a configuration for WindowTime.
+type WindowTimeConfig struct {
 	TimeSpan         time.Duration
 	CreationInterval time.Duration
 	MaxWindowSize    int
 	WindowFactory    rx.SubjectFactory
 }
 
-// Make creates an Operator from this configure.
-func (configure WindowTimeConfigure) Make() rx.Operator {
-	if configure.WindowFactory == nil {
-		configure.WindowFactory = rx.Multicast
+// Make creates an Operator from this configuration.
+func (config WindowTimeConfig) Make() rx.Operator {
+	if config.WindowFactory == nil {
+		config.WindowFactory = rx.Multicast
 	}
 
 	return func(source rx.Observable) rx.Observable {
-		return windowTimeObservable{source, configure}.Subscribe
+		return windowTimeObservable{source, config}.Subscribe
 	}
 }
 
 type windowTimeObservable struct {
 	Source rx.Observable
-	WindowTimeConfigure
+	WindowTimeConfig
 }
 
 type windowTimeContext struct {

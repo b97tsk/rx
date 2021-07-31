@@ -13,26 +13,26 @@ import (
 // BufferTime collects values from the past as a slice, and emits those slices
 // periodically in time.
 func BufferTime(d time.Duration) rx.Operator {
-	return BufferTimeConfigure{TimeSpan: d}.Make()
+	return BufferTimeConfig{TimeSpan: d}.Make()
 }
 
-// A BufferTimeConfigure is a configure for BufferTime.
-type BufferTimeConfigure struct {
+// A BufferTimeConfig is a configuration for BufferTime.
+type BufferTimeConfig struct {
 	TimeSpan         time.Duration
 	CreationInterval time.Duration
 	MaxBufferSize    int
 }
 
-// Make creates an Operator from this configure.
-func (configure BufferTimeConfigure) Make() rx.Operator {
+// Make creates an Operator from this configuration.
+func (config BufferTimeConfig) Make() rx.Operator {
 	return func(source rx.Observable) rx.Observable {
-		return bufferTimeObservable{source, configure}.Subscribe
+		return bufferTimeObservable{source, config}.Subscribe
 	}
 }
 
 type bufferTimeObservable struct {
 	Source rx.Observable
-	BufferTimeConfigure
+	BufferTimeConfig
 }
 
 type bufferTimeContext struct {

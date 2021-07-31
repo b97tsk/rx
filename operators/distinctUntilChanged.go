@@ -15,33 +15,33 @@ import (
 // If a comparator function is not provided, an equality check is used by
 // default.
 func DistinctUntilChanged() rx.Operator {
-	return DistinctUntilChangedConfigure{}.Make()
+	return DistinctUntilChangedConfig{}.Make()
 }
 
-// A DistinctUntilChangedConfigure is a configure for DistinctUntilChanged.
-type DistinctUntilChangedConfigure struct {
+// A DistinctUntilChangedConfig is a configuration for DistinctUntilChanged.
+type DistinctUntilChangedConfig struct {
 	Compare     func(interface{}, interface{}) bool
 	KeySelector func(interface{}) interface{}
 }
 
-// Make creates an Operator from this configure.
-func (configure DistinctUntilChangedConfigure) Make() rx.Operator {
-	if configure.Compare == nil {
-		configure.Compare = func(v1, v2 interface{}) bool { return v1 == v2 }
+// Make creates an Operator from this configuration.
+func (config DistinctUntilChangedConfig) Make() rx.Operator {
+	if config.Compare == nil {
+		config.Compare = func(v1, v2 interface{}) bool { return v1 == v2 }
 	}
 
-	if configure.KeySelector == nil {
-		configure.KeySelector = func(val interface{}) interface{} { return val }
+	if config.KeySelector == nil {
+		config.KeySelector = func(val interface{}) interface{} { return val }
 	}
 
 	return func(source rx.Observable) rx.Observable {
-		return distinctUntilChangedObservable{source, configure}.Subscribe
+		return distinctUntilChangedObservable{source, config}.Subscribe
 	}
 }
 
 type distinctUntilChangedObservable struct {
 	Source rx.Observable
-	DistinctUntilChangedConfigure
+	DistinctUntilChangedConfig
 }
 
 func (obs distinctUntilChangedObservable) Subscribe(ctx context.Context, sink rx.Observer) {

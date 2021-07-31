@@ -23,7 +23,7 @@ func TestBufferCount(t *testing.T) {
 		"[A B C]", "[D E]", Completed,
 	).Case(
 		rx.Just("A", "B", "C", "D", "E").Pipe(
-			operators.BufferCountConfigure{
+			operators.BufferCountConfig{
 				BufferSize:       3,
 				StartBufferEvery: 1,
 			}.Make(),
@@ -32,7 +32,7 @@ func TestBufferCount(t *testing.T) {
 		"[A B C]", "[B C D]", "[C D E]", "[D E]", "[E]", Completed,
 	).Case(
 		rx.Just("A", "B", "C", "D", "E").Pipe(
-			operators.BufferCountConfigure{
+			operators.BufferCountConfig{
 				BufferSize:       3,
 				StartBufferEvery: 2,
 			}.Make(),
@@ -41,7 +41,7 @@ func TestBufferCount(t *testing.T) {
 		"[A B C]", "[C D E]", "[E]", Completed,
 	).Case(
 		rx.Just("A", "B", "C", "D", "E").Pipe(
-			operators.BufferCountConfigure{
+			operators.BufferCountConfig{
 				BufferSize:       3,
 				StartBufferEvery: 4,
 			}.Make(),
@@ -74,11 +74,11 @@ func TestBufferCount(t *testing.T) {
 	)
 	panictest(
 		func() {
-			operators.BufferCountConfigure{
+			operators.BufferCountConfig{
 				BufferSize:       1,
 				StartBufferEvery: -1,
 			}.Make()
 		},
-		"BufferCountConfigure with negative StartBufferEvery didn't panic.",
+		"BufferCountConfig with negative StartBufferEvery didn't panic.",
 	)
 }

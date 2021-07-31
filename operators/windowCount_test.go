@@ -36,7 +36,7 @@ func TestWindowCount(t *testing.T) {
 	).Case(
 		rx.Just("A", "B", "C", "D", "E").Pipe(
 			AddLatencyToValues(1, 2),
-			operators.WindowCountConfigure{
+			operators.WindowCountConfig{
 				WindowSize:       3,
 				StartWindowEvery: 1,
 			}.Make(),
@@ -47,7 +47,7 @@ func TestWindowCount(t *testing.T) {
 	).Case(
 		rx.Just("A", "B", "C", "D", "E").Pipe(
 			AddLatencyToValues(1, 2),
-			operators.WindowCountConfigure{
+			operators.WindowCountConfig{
 				WindowSize:       3,
 				StartWindowEvery: 2,
 			}.Make(),
@@ -58,7 +58,7 @@ func TestWindowCount(t *testing.T) {
 	).Case(
 		rx.Just("A", "B", "C", "D", "E").Pipe(
 			AddLatencyToValues(1, 2),
-			operators.WindowCountConfigure{
+			operators.WindowCountConfig{
 				WindowSize:       3,
 				StartWindowEvery: 4,
 			}.Make(),
@@ -94,11 +94,11 @@ func TestWindowCount(t *testing.T) {
 	)
 	panictest(
 		func() {
-			operators.WindowCountConfigure{
+			operators.WindowCountConfig{
 				WindowSize:       1,
 				StartWindowEvery: -1,
 			}.Make()
 		},
-		"WindowCountConfigure with negative StartWindowEvery didn't panic.",
+		"WindowCountConfig with negative StartWindowEvery didn't panic.",
 	)
 }

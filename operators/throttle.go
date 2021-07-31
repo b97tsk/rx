@@ -15,7 +15,7 @@ import (
 // It's like ThrottleTime, but the silencing duration is determined by a second
 // Observable.
 func Throttle(durationSelector func(interface{}) rx.Observable) rx.Operator {
-	return ThrottleConfigure{
+	return ThrottleConfig{
 		DurationSelector: durationSelector,
 		Leading:          true,
 		Trailing:         false,
@@ -28,54 +28,54 @@ func Throttle(durationSelector func(interface{}) rx.Observable) rx.Operator {
 // ThrottleTime lets a value pass, then ignores source values for the next
 // duration time.
 func ThrottleTime(d time.Duration) rx.Operator {
-	return ThrottleTimeConfigure{
+	return ThrottleTimeConfig{
 		Duration: d,
 		Leading:  true,
 		Trailing: false,
 	}.Make()
 }
 
-// A ThrottleConfigure is a configure for Throttle.
-type ThrottleConfigure struct {
+// A ThrottleConfig is a configuration for Throttle.
+type ThrottleConfig struct {
 	DurationSelector func(interface{}) rx.Observable
 	Leading          bool
 	Trailing         bool
 }
 
-// Make creates an Operator from this configure.
-func (configure ThrottleConfigure) Make() rx.Operator {
-	if configure.DurationSelector == nil {
+// Make creates an Operator from this configuration.
+func (config ThrottleConfig) Make() rx.Operator {
+	if config.DurationSelector == nil {
 		panic("Throttle: DurationSelector is nil")
 	}
 
 	return func(source rx.Observable) rx.Observable {
-		return throttleObservable{source, configure}.Subscribe
+		return throttleObservable{source, config}.Subscribe
 	}
 }
 
-// A ThrottleTimeConfigure is a configure for ThrottleTime.
-type ThrottleTimeConfigure struct {
+// A ThrottleTimeConfig is a configuration for ThrottleTime.
+type ThrottleTimeConfig struct {
 	Duration time.Duration
 	Leading  bool
 	Trailing bool
 }
 
-// Make creates an Operator from this configure.
-func (configure ThrottleTimeConfigure) Make() rx.Operator {
-	obsTimer := rx.Timer(configure.Duration)
+// Make creates an Operator from this configuration.
+func (config ThrottleTimeConfig) Make() rx.Operator {
+	obsTimer := rx.Timer(config.Duration)
 
 	durationSelector := func(interface{}) rx.Observable { return obsTimer }
 
-	return ThrottleConfigure{
+	return ThrottleConfig{
 		DurationSelector: durationSelector,
-		Leading:          configure.Leading,
-		Trailing:         configure.Trailing,
+		Leading:          config.Leading,
+		Trailing:         config.Trailing,
 	}.Make()
 }
 
 type throttleObservable struct {
 	Source rx.Observable
-	ThrottleConfigure
+	ThrottleConfig
 }
 
 func (obs throttleObservable) Subscribe(ctx context.Context, sink rx.Observer) {

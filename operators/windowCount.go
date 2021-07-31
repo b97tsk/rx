@@ -11,42 +11,42 @@ import (
 //
 // It's like BufferCount, but emits a nested Observable instead of a slice.
 func WindowCount(windowSize int) rx.Operator {
-	return WindowCountConfigure{WindowSize: windowSize}.Make()
+	return WindowCountConfig{WindowSize: windowSize}.Make()
 }
 
-// A WindowCountConfigure is a configure for WindowCount.
-type WindowCountConfigure struct {
+// A WindowCountConfig is a configuration for WindowCount.
+type WindowCountConfig struct {
 	WindowSize       int
 	StartWindowEvery int
 	WindowFactory    rx.SubjectFactory
 }
 
-// Make creates an Operator from this configure.
-func (configure WindowCountConfigure) Make() rx.Operator {
-	if configure.WindowSize <= 0 {
+// Make creates an Operator from this configuration.
+func (config WindowCountConfig) Make() rx.Operator {
+	if config.WindowSize <= 0 {
 		panic("WindowCount: WindowSize is negative or zero")
 	}
 
-	if configure.StartWindowEvery < 0 {
+	if config.StartWindowEvery < 0 {
 		panic("WindowCount: StartWindowEvery is negative")
 	}
 
-	if configure.StartWindowEvery == 0 {
-		configure.StartWindowEvery = configure.WindowSize
+	if config.StartWindowEvery == 0 {
+		config.StartWindowEvery = config.WindowSize
 	}
 
-	if configure.WindowFactory == nil {
-		configure.WindowFactory = rx.Multicast
+	if config.WindowFactory == nil {
+		config.WindowFactory = rx.Multicast
 	}
 
 	return func(source rx.Observable) rx.Observable {
-		return windowCountObservable{source, configure}.Subscribe
+		return windowCountObservable{source, config}.Subscribe
 	}
 }
 
 type windowCountObservable struct {
 	Source rx.Observable
-	WindowCountConfigure
+	WindowCountConfig
 }
 
 func (obs windowCountObservable) Subscribe(ctx context.Context, sink rx.Observer) {
