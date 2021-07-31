@@ -46,7 +46,7 @@ func TestMergeSync(t *testing.T) {
 			},
 			3,
 		),
-	).Subscribe(ctx, func(rx.Notification) { t.Fatal("should not happen") })
+	).BlockingSubscribe(ctx, func(rx.Notification) { t.Fatal("should not happen") })
 
 	panictest := func(f func(), msg string) {
 		defer func() {

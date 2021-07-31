@@ -112,5 +112,5 @@ func TestWithLatestFrom(t *testing.T) {
 
 	rx.Timer(Step(2)).Pipe(
 		operators.WithLatestFrom(rx.Timer(Step(2))),
-	).Subscribe(ctx, func(rx.Notification) { t.Fatal("should not happen") })
+	).BlockingSubscribe(ctx, func(rx.Notification) { t.Fatal("should not happen") })
 }

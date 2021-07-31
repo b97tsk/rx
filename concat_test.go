@@ -31,5 +31,5 @@ func TestConcat(t *testing.T) {
 		func(context.Context, rx.Observer) {
 			t.Fatal("should not happen")
 		},
-	).Subscribe(ctx, rx.Noop)
+	).BlockingSubscribe(ctx, rx.Noop)
 }

@@ -44,5 +44,5 @@ func TestFromChan(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), Step(1))
 	defer cancel()
 
-	rx.FromChan(nil).Subscribe(ctx, rx.Noop)
+	rx.FromChan(nil).BlockingSubscribe(ctx, rx.Noop)
 }

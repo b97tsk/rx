@@ -25,5 +25,5 @@ func TestCongest(t *testing.T) {
 
 	rx.Timer(Step(2)).Pipe(
 		operators.Congest(3),
-	).Subscribe(ctx, func(rx.Notification) { t.Fatal("should not happen") })
+	).BlockingSubscribe(ctx, func(rx.Notification) { t.Fatal("should not happen") })
 }

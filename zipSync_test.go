@@ -82,5 +82,5 @@ func TestZipSync(t *testing.T) {
 
 	rx.ZipSync(
 		rx.Timer(Step(2)),
-	).Subscribe(ctx, func(rx.Notification) { t.Fatal("should not happen") })
+	).BlockingSubscribe(ctx, func(rx.Notification) { t.Fatal("should not happen") })
 }
