@@ -56,7 +56,6 @@ func (obs skipUntilObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 
 	if noSkipping.True() {
 		obs.Source.Subscribe(ctx, originalSink)
-
 		return
 	}
 

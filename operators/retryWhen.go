@@ -42,7 +42,6 @@ func (obs retryWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 		obs.Source.Subscribe(ctx, func(t rx.Notification) {
 			if !t.HasError {
 				sink(t)
-
 				return
 			}
 
@@ -52,7 +51,6 @@ func (obs retryWhenObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 
 			if retryWorking.False() {
 				sink(t)
-
 				return
 			}
 

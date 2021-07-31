@@ -144,7 +144,6 @@ func NewTestSuite(t *testing.T) *TestSuite {
 
 func (s *TestSuite) Case(source rx.Observable, output ...interface{}) *TestSuite {
 	s.cases = append(s.cases, TestCase{source, output})
-
 	return s
 }
 

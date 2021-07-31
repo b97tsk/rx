@@ -181,7 +181,6 @@ func (obs throttleObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 
 				if obs.Trailing && x.Trailing.HasValue && x.Throttling {
 					critical.Leave(&x.Section)
-
 					break
 				}
 

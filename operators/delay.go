@@ -107,7 +107,6 @@ func (obs delayObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 
 				if x.Queue.Len() > 0 {
 					critical.Leave(&x.Section)
-
 					break
 				}
 

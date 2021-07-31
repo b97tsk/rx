@@ -66,7 +66,6 @@ func (obs *shareObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		go obs.source.Subscribe(ctx, func(t rx.Notification) {
 			if t.HasValue {
 				sink(t)
-
 				return
 			}
 

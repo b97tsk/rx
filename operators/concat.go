@@ -80,7 +80,6 @@ func (obs concatObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		obs1.Subscribe(ctx, func(t rx.Notification) {
 			if t.HasValue || t.HasError {
 				sink(t)
-
 				return
 			}
 

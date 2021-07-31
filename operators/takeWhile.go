@@ -36,7 +36,6 @@ func (obs takeWhileObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 
 			if obs.Predicate(t.Value, sourceIndex) {
 				sink(t)
-
 				break
 			}
 

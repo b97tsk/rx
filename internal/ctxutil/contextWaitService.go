@@ -44,7 +44,6 @@ func NewContextWaitService() ContextWaitService {
 				case <-service:
 					if len(actionChan) == 0 {
 						close(service)
-
 						return
 					}
 

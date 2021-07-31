@@ -73,7 +73,6 @@ func (observables combineLatestObservable) Subscribe(ctx context.Context, sink O
 
 				case t.HasError:
 					sink(t.Notification)
-
 					return
 
 				default:

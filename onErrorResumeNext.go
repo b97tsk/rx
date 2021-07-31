@@ -27,7 +27,6 @@ func (observables onErrorResumeNextObservable) Subscribe(ctx context.Context, si
 	subscribeToNext := norec.Wrap(func() {
 		if len(remainder) == 0 {
 			sink.Complete()
-
 			return
 		}
 
@@ -44,7 +43,6 @@ func (observables onErrorResumeNextObservable) Subscribe(ctx context.Context, si
 	observer = func(t Notification) {
 		if t.HasValue {
 			sink(t)
-
 			return
 		}
 

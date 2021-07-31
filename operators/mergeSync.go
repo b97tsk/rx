@@ -93,7 +93,6 @@ func (obs mergeSyncObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 				select {
 				case <-done:
 					observer = rx.Noop
-
 					return
 				case <-complete:
 				}
@@ -111,7 +110,6 @@ func (obs mergeSyncObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 			go obs1.Subscribe(ctx, func(t rx.Notification) {
 				if t.HasValue || t.HasError {
 					sink(t)
-
 					return
 				}
 

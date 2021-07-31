@@ -86,7 +86,6 @@ func (obs mergeScanObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 
 			if t.HasValue || t.HasError {
 				sink(t)
-
 				return
 			}
 

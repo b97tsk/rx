@@ -81,7 +81,6 @@ func (d *unicast) subscribe(ctx context.Context, sink Observer) {
 	if err != nil {
 		if err == errCompleted {
 			sink.Complete()
-
 			return
 		}
 

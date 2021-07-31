@@ -26,7 +26,6 @@ func ThrowIfEmpty(e error) rx.Operator {
 				default:
 					if hasValue {
 						sink(t)
-
 						return
 					}
 

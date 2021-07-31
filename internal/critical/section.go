@@ -14,7 +14,6 @@ func Enter(s *Section) bool {
 
 	if s.closed {
 		s.mu.Unlock()
-
 		return false
 	}
 

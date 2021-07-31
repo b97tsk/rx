@@ -18,7 +18,6 @@ func FromChan(c <-chan interface{}) Observable {
 			case val, ok := <-c:
 				if !ok {
 					sink.Complete()
-
 					return
 				}
 

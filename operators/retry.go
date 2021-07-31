@@ -44,7 +44,6 @@ func (obs retryObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	observer = func(t rx.Notification) {
 		if t.HasValue || !t.HasError || count == 0 {
 			sink(t)
-
 			return
 		}
 

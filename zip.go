@@ -90,13 +90,11 @@ func (observables zipObservable) Subscribe(ctx context.Context, sink Observer) {
 
 					if shouldComplete {
 						sink.Complete()
-
 						return
 					}
 
 				case t.HasError:
 					sink(t.Notification)
-
 					return
 
 				default:
@@ -105,7 +103,6 @@ func (observables zipObservable) Subscribe(ctx context.Context, sink Observer) {
 
 					if stream.Len() == 0 {
 						sink(t.Notification)
-
 						return
 					}
 				}

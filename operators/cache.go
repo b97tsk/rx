@@ -47,7 +47,6 @@ func (obs cacheObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 
 				default:
 					sink(t)
-
 					return
 				}
 			}

@@ -85,7 +85,6 @@ func (obs mergeObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 		go obs1.Subscribe(ctx, func(t rx.Notification) {
 			if t.HasValue || t.HasError {
 				sink(t)
-
 				return
 			}
 

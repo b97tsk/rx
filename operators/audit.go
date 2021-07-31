@@ -113,7 +113,6 @@ func (obs auditObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 
 				if x.Scheduled {
 					critical.Leave(&x.Section)
-
 					break
 				}
 

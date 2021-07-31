@@ -50,7 +50,6 @@ func (observables zipSyncObservable) Subscribe(ctx context.Context, sink Observe
 
 					default:
 						sink(t)
-
 						return
 					}
 				}

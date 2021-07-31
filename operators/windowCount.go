@@ -64,7 +64,6 @@ func (obs windowCountObservable) Subscribe(ctx context.Context, sink rx.Observer
 		case t.HasValue:
 			if windowSize < 0 {
 				windowSize++
-
 				break
 			}
 

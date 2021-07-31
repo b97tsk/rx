@@ -19,7 +19,6 @@ import (
 func WithLatestFrom(observables ...rx.Observable) rx.Operator {
 	return func(source rx.Observable) rx.Observable {
 		observables = append([]rx.Observable{source}, observables...)
-
 		return withLatestFromObservable(observables).Subscribe
 	}
 }
@@ -78,7 +77,6 @@ func (observables withLatestFromObservable) Subscribe(ctx context.Context, sink 
 
 				case t.HasError:
 					sink(t.Notification)
-
 					return
 
 				default:
