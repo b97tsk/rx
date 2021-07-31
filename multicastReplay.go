@@ -157,12 +157,13 @@ func (s *multicastReplay) subscribe(ctx context.Context, sink Observer) {
 
 	err := s.err
 	if err == nil {
-		ctx, cancel := context.WithCancel(ctx)
+		var cancel context.CancelFunc
 
-		observer := sink.WithCancel(cancel).MutexContext(ctx)
+		ctx, cancel = context.WithCancel(ctx)
+		sink = sink.WithCancel(cancel).MutexContext(ctx)
 
+		observer := sink
 		s.lst.Append(&observer)
-
 		s.cws.Submit(ctx, func() {
 			s.mu.Lock()
 			s.lst.Remove(&observer)
