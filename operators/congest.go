@@ -7,26 +7,26 @@ import (
 	"github.com/b97tsk/rx/internal/queue"
 )
 
-// Cache mirrors the source, caches emissions if the source emits too fast,
-// and blocks the source if the cache is full.
+// Congest mirrors the source, buffers emissions if the source emits too fast,
+// and blocks the source if the buffer is full.
 //
-// Cache has no effect if cacheSize < 1.
-func Cache(cacheSize int) rx.Operator {
-	if cacheSize < 1 {
+// Congest has no effect if bufferSize < 1.
+func Congest(bufferSize int) rx.Operator {
+	if bufferSize < 1 {
 		return noop
 	}
 
 	return func(source rx.Observable) rx.Observable {
-		return cacheObservable{source, cacheSize}.Subscribe
+		return congestObservable{source, bufferSize}.Subscribe
 	}
 }
 
-type cacheObservable struct {
-	Source    rx.Observable
-	CacheSize int
+type congestObservable struct {
+	Source     rx.Observable
+	BufferSize int
 }
 
-func (obs cacheObservable) Subscribe(ctx context.Context, sink rx.Observer) {
+func (obs congestObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	ctx, cancel := context.WithCancel(ctx)
 	done := ctx.Done()
 
@@ -67,7 +67,7 @@ func (obs cacheObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 
 			length := queue.Len()
 
-			if length < obs.CacheSize {
+			if length < obs.BufferSize {
 				in = cin
 			}
 
