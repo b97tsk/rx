@@ -14,26 +14,26 @@ type ReplayOptions struct {
 	WindowTime time.Duration
 }
 
-// MulticastReplay returns a Double whose Observable part takes care of all
+// MulticastReplay returns a Subject whose Observable part takes care of all
 // Observers that subscribes to it, which will receive buffered emissions and
-// new emissions from Double's Observer part.
-func MulticastReplay(opts *ReplayOptions) Double {
-	d := &multicastReplay{}
+// new emissions from Subject's Observer part.
+func MulticastReplay(opts *ReplayOptions) Subject {
+	s := &multicastReplay{}
 
 	if opts != nil {
-		d.ReplayOptions = *opts
+		s.ReplayOptions = *opts
 	}
 
-	return Double{
-		Observable: d.subscribe,
-		Observer:   d.sink,
+	return Subject{
+		Observable: s.subscribe,
+		Observer:   s.sink,
 	}
 }
 
-// MulticastReplayFactory returns a DoubleFactory that wraps calls to
+// MulticastReplayFactory returns a SubjectFactory that wraps calls to
 // MulticastReplay.
-func MulticastReplayFactory(opts *ReplayOptions) DoubleFactory {
-	return func() Double { return MulticastReplay(opts) }
+func MulticastReplayFactory(opts *ReplayOptions) SubjectFactory {
+	return func() Subject { return MulticastReplay(opts) }
 }
 
 type multicastReplay struct {
@@ -48,34 +48,34 @@ type multicastReplayElement struct {
 	Deadline time.Time
 }
 
-func (d *multicastReplay) bufferForRead() (queue.Queue, *atomic.Uint32) {
-	refs := d.bufferRefs
+func (s *multicastReplay) bufferForRead() (queue.Queue, *atomic.Uint32) {
+	refs := s.bufferRefs
 
 	if refs == nil {
 		refs = new(atomic.Uint32)
-		d.bufferRefs = refs
+		s.bufferRefs = refs
 	}
 
 	refs.Add(1)
 
-	return d.buffer, refs
+	return s.buffer, refs
 }
 
-func (d *multicastReplay) bufferForWrite() *queue.Queue {
-	refs := d.bufferRefs
+func (s *multicastReplay) bufferForWrite() *queue.Queue {
+	refs := s.bufferRefs
 
 	if refs != nil && !refs.Equals(0) {
-		d.buffer = d.buffer.Clone()
-		d.bufferRefs = nil
+		s.buffer = s.buffer.Clone()
+		s.bufferRefs = nil
 	}
 
-	return &d.buffer
+	return &s.buffer
 }
 
-func (d *multicastReplay) trimBuffer(b *queue.Queue) {
-	if d.WindowTime > 0 {
+func (s *multicastReplay) trimBuffer(b *queue.Queue) {
+	if s.WindowTime > 0 {
 		if b == nil {
-			b = d.bufferForWrite()
+			b = s.bufferForWrite()
 		}
 
 		now := time.Now()
@@ -89,9 +89,9 @@ func (d *multicastReplay) trimBuffer(b *queue.Queue) {
 		}
 	}
 
-	if bufferSize := d.BufferSize; bufferSize > 0 {
+	if bufferSize := s.BufferSize; bufferSize > 0 {
 		if b == nil {
-			b = d.bufferForWrite()
+			b = s.bufferForWrite()
 		}
 
 		for b.Len() > bufferSize {
@@ -100,28 +100,28 @@ func (d *multicastReplay) trimBuffer(b *queue.Queue) {
 	}
 }
 
-func (d *multicastReplay) sink(t Notification) {
-	d.mu.Lock()
+func (s *multicastReplay) sink(t Notification) {
+	s.mu.Lock()
 
 	switch {
-	case d.err != nil:
-		d.mu.Unlock()
+	case s.err != nil:
+		s.mu.Unlock()
 
 	case t.HasValue:
-		lst := d.lst.Clone()
+		lst := s.lst.Clone()
 		defer lst.Release()
 
 		var deadline time.Time
 
-		if windowTime := d.WindowTime; windowTime > 0 {
+		if windowTime := s.WindowTime; windowTime > 0 {
 			deadline = time.Now().Add(windowTime)
 		}
 
-		b := d.bufferForWrite()
+		b := s.bufferForWrite()
 		b.Push(multicastReplayElement{t.Value, deadline})
-		d.trimBuffer(b)
+		s.trimBuffer(b)
 
-		d.mu.Unlock()
+		s.mu.Unlock()
 
 		for _, observer := range lst.Observers {
 			observer.Sink(t)
@@ -130,21 +130,21 @@ func (d *multicastReplay) sink(t Notification) {
 	default:
 		var lst observerList
 
-		d.lst.Swap(&lst)
+		s.lst.Swap(&lst)
 
-		d.err = errCompleted
+		s.err = errCompleted
 
 		if t.HasError {
-			d.err = t.Error
+			s.err = t.Error
 
-			if d.err == nil {
-				d.err = errNil
+			if s.err == nil {
+				s.err = errNil
 			}
 
-			d.buffer.Init()
+			s.buffer.Init()
 		}
 
-		d.mu.Unlock()
+		s.mu.Unlock()
 
 		for _, observer := range lst.Observers {
 			observer.Sink(t)
@@ -152,30 +152,30 @@ func (d *multicastReplay) sink(t Notification) {
 	}
 }
 
-func (d *multicastReplay) subscribe(ctx context.Context, sink Observer) {
-	d.mu.Lock()
+func (s *multicastReplay) subscribe(ctx context.Context, sink Observer) {
+	s.mu.Lock()
 
-	err := d.err
+	err := s.err
 	if err == nil {
 		ctx, cancel := context.WithCancel(ctx)
 
 		observer := sink.WithCancel(cancel).MutexContext(ctx)
 
-		d.lst.Append(&observer)
+		s.lst.Append(&observer)
 
-		d.cws.Submit(ctx, func() {
-			d.mu.Lock()
-			d.lst.Remove(&observer)
-			d.mu.Unlock()
+		s.cws.Submit(ctx, func() {
+			s.mu.Lock()
+			s.lst.Remove(&observer)
+			s.mu.Unlock()
 		})
 	}
 
-	d.trimBuffer(nil)
+	s.trimBuffer(nil)
 
-	b, refs := d.bufferForRead()
+	b, refs := s.bufferForRead()
 	defer refs.Sub(1)
 
-	d.mu.Unlock()
+	s.mu.Unlock()
 
 	for i, j := 0, b.Len(); i < j; i++ {
 		if ctx.Err() != nil {

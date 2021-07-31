@@ -7,15 +7,15 @@ import (
 	"github.com/b97tsk/rx/internal/ctxutil"
 )
 
-// Multicast returns a Double whose Observable part takes care of all
+// Multicast returns a Subject whose Observable part takes care of all
 // Observers that subscribes to it, which will receive emissions from
-// Double's Observer part.
-func Multicast() Double {
-	d := &multicast{}
+// Subject's Observer part.
+func Multicast() Subject {
+	s := &multicast{}
 
-	return Double{
-		Observable: d.subscribe,
-		Observer:   d.sink,
+	return Subject{
+		Observable: s.subscribe,
+		Observer:   s.sink,
 	}
 }
 
@@ -26,18 +26,18 @@ type multicast struct {
 	cws ctxutil.ContextWaitService
 }
 
-func (d *multicast) sink(t Notification) {
-	d.mu.Lock()
+func (s *multicast) sink(t Notification) {
+	s.mu.Lock()
 
 	switch {
-	case d.err != nil:
-		d.mu.Unlock()
+	case s.err != nil:
+		s.mu.Unlock()
 
 	case t.HasValue:
-		lst := d.lst.Clone()
+		lst := s.lst.Clone()
 		defer lst.Release()
 
-		d.mu.Unlock()
+		s.mu.Unlock()
 
 		for _, observer := range lst.Observers {
 			observer.Sink(t)
@@ -46,19 +46,19 @@ func (d *multicast) sink(t Notification) {
 	default:
 		var lst observerList
 
-		d.lst.Swap(&lst)
+		s.lst.Swap(&lst)
 
-		d.err = errCompleted
+		s.err = errCompleted
 
 		if t.HasError {
-			d.err = t.Error
+			s.err = t.Error
 
-			if d.err == nil {
-				d.err = errNil
+			if s.err == nil {
+				s.err = errNil
 			}
 		}
 
-		d.mu.Unlock()
+		s.mu.Unlock()
 
 		for _, observer := range lst.Observers {
 			observer.Sink(t)
@@ -66,25 +66,25 @@ func (d *multicast) sink(t Notification) {
 	}
 }
 
-func (d *multicast) subscribe(ctx context.Context, sink Observer) {
-	d.mu.Lock()
+func (s *multicast) subscribe(ctx context.Context, sink Observer) {
+	s.mu.Lock()
 
-	err := d.err
+	err := s.err
 	if err == nil {
 		ctx, cancel := context.WithCancel(ctx)
 
 		observer := sink.WithCancel(cancel).MutexContext(ctx)
 
-		d.lst.Append(&observer)
+		s.lst.Append(&observer)
 
-		d.cws.Submit(ctx, func() {
-			d.mu.Lock()
-			d.lst.Remove(&observer)
-			d.mu.Unlock()
+		s.cws.Submit(ctx, func() {
+			s.mu.Lock()
+			s.lst.Remove(&observer)
+			s.mu.Unlock()
 		})
 	}
 
-	d.mu.Unlock()
+	s.mu.Unlock()
 
 	if err != nil {
 		if err == errCompleted {

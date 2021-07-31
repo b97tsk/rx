@@ -23,7 +23,7 @@ func WindowToggle(openings rx.Observable, closingSelector func(interface{}) rx.O
 type WindowToggleConfigure struct {
 	Openings        rx.Observable
 	ClosingSelector func(interface{}) rx.Observable
-	WindowFactory   rx.DoubleFactory
+	WindowFactory   rx.SubjectFactory
 }
 
 // Make creates an Operator from this configure.

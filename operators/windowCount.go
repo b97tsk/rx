@@ -18,7 +18,7 @@ func WindowCount(windowSize int) rx.Operator {
 type WindowCountConfigure struct {
 	WindowSize       int
 	StartWindowEvery int
-	WindowFactory    rx.DoubleFactory
+	WindowFactory    rx.SubjectFactory
 }
 
 // Make creates an Operator from this configure.

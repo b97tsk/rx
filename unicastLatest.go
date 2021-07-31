@@ -5,16 +5,16 @@ import (
 	"sync"
 )
 
-// UnicastLatest returns a Double whose Observable part only takes care of
+// UnicastLatest returns a Subject whose Observable part only takes care of
 // one single Observer (the latest one subscribes to it), which will receive
-// emissions from Double's Observer part; the previous one will immediately
+// emissions from Subject's Observer part; the previous one will immediately
 // receive an ErrDropped.
-func UnicastLatest() Double {
-	d := &unicastLatest{}
+func UnicastLatest() Subject {
+	s := &unicastLatest{}
 
-	return Double{
-		Observable: d.subscribe,
-		Observer:   d.sink,
+	return Subject{
+		Observable: s.subscribe,
+		Observer:   s.sink,
 	}
 }
 
@@ -27,37 +27,37 @@ type unicastLatest struct {
 	}
 }
 
-func (d *unicastLatest) sink(t Notification) {
-	d.mu.Lock()
-	defer d.mu.Unlock()
+func (s *unicastLatest) sink(t Notification) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
 	switch {
-	case d.err != nil:
+	case s.err != nil:
 		break
 
 	case t.HasValue:
-		if ctx := d.obs.ctx; ctx != nil {
+		if ctx := s.obs.ctx; ctx != nil {
 			if ctx.Err() != nil {
-				d.obs.ctx, d.obs.sink = nil, nil
+				s.obs.ctx, s.obs.sink = nil, nil
 			} else {
-				d.obs.sink(t)
+				s.obs.sink(t)
 			}
 		}
 
 	default:
-		d.err = errCompleted
+		s.err = errCompleted
 
 		if t.HasError {
-			d.err = t.Error
+			s.err = t.Error
 
-			if d.err == nil {
-				d.err = errNil
+			if s.err == nil {
+				s.err = errNil
 			}
 		}
 
-		obs := d.obs
+		obs := s.obs
 
-		d.obs.ctx, d.obs.sink = nil, nil
+		s.obs.ctx, s.obs.sink = nil, nil
 
 		if ctx := obs.ctx; ctx != nil && ctx.Err() == nil {
 			obs.sink(t)
@@ -65,14 +65,14 @@ func (d *unicastLatest) sink(t Notification) {
 	}
 }
 
-func (d *unicastLatest) subscribe(ctx context.Context, sink Observer) {
-	d.mu.Lock()
+func (s *unicastLatest) subscribe(ctx context.Context, sink Observer) {
+	s.mu.Lock()
 
-	err := d.err
+	err := s.err
 	if err == nil {
-		obs := d.obs
+		obs := s.obs
 
-		d.obs.ctx, d.obs.sink = ctx, sink
+		s.obs.ctx, s.obs.sink = ctx, sink
 
 		if ctx := obs.ctx; ctx != nil && ctx.Err() == nil {
 			err = ErrDropped
@@ -80,7 +80,7 @@ func (d *unicastLatest) subscribe(ctx context.Context, sink Observer) {
 		}
 	}
 
-	d.mu.Unlock()
+	s.mu.Unlock()
 
 	if err != nil {
 		if err == errCompleted {

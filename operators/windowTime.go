@@ -21,7 +21,7 @@ type WindowTimeConfigure struct {
 	TimeSpan         time.Duration
 	CreationInterval time.Duration
 	MaxWindowSize    int
-	WindowFactory    rx.DoubleFactory
+	WindowFactory    rx.SubjectFactory
 }
 
 // Make creates an Operator from this configure.

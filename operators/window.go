@@ -18,7 +18,7 @@ func Window(windowBoundaries rx.Observable) rx.Operator {
 // A WindowConfigure is a configure for Window.
 type WindowConfigure struct {
 	WindowBoundaries rx.Observable
-	WindowFactory    rx.DoubleFactory
+	WindowFactory    rx.SubjectFactory
 }
 
 // Make creates an Operator from this configure.

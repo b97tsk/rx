@@ -20,7 +20,7 @@ func WindowWhen(closingSelector func() rx.Observable) rx.Operator {
 // A WindowWhenConfigure is a configure for WindowWhen.
 type WindowWhenConfigure struct {
 	ClosingSelector func() rx.Observable
-	WindowFactory   rx.DoubleFactory
+	WindowFactory   rx.SubjectFactory
 }
 
 // Make creates an Operator from this configure.

@@ -5,15 +5,15 @@ import (
 	"sync"
 )
 
-// Unicast returns a Double whose Observable part only takes care of one single
+// Unicast returns a Subject whose Observable part only takes care of one single
 // Observer (the first one subscribes to it), which will receive emissions from
-// Double's Observer part; the others will immediately receive an ErrDropped.
-func Unicast() Double {
-	d := &unicast{}
+// Subject's Observer part; the others will immediately receive an ErrDropped.
+func Unicast() Subject {
+	s := &unicast{}
 
-	return Double{
-		Observable: d.subscribe,
-		Observer:   d.sink,
+	return Subject{
+		Observable: s.subscribe,
+		Observer:   s.sink,
 	}
 }
 
@@ -26,37 +26,37 @@ type unicast struct {
 	}
 }
 
-func (d *unicast) sink(t Notification) {
-	d.mu.Lock()
-	defer d.mu.Unlock()
+func (s *unicast) sink(t Notification) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
 	switch {
-	case d.err != nil:
+	case s.err != nil:
 		break
 
 	case t.HasValue:
-		if ctx := d.obs.ctx; ctx != nil {
+		if ctx := s.obs.ctx; ctx != nil {
 			if ctx.Err() != nil {
-				d.obs.ctx, d.obs.sink = nil, Noop
+				s.obs.ctx, s.obs.sink = nil, Noop
 			} else {
-				d.obs.sink(t)
+				s.obs.sink(t)
 			}
 		}
 
 	default:
-		d.err = errCompleted
+		s.err = errCompleted
 
 		if t.HasError {
-			d.err = t.Error
+			s.err = t.Error
 
-			if d.err == nil {
-				d.err = errNil
+			if s.err == nil {
+				s.err = errNil
 			}
 		}
 
-		obs := d.obs
+		obs := s.obs
 
-		d.obs.ctx, d.obs.sink = nil, nil
+		s.obs.ctx, s.obs.sink = nil, nil
 
 		if ctx := obs.ctx; ctx != nil && ctx.Err() == nil {
 			obs.sink(t)
@@ -64,19 +64,19 @@ func (d *unicast) sink(t Notification) {
 	}
 }
 
-func (d *unicast) subscribe(ctx context.Context, sink Observer) {
-	d.mu.Lock()
+func (s *unicast) subscribe(ctx context.Context, sink Observer) {
+	s.mu.Lock()
 
-	err := d.err
+	err := s.err
 	if err == nil {
-		if d.obs.sink == nil {
-			d.obs.ctx, d.obs.sink = ctx, sink
+		if s.obs.sink == nil {
+			s.obs.ctx, s.obs.sink = ctx, sink
 		} else {
 			err = ErrDropped
 		}
 	}
 
-	d.mu.Unlock()
+	s.mu.Unlock()
 
 	if err != nil {
 		if err == errCompleted {
