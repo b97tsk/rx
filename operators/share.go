@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/b97tsk/rx"
-	"github.com/b97tsk/rx/internal/ctxutil"
+	"github.com/b97tsk/rx/internal/ctxwatch"
 )
 
 // Share returns a new Observable that multicasts (shares) the original
@@ -25,7 +25,6 @@ func Share(subjectFactory rx.SubjectFactory) rx.Operator {
 
 type shareObservable struct {
 	mu             sync.Mutex
-	cws            ctxutil.ContextWaitService
 	source         rx.Observable
 	subjectFactory rx.SubjectFactory
 	subject        rx.Subject
@@ -88,7 +87,7 @@ func (obs *shareObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 
 	obs.shareCount++
 
-	obs.cws.Submit(ctx, func() {
+	ctxwatch.Add(ctx, func() {
 		obs.mu.Lock()
 
 		if connection == obs.connection {

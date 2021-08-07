@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/b97tsk/rx/internal/atomic"
+	"github.com/b97tsk/rx/internal/ctxwatch"
 	"github.com/b97tsk/rx/internal/queue"
 )
 
@@ -164,7 +165,7 @@ func (s *multicastReplay) subscribe(ctx context.Context, sink Observer) {
 
 		observer := sink
 		s.lst.Append(&observer)
-		s.cws.Submit(ctx, func() {
+		ctxwatch.Add(ctx, func() {
 			s.mu.Lock()
 			s.lst.Remove(&observer)
 			s.mu.Unlock()
