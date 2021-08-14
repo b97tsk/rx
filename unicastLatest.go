@@ -10,11 +10,11 @@ import (
 // emissions from Subject's Observer part; the previous one will immediately
 // receive an ErrDropped.
 func UnicastLatest() Subject {
-	s := &unicastLatest{}
+	u := &unicastLatest{}
 
 	return Subject{
-		Observable: s.subscribe,
-		Observer:   s.sink,
+		Observable: u.subscribe,
+		Observer:   u.sink,
 	}
 }
 
@@ -27,37 +27,37 @@ type unicastLatest struct {
 	}
 }
 
-func (s *unicastLatest) sink(t Notification) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+func (u *unicastLatest) sink(t Notification) {
+	u.mu.Lock()
+	defer u.mu.Unlock()
 
 	switch {
-	case s.err != nil:
+	case u.err != nil:
 		break
 
 	case t.HasValue:
-		if ctx := s.obs.ctx; ctx != nil {
+		if ctx := u.obs.ctx; ctx != nil {
 			if ctx.Err() != nil {
-				s.obs.ctx, s.obs.sink = nil, nil
+				u.obs.ctx, u.obs.sink = nil, nil
 			} else {
-				s.obs.sink(t)
+				u.obs.sink(t)
 			}
 		}
 
 	default:
-		s.err = errCompleted
+		u.err = errCompleted
 
 		if t.HasError {
-			s.err = t.Error
+			u.err = t.Error
 
-			if s.err == nil {
-				s.err = errNil
+			if u.err == nil {
+				u.err = errNil
 			}
 		}
 
-		obs := s.obs
+		obs := u.obs
 
-		s.obs.ctx, s.obs.sink = nil, nil
+		u.obs.ctx, u.obs.sink = nil, nil
 
 		if ctx := obs.ctx; ctx != nil && ctx.Err() == nil {
 			obs.sink(t)
@@ -65,14 +65,14 @@ func (s *unicastLatest) sink(t Notification) {
 	}
 }
 
-func (s *unicastLatest) subscribe(ctx context.Context, sink Observer) {
-	s.mu.Lock()
+func (u *unicastLatest) subscribe(ctx context.Context, sink Observer) {
+	u.mu.Lock()
 
-	err := s.err
+	err := u.err
 	if err == nil {
-		obs := s.obs
+		obs := u.obs
 
-		s.obs.ctx, s.obs.sink = ctx, sink
+		u.obs.ctx, u.obs.sink = ctx, sink
 
 		if ctx := obs.ctx; ctx != nil && ctx.Err() == nil {
 			err = ErrDropped
@@ -80,7 +80,7 @@ func (s *unicastLatest) subscribe(ctx context.Context, sink Observer) {
 		}
 	}
 
-	s.mu.Unlock()
+	u.mu.Unlock()
 
 	if err != nil {
 		if err == errCompleted {

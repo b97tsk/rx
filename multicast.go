@@ -11,11 +11,11 @@ import (
 // Observers that subscribes to it, which will receive emissions from
 // Subject's Observer part.
 func Multicast() Subject {
-	s := &multicast{}
+	m := &multicast{}
 
 	return Subject{
-		Observable: s.subscribe,
-		Observer:   s.sink,
+		Observable: m.subscribe,
+		Observer:   m.sink,
 	}
 }
 
@@ -25,18 +25,18 @@ type multicast struct {
 	lst observerList
 }
 
-func (s *multicast) sink(t Notification) {
-	s.mu.Lock()
+func (m *multicast) sink(t Notification) {
+	m.mu.Lock()
 
 	switch {
-	case s.err != nil:
-		s.mu.Unlock()
+	case m.err != nil:
+		m.mu.Unlock()
 
 	case t.HasValue:
-		lst := s.lst.Clone()
+		lst := m.lst.Clone()
 		defer lst.Release()
 
-		s.mu.Unlock()
+		m.mu.Unlock()
 
 		for _, observer := range lst.Observers {
 			observer.Sink(t)
@@ -45,19 +45,19 @@ func (s *multicast) sink(t Notification) {
 	default:
 		var lst observerList
 
-		s.lst.Swap(&lst)
+		m.lst.Swap(&lst)
 
-		s.err = errCompleted
+		m.err = errCompleted
 
 		if t.HasError {
-			s.err = t.Error
+			m.err = t.Error
 
-			if s.err == nil {
-				s.err = errNil
+			if m.err == nil {
+				m.err = errNil
 			}
 		}
 
-		s.mu.Unlock()
+		m.mu.Unlock()
 
 		for _, observer := range lst.Observers {
 			observer.Sink(t)
@@ -65,10 +65,10 @@ func (s *multicast) sink(t Notification) {
 	}
 }
 
-func (s *multicast) subscribe(ctx context.Context, sink Observer) {
-	s.mu.Lock()
+func (m *multicast) subscribe(ctx context.Context, sink Observer) {
+	m.mu.Lock()
 
-	err := s.err
+	err := m.err
 	if err == nil {
 		var cancel context.CancelFunc
 
@@ -76,15 +76,15 @@ func (s *multicast) subscribe(ctx context.Context, sink Observer) {
 		sink = sink.WithCancel(cancel).MutexContext(ctx)
 
 		observer := sink
-		s.lst.Append(&observer)
+		m.lst.Append(&observer)
 		ctxwatch.Add(ctx, func() {
-			s.mu.Lock()
-			s.lst.Remove(&observer)
-			s.mu.Unlock()
+			m.mu.Lock()
+			m.lst.Remove(&observer)
+			m.mu.Unlock()
 		})
 	}
 
-	s.mu.Unlock()
+	m.mu.Unlock()
 
 	if err != nil {
 		if err == errCompleted {

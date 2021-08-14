@@ -11,72 +11,72 @@ import (
 
 func TestUnicast(t *testing.T) {
 	t.Run("Normal", func(t *testing.T) {
-		d := rx.Unicast()
+		u := rx.Unicast()
 
 		rx.Just("A", "B", "C").Pipe(
 			AddLatencyToNotifications(1, 1),
-		).Subscribe(context.Background(), d.Observer)
+		).Subscribe(context.Background(), u.Observer)
 
 		NewTestSuite(t).Case(
-			d.Observable,
+			u.Observable,
 			"A", "B", "C", Completed,
 		).Case(
-			d.Observable,
+			u.Observable,
 			Completed,
 		).TestAll()
 	})
 
 	t.Run("EarlyUnsubscribed", func(t *testing.T) {
-		d := rx.Unicast()
+		u := rx.Unicast()
 
 		rx.Just("A", "B", "C").Pipe(
 			AddLatencyToNotifications(1, 1),
-		).Subscribe(context.Background(), d.Observer)
+		).Subscribe(context.Background(), u.Observer)
 
 		NewTestSuite(t).Case(
-			d.Observable.Pipe(operators.Take(2)),
+			u.Observable.Pipe(operators.Take(2)),
 			"A", "B", Completed,
 		).Case(
-			d.Observable,
+			u.Observable,
 			rx.ErrDropped,
 		).Case(
-			d.Observable.Pipe(DelaySubscription(3)),
+			u.Observable.Pipe(DelaySubscription(3)),
 			Completed,
 		).Case(
-			d.Observable,
+			u.Observable,
 			Completed,
 		).TestAll()
 	})
 
 	t.Run("AfterComplete", func(t *testing.T) {
-		d := rx.Unicast()
+		u := rx.Unicast()
 
-		d.Complete()
+		u.Complete()
 
-		Test(t, d.Observable, Completed)
+		Test(t, u.Observable, Completed)
 
-		d.Error(ErrTest)
+		u.Error(ErrTest)
 
-		Test(t, d.Observable, Completed)
+		Test(t, u.Observable, Completed)
 	})
 
 	t.Run("AfterError", func(t *testing.T) {
-		d := rx.Unicast()
+		u := rx.Unicast()
 
-		d.Error(ErrTest)
+		u.Error(ErrTest)
 
-		Test(t, d.Observable, ErrTest)
+		Test(t, u.Observable, ErrTest)
 
-		d.Complete()
+		u.Complete()
 
-		Test(t, d.Observable, ErrTest)
+		Test(t, u.Observable, ErrTest)
 	})
 
 	t.Run("NilError", func(t *testing.T) {
-		d := rx.Unicast()
+		u := rx.Unicast()
 
-		rx.Throw(nil).Subscribe(context.Background(), d.Observer)
+		rx.Throw(nil).Subscribe(context.Background(), u.Observer)
 
-		Test(t, d.Observable, nil)
+		Test(t, u.Observable, nil)
 	})
 }

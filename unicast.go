@@ -9,11 +9,11 @@ import (
 // Observer (the first one subscribes to it), which will receive emissions from
 // Subject's Observer part; the others will immediately receive an ErrDropped.
 func Unicast() Subject {
-	s := &unicast{}
+	u := &unicast{}
 
 	return Subject{
-		Observable: s.subscribe,
-		Observer:   s.sink,
+		Observable: u.subscribe,
+		Observer:   u.sink,
 	}
 }
 
@@ -26,37 +26,37 @@ type unicast struct {
 	}
 }
 
-func (s *unicast) sink(t Notification) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+func (u *unicast) sink(t Notification) {
+	u.mu.Lock()
+	defer u.mu.Unlock()
 
 	switch {
-	case s.err != nil:
+	case u.err != nil:
 		break
 
 	case t.HasValue:
-		if ctx := s.obs.ctx; ctx != nil {
+		if ctx := u.obs.ctx; ctx != nil {
 			if ctx.Err() != nil {
-				s.obs.ctx, s.obs.sink = nil, Noop
+				u.obs.ctx, u.obs.sink = nil, Noop
 			} else {
-				s.obs.sink(t)
+				u.obs.sink(t)
 			}
 		}
 
 	default:
-		s.err = errCompleted
+		u.err = errCompleted
 
 		if t.HasError {
-			s.err = t.Error
+			u.err = t.Error
 
-			if s.err == nil {
-				s.err = errNil
+			if u.err == nil {
+				u.err = errNil
 			}
 		}
 
-		obs := s.obs
+		obs := u.obs
 
-		s.obs.ctx, s.obs.sink = nil, nil
+		u.obs.ctx, u.obs.sink = nil, nil
 
 		if ctx := obs.ctx; ctx != nil && ctx.Err() == nil {
 			obs.sink(t)
@@ -64,19 +64,19 @@ func (s *unicast) sink(t Notification) {
 	}
 }
 
-func (s *unicast) subscribe(ctx context.Context, sink Observer) {
-	s.mu.Lock()
+func (u *unicast) subscribe(ctx context.Context, sink Observer) {
+	u.mu.Lock()
 
-	err := s.err
+	err := u.err
 	if err == nil {
-		if s.obs.sink == nil {
-			s.obs.ctx, s.obs.sink = ctx, sink
+		if u.obs.sink == nil {
+			u.obs.ctx, u.obs.sink = ctx, sink
 		} else {
 			err = ErrDropped
 		}
 	}
 
-	s.mu.Unlock()
+	u.mu.Unlock()
 
 	if err != nil {
 		if err == errCompleted {

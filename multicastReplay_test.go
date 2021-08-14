@@ -12,32 +12,32 @@ import (
 
 func TestMulticastReplay(t *testing.T) {
 	t.Run("BufferSize", func(t *testing.T) {
-		d := rx.MulticastReplay(&rx.ReplayOptions{BufferSize: 3})
+		m := rx.MulticastReplay(&rx.ReplayOptions{BufferSize: 3})
 
 		subscribeThenComplete := rx.Observable(
 			func(ctx context.Context, sink rx.Observer) {
 				sink = sink.Mutex()
-				d.Subscribe(ctx, sink)
+				m.Subscribe(ctx, sink)
 				sink.Complete()
 			},
 		)
 
-		d.Next("A")
+		m.Next("A")
 
 		Test(t, subscribeThenComplete, "A", Completed)
 
-		d.Next("B")
+		m.Next("B")
 
 		Test(t, subscribeThenComplete, "A", "B", Completed)
 
-		d.Next("C")
+		m.Next("C")
 
 		Test(t, subscribeThenComplete, "A", "B", "C", Completed)
 
 		ctx, cancel := context.WithTimeout(context.Background(), Step(2))
 		defer cancel()
 
-		go d.Observable.Pipe(
+		go m.Observable.Pipe(
 			operators.DoOnNext(
 				func(interface{}) {
 					time.Sleep(Step(2))
@@ -47,45 +47,45 @@ func TestMulticastReplay(t *testing.T) {
 
 		time.Sleep(Step(1))
 
-		d.Next("D")
+		m.Next("D")
 
 		time.Sleep(Step(2))
 
 		Test(t, subscribeThenComplete, "B", "C", "D", Completed)
 
-		d.Error(ErrTest)
+		m.Error(ErrTest)
 
 		Test(t, subscribeThenComplete, ErrTest)
 	})
 
 	t.Run("WindowTime", func(t *testing.T) {
-		d := rx.MulticastReplay(&rx.ReplayOptions{WindowTime: Step(5)})
+		m := rx.MulticastReplay(&rx.ReplayOptions{WindowTime: Step(5)})
 
 		subscribeThenComplete := rx.Observable(
 			func(ctx context.Context, sink rx.Observer) {
 				sink = sink.Mutex()
-				d.Subscribe(ctx, sink)
+				m.Subscribe(ctx, sink)
 				sink.Complete()
 			},
 		)
 
-		d.Next("A")
+		m.Next("A")
 
 		Test(t, subscribeThenComplete, "A", Completed)
 
 		time.Sleep(Step(2))
-		d.Next("B")
+		m.Next("B")
 
 		Test(t, subscribeThenComplete, "A", "B", Completed)
 
 		time.Sleep(Step(2))
-		d.Next("C")
+		m.Next("C")
 
 		Test(t, subscribeThenComplete, "A", "B", "C", Completed)
 
 		time.Sleep(Step(2))
-		d.Next("D")
-		d.Complete()
+		m.Next("D")
+		m.Complete()
 
 		Test(t, subscribeThenComplete, "B", "C", "D", Completed)
 
@@ -103,34 +103,34 @@ func TestMulticastReplay(t *testing.T) {
 	})
 
 	t.Run("AfterComplete", func(t *testing.T) {
-		d := rx.MulticastReplay(nil)
+		m := rx.MulticastReplay(nil)
 
-		d.Complete()
+		m.Complete()
 
-		Test(t, d.Observable, Completed)
+		Test(t, m.Observable, Completed)
 
-		d.Error(ErrTest)
+		m.Error(ErrTest)
 
-		Test(t, d.Observable, Completed)
+		Test(t, m.Observable, Completed)
 	})
 
 	t.Run("AfterError", func(t *testing.T) {
-		d := rx.MulticastReplay(nil)
+		m := rx.MulticastReplay(nil)
 
-		d.Error(ErrTest)
+		m.Error(ErrTest)
 
-		Test(t, d.Observable, ErrTest)
+		Test(t, m.Observable, ErrTest)
 
-		d.Complete()
+		m.Complete()
 
-		Test(t, d.Observable, ErrTest)
+		Test(t, m.Observable, ErrTest)
 	})
 
 	t.Run("NilError", func(t *testing.T) {
-		d := rx.MulticastReplayFactory(nil)()
+		m := rx.MulticastReplayFactory(nil)()
 
-		rx.Throw(nil).Subscribe(context.Background(), d.Observer)
+		rx.Throw(nil).Subscribe(context.Background(), m.Observer)
 
-		Test(t, d.Observable, nil)
+		Test(t, m.Observable, nil)
 	})
 }

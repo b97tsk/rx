@@ -15,79 +15,79 @@ func TestMulticast(t *testing.T) {
 	}
 
 	t.Run("Normal", func(t *testing.T) {
-		d := rx.Multicast()
+		m := rx.Multicast()
 
 		rx.Just(3, 4, 5).Pipe(
 			AddLatencyToValues(1, 1),
-		).Subscribe(context.Background(), d.Observer)
+		).Subscribe(context.Background(), m.Observer)
 
 		NewTestSuite(t).Case(
 			rx.Zip(
-				d.Observable,
-				d.Pipe(operators.Scan(sum)),
+				m.Observable,
+				m.Pipe(operators.Scan(sum)),
 			).Pipe(
 				ToString(),
 			),
 			"[3 3]", "[4 7]", "[5 12]", Completed,
 		).Case(
-			d.Observable,
+			m.Observable,
 			Completed,
 		).TestAll()
 	})
 
 	t.Run("Error", func(t *testing.T) {
-		d := rx.Multicast()
+		m := rx.Multicast()
 
 		rx.Concat(
 			rx.Just(3, 4, 5),
 			rx.Throw(ErrTest),
 		).Pipe(
 			AddLatencyToNotifications(1, 1),
-		).Subscribe(context.Background(), d.Observer)
+		).Subscribe(context.Background(), m.Observer)
 
 		NewTestSuite(t).Case(
 			rx.Zip(
-				d.Observable,
-				d.Pipe(operators.Scan(sum)),
+				m.Observable,
+				m.Pipe(operators.Scan(sum)),
 			).Pipe(
 				ToString(),
 			),
 			"[3 3]", "[4 7]", "[5 12]", ErrTest,
 		).Case(
-			d.Observable,
+			m.Observable,
 			ErrTest,
 		).TestAll()
 	})
 
 	t.Run("AfterComplete", func(t *testing.T) {
-		d := rx.Multicast()
+		m := rx.Multicast()
 
-		d.Complete()
+		m.Complete()
 
-		Test(t, d.Observable, Completed)
+		Test(t, m.Observable, Completed)
 
-		d.Error(ErrTest)
+		m.Error(ErrTest)
 
-		Test(t, d.Observable, Completed)
+		Test(t, m.Observable, Completed)
 	})
 
 	t.Run("AfterError", func(t *testing.T) {
-		d := rx.Multicast()
+		m := rx.Multicast()
 
-		d.Error(ErrTest)
+		m.Error(ErrTest)
 
-		Test(t, d.Observable, ErrTest)
+		Test(t, m.Observable, ErrTest)
 
-		d.Complete()
+		m.Complete()
 
-		Test(t, d.Observable, ErrTest)
+		Test(t, m.Observable, ErrTest)
 	})
 
 	t.Run("NilError", func(t *testing.T) {
-		d := rx.Multicast()
+		m := rx.Multicast()
 
-		rx.Throw(nil).Subscribe(context.Background(), d.Observer)
+		rx.Throw(nil).Subscribe(context.Background(), m.Observer)
 
-		Test(t, d.Observable, nil)
+		Test(t, m.Observable, nil)
 	})
 }

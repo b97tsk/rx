@@ -19,15 +19,15 @@ type ReplayOptions struct {
 // Observers that subscribes to it, which will receive buffered emissions and
 // new emissions from Subject's Observer part.
 func MulticastReplay(opts *ReplayOptions) Subject {
-	s := &multicastReplay{}
+	m := &multicastReplay{}
 
 	if opts != nil {
-		s.ReplayOptions = *opts
+		m.ReplayOptions = *opts
 	}
 
 	return Subject{
-		Observable: s.subscribe,
-		Observer:   s.sink,
+		Observable: m.subscribe,
+		Observer:   m.sink,
 	}
 }
 
@@ -49,34 +49,34 @@ type multicastReplayElement struct {
 	Deadline time.Time
 }
 
-func (s *multicastReplay) bufferForRead() (queue.Queue, *atomic.Uint32) {
-	refs := s.bufferRefs
+func (m *multicastReplay) bufferForRead() (queue.Queue, *atomic.Uint32) {
+	refs := m.bufferRefs
 
 	if refs == nil {
 		refs = new(atomic.Uint32)
-		s.bufferRefs = refs
+		m.bufferRefs = refs
 	}
 
 	refs.Add(1)
 
-	return s.buffer, refs
+	return m.buffer, refs
 }
 
-func (s *multicastReplay) bufferForWrite() *queue.Queue {
-	refs := s.bufferRefs
+func (m *multicastReplay) bufferForWrite() *queue.Queue {
+	refs := m.bufferRefs
 
 	if refs != nil && !refs.Equals(0) {
-		s.buffer = s.buffer.Clone()
-		s.bufferRefs = nil
+		m.buffer = m.buffer.Clone()
+		m.bufferRefs = nil
 	}
 
-	return &s.buffer
+	return &m.buffer
 }
 
-func (s *multicastReplay) trimBuffer(b *queue.Queue) {
-	if s.WindowTime > 0 {
+func (m *multicastReplay) trimBuffer(b *queue.Queue) {
+	if m.WindowTime > 0 {
 		if b == nil {
-			b = s.bufferForWrite()
+			b = m.bufferForWrite()
 		}
 
 		now := time.Now()
@@ -90,9 +90,9 @@ func (s *multicastReplay) trimBuffer(b *queue.Queue) {
 		}
 	}
 
-	if bufferSize := s.BufferSize; bufferSize > 0 {
+	if bufferSize := m.BufferSize; bufferSize > 0 {
 		if b == nil {
-			b = s.bufferForWrite()
+			b = m.bufferForWrite()
 		}
 
 		for b.Len() > bufferSize {
@@ -101,28 +101,28 @@ func (s *multicastReplay) trimBuffer(b *queue.Queue) {
 	}
 }
 
-func (s *multicastReplay) sink(t Notification) {
-	s.mu.Lock()
+func (m *multicastReplay) sink(t Notification) {
+	m.mu.Lock()
 
 	switch {
-	case s.err != nil:
-		s.mu.Unlock()
+	case m.err != nil:
+		m.mu.Unlock()
 
 	case t.HasValue:
-		lst := s.lst.Clone()
+		lst := m.lst.Clone()
 		defer lst.Release()
 
 		var deadline time.Time
 
-		if windowTime := s.WindowTime; windowTime > 0 {
+		if windowTime := m.WindowTime; windowTime > 0 {
 			deadline = time.Now().Add(windowTime)
 		}
 
-		b := s.bufferForWrite()
+		b := m.bufferForWrite()
 		b.Push(multicastReplayElement{t.Value, deadline})
-		s.trimBuffer(b)
+		m.trimBuffer(b)
 
-		s.mu.Unlock()
+		m.mu.Unlock()
 
 		for _, observer := range lst.Observers {
 			observer.Sink(t)
@@ -131,21 +131,21 @@ func (s *multicastReplay) sink(t Notification) {
 	default:
 		var lst observerList
 
-		s.lst.Swap(&lst)
+		m.lst.Swap(&lst)
 
-		s.err = errCompleted
+		m.err = errCompleted
 
 		if t.HasError {
-			s.err = t.Error
+			m.err = t.Error
 
-			if s.err == nil {
-				s.err = errNil
+			if m.err == nil {
+				m.err = errNil
 			}
 
-			s.buffer.Init()
+			m.buffer.Init()
 		}
 
-		s.mu.Unlock()
+		m.mu.Unlock()
 
 		for _, observer := range lst.Observers {
 			observer.Sink(t)
@@ -153,10 +153,10 @@ func (s *multicastReplay) sink(t Notification) {
 	}
 }
 
-func (s *multicastReplay) subscribe(ctx context.Context, sink Observer) {
-	s.mu.Lock()
+func (m *multicastReplay) subscribe(ctx context.Context, sink Observer) {
+	m.mu.Lock()
 
-	err := s.err
+	err := m.err
 	if err == nil {
 		var cancel context.CancelFunc
 
@@ -164,20 +164,20 @@ func (s *multicastReplay) subscribe(ctx context.Context, sink Observer) {
 		sink = sink.WithCancel(cancel).MutexContext(ctx)
 
 		observer := sink
-		s.lst.Append(&observer)
+		m.lst.Append(&observer)
 		ctxwatch.Add(ctx, func() {
-			s.mu.Lock()
-			s.lst.Remove(&observer)
-			s.mu.Unlock()
+			m.mu.Lock()
+			m.lst.Remove(&observer)
+			m.mu.Unlock()
 		})
 	}
 
-	s.trimBuffer(nil)
+	m.trimBuffer(nil)
 
-	b, refs := s.bufferForRead()
+	b, refs := m.bufferForRead()
 	defer refs.Sub(1)
 
-	s.mu.Unlock()
+	m.mu.Unlock()
 
 	for i, j := 0, b.Len(); i < j; i++ {
 		if ctx.Err() != nil {
