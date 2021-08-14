@@ -44,7 +44,9 @@ func startService() watchService {
 
 	go func() {
 		cases := []reflect.SelectCase{{}}
-		itemCounter := atomic.FromUint32(0)
+		itemCounter := atomic.FromInt32(0)
+		workloadPerWorker := atomic.FromInt32(5)
+		oldWorkloadPerWorker := 3
 
 		for item := range cout {
 			itemValue := reflect.ValueOf(item)
@@ -54,7 +56,7 @@ func startService() watchService {
 			}
 
 			dir0 := reflect.SelectSend
-			if n := len(cases); int(itemCounter.Load()) >= (n-1)*(1<<(n+1)) {
+			if n := len(cases); int(itemCounter.Load()) >= (n-1)*oldWorkloadPerWorker {
 				dir0 = reflect.SelectDefault
 			}
 
@@ -78,7 +80,11 @@ func startService() watchService {
 					Send: itemValue,
 				})
 
-				go startWorker(workerValue, &itemCounter)
+				w := workloadPerWorker.Load()
+				workloadPerWorker.Store(w + int32(oldWorkloadPerWorker))
+				oldWorkloadPerWorker = int(w)
+
+				go startWorker(workerValue, &itemCounter, &workloadPerWorker)
 			}
 		}
 	}()
@@ -86,11 +92,18 @@ func startService() watchService {
 	return cin
 }
 
-func startWorker(workerChan reflect.Value, itemCounter *atomic.Uint32) {
-	cases := []reflect.SelectCase{{Dir: reflect.SelectRecv, Chan: workerChan}}
+func startWorker(workerChan reflect.Value, itemCounter *atomic.Int32, workloadPerWorker *atomic.Int32) {
+	cases := []reflect.SelectCase{{Dir: reflect.SelectRecv}}
 	items := []*watchItem{nil}
 
 	for {
+		var chan0 reflect.Value
+		if len(items)-1 < int(workloadPerWorker.Load()) {
+			chan0 = workerChan
+		}
+
+		cases[0].Chan = chan0
+
 		switch i, v, _ := reflect.Select(cases); i {
 		case 0:
 			item := v.Interface().(*watchItem)
