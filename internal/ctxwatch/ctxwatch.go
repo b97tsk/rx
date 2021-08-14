@@ -45,6 +45,7 @@ func startService() watchService {
 	go func() {
 		cases := []reflect.SelectCase{{}}
 		itemCounter := atomic.FromInt32(0)
+		workloadDoneChans := sync.Map{}
 		workloadPerWorker := atomic.FromInt32(5)
 		oldWorkloadPerWorker := 3
 
@@ -81,10 +82,21 @@ func startService() watchService {
 				})
 
 				w := workloadPerWorker.Load()
-				workloadPerWorker.Store(w + int32(oldWorkloadPerWorker))
+				w2 := w + int32(oldWorkloadPerWorker)
 				oldWorkloadPerWorker = int(w)
 
-				go startWorker(workerValue, &itemCounter, &workloadPerWorker)
+				workloadDoneChans.Store(w2, make(chan struct{}))
+				workloadPerWorker.Store(w2)
+
+				if done, loaded := workloadDoneChans.LoadAndDelete(w); loaded {
+					close(done.(chan struct{}))
+				}
+
+				go startWorker(workerValue, &itemCounter, &workloadDoneChans, &workloadPerWorker)
+			}
+
+			for i, j := 1, len(cases); i < j; i++ {
+				cases[i].Send = reflect.Value{}
 			}
 		}
 	}()
@@ -92,21 +104,35 @@ func startService() watchService {
 	return cin
 }
 
-func startWorker(workerChan reflect.Value, itemCounter *atomic.Int32, workloadPerWorker *atomic.Int32) {
+func startWorker(
+	workerChan reflect.Value,
+	itemCounter *atomic.Int32,
+	workloadDoneChans *sync.Map,
+	workloadPerWorker *atomic.Int32,
+) {
 	cases := []reflect.SelectCase{{Dir: reflect.SelectRecv}}
 	items := []*watchItem{nil}
 
 	for {
-		var chan0 reflect.Value
-		if len(items)-1 < int(workloadPerWorker.Load()) {
-			chan0 = workerChan
+		chan0 := workerChan
+
+		if w := workloadPerWorker.Load(); int(w) < len(items) {
+			done, ok := workloadDoneChans.Load(w)
+			if !ok { // workloadPerWorker has just changed.
+				continue
+			}
+
+			chan0 = reflect.ValueOf(done)
 		}
 
 		cases[0].Chan = chan0
 
 		switch i, v, _ := reflect.Select(cases); i {
 		case 0:
-			item := v.Interface().(*watchItem)
+			item, ok := v.Interface().(*watchItem)
+			if !ok {
+				break
+			}
 
 			cases = append(cases, reflect.SelectCase{
 				Dir:  reflect.SelectRecv,
