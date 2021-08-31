@@ -2,6 +2,7 @@ package rx_test
 
 import (
 	"context"
+	"runtime"
 	"testing"
 	"time"
 
@@ -132,5 +133,15 @@ func TestMulticastReplay(t *testing.T) {
 		rx.Throw(nil).Subscribe(context.Background(), m.Observer)
 
 		Test(t, m.Observable, nil)
+	})
+
+	t.Run("Finalizer", func(t *testing.T) {
+		m := rx.MulticastReplay(nil)
+
+		for i := 0; i < 10; i++ {
+			m.Subscribe(context.Background(), rx.Noop)
+		}
+
+		runtime.GC()
 	})
 }

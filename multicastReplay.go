@@ -2,6 +2,7 @@ package rx
 
 import (
 	"context"
+	"runtime"
 	"time"
 
 	"github.com/b97tsk/rx/internal/atomic"
@@ -25,10 +26,20 @@ func MulticastReplay(opts *ReplayOptions) Subject {
 		m.ReplayOptions = *opts
 	}
 
+	runtime.SetFinalizer(&m, multicastReplayFinalizer)
+
 	return Subject{
-		Observable: m.subscribe,
-		Observer:   m.sink,
+		Observable: func(ctx context.Context, sink Observer) {
+			m.subscribe(ctx, sink)
+		},
+		Observer: func(t Notification) {
+			m.sink(t)
+		},
 	}
+}
+
+func multicastReplayFinalizer(m **multicastReplay) {
+	Observer((*m).sink).Error(errFinalized)
 }
 
 // MulticastReplayFactory returns a SubjectFactory that wraps calls to

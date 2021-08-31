@@ -17,5 +17,6 @@ var (
 // Errors for internal use only.
 var (
 	errCompleted = errors.New("completed")
+	errFinalized = errors.New("finalized")
 	errNil       = errors.New("nil")
 )

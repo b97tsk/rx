@@ -95,6 +95,10 @@ func (sink Observer) WithCancel(cancel context.CancelFunc) Observer {
 			cancel()
 		}
 
+		if t.HasError && t.Error == errFinalized {
+			return
+		}
+
 		sink(t)
 	}
 }

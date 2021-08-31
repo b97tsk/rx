@@ -2,6 +2,7 @@ package rx
 
 import (
 	"context"
+	"runtime"
 	"sync"
 
 	"github.com/b97tsk/rx/internal/ctxwatch"
@@ -13,10 +14,20 @@ import (
 func Multicast() Subject {
 	m := &multicast{}
 
+	runtime.SetFinalizer(&m, multicastFinalizer)
+
 	return Subject{
-		Observable: m.subscribe,
-		Observer:   m.sink,
+		Observable: func(ctx context.Context, sink Observer) {
+			m.subscribe(ctx, sink)
+		},
+		Observer: func(t Notification) {
+			m.sink(t)
+		},
 	}
+}
+
+func multicastFinalizer(m **multicast) {
+	Observer((*m).sink).Error(errFinalized)
 }
 
 type multicast struct {
