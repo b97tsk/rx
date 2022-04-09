@@ -64,15 +64,14 @@ func (obs switchMapObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 				childCancel()
 			}
 
-			var childCtx context.Context
-
-			childCtx, childCancel = context.WithCancel(ctx)
+			ctx, cancel := context.WithCancel(ctx)
+			childCancel = cancel
 
 			obs1 := obs.Project(t.Value, sourceIndex)
 
-			obs1.Subscribe(childCtx, func(t rx.Notification) {
+			obs1.Subscribe(ctx, func(t rx.Notification) {
 				if !t.HasValue {
-					childCancel()
+					cancel()
 				}
 
 				if t.HasValue || t.HasError {

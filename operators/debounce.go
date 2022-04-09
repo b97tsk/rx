@@ -63,16 +63,15 @@ func (obs debounceObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 					scheduleCancel()
 				}
 
-				var scheduleCtx context.Context
-
-				scheduleCtx, scheduleCancel = context.WithCancel(ctx)
+				ctx, cancel := context.WithCancel(ctx)
+				scheduleCancel = cancel
 
 				var observer rx.Observer
 
 				observer = func(t rx.Notification) {
 					observer = rx.Noop
 
-					scheduleCancel()
+					cancel()
 
 					if critical.Enter(&x.Section) {
 						switch {
@@ -101,7 +100,7 @@ func (obs debounceObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 
 				obs1 := obs.DurationSelector(t.Value)
 
-				obs1.Subscribe(scheduleCtx, observer.Sink)
+				obs1.Subscribe(ctx, observer.Sink)
 
 			case t.HasError:
 				critical.Close(&x.Section)
