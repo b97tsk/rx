@@ -39,7 +39,7 @@ func MulticastReplay(opts *ReplayOptions) Subject {
 }
 
 func multicastReplayFinalizer(m **multicastReplay) {
-	Observer((*m).sink).Error(errFinalized)
+	go Observer((*m).sink).Error(errFinalized)
 }
 
 // MulticastReplayFactory returns a SubjectFactory that wraps calls to

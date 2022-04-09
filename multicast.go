@@ -27,7 +27,7 @@ func Multicast() Subject {
 }
 
 func multicastFinalizer(m **multicast) {
-	Observer((*m).sink).Error(errFinalized)
+	go Observer((*m).sink).Error(errFinalized)
 }
 
 type multicast struct {
