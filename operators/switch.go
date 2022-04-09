@@ -5,6 +5,7 @@ import (
 
 	"github.com/b97tsk/rx"
 	"github.com/b97tsk/rx/internal/atomic"
+	"github.com/b97tsk/rx/internal/critical"
 )
 
 // SwitchAll converts a higher-order Observable into a first-order Observable
@@ -44,7 +45,15 @@ type switchMapObservable struct {
 func (obs switchMapObservable) Subscribe(ctx context.Context, sink rx.Observer) {
 	ctx, cancel := context.WithCancel(ctx)
 
-	sink = sink.WithCancel(cancel).Mutex()
+	var cs critical.Section
+
+	sinkAndDone := func(t rx.Notification) {
+		if critical.Enter(&cs) {
+			critical.Close(&cs)
+			cancel()
+			sink(t)
+		}
+	}
 
 	var childCancel context.CancelFunc
 
@@ -70,29 +79,35 @@ func (obs switchMapObservable) Subscribe(ctx context.Context, sink rx.Observer) 
 			obs1 := obs.Project(t.Value, sourceIndex)
 
 			obs1.Subscribe(ctx, func(t rx.Notification) {
-				if !t.HasValue {
-					cancel()
-				}
+				if t.HasValue {
+					if critical.Enter(&cs) {
+						defer critical.Leave(&cs)
 
-				if t.HasValue || t.HasError {
-					sink(t)
+						if activeIndex.Equals(int64(sourceIndex)) {
+							sink(t)
+						}
+					}
+
 					return
 				}
 
-				if activeIndex.Cas(int64(sourceIndex), -1) &&
-					sourceCompleted.Equals(1) && activeIndex.Equals(-1) {
-					sink(t)
+				cancel()
+
+				if activeIndex.Cas(int64(sourceIndex), -1) {
+					if t.HasError || sourceCompleted.Equals(1) && activeIndex.Equals(-1) {
+						sinkAndDone(t)
+					}
 				}
 			})
 
 		case t.HasError:
-			sink(t)
+			sinkAndDone(t)
 
 		default:
 			sourceCompleted.Store(1)
 
 			if activeIndex.Equals(-1) {
-				sink(t)
+				sinkAndDone(t)
 			}
 		}
 	})
