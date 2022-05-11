@@ -30,6 +30,19 @@ func (sink *Observer[T]) Sink(n Notification[T]) {
 	(*sink)(n)
 }
 
+// WithCancel creates an Observer that passes incoming emissions to sink and,
+// when an error or a completion passes in, calls a specified function just
+// before passing it to sink.
+func (sink Observer[T]) WithCancel(cancel func()) Observer[T] {
+	return func(n Notification[T]) {
+		if !n.HasValue {
+			cancel()
+		}
+
+		sink(n)
+	}
+}
+
 // Noop gives you an Observer that does nothing.
 func Noop[T any](Notification[T]) {}
 
