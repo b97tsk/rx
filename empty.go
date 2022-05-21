@@ -2,6 +2,8 @@ package rx
 
 import (
 	"context"
+
+	"github.com/b97tsk/rx/internal/ctxwatch"
 )
 
 // Empty returns an Observable that emits no items to the Observer and
@@ -19,7 +21,13 @@ func Never[T any]() Observable[T] {
 	return never[T]
 }
 
-func never[T any](ctx context.Context, sink Observer[T]) {}
+func never[T any](ctx context.Context, sink Observer[T]) {
+	if ctx.Done() != nil {
+		ctxwatch.Add(ctx, func(ctx context.Context) {
+			sink.Error(ctx.Err())
+		})
+	}
+}
 
 // Throw creates an Observable that emits no items to the Observer and
 // immediately throws a specified error.
