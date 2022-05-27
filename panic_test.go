@@ -9,15 +9,21 @@ import (
 func TestPanic(t *testing.T) {
 	t.Parallel()
 
+	shouldPanic(t, func() { _ = rx.Contains[any](nil) }, "Contains with cond == nil")
+
 	shouldPanic(t, func() { _ = rx.Do[any](nil) }, "Do with tap == nil")
 	shouldPanic(t, func() { _ = rx.DoOnNext[any](nil) }, "DoOnNext with f == nil")
 	shouldPanic(t, func() { _ = rx.DoOnComplete[any](nil) }, "DoOnComplete with f == nil")
 	shouldPanic(t, func() { _ = rx.DoOnError[any](nil) }, "DoOnError with f == nil")
 	shouldPanic(t, func() { _ = rx.DoOnErrorOrComplete[any](nil) }, "DoOnErrorOrComplete with f == nil")
 
+	shouldPanic(t, func() { _ = rx.Every[any](nil) }, "Every with cond == nil")
+
 	shouldPanic(t, func() { _ = rx.Filter[any](nil) }, "Filter with cond == nil")
 	shouldPanic(t, func() { _ = rx.FilterOut[any](nil) }, "FilterOut with cond == nil")
 	shouldPanic(t, func() { _ = rx.FilterMap[any, any](nil) }, "FilterMap with cond == nil")
+
+	shouldPanic(t, func() { _ = rx.Find[any](nil) }, "Find with cond == nil")
 
 	shouldPanic(t, func() { _ = rx.Map[any, any](nil) }, "Map with proj == nil")
 
