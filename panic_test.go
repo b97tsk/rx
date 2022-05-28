@@ -33,6 +33,8 @@ func TestPanic(t *testing.T) {
 	shouldPanic(t, func() { _ = rx.SkipUntil[any, any](nil) }, "SkipUntil with notifier == nil")
 	shouldPanic(t, func() { _ = rx.SkipWhile[any](nil) }, "SkipWhile with cond == nil")
 
+	shouldPanic(t, func() { _ = rx.SwitchIfEmpty[any](nil) }, "SwitchIfEmpty with obs == nil")
+
 	shouldPanic(t, func() { _ = rx.TakeUntil[any, any](nil) }, "TakeUntil with notifier == nil")
 	shouldPanic(t, func() { _ = rx.TakeWhile[any](nil) }, "TakeWhile with cond == nil")
 
