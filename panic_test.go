@@ -9,6 +9,9 @@ import (
 func TestPanic(t *testing.T) {
 	t.Parallel()
 
+	shouldPanic(t, func() { _ = rx.Catch[any](nil) }, "Catch with selector == nil")
+	shouldPanic(t, func() { _ = rx.OnErrorResumeWith[any](nil) }, "OnErrorResumeWith with obs == nil")
+
 	shouldPanic(t, func() { _ = rx.Contains[any](nil) }, "Contains with cond == nil")
 
 	shouldPanic(t, func() { _ = rx.Do[any](nil) }, "Do with tap == nil")

@@ -1,0 +1,85 @@
+package rx
+
+import (
+	"context"
+)
+
+// Catch catches errors on the Observable to be handled by returning a new
+// Observable.
+func Catch[T any](selector func(err error) Observable[T]) Operator[T, T] {
+	if selector == nil {
+		panic("selector == nil")
+	}
+
+	return catch(selector)
+}
+
+func catch[T any](selector func(err error) Observable[T]) Operator[T, T] {
+	return AsOperator(
+		func(source Observable[T]) Observable[T] {
+			return func(ctx context.Context, sink Observer[T]) {
+				source.Subscribe(ctx, func(n Notification[T]) {
+					switch {
+					case n.HasValue:
+						sink(n)
+					case n.HasError:
+						obs := selector(n.Error)
+						obs.Subscribe(ctx, sink)
+					default:
+						sink(n)
+					}
+				})
+			}
+		},
+	)
+}
+
+// OnErrorResumeWith mirrors the source or specified Observable if the source
+// throws an error.
+func OnErrorResumeWith[T any](obs Observable[T]) Operator[T, T] {
+	if obs == nil {
+		panic("obs == nil")
+	}
+
+	return onErrorResumeWith(obs)
+}
+
+func onErrorResumeWith[T any](obs Observable[T]) Operator[T, T] {
+	return AsOperator(
+		func(source Observable[T]) Observable[T] {
+			return func(ctx context.Context, sink Observer[T]) {
+				source.Subscribe(ctx, func(n Notification[T]) {
+					switch {
+					case n.HasValue:
+						sink(n)
+					case n.HasError:
+						obs.Subscribe(ctx, sink)
+					default:
+						sink(n)
+					}
+				})
+			}
+		},
+	)
+}
+
+// OnErrorComplete mirrors the source Observable or completes if the source
+// throws an error.
+func OnErrorComplete[T any]() Operator[T, T] {
+	return AsOperator(onErrorComplete[T])
+}
+
+func onErrorComplete[T any](source Observable[T]) Observable[T] {
+	return func(ctx context.Context, sink Observer[T]) {
+		source.Subscribe(ctx, func(n Notification[T]) {
+			switch {
+			case n.HasValue:
+				sink(n)
+			case n.HasError:
+				sink.Complete()
+			default:
+				sink(n)
+			}
+		})
+	}
+}
