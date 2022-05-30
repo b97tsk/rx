@@ -9,10 +9,19 @@ import (
 func TestPanic(t *testing.T) {
 	t.Parallel()
 
+	proj := func(v any) any { return v }
+
 	shouldPanic(t, func() { _ = rx.Catch[any](nil) }, "Catch with selector == nil")
 	shouldPanic(t, func() { _ = rx.OnErrorResumeWith[any](nil) }, "OnErrorResumeWith with obs == nil")
 
+	shouldPanic(t, func() { _ = rx.Compact[any](nil) }, "Compact with eq == nil")
+	shouldPanic(t, func() { _ = rx.CompactComparableKey[any, string](nil) }, "CompactComparableKey with proj == nil")
+	shouldPanic(t, func() { _ = rx.CompactKey[any, any](nil, nil) }, "CompactKey with proj == nil")
+	shouldPanic(t, func() { _ = rx.CompactKey(proj, nil) }, "CompactKey with eq == nil")
+
 	shouldPanic(t, func() { _ = rx.Contains[any](nil) }, "Contains with cond == nil")
+
+	shouldPanic(t, func() { _ = rx.Distinct[any, string](nil) }, "Distinct with proj == nil")
 
 	shouldPanic(t, func() { _ = rx.Do[any](nil) }, "Do with tap == nil")
 	shouldPanic(t, func() { _ = rx.DoOnNext[any](nil) }, "DoOnNext with f == nil")
