@@ -2,8 +2,10 @@ package rx
 
 import (
 	"context"
+	"sync"
 
 	"github.com/b97tsk/rx/internal/atomic"
+	"github.com/b97tsk/rx/internal/queue"
 )
 
 // Merge creates an Observable that concurrently emits all values from every
@@ -43,4 +45,155 @@ func (some observables[T]) Merge(ctx context.Context, sink Observer[T]) {
 	for _, obs := range some {
 		go obs.Subscribe(ctx, observer)
 	}
+}
+
+// MergeAll flattens a higher-order Observable into a first-order Observable
+// which concurrently delivers all values that are emitted on the inner
+// Observables.
+func MergeAll[_ Observable[T], T any]() MergeMapOperator[Observable[T], T] {
+	return MergeMapOperator[Observable[T], T]{
+		opts: mergeMapConfig[Observable[T], T]{
+			Project:     identity[Observable[T]],
+			Concurrency: -1,
+		},
+	}
+}
+
+// MergeMap converts the source Observable into a higher-order Observable,
+// by projecting each source value to an Observable, then flattens it into
+// a first-order Observable using MergeAll.
+func MergeMap[T, R any](proj func(v T) Observable[R]) MergeMapOperator[T, R] {
+	if proj == nil {
+		panic("proj == nil")
+	}
+
+	return MergeMapOperator[T, R]{
+		opts: mergeMapConfig[T, R]{
+			Project:     proj,
+			Concurrency: -1,
+		},
+	}
+}
+
+// MergeMapTo converts the source Observable into a higher-order Observable,
+// by projecting each source value to the same Observable, then flattens it
+// into a first-order Observable using MergeAll.
+func MergeMapTo[T, R any](inner Observable[R]) MergeMapOperator[T, R] {
+	if inner == nil {
+		panic("inner == nil")
+	}
+
+	return MergeMapOperator[T, R]{
+		opts: mergeMapConfig[T, R]{
+			Project:     func(T) Observable[R] { return inner },
+			Concurrency: -1,
+		},
+	}
+}
+
+type mergeMapConfig[T, R any] struct {
+	Project     func(T) Observable[R]
+	Concurrency int
+}
+
+// MergeMapOperator is an Operator type for MergeMap.
+type MergeMapOperator[T, R any] struct {
+	opts mergeMapConfig[T, R]
+}
+
+// WithConcurrency sets Concurrency option to a given value.
+// It must not be zero. The default value is -1 (unlimited).
+func (op MergeMapOperator[T, R]) WithConcurrency(n int) MergeMapOperator[T, R] {
+	if n == 0 {
+		panic("n == 0")
+	}
+
+	op.opts.Concurrency = n
+
+	return op
+}
+
+// Apply implements the Operator interface.
+func (op MergeMapOperator[T, R]) Apply(source Observable[T]) Observable[R] {
+	return mergeMapObservable[T, R]{source, op.opts}.Subscribe
+}
+
+// AsOperator converts op to an Operator.
+//
+// Once type inference has improved in Go, this method will be removed.
+func (op MergeMapOperator[T, R]) AsOperator() Operator[T, R] { return op }
+
+type mergeMapObservable[T, R any] struct {
+	Source Observable[T]
+	mergeMapConfig[T, R]
+}
+
+func (obs mergeMapObservable[T, R]) Subscribe(ctx context.Context, sink Observer[R]) {
+	ctx, cancel := context.WithCancel(ctx)
+
+	sink = sink.WithCancel(cancel).Mutex()
+
+	var x struct {
+		sync.Mutex
+		Queue     queue.Queue[T]
+		Workers   int
+		Completed bool
+	}
+
+	var observer Observer[R]
+
+	subscribeToNext := func() {
+		go obs.Project(x.Queue.Pop()).Subscribe(ctx, observer)
+	}
+
+	observer = func(n Notification[R]) {
+		if n.HasValue || n.HasError {
+			sink(n)
+			return
+		}
+
+		x.Lock()
+		defer x.Unlock()
+
+		if x.Queue.Len() > 0 {
+			subscribeToNext()
+			return
+		}
+
+		x.Workers--
+
+		if x.Completed && x.Workers == 0 {
+			sink(n)
+		}
+	}
+
+	obs.Source.Subscribe(ctx, func(n Notification[T]) {
+		switch {
+		case n.HasValue:
+			x.Lock()
+
+			x.Queue.Push(n.Value)
+
+			if x.Workers != obs.Concurrency {
+				x.Workers++
+				subscribeToNext()
+			}
+
+			x.Unlock()
+
+		case n.HasError:
+			sink.Error(n.Error)
+
+		default:
+			x.Lock()
+
+			x.Completed = true
+
+			if x.Workers == 0 {
+				sink.Complete()
+			}
+
+			x.Unlock()
+		}
+	})
 }

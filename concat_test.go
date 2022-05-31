@@ -49,3 +49,60 @@ func TestConcat(t *testing.T) {
 		context.DeadlineExceeded,
 	)
 }
+
+func TestConcat2(t *testing.T) {
+	t.Parallel()
+
+	NewTestSuite[string](t).Case(
+		rx.Pipe(
+			rx.Just(
+				rx.Pipe(rx.Just("A", "B"), AddLatencyToValues[string](3, 5)),
+				rx.Pipe(rx.Just("C", "D"), AddLatencyToValues[string](2, 4)),
+				rx.Pipe(rx.Just("E", "F"), AddLatencyToValues[string](1, 3)),
+			),
+			rx.ConcatAll[rx.Observable[string]](),
+		),
+		"A", "B", "C", "D", "E", "F", ErrCompleted,
+	).Case(
+		rx.Pipe(
+			rx.Timer(Step(1)),
+			rx.ConcatMap(
+				func(time.Time) rx.Observable[string] {
+					return rx.Just("A")
+				},
+			),
+		),
+		"A", ErrCompleted,
+	).Case(
+		rx.Pipe(
+			rx.Timer(Step(1)),
+			rx.ConcatMapTo[time.Time](rx.Just("A")),
+		),
+		"A", ErrCompleted,
+	).Case(
+		rx.Pipe(
+			rx.Throw[rx.Observable[string]](ErrTest),
+			rx.ConcatAll[rx.Observable[string]](),
+		),
+		ErrTest,
+	)
+
+	ctx, cancel := context.WithTimeout(context.Background(), Step(1))
+	defer cancel()
+
+	NewTestSuite[string](t).WithContext(ctx).Case(
+		rx.Pipe(
+			rx.Just[rx.Observable[string]](
+				func(_ context.Context, sink rx.Observer[string]) {
+					time.Sleep(Step(2))
+					sink.Complete()
+				},
+				func(context.Context, rx.Observer[string]) {
+					panic("should not happen")
+				},
+			),
+			rx.ConcatAll[rx.Observable[string]](),
+		),
+		context.DeadlineExceeded,
+	)
+}

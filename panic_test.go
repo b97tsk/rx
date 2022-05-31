@@ -19,6 +19,9 @@ func TestPanic(t *testing.T) {
 	shouldPanic(t, func() { _ = rx.CompactKey[any, any](nil, nil) }, "CompactKey with proj == nil")
 	shouldPanic(t, func() { _ = rx.CompactKey(proj, nil) }, "CompactKey with eq == nil")
 
+	shouldPanic(t, func() { _ = rx.ConcatMap[any, any](nil) }, "ConcatMap with proj == nil")
+	shouldPanic(t, func() { _ = rx.ConcatMapTo[any, any](nil) }, "ConcatMapTo with inner == nil")
+
 	shouldPanic(t, func() { _ = rx.Contains[any](nil) }, "Contains with cond == nil")
 
 	shouldPanic(t, func() { _ = rx.Distinct[any, string](nil) }, "Distinct with proj == nil")
@@ -38,6 +41,12 @@ func TestPanic(t *testing.T) {
 	shouldPanic(t, func() { _ = rx.Find[any](nil) }, "Find with cond == nil")
 
 	shouldPanic(t, func() { _ = rx.Map[any, any](nil) }, "Map with proj == nil")
+
+	shouldPanic(t, func() { _ = rx.MergeMap[any, any](nil) }, "MergeMap with proj == nil")
+	shouldPanic(t, func() { _ = rx.MergeMapTo[any, any](nil) }, "MergeMapTo with inner == nil")
+	shouldPanic(t, func() {
+		_ = rx.MergeMapTo[any](rx.Just(42)).WithConcurrency(0)
+	}, "MergeMapTo with Concurrency == 0")
 
 	shouldPanic(t, func() { _ = rx.Reduce[any, any](nil, nil) }, "Reduce with accumulator == nil")
 	shouldPanic(t, func() { _ = rx.Scan[any, any](nil, nil) }, "Scan with accumulator == nil")

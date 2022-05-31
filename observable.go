@@ -22,7 +22,8 @@ import (
 // must divide the work (as an Observable) you're going to do into pieces
 // (Observables), process (subscribe to) them concurrently, and then later
 // or in the meantime, merge (flatten) them together (back into one sequential
-// Observable). Typically, these are done by one single Operator.
+// Observable). Typically, these are done by one single Operator, for example,
+// MergeMap.
 //
 type Observable[T any] func(ctx context.Context, sink Observer[T])
 
