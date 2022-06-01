@@ -34,6 +34,9 @@ func TestPanic(t *testing.T) {
 
 	shouldPanic(t, func() { _ = rx.Every[any](nil) }, "Every with cond == nil")
 
+	shouldPanic(t, func() { _ = rx.ExhaustMap[any, any](nil) }, "ExhaustMap with proj == nil")
+	shouldPanic(t, func() { _ = rx.ExhaustMapTo[any, any](nil) }, "ExhaustMapTo with inner == nil")
+
 	shouldPanic(t, func() { _ = rx.Filter[any](nil) }, "Filter with cond == nil")
 	shouldPanic(t, func() { _ = rx.FilterOut[any](nil) }, "FilterOut with cond == nil")
 	shouldPanic(t, func() { _ = rx.FilterMap[any, any](nil) }, "FilterMap with cond == nil")
@@ -55,6 +58,9 @@ func TestPanic(t *testing.T) {
 	shouldPanic(t, func() { _ = rx.SkipWhile[any](nil) }, "SkipWhile with cond == nil")
 
 	shouldPanic(t, func() { _ = rx.SwitchIfEmpty[any](nil) }, "SwitchIfEmpty with obs == nil")
+
+	shouldPanic(t, func() { _ = rx.SwitchMap[any, any](nil) }, "SwitchMap with proj == nil")
+	shouldPanic(t, func() { _ = rx.SwitchMapTo[any, any](nil) }, "SwitchMapTo with inner == nil")
 
 	shouldPanic(t, func() { _ = rx.TakeUntil[any, any](nil) }, "TakeUntil with notifier == nil")
 	shouldPanic(t, func() { _ = rx.TakeWhile[any](nil) }, "TakeWhile with cond == nil")
