@@ -6,6 +6,11 @@ import (
 
 type observables[T any] []Observable[T]
 
+type subscription struct {
+	Context context.Context
+	Cancel  context.CancelFunc
+}
+
 func identity[T any](v T) T { return v }
 
 func subscribeToChan[T any](ctx context.Context, obs Observable[T], c chan<- Notification[T]) {
