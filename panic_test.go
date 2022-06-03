@@ -43,6 +43,8 @@ func TestPanic(t *testing.T) {
 
 	shouldPanic(t, func() { _ = rx.Find[any](nil) }, "Find with cond == nil")
 
+	shouldPanic(t, func() { _ = rx.Flat[rx.Observable[any]](nil) }, "Flat with f == nil")
+
 	shouldPanic(t, func() { _ = rx.Map[any, any](nil) }, "Map with proj == nil")
 
 	shouldPanic(t, func() { _ = rx.MergeMap[any, any](nil) }, "MergeMap with proj == nil")
