@@ -7,4 +7,5 @@ import (
 var (
 	ErrEmpty     = errors.New("empty")
 	ErrNotSingle = errors.New("not single")
+	ErrTimeout   = errors.New("timeout")
 )
