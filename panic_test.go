@@ -71,6 +71,19 @@ func TestPanic(t *testing.T) {
 
 	panicTestZipLike(
 		t,
+		"CombineLatest",
+		rx.CombineLatest2[any, any, any],
+		rx.CombineLatest3[any, any, any, any],
+		rx.CombineLatest4[any, any, any, any, any],
+		rx.CombineLatest5[any, any, any, any, any, any],
+		rx.CombineLatest6[any, any, any, any, any, any, any],
+		rx.CombineLatest7[any, any, any, any, any, any, any, any],
+		rx.CombineLatest8[any, any, any, any, any, any, any, any, any],
+		rx.CombineLatest9[any, any, any, any, any, any, any, any, any, any],
+	)
+
+	panicTestZipLike(
+		t,
 		"Zip",
 		rx.Zip2[any, any, any],
 		rx.Zip3[any, any, any, any],
