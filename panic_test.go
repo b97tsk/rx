@@ -11,6 +11,8 @@ func TestPanic(t *testing.T) {
 
 	proj := func(v any) any { return v }
 
+	shouldPanic(t, func() { _ = rx.Audit[any, any](nil) }, "Audit with durationSelector == nil")
+
 	shouldPanic(t, func() { _ = rx.BufferCount[any](0) }, "BufferCount with bufferSize == 0")
 	shouldPanic(t, func() {
 		_ = rx.BufferCount[any](2).WithStartBufferEvery(0)
