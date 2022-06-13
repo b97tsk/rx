@@ -65,6 +65,8 @@ func TestPanic(t *testing.T) {
 	shouldPanic(t, func() { _ = rx.Reduce[any, any](nil, nil) }, "Reduce with accumulator == nil")
 	shouldPanic(t, func() { _ = rx.Scan[any, any](nil, nil) }, "Scan with accumulator == nil")
 
+	shouldPanic(t, func() { _ = rx.Sample[any, any](nil) }, "Sample with notifier == nil")
+
 	shouldPanic(t, func() { _ = rx.SkipUntil[any, any](nil) }, "SkipUntil with notifier == nil")
 	shouldPanic(t, func() { _ = rx.SkipWhile[any](nil) }, "SkipWhile with cond == nil")
 
