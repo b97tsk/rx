@@ -78,6 +78,8 @@ func TestPanic(t *testing.T) {
 	shouldPanic(t, func() { _ = rx.TakeUntil[any, any](nil) }, "TakeUntil with notifier == nil")
 	shouldPanic(t, func() { _ = rx.TakeWhile[any](nil) }, "TakeWhile with cond == nil")
 
+	shouldPanic(t, func() { _ = rx.Throttle[any, any](nil) }, "Throttle with durationSelector == nil")
+
 	shouldPanic(t, func() { _ = rx.Ticker(0) }, "Ticker with d == 0")
 
 	panicTestZipLike(
