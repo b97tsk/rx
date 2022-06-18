@@ -34,6 +34,13 @@ func (sink *Observer[T]) Sink(n Notification[T]) {
 	(*sink)(n)
 }
 
+// ElementsOnly passes n to sink if n represents a value.
+func (sink Observer[T]) ElementsOnly(n Notification[T]) {
+	if n.HasValue {
+		sink(n)
+	}
+}
+
 // Mutex creates an Observer that passes incoming emissions to sink in a
 // mutually exclusive way.
 func (sink Observer[T]) Mutex() Observer[T] {
