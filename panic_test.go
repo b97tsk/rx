@@ -54,6 +54,9 @@ func TestPanic(t *testing.T) {
 
 	shouldPanic(t, func() { _ = rx.Flat[rx.Observable[any]](nil) }, "Flat with f == nil")
 
+	shouldPanic(t, func() { _ = rx.GroupBy[any, string](nil, nil) }, "GroupBy with keySelector == nil")
+	shouldPanic(t, func() { _ = rx.GroupBy(func(any) string { return "" }, nil) }, "GroupBy with groupFactory == nil")
+
 	shouldPanic(t, func() { _ = rx.Map[any, any](nil) }, "Map with proj == nil")
 
 	shouldPanic(t, func() { _ = rx.MergeMap[any, any](nil) }, "MergeMap with proj == nil")
