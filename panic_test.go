@@ -70,6 +70,8 @@ func TestPanic(t *testing.T) {
 
 	shouldPanic(t, func() { _ = rx.Sample[any, any](nil) }, "Sample with notifier == nil")
 
+	shouldPanic(t, func() { _ = rx.Share[any]().WithConnector(nil) }, "Share with Connector == nil")
+
 	shouldPanic(t, func() { _ = rx.SkipUntil[any, any](nil) }, "SkipUntil with notifier == nil")
 	shouldPanic(t, func() { _ = rx.SkipWhile[any](nil) }, "SkipWhile with cond == nil")
 
