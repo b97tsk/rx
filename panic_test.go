@@ -29,6 +29,12 @@ func TestPanic(t *testing.T) {
 	shouldPanic(t, func() { _ = rx.ConcatMap[any, any](nil) }, "ConcatMap with proj == nil")
 	shouldPanic(t, func() { _ = rx.ConcatMapTo[any, any](nil) }, "ConcatMapTo with inner == nil")
 
+	shouldPanic(t, func() { _ = rx.Connect[any, any](nil) }, "Connect with selector == nil")
+	shouldPanic(t, func() {
+		selector := func(source rx.Observable[any]) rx.Observable[any] { return source }
+		_ = rx.Connect(selector).WithConnector(nil)
+	}, "Connect with Connector == nil")
+
 	shouldPanic(t, func() { _ = rx.Contains[any](nil) }, "Contains with cond == nil")
 
 	shouldPanic(t, func() { _ = rx.Debounce[any, any](nil) }, "Debounce with durationSelector == nil")
