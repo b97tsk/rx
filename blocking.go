@@ -25,11 +25,11 @@ func (obs Observable[T]) BlockingFirst(ctx context.Context) (v T, err error) {
 
 		noop = true
 
-		cancel()
-
 		if n.HasValue || n.HasError {
 			res = n
 		}
+
+		cancel()
 	})
 
 	<-childCtx.Done()
