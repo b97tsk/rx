@@ -5,11 +5,12 @@ import (
 )
 
 // BlockingFirst subscribes to the source Observable, returns the first item
-// emitted by the source; if the source emits no items, it returns nil and
-// ErrEmpty; if the source throws an error, it returns nil and this error.
+// emitted by the source; if the source emits no items, it returns zero value
+// of T and ErrEmpty; if the source throws an error, it returns zero value of
+// T and this error.
 //
-// A cancellation of ctx will cause BlockingFirst to immediately return nil
-// and ctx.Err().
+// A cancellation of ctx will cause BlockingFirst to immediately return zero
+// value of T and ctx.Err().
 //
 func (obs Observable[T]) BlockingFirst(ctx context.Context) (v T, err error) {
 	childCtx, cancel := context.WithCancel(ctx)
@@ -65,11 +66,12 @@ func (obs Observable[T]) BlockingFirstOrDefault(ctx context.Context, def T) T {
 }
 
 // BlockingLast subscribes to the source Observable, returns the last item
-// emitted by the source; if the source emits no items, it returns nil and
-// ErrEmpty; if the source throws an error, it returns nil and this error.
+// emitted by the source; if the source emits no items, it returns zero value
+// of T and ErrEmpty; if the source throws an error, it returns zero value of
+// T and this error.
 //
-// A cancellation of ctx will cause BlockingLast to immediately return nil
-// and ctx.Err().
+// A cancellation of ctx will cause BlockingLast to immediately return zero
+// value of T and ctx.Err().
 //
 func (obs Observable[T]) BlockingLast(ctx context.Context) (v T, err error) {
 	childCtx, cancel := context.WithCancel(ctx)
@@ -120,11 +122,11 @@ func (obs Observable[T]) BlockingLastOrDefault(ctx context.Context, def T) T {
 
 // BlockingSingle subscribes to the source Observable, returns the single item
 // emitted by the source; if the source emits more than one item or no items,
-// it returns nil, ErrNotSingle or nil, ErrEmpty respectively; if the source
-// throws an error, it returns nil and this error.
+// it returns zero value of T and ErrNotSingle or ErrEmpty respectively;
+// if the source throws an error, it returns zero value of T and this error.
 //
-// A cancellation of ctx will cause BlockingSingle to immediately return nil
-// and ctx.Err().
+// A cancellation of ctx will cause BlockingSingle to immediately return zero
+// value of T and ctx.Err().
 //
 func (obs Observable[T]) BlockingSingle(ctx context.Context) (v T, err error) {
 	childCtx, cancel := context.WithCancel(ctx)
