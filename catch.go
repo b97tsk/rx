@@ -6,6 +6,9 @@ import (
 
 // Catch catches errors on the Observable to be handled by returning a new
 // Observable.
+//
+// Catch does not catch context cancellations.
+//
 func Catch[T any](selector func(err error) Observable[T]) Operator[T, T] {
 	if selector == nil {
 		panic("selector == nil")
@@ -22,9 +25,16 @@ func catch[T any](selector func(err error) Observable[T]) Operator[T, T] {
 					switch {
 					case n.HasValue:
 						sink(n)
+
 					case n.HasError:
+						if err := ctx.Err(); err != nil {
+							sink.Error(err)
+							return
+						}
+
 						obs := selector(n.Error)
 						obs.Subscribe(ctx, sink)
+
 					default:
 						sink(n)
 					}
@@ -36,6 +46,9 @@ func catch[T any](selector func(err error) Observable[T]) Operator[T, T] {
 
 // OnErrorResumeWith mirrors the source or specified Observable if the source
 // throws an error.
+//
+// OnErrorResumeWith does not resume on context cancellation.
+//
 func OnErrorResumeWith[T any](obs Observable[T]) Operator[T, T] {
 	if obs == nil {
 		panic("obs == nil")
@@ -52,8 +65,15 @@ func onErrorResumeWith[T any](obs Observable[T]) Operator[T, T] {
 					switch {
 					case n.HasValue:
 						sink(n)
+
 					case n.HasError:
+						if err := ctx.Err(); err != nil {
+							sink.Error(err)
+							return
+						}
+
 						obs.Subscribe(ctx, sink)
+
 					default:
 						sink(n)
 					}
