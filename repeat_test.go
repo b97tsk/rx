@@ -1,7 +1,9 @@
 package rx_test
 
 import (
+	"context"
 	"testing"
+	"time"
 
 	"github.com/b97tsk/rx"
 	. "github.com/b97tsk/rx/internal/rxtest"
@@ -64,5 +66,17 @@ func TestRepeat(t *testing.T) {
 			rx.RepeatForever[string](),
 		),
 		"A", "B", "C", ErrTest,
+	)
+
+	ctx, cancel := context.WithTimeout(context.Background(), Step(1))
+	defer cancel()
+
+	NewTestSuite[string](t).WithContext(ctx).Case(
+		rx.Pipe2(
+			rx.Empty[string](),
+			rx.DoOnComplete[string](func() { time.Sleep(Step(2)) }),
+			rx.Repeat[string](2),
+		),
+		context.DeadlineExceeded,
 	)
 }

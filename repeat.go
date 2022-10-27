@@ -8,12 +8,20 @@ import (
 
 // RepeatForever repeats the stream of items emitted by the source Observable
 // forever.
+//
+// RepeatForever does not repeat on context cancellation.
+//
 func RepeatForever[T any]() Operator[T, T] {
 	return Repeat[T](-1)
 }
 
 // Repeat repeats the stream of items emitted by the source Observable at
 // most count times.
+//
+// Repeat(0) results in an empty Observable; Repeat(1) is a no-op.
+//
+// Repeat does not repeat on context cancellation.
+//
 func Repeat[T any](count int) Operator[T, T] {
 	return AsOperator(
 		func(source Observable[T]) Observable[T] {
@@ -43,6 +51,11 @@ func (obs repeatObservable[T]) Subscribe(ctx context.Context, sink Observer[T]) 
 	var observer Observer[T]
 
 	subscribeToSource := norec.Wrap(func() {
+		if err := ctx.Err(); err != nil {
+			sink.Error(err)
+			return
+		}
+
 		obs.Source.Subscribe(ctx, observer)
 	})
 
