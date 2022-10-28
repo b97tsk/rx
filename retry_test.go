@@ -1,6 +1,7 @@
 package rx_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/b97tsk/rx"
@@ -61,5 +62,16 @@ func TestRetry(t *testing.T) {
 			rx.Retry[string](2),
 		),
 		"A", "B", "C", "A", "B", "C", "A", "B", "C", ErrTest,
+	)
+
+	ctx, cancel := context.WithTimeout(context.Background(), Step(1))
+	defer cancel()
+
+	NewTestSuite[string](t).WithContext(ctx).Case(
+		rx.Pipe(
+			rx.Never[string](),
+			rx.Retry[string](1),
+		),
+		context.DeadlineExceeded,
 	)
 }
