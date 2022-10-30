@@ -85,6 +85,9 @@ func onErrorResumeWith[T any](obs Observable[T]) Operator[T, T] {
 
 // OnErrorComplete mirrors the source Observable or completes if the source
 // throws an error.
+//
+// OnErrorComplete does not complete on context cancellation.
+//
 func OnErrorComplete[T any]() Operator[T, T] {
 	return AsOperator(onErrorComplete[T])
 }
@@ -95,8 +98,15 @@ func onErrorComplete[T any](source Observable[T]) Observable[T] {
 			switch {
 			case n.HasValue:
 				sink(n)
+
 			case n.HasError:
+				if err := ctx.Err(); err != nil {
+					sink.Error(err)
+					return
+				}
+
 				sink.Complete()
+
 			default:
 				sink(n)
 			}

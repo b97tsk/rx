@@ -95,4 +95,15 @@ func TestOnErrorComplete(t *testing.T) {
 		),
 		"A", "B", "C", ErrCompleted,
 	)
+
+	ctx, cancel := context.WithTimeout(context.Background(), Step(1))
+	defer cancel()
+
+	NewTestSuite[string](t).WithContext(ctx).Case(
+		rx.Pipe(
+			rx.Never[string](),
+			rx.OnErrorComplete[string](),
+		),
+		context.DeadlineExceeded,
+	)
 }
