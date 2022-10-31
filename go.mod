@@ -4,4 +4,4 @@ go 1.18
 
 require golang.org/x/exp v0.0.0-20220428152302-39d4317da171
 
-retract [v0.0.1, v0.6.1]
+retract [v0.0.1, v0.7.1]
