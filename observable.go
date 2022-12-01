@@ -24,7 +24,6 @@ import (
 // or in the meantime, merge (flatten) them together (back into one sequential
 // Observable). Typically, these are done by one single Operator, for example,
 // MergeMap.
-//
 type Observable[T any] func(ctx context.Context, sink Observer[T])
 
 // Subscribe invokes an execution of an Observable.

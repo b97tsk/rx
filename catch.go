@@ -8,7 +8,6 @@ import (
 // Observable.
 //
 // Catch does not catch context cancellations.
-//
 func Catch[T any](selector func(err error) Observable[T]) Operator[T, T] {
 	if selector == nil {
 		panic("selector == nil")
@@ -48,7 +47,6 @@ func catch[T any](selector func(err error) Observable[T]) Operator[T, T] {
 // throws an error.
 //
 // OnErrorResumeWith does not resume on context cancellation.
-//
 func OnErrorResumeWith[T any](obs Observable[T]) Operator[T, T] {
 	if obs == nil {
 		panic("obs == nil")
@@ -87,7 +85,6 @@ func onErrorResumeWith[T any](obs Observable[T]) Operator[T, T] {
 // throws an error.
 //
 // OnErrorComplete does not complete on context cancellation.
-//
 func OnErrorComplete[T any]() Operator[T, T] {
 	return AsOperator(onErrorComplete[T])
 }

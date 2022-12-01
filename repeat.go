@@ -10,7 +10,6 @@ import (
 // forever.
 //
 // RepeatForever does not repeat on context cancellation.
-//
 func RepeatForever[T any]() Operator[T, T] {
 	return Repeat[T](-1)
 }
@@ -21,7 +20,6 @@ func RepeatForever[T any]() Operator[T, T] {
 // Repeat(0) results in an empty Observable; Repeat(1) is a no-op.
 //
 // Repeat does not repeat on context cancellation.
-//
 func Repeat[T any](count int) Operator[T, T] {
 	return AsOperator(
 		func(source Observable[T]) Observable[T] {

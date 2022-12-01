@@ -11,7 +11,6 @@ import (
 //
 // A cancellation of ctx will cause BlockingFirst to immediately return zero
 // value of T and ctx.Err().
-//
 func (obs Observable[T]) BlockingFirst(ctx context.Context) (v T, err error) {
 	childCtx, cancel := context.WithCancel(ctx)
 
@@ -55,7 +54,6 @@ func (obs Observable[T]) BlockingFirst(ctx context.Context) (v T, err error) {
 //
 // A cancellation of ctx will cause BlockingFirstOrDefault to immediately
 // return def.
-//
 func (obs Observable[T]) BlockingFirstOrDefault(ctx context.Context, def T) T {
 	v, err := obs.BlockingFirst(ctx)
 	if err != nil {
@@ -72,7 +70,6 @@ func (obs Observable[T]) BlockingFirstOrDefault(ctx context.Context, def T) T {
 //
 // A cancellation of ctx will cause BlockingLast to immediately return zero
 // value of T and ctx.Err().
-//
 func (obs Observable[T]) BlockingLast(ctx context.Context) (v T, err error) {
 	childCtx, cancel := context.WithCancel(ctx)
 
@@ -110,7 +107,6 @@ func (obs Observable[T]) BlockingLast(ctx context.Context) (v T, err error) {
 //
 // A cancellation of ctx will cause BlockingLastOrDefault to immediately return
 // def.
-//
 func (obs Observable[T]) BlockingLastOrDefault(ctx context.Context, def T) T {
 	v, err := obs.BlockingLast(ctx)
 	if err != nil {
@@ -127,7 +123,6 @@ func (obs Observable[T]) BlockingLastOrDefault(ctx context.Context, def T) T {
 //
 // A cancellation of ctx will cause BlockingSingle to immediately return zero
 // value of T and ctx.Err().
-//
 func (obs Observable[T]) BlockingSingle(ctx context.Context) (v T, err error) {
 	childCtx, cancel := context.WithCancel(ctx)
 
@@ -180,7 +175,6 @@ func (obs Observable[T]) BlockingSingle(ctx context.Context) (v T, err error) {
 //
 // The source Observable must honor the cancellation of ctx; otherwise,
 // BlockingSubscribe might still block even after ctx has been cancelled.
-//
 func (obs Observable[T]) BlockingSubscribe(ctx context.Context, sink Observer[T]) error {
 	var res Notification[T]
 

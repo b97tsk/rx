@@ -29,7 +29,6 @@ func (sink Observer[T]) Complete() {
 //	func(n Notification[T]) { (*sink)(n) }
 //
 // Useful when you want to set *sink to another Observer at some point.
-//
 func (sink *Observer[T]) Sink(n Notification[T]) {
 	(*sink)(n)
 }

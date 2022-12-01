@@ -10,7 +10,6 @@ import (
 // whenever the source throws an error.
 //
 // RetryForever does not retry on context cancellation.
-//
 func RetryForever[T any]() Operator[T, T] {
 	return Retry[T](-1)
 }
@@ -21,7 +20,6 @@ func RetryForever[T any]() Operator[T, T] {
 // Retry(0) is a no-op.
 //
 // Retry does not retry on context cancellation.
-//
 func Retry[T any](count int) Operator[T, T] {
 	return AsOperator(
 		func(source Observable[T]) Observable[T] {
