@@ -2,8 +2,8 @@ package rx
 
 import (
 	"context"
+	"sync/atomic"
 
-	"github.com/b97tsk/rx/internal/atomic"
 	"github.com/b97tsk/rx/internal/critical"
 )
 
@@ -96,7 +96,7 @@ func (obs switchMapObservable[T, R]) Subscribe(ctx context.Context, sink Observe
 				cancel()
 
 				if x.Ctx.CompareAndSwap(childCtx, ctx) {
-					if n.HasError || x.Completed.True() && x.Ctx.Load() == ctx {
+					if n.HasError || x.Completed.Load() && x.Ctx.Load() == ctx {
 						sinkAndDone(n)
 					}
 				}

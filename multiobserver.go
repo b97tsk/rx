@@ -1,7 +1,7 @@
 package rx
 
 import (
-	"github.com/b97tsk/rx/internal/atomic"
+	"sync/atomic"
 )
 
 type multiObserver[T any] struct {
@@ -27,7 +27,7 @@ func (m *multiObserver[T]) Release() {
 	if rc := m.rc; rc != nil {
 		m.rc = nil
 
-		rc.Sub(1)
+		rc.Add(^uint32(0))
 	}
 }
 
@@ -39,7 +39,7 @@ func (m *multiObserver[T]) Add(observer *Observer[T]) {
 	m.Observers = observers
 
 	if cap(observers) != oldcap {
-		if rc := m.rc; rc != nil && !rc.Equal(0) {
+		if rc := m.rc; rc != nil && rc.Load() != 0 {
 			m.rc = nil
 		}
 	}
@@ -52,7 +52,7 @@ func (m *multiObserver[T]) Delete(observer *Observer[T]) {
 		if sink == observer {
 			n := len(observers)
 
-			if rc := m.rc; rc != nil && !rc.Equal(0) {
+			if rc := m.rc; rc != nil && rc.Load() != 0 {
 				new := make([]*Observer[T], n-1, n)
 				copy(new, observers[:i])
 				copy(new[i:], observers[i+1:])

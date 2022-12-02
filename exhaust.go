@@ -2,8 +2,7 @@ package rx
 
 import (
 	"context"
-
-	"github.com/b97tsk/rx/internal/atomic"
+	"sync/atomic"
 )
 
 // ExhaustAll flattens a higher-order Observable into a first-order Observable
@@ -53,10 +52,12 @@ func (obs exhaustMapObservable[T, R]) Subscribe(ctx context.Context, sink Observ
 
 	sink = sink.WithCancel(cancel).Mutex()
 
-	workers := atomic.FromUint32(1)
+	var workers atomic.Uint32
+
+	workers.Store(1)
 
 	observer := func(n Notification[R]) {
-		if n.HasValue || n.HasError || workers.Sub(1) == 0 {
+		if n.HasValue || n.HasError || workers.Add(^uint32(0)) == 0 {
 			sink(n)
 		}
 	}
@@ -70,7 +71,7 @@ func (obs exhaustMapObservable[T, R]) Subscribe(ctx context.Context, sink Observ
 		case n.HasError:
 			sink.Error(n.Error)
 		default:
-			if workers.Sub(1) == 0 {
+			if workers.Add(^uint32(0)) == 0 {
 				sink.Complete()
 			}
 		}

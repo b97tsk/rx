@@ -2,8 +2,7 @@ package rx
 
 import (
 	"context"
-
-	"github.com/b97tsk/rx/internal/atomic"
+	"sync/atomic"
 )
 
 // SkipUntil skips items emitted by the source Observable until a second
@@ -66,7 +65,7 @@ func (obs skipUntilObservable[T, U]) Subscribe(ctx context.Context, sink Observe
 		return
 	}
 
-	if noSkipping.True() {
+	if noSkipping.Load() {
 		obs.Source.Subscribe(ctx, originalSink)
 		return
 	}
@@ -78,7 +77,7 @@ func (obs skipUntilObservable[T, U]) Subscribe(ctx context.Context, sink Observe
 		case taking:
 			originalSink(n)
 		case n.HasValue:
-			if noSkipping.True() {
+			if noSkipping.Load() {
 				taking = true
 
 				originalSink(n)

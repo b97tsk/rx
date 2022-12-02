@@ -3,9 +3,9 @@ package rx
 import (
 	"context"
 	"runtime"
+	"sync/atomic"
 	"time"
 
-	"github.com/b97tsk/rx/internal/atomic"
 	"github.com/b97tsk/rx/internal/ctxwatch"
 	"github.com/b97tsk/rx/internal/queue"
 )
@@ -73,7 +73,7 @@ func (m *multicastReplay[T]) bufferForRead() (queue.Queue[Pair[time.Time, T]], *
 func (m *multicastReplay[T]) bufferForWrite() *queue.Queue[Pair[time.Time, T]] {
 	rc := m.bufferRc
 
-	if rc != nil && !rc.Equal(0) {
+	if rc != nil && rc.Load() != 0 {
 		m.buffer = m.buffer.Clone()
 		m.bufferRc = nil
 	}
@@ -177,7 +177,7 @@ func (m *multicastReplay[T]) subscribe(ctx context.Context, sink Observer[T]) {
 	m.trimBuffer(nil)
 
 	b, rc := m.bufferForRead()
-	defer rc.Sub(1)
+	defer rc.Add(^uint32(0))
 
 	m.mu.Unlock()
 

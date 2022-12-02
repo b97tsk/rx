@@ -2,20 +2,20 @@ package ctxwatch_test
 
 import (
 	"context"
+	"sync/atomic"
 	"testing"
 	"time"
 
-	"github.com/b97tsk/rx/internal/atomic"
 	"github.com/b97tsk/rx/internal/ctxwatch"
 )
 
 func TestAdd(t *testing.T) {
 	t.Parallel()
 
-	v := atomic.FromInt32(0)
+	var v atomic.Int32
 
 	cancels := []context.CancelFunc(nil)
-	done := func(context.Context) { v.Sub(1) }
+	done := func(context.Context) { v.Add(-1) }
 	add := func(n int) {
 		v.Add(int32(n))
 
@@ -44,7 +44,7 @@ func TestAdd(t *testing.T) {
 		remove(n)
 	}
 
-	if !v.Equal(0) {
+	if v.Load() != 0 {
 		t.Fail()
 	}
 }

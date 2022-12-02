@@ -4,8 +4,8 @@ import (
 	"context"
 	"reflect"
 	"sync"
+	"sync/atomic"
 
-	"github.com/b97tsk/rx/internal/atomic"
 	"github.com/b97tsk/rx/internal/queue"
 )
 
@@ -44,10 +44,17 @@ func startService() watchService {
 
 	go func() {
 		cases := []reflect.SelectCase{{}}
-		itemCounter := atomic.FromInt32(0)
-		workloadDoneChans := sync.Map{}
-		workloadPerWorker := atomic.FromInt32(5)
+
+		var itemCounter atomic.Int32
+
+		var (
+			workloadDoneChans sync.Map
+			workloadPerWorker atomic.Int32
+		)
+
 		oldWorkloadPerWorker := 3
+
+		workloadPerWorker.Store(5)
 
 		for item := range cout {
 			itemValue := reflect.ValueOf(item)
@@ -154,7 +161,7 @@ func startWorker(
 
 			go item.Callback(item.Context)
 
-			itemCounter.Sub(1)
+			itemCounter.Add(-1)
 		}
 	}
 }

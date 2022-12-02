@@ -3,8 +3,8 @@ package rx
 import (
 	"context"
 	"sync"
+	"sync/atomic"
 
-	"github.com/b97tsk/rx/internal/atomic"
 	"github.com/b97tsk/rx/internal/queue"
 )
 
@@ -34,10 +34,12 @@ func (some observables[T]) Merge(ctx context.Context, sink Observer[T]) {
 
 	sink = sink.WithCancel(cancel).Mutex()
 
-	workers := atomic.FromUint32(uint32(len(some)))
+	var workers atomic.Uint32
+
+	workers.Store(uint32(len(some)))
 
 	observer := func(n Notification[T]) {
-		if n.HasValue || n.HasError || workers.Sub(1) == 0 {
+		if n.HasValue || n.HasError || workers.Add(^uint32(0)) == 0 {
 			sink(n)
 		}
 	}
