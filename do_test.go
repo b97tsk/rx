@@ -53,7 +53,7 @@ func doTest(
 
 	do := op(func() { n++ })
 
-	obs := rx.AsObservable(
+	obs := rx.NewObservable(
 		func(ctx context.Context, sink rx.Observer[int]) {
 			sink.Next(n)
 			sink.Complete()

@@ -18,7 +18,7 @@ func TestMulticastReplay(t *testing.T) {
 
 		m := rx.MulticastReplay[string](&rx.ReplayConfig{BufferSize: 3})
 
-		subscribeThenComplete := rx.AsObservable(
+		subscribeThenComplete := rx.NewObservable(
 			func(ctx context.Context, sink rx.Observer[string]) {
 				sink = sink.Mutex()
 				m.Subscribe(ctx, sink)
@@ -68,7 +68,7 @@ func TestMulticastReplay(t *testing.T) {
 
 		m := rx.MulticastReplay[string](&rx.ReplayConfig{WindowTime: Step(5)})
 
-		subscribeThenComplete := rx.AsObservable(
+		subscribeThenComplete := rx.NewObservable(
 			func(ctx context.Context, sink rx.Observer[string]) {
 				sink = sink.Mutex()
 				m.Subscribe(ctx, sink)

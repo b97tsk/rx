@@ -31,7 +31,7 @@ func (obs Observable[T]) Subscribe(ctx context.Context, sink Observer[T]) {
 	obs(ctx, sink)
 }
 
-// AsObservable converts f to an Observable.
-func AsObservable[T any](f func(ctx context.Context, sink Observer[T])) Observable[T] {
+// NewObservable creates an Observable from f.
+func NewObservable[T any](f func(ctx context.Context, sink Observer[T])) Observable[T] {
 	return f
 }
