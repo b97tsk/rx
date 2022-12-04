@@ -75,5 +75,5 @@ func (sink Observer[T]) WithCancel(cancel func()) Observer[T] {
 // Noop gives you an Observer that does nothing.
 func Noop[T any](Notification[T]) {}
 
-// AsObserver converts f to an Observer.
-func AsObserver[T any](f func(n Notification[T])) Observer[T] { return f }
+// NewObserver creates an Observer from f.
+func NewObserver[T any](f func(n Notification[T])) Observer[T] { return f }

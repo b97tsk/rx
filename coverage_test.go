@@ -9,7 +9,7 @@ import (
 func TestAdditionalCoverage(t *testing.T) {
 	t.Parallel()
 
-	observer := rx.AsObserver(rx.Noop[int])
+	observer := rx.NewObserver(rx.Noop[int])
 	observer.Sink(rx.Next(0))
 
 	op := rx.IgnoreElements[int, int]()
