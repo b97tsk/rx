@@ -7,8 +7,8 @@ type Operator[T, R any] interface {
 	Apply(source Observable[T]) Observable[R]
 }
 
-// AsOperator converts f to an Operator.
-func AsOperator[T, R any](f func(source Observable[T]) Observable[R]) Operator[T, R] {
+// NewOperator creates an Operator from f.
+func NewOperator[T, R any](f func(source Observable[T]) Observable[R]) Operator[T, R] {
 	return operatorFunc[T, R](f)
 }
 

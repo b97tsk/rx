@@ -8,7 +8,7 @@ import (
 // If the source emits more than one item or no items, Single throws
 // ErrNotSingle or ErrEmpty respectively.
 func Single[T any]() Operator[T, T] {
-	return AsOperator(single[T])
+	return NewOperator(single[T])
 }
 
 func single[T any](source Observable[T]) Observable[T] {

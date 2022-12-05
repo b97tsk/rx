@@ -22,7 +22,7 @@ func Merge[T any](some ...Observable[T]) Observable[T] {
 // Observables to create a first-order Observable, then mirrors the resulting
 // Observable.
 func MergeWith[T any](some ...Observable[T]) Operator[T, T] {
-	return AsOperator(
+	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return observables[T](append([]Observable[T]{source}, some...)).Merge
 		},

@@ -7,14 +7,14 @@ import (
 // Skip skips the first count items emitted by the source Observable.
 func Skip[T any](count int) Operator[T, T] {
 	if count <= 0 {
-		return AsOperator(identity[Observable[T]])
+		return NewOperator(identity[Observable[T]])
 	}
 
 	return skip[T](count)
 }
 
 func skip[T any](count int) Operator[T, T] {
-	return AsOperator(
+	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return skipObservable[T]{source, count}.Subscribe
 		},

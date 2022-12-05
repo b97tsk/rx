@@ -32,7 +32,7 @@ func DebounceTime[T any](d time.Duration) Operator[T, T] {
 }
 
 func debounce[T, U any](durationSelector func(v T) Observable[U]) Operator[T, T] {
-	return AsOperator(
+	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return debounceObservable[T, U]{source, durationSelector}.Subscribe
 		},

@@ -15,7 +15,7 @@ func Do[T any](tap Observer[T]) Operator[T, T] {
 }
 
 func do[T any](tap Observer[T]) Operator[T, T] {
-	return AsOperator(
+	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return func(ctx context.Context, sink Observer[T]) {
 				source.Subscribe(ctx, func(n Notification[T]) {
@@ -38,7 +38,7 @@ func DoOnNext[T any](f func(v T)) Operator[T, T] {
 }
 
 func doOnNext[T any](f func(v T)) Operator[T, T] {
-	return AsOperator(
+	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return func(ctx context.Context, sink Observer[T]) {
 				source.Subscribe(ctx, func(n Notification[T]) {
@@ -64,7 +64,7 @@ func DoOnComplete[T any](f func()) Operator[T, T] {
 }
 
 func doOnComplete[T any](f func()) Operator[T, T] {
-	return AsOperator(
+	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return func(ctx context.Context, sink Observer[T]) {
 				source.Subscribe(ctx, func(n Notification[T]) {
@@ -90,7 +90,7 @@ func DoOnError[T any](f func(err error)) Operator[T, T] {
 }
 
 func doOnError[T any](f func(err error)) Operator[T, T] {
-	return AsOperator(
+	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return func(ctx context.Context, sink Observer[T]) {
 				source.Subscribe(ctx, func(n Notification[T]) {
@@ -116,7 +116,7 @@ func DoOnErrorOrComplete[T any](f func()) Operator[T, T] {
 }
 
 func doOnErrorOrComplete[T any](f func()) Operator[T, T] {
-	return AsOperator(
+	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return func(ctx context.Context, sink Observer[T]) {
 				source.Subscribe(ctx, func(n Notification[T]) {

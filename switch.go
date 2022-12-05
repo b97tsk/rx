@@ -36,7 +36,7 @@ func SwitchMapTo[T, R any](inner Observable[R]) Operator[T, R] {
 }
 
 func switchMap[T, R any](proj func(v T) Observable[R]) Operator[T, R] {
-	return AsOperator(
+	return NewOperator(
 		func(source Observable[T]) Observable[R] {
 			return switchMapObservable[T, R]{source, proj}.Subscribe
 		},

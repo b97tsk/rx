@@ -11,7 +11,7 @@ import (
 // Delay delays the emission of items from the source Observable by a given
 // timeout.
 func Delay[T any](d time.Duration) Operator[T, T] {
-	return AsOperator(
+	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return delayObservable[T]{source, d}.Subscribe
 		},

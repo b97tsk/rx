@@ -15,7 +15,7 @@ func Contains[T any](cond func(v T) bool) Operator[T, bool] {
 }
 
 func contains[T any](cond func(v T) bool) Operator[T, bool] {
-	return AsOperator(
+	return NewOperator(
 		func(source Observable[T]) Observable[bool] {
 			return containsObservable[T]{source, cond}.Subscribe
 		},
@@ -25,7 +25,7 @@ func contains[T any](cond func(v T) bool) Operator[T, bool] {
 // ContainsElement emits a boolean to indicate whether the source Observable
 // emits a given value.
 func ContainsElement[T comparable](v T) Operator[T, bool] {
-	return AsOperator(
+	return NewOperator(
 		func(source Observable[T]) Observable[bool] {
 			return containsElementObservable[T]{source, v}.Subscribe
 		},

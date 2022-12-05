@@ -12,14 +12,14 @@ import (
 // Congest has no effect if bufferSize < 1.
 func Congest[T any](bufferSize int) Operator[T, T] {
 	if bufferSize < 1 {
-		return AsOperator(identity[Observable[T]])
+		return NewOperator(identity[Observable[T]])
 	}
 
 	return congest[T](bufferSize)
 }
 
 func congest[T any](bufferSize int) Operator[T, T] {
-	return AsOperator(
+	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return congestObservable[T]{source, bufferSize}.Subscribe
 		},

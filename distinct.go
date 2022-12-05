@@ -7,7 +7,7 @@ import (
 // DistinctComparable emits all items emitted by the source Observable that
 // are distinct from each other.
 func DistinctComparable[T comparable]() Operator[T, T] {
-	return AsOperator(
+	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return func(ctx context.Context, sink Observer[T]) {
 				seen := make(map[T]struct{})
@@ -41,7 +41,7 @@ func Distinct[T any, K comparable](proj func(v T) K) Operator[T, T] {
 }
 
 func distinct[T any, K comparable](proj func(v T) K) Operator[T, T] {
-	return AsOperator(
+	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return func(ctx context.Context, sink Observer[T]) {
 				seen := make(map[K]struct{})

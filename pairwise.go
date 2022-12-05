@@ -7,7 +7,7 @@ import (
 // PairWise groups pairs of consecutive emissions together and emits them
 // as Pairs.
 func PairWise[T any]() Operator[T, Pair[T, T]] {
-	return AsOperator(pairWise[T])
+	return NewOperator(pairWise[T])
 }
 
 func pairWise[T any](source Observable[T]) Observable[Pair[T, T]] {

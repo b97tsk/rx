@@ -15,7 +15,7 @@ func Find[T any](cond func(v T) bool) Operator[T, T] {
 }
 
 func find[T any](cond func(v T) bool) Operator[T, T] {
-	return AsOperator(
+	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return findObservable[T]{source, cond}.Subscribe
 		},

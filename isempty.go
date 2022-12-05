@@ -6,7 +6,7 @@ import (
 
 // IsEmpty emits a boolean to indicate whether the source emits no items.
 func IsEmpty[T any]() Operator[T, bool] {
-	return AsOperator(isEmpty[T])
+	return NewOperator(isEmpty[T])
 }
 
 func isEmpty[T any](source Observable[T]) Observable[bool] {

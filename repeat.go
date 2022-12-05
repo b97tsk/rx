@@ -21,7 +21,7 @@ func RepeatForever[T any]() Operator[T, T] {
 //
 // Repeat does not repeat on context cancellation.
 func Repeat[T any](count int) Operator[T, T] {
-	return AsOperator(
+	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			if count == 0 {
 				return Empty[T]()

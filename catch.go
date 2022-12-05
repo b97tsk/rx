@@ -17,7 +17,7 @@ func Catch[T any](selector func(err error) Observable[T]) Operator[T, T] {
 }
 
 func catch[T any](selector func(err error) Observable[T]) Operator[T, T] {
-	return AsOperator(
+	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return func(ctx context.Context, sink Observer[T]) {
 				source.Subscribe(ctx, func(n Notification[T]) {
@@ -56,7 +56,7 @@ func OnErrorResumeWith[T any](obs Observable[T]) Operator[T, T] {
 }
 
 func onErrorResumeWith[T any](obs Observable[T]) Operator[T, T] {
-	return AsOperator(
+	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return func(ctx context.Context, sink Observer[T]) {
 				source.Subscribe(ctx, func(n Notification[T]) {
@@ -86,7 +86,7 @@ func onErrorResumeWith[T any](obs Observable[T]) Operator[T, T] {
 //
 // OnErrorComplete does not complete on context cancellation.
 func OnErrorComplete[T any]() Operator[T, T] {
-	return AsOperator(onErrorComplete[T])
+	return NewOperator(onErrorComplete[T])
 }
 
 func onErrorComplete[T any](source Observable[T]) Observable[T] {

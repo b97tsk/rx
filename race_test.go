@@ -15,7 +15,7 @@ func TestRace(t *testing.T) {
 
 	var s [8]rx.Observable[time.Duration]
 
-	detachContext := rx.AsOperator(
+	detachContext := rx.NewOperator(
 		func(source rx.Observable[time.Duration]) rx.Observable[time.Duration] {
 			return func(ctx context.Context, sink rx.Observer[time.Duration]) {
 				source.Subscribe(context.Background(), sink)

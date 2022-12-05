@@ -41,7 +41,7 @@ func FromMap[M ~map[K]V, K comparable, V any](m M) Observable[Pair[K, V]] {
 // KeyOf projects each Pair emitted by the source Observable to a value
 // stored in the Key field of that Pair.
 func KeyOf[_ Pair[K, V], K, V any]() Operator[Pair[K, V], K] {
-	return AsOperator(
+	return NewOperator(
 		func(source Observable[Pair[K, V]]) Observable[K] {
 			return func(ctx context.Context, sink Observer[K]) {
 				source.Subscribe(ctx, func(n Notification[Pair[K, V]]) {
@@ -62,7 +62,7 @@ func KeyOf[_ Pair[K, V], K, V any]() Operator[Pair[K, V], K] {
 // ValueOf projects each Pair emitted by the source Observable to a value
 // stored in the Value field of that Pair.
 func ValueOf[_ Pair[K, V], K, V any]() Operator[Pair[K, V], V] {
-	return AsOperator(
+	return NewOperator(
 		func(source Observable[Pair[K, V]]) Observable[V] {
 			return func(ctx context.Context, sink Observer[V]) {
 				source.Subscribe(ctx, func(n Notification[Pair[K, V]]) {
@@ -84,7 +84,7 @@ func ValueOf[_ Pair[K, V], K, V any]() Operator[Pair[K, V], V] {
 // containing two elements: the Key field stores the index of each value
 // starting from init; the Value field stores the value.
 func WithIndex[V any, K constraints.Integer](init K) Operator[V, Pair[K, V]] {
-	return AsOperator(
+	return NewOperator(
 		func(source Observable[V]) Observable[Pair[K, V]] {
 			return func(ctx context.Context, sink Observer[Pair[K, V]]) {
 				index := init

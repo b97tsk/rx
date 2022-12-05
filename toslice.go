@@ -7,7 +7,7 @@ import (
 // ToSlice collects all the values emitted by the source Observable, and then
 // emits them as a slice when the source completes.
 func ToSlice[T any]() Operator[T, []T] {
-	return AsOperator(toSlice[T])
+	return NewOperator(toSlice[T])
 }
 
 func toSlice[T any](source Observable[T]) Observable[[]T] {

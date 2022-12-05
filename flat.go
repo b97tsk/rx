@@ -15,7 +15,7 @@ func Flat[_ Observable[T], T any](f func(some ...Observable[T]) Observable[T]) O
 }
 
 func flat[_ Observable[T], T any](f func(some ...Observable[T]) Observable[T]) Operator[Observable[T], T] {
-	return AsOperator(
+	return NewOperator(
 		func(source Observable[Observable[T]]) Observable[T] {
 			return func(ctx context.Context, sink Observer[T]) {
 				var s []Observable[T]

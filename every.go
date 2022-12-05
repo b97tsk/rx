@@ -15,7 +15,7 @@ func Every[T any](cond func(v T) bool) Operator[T, bool] {
 }
 
 func every[T any](cond func(v T) bool) Operator[T, bool] {
-	return AsOperator(
+	return NewOperator(
 		func(source Observable[T]) Observable[bool] {
 			return everyObservable[T]{source, cond}.Subscribe
 		},

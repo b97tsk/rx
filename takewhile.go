@@ -16,7 +16,7 @@ func TakeWhile[T any](cond func(v T) bool) Operator[T, T] {
 }
 
 func takeWhile[T any](cond func(v T) bool) Operator[T, T] {
-	return AsOperator(
+	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return takeWhileObservable[T]{source, cond}.Subscribe
 		},

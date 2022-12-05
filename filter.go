@@ -15,7 +15,7 @@ func Filter[T any](cond func(v T) bool) Operator[T, T] {
 }
 
 func filter[T any](cond func(v T) bool) Operator[T, T] {
-	return AsOperator(
+	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return func(ctx context.Context, sink Observer[T]) {
 				source.Subscribe(ctx, func(n Notification[T]) {
@@ -44,7 +44,7 @@ func FilterOut[T any](cond func(v T) bool) Operator[T, T] {
 }
 
 func filterOut[T any](cond func(v T) bool) Operator[T, T] {
-	return AsOperator(
+	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return func(ctx context.Context, sink Observer[T]) {
 				source.Subscribe(ctx, func(n Notification[T]) {
@@ -74,7 +74,7 @@ func FilterMap[T, R any](cond func(v T) (R, bool)) Operator[T, R] {
 }
 
 func filterMap[T, R any](cond func(v T) (R, bool)) Operator[T, R] {
-	return AsOperator(
+	return NewOperator(
 		func(source Observable[T]) Observable[R] {
 			return func(ctx context.Context, sink Observer[R]) {
 				source.Subscribe(ctx, func(n Notification[T]) {

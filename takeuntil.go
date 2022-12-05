@@ -15,7 +15,7 @@ func TakeUntil[T, U any](notifier Observable[U]) Operator[T, T] {
 }
 
 func takeUntil[T, U any](notifier Observable[U]) Operator[T, T] {
-	return AsOperator(
+	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return takeUntilObservable[T, U]{source, notifier}.Subscribe
 		},

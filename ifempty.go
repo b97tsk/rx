@@ -7,7 +7,7 @@ import (
 // DefaultIfEmpty mirrors the source Observable, emits a given value if
 // the source completes without emitting any value.
 func DefaultIfEmpty[T any](def T) Operator[T, T] {
-	return AsOperator(
+	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return func(ctx context.Context, sink Observer[T]) {
 				haveValue := false
@@ -33,7 +33,7 @@ func DefaultIfEmpty[T any](def T) Operator[T, T] {
 // ThrowIfEmpty mirrors the source Observable, throws ErrEmpty if the source
 // completes without emitting any value.
 func ThrowIfEmpty[T any]() Operator[T, T] {
-	return AsOperator(
+	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return func(ctx context.Context, sink Observer[T]) {
 				haveValue := false
@@ -68,7 +68,7 @@ func SwitchIfEmpty[T any](obs Observable[T]) Operator[T, T] {
 }
 
 func switchIfEmpty[T any](obs Observable[T]) Operator[T, T] {
-	return AsOperator(
+	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return func(ctx context.Context, sink Observer[T]) {
 				haveValue := false

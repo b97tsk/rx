@@ -16,7 +16,7 @@ func SkipWhile[T any](cond func(v T) bool) Operator[T, T] {
 }
 
 func skipWhile[T any](cond func(v T) bool) Operator[T, T] {
-	return AsOperator(
+	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return skipWhileObservable[T]{source, cond}.Subscribe
 		},

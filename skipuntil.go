@@ -16,7 +16,7 @@ func SkipUntil[T, U any](notifier Observable[U]) Operator[T, T] {
 }
 
 func skipUntil[T, U any](notifier Observable[U]) Operator[T, T] {
-	return AsOperator(
+	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return skipUntilObservable[T, U]{source, notifier}.Subscribe
 		},

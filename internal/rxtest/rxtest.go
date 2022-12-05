@@ -20,7 +20,7 @@ func Step(n int) time.Duration {
 }
 
 func AddLatencyToValues[T any](initialDelay, period int) rx.Operator[T, T] {
-	return rx.AsOperator(
+	return rx.NewOperator(
 		func(source rx.Observable[T]) rx.Observable[T] {
 			return rx.Zip2(
 				source,
@@ -32,7 +32,7 @@ func AddLatencyToValues[T any](initialDelay, period int) rx.Operator[T, T] {
 }
 
 func AddLatencyToNotifications[T any](initialDelay, period int) rx.Operator[T, T] {
-	return rx.AsOperator(
+	return rx.NewOperator(
 		func(source rx.Observable[T]) rx.Observable[T] {
 			return rx.Pipe(
 				rx.Zip2(
@@ -47,7 +47,7 @@ func AddLatencyToNotifications[T any](initialDelay, period int) rx.Operator[T, T
 }
 
 func DelaySubscription[T any](n int) rx.Operator[T, T] {
-	return rx.AsOperator(
+	return rx.NewOperator(
 		func(source rx.Observable[T]) rx.Observable[T] {
 			return rx.Concat(
 				rx.Pipe(

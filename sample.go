@@ -27,7 +27,7 @@ func SampleTime[T any](d time.Duration) Operator[T, T] {
 }
 
 func sample[T, U any](notifier Observable[U]) Operator[T, T] {
-	return AsOperator(
+	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return sampleObservable[T, U]{source, notifier}.Subscribe
 		},

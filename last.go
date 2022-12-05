@@ -7,7 +7,7 @@ import (
 // Last emits only the last value emitted by the source Observable;
 // if the source turns out to be empty, throws ErrEmpty.
 func Last[T any]() Operator[T, T] {
-	return AsOperator(last[T])
+	return NewOperator(last[T])
 }
 
 func last[T any](source Observable[T]) Observable[T] {
@@ -39,7 +39,7 @@ func last[T any](source Observable[T]) Observable[T] {
 // LastOrDefault emits only the last value emitted by the source Observable;
 // if the source turns out to be empty, emits a specified default value.
 func LastOrDefault[T any](def T) Operator[T, T] {
-	return AsOperator(
+	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return func(ctx context.Context, sink Observer[T]) {
 				var (

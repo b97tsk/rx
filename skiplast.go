@@ -7,14 +7,14 @@ import (
 // SkipLast skips the last count values emitted by the source Observable.
 func SkipLast[T any](count int) Operator[T, T] {
 	if count <= 0 {
-		return AsOperator(identity[Observable[T]])
+		return NewOperator(identity[Observable[T]])
 	}
 
 	return skipLast[T](count)
 }
 
 func skipLast[T any](count int) Operator[T, T] {
-	return AsOperator(
+	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return skipLastObservable[T]{source, count}.Subscribe
 		},

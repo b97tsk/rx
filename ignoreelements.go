@@ -7,7 +7,7 @@ import (
 // IgnoreElements ignores all values emitted by the source Observable and
 // only mirrors errors or completions.
 func IgnoreElements[T, R any]() Operator[T, R] {
-	return AsOperator(ignoreElements[T, R])
+	return NewOperator(ignoreElements[T, R])
 }
 
 func ignoreElements[T, R any](source Observable[T]) Observable[R] {

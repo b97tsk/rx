@@ -23,7 +23,7 @@ func Concat[T any](some ...Observable[T]) Observable[T] {
 // Observables to create a first-order Observable, then mirrors the resulting
 // Observable.
 func ConcatWith[T any](some ...Observable[T]) Operator[T, T] {
-	return AsOperator(
+	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return observables[T](append([]Observable[T]{source}, some...)).Concat
 		},
@@ -91,7 +91,7 @@ func ConcatMapTo[T, R any](inner Observable[R]) Operator[T, R] {
 }
 
 func concatMap[T, R any](proj func(v T) Observable[R]) Operator[T, R] {
-	return AsOperator(
+	return NewOperator(
 		func(source Observable[T]) Observable[R] {
 			return concatMapObservable[T, R]{source, proj}.Subscribe
 		},

@@ -7,7 +7,7 @@ import (
 // Dematerialize converts an Observable of Notification objects into the
 // emissions that they represent. It's the opposite of Materialize.
 func Dematerialize[_ Notification[T], T any]() Operator[Notification[T], T] {
-	return AsOperator(dematerialize[Notification[T]])
+	return NewOperator(dematerialize[Notification[T]])
 }
 
 func dematerialize[_ Notification[T], T any](source Observable[Notification[T]]) Observable[T] {

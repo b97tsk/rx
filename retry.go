@@ -21,7 +21,7 @@ func RetryForever[T any]() Operator[T, T] {
 //
 // Retry does not retry on context cancellation.
 func Retry[T any](count int) Operator[T, T] {
-	return AsOperator(
+	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			if count == 0 {
 				return source

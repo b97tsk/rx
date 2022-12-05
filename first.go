@@ -7,7 +7,7 @@ import (
 // First emits only the first value emitted by the source Observable;
 // if the source turns out to be empty, throws ErrEmpty.
 func First[T any]() Operator[T, T] {
-	return AsOperator(first[T])
+	return NewOperator(first[T])
 }
 
 func first[T any](source Observable[T]) Observable[T] {
@@ -41,7 +41,7 @@ func first[T any](source Observable[T]) Observable[T] {
 // FirstOrDefault emits only the first value emitted by the source Observable;
 // if the source turns out to be empty, emits a specified default value.
 func FirstOrDefault[T any](def T) Operator[T, T] {
-	return AsOperator(
+	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return func(ctx context.Context, sink Observer[T]) {
 				ctx, cancel := context.WithCancel(ctx)

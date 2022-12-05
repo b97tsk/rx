@@ -16,7 +16,7 @@ func Reduce[T, R any](init R, accumulator func(v1 R, v2 T) R) Operator[T, R] {
 }
 
 func reduce[T, R any](init R, accumulator func(v1 R, v2 T) R) Operator[T, R] {
-	return AsOperator(
+	return NewOperator(
 		func(source Observable[T]) Observable[R] {
 			return func(ctx context.Context, sink Observer[R]) {
 				res := init

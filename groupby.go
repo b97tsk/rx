@@ -25,7 +25,7 @@ func groupBy[T any, K comparable](
 	keySelector func(v T) K,
 	groupFactory func() Subject[T],
 ) Operator[T, Pair[K, Observable[T]]] {
-	return AsOperator(
+	return NewOperator(
 		func(source Observable[T]) Observable[Pair[K, Observable[T]]] {
 			return groupByObservable[T, K]{source, keySelector, groupFactory}.Subscribe
 		},

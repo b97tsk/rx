@@ -35,7 +35,7 @@ func AuditTime[T any](d time.Duration) Operator[T, T] {
 }
 
 func audit[T, U any](durationSelector func(v T) Observable[U]) Operator[T, T] {
-	return AsOperator(
+	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return auditObservable[T, U]{source, durationSelector}.Subscribe
 		},
