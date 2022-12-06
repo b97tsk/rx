@@ -127,7 +127,7 @@ func (m *multicastReplay[T]) sink(n Notification[T]) {
 		}
 
 		b := m.bufferForWrite()
-		b.Push(MakePair(deadline, n.Value))
+		b.Push(NewPair(deadline, n.Value))
 		m.trimBuffer(b)
 
 		m.mu.Unlock()

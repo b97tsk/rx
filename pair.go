@@ -18,8 +18,8 @@ func (p Pair[K, V]) Left() K { return p.Key }
 // Right returns p.Value.
 func (p Pair[K, V]) Right() V { return p.Value }
 
-// MakePair creates a Pair of two elements.
-func MakePair[K, V any](k K, v V) Pair[K, V] { return Pair[K, V]{k, v} }
+// NewPair creates a Pair of two elements.
+func NewPair[K, V any](k K, v V) Pair[K, V] { return Pair[K, V]{k, v} }
 
 // FromMap creates an Observable that emits Pairs from a map, one after
 // the other, and then completes. The order of those Pairs is not specified.
@@ -31,7 +31,7 @@ func FromMap[M ~map[K]V, K comparable, V any](m M) Observable[Pair[K, V]] {
 				return
 			}
 
-			sink.Next(MakePair(k, v))
+			sink.Next(NewPair(k, v))
 		}
 
 		sink.Complete()
@@ -92,7 +92,7 @@ func WithIndex[V any, K constraints.Integer](init K) Operator[V, Pair[K, V]] {
 				source.Subscribe(ctx, func(n Notification[V]) {
 					switch {
 					case n.HasValue:
-						sink.Next(MakePair(index, n.Value))
+						sink.Next(NewPair(index, n.Value))
 						index++
 					case n.HasError:
 						sink.Error(n.Error)

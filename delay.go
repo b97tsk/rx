@@ -89,7 +89,7 @@ func (obs delayObservable[T]) Subscribe(ctx context.Context, sink Observer[T]) {
 		if critical.Enter(&x.Section) {
 			switch {
 			case n.HasValue:
-				x.Queue.Push(MakePair(time.Now().Add(obs.Duration), n.Value))
+				x.Queue.Push(NewPair(time.Now().Add(obs.Duration), n.Value))
 
 				if !x.Scheduled {
 					x.Scheduled = true

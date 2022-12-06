@@ -22,7 +22,7 @@ func TestGroupBy(t *testing.T) {
 					rx.Reduce(0, func(n int, _ string) int { return n + 1 }),
 					rx.Map(
 						func(v int) rx.Pair[string, int] {
-							return rx.MakePair(group.Key, v)
+							return rx.NewPair(group.Key, v)
 						},
 					),
 				)

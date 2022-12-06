@@ -54,7 +54,7 @@ func (obs groupByObservable[T, K]) Subscribe(ctx context.Context, sink Observer[
 				group = g.Observer
 				groups[key] = group
 
-				sink.Next(MakePair(key, g.Observable))
+				sink.Next(NewPair(key, g.Observable))
 			}
 
 			group.Sink(n)

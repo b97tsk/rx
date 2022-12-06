@@ -21,7 +21,7 @@ func pairWise[T any](source Observable[T]) Observable[Pair[T, T]] {
 			switch {
 			case n.HasValue:
 				if p.HasValue {
-					sink.Next(MakePair(p.Value, n.Value))
+					sink.Next(NewPair(p.Value, n.Value))
 				}
 
 				p.Value = n.Value
