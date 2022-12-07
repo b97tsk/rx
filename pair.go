@@ -41,6 +41,11 @@ func FromMap[M ~map[K]V, K comparable, V any](m M) Observable[Pair[K, V]] {
 // KeyOf projects each Pair emitted by the source Observable to a value
 // stored in the Key field of that Pair.
 func KeyOf[_ Pair[K, V], K, V any]() Operator[Pair[K, V], K] {
+	return LeftOf[Pair[K, V]]()
+}
+
+// LeftOf is an alias to KeyOf.
+func LeftOf[_ Pair[K, V], K, V any]() Operator[Pair[K, V], K] {
 	return NewOperator(
 		func(source Observable[Pair[K, V]]) Observable[K] {
 			return func(ctx context.Context, sink Observer[K]) {
@@ -62,6 +67,11 @@ func KeyOf[_ Pair[K, V], K, V any]() Operator[Pair[K, V], K] {
 // ValueOf projects each Pair emitted by the source Observable to a value
 // stored in the Value field of that Pair.
 func ValueOf[_ Pair[K, V], K, V any]() Operator[Pair[K, V], V] {
+	return RightOf[Pair[K, V]]()
+}
+
+// RightOf is an alias to ValueOf.
+func RightOf[_ Pair[K, V], K, V any]() Operator[Pair[K, V], V] {
 	return NewOperator(
 		func(source Observable[Pair[K, V]]) Observable[V] {
 			return func(ctx context.Context, sink Observer[V]) {
