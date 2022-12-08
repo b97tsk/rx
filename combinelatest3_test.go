@@ -1,10 +1,8 @@
 package rx_test
 
 import (
-	"context"
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/b97tsk/rx"
 	. "github.com/b97tsk/rx/internal/rxtest"
@@ -33,20 +31,5 @@ func TestCombineLatest3(t *testing.T) {
 			toString,
 		),
 		ErrTest,
-	)
-
-	ctx, cancel := context.WithTimeout(context.Background(), Step(1))
-	defer cancel()
-
-	NewTestSuite[string](t).WithContext(ctx).Case(
-		rx.CombineLatest3(
-			rx.Just("A"),
-			rx.Just("B"),
-			rx.Timer(Step(2)),
-			func(v1, v2 string, _ time.Time) string {
-				return v1 + v2
-			},
-		),
-		context.DeadlineExceeded,
 	)
 }

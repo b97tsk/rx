@@ -31,27 +31,27 @@ func Zip2[T1, T2, R any](
 		chan1 := make(chan Notification[T1])
 		chan2 := make(chan Notification[T2])
 
+		noop := make(chan struct{})
+
 		go func() {
 			var s zipState2[T1, T2]
 
-			done := ctx.Done()
-			exit := false
+			done := false
 
-			for !exit {
+			for !done {
 				select {
-				case <-done:
-					sink.Error(ctx.Err())
-					return
 				case n := <-chan1:
-					exit = zipSink2(n, sink, proj, &s, &s.Q1, 1)
+					done = zipSink2(n, sink, proj, &s, &s.Q1, 1)
 				case n := <-chan2:
-					exit = zipSink2(n, sink, proj, &s, &s.Q2, 2)
+					done = zipSink2(n, sink, proj, &s, &s.Q2, 2)
 				}
 			}
+
+			close(noop)
 		}()
 
-		go subscribeToChan(ctx, obs1, chan1)
-		go subscribeToChan(ctx, obs2, chan2)
+		go obs1.Subscribe(ctx, chanObserver(chan1, noop))
+		go obs2.Subscribe(ctx, chanObserver(chan2, noop))
 	}
 }
 

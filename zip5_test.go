@@ -1,10 +1,8 @@
 package rx_test
 
 import (
-	"context"
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/b97tsk/rx"
 	. "github.com/b97tsk/rx/internal/rxtest"
@@ -95,22 +93,5 @@ func TestZip5(t *testing.T) {
 			toString,
 		),
 		"[A B C D 1]", "[B C D E 2]", "[C D E F 3]", ErrTest,
-	)
-
-	ctx, cancel := context.WithTimeout(context.Background(), Step(1))
-	defer cancel()
-
-	NewTestSuite[string](t).WithContext(ctx).Case(
-		rx.Zip5(
-			rx.Just("A"),
-			rx.Just("B"),
-			rx.Just("C"),
-			rx.Just("D"),
-			rx.Timer(Step(2)),
-			func(v1, v2, v3, v4 string, _ time.Time) string {
-				return v1 + v2 + v3 + v4
-			},
-		),
-		context.DeadlineExceeded,
 	)
 }

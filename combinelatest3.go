@@ -33,30 +33,30 @@ func CombineLatest3[T1, T2, T3, R any](
 		chan2 := make(chan Notification[T2])
 		chan3 := make(chan Notification[T3])
 
+		noop := make(chan struct{})
+
 		go func() {
 			var s combineLatestState3[T1, T2, T3]
 
-			done := ctx.Done()
-			exit := false
+			done := false
 
-			for !exit {
+			for !done {
 				select {
-				case <-done:
-					sink.Error(ctx.Err())
-					return
 				case n := <-chan1:
-					exit = combineLatestSink3(n, sink, proj, &s, &s.V1, 1)
+					done = combineLatestSink3(n, sink, proj, &s, &s.V1, 1)
 				case n := <-chan2:
-					exit = combineLatestSink3(n, sink, proj, &s, &s.V2, 2)
+					done = combineLatestSink3(n, sink, proj, &s, &s.V2, 2)
 				case n := <-chan3:
-					exit = combineLatestSink3(n, sink, proj, &s, &s.V3, 4)
+					done = combineLatestSink3(n, sink, proj, &s, &s.V3, 4)
 				}
 			}
+
+			close(noop)
 		}()
 
-		go subscribeToChan(ctx, obs1, chan1)
-		go subscribeToChan(ctx, obs2, chan2)
-		go subscribeToChan(ctx, obs3, chan3)
+		go obs1.Subscribe(ctx, chanObserver(chan1, noop))
+		go obs2.Subscribe(ctx, chanObserver(chan2, noop))
+		go obs3.Subscribe(ctx, chanObserver(chan3, noop))
 	}
 }
 

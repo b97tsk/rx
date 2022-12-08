@@ -59,48 +59,48 @@ func Zip9[T1, T2, T3, T4, T5, T6, T7, T8, T9, R any](
 		chan8 := make(chan Notification[T8])
 		chan9 := make(chan Notification[T9])
 
+		noop := make(chan struct{})
+
 		go func() {
 			var s zipState9[T1, T2, T3, T4, T5, T6, T7, T8, T9]
 
-			done := ctx.Done()
-			exit := false
+			done := false
 
-			for !exit {
+			for !done {
 				select {
-				case <-done:
-					sink.Error(ctx.Err())
-					return
 				case n := <-chan1:
-					exit = zipSink9(n, sink, proj, &s, &s.Q1, 1)
+					done = zipSink9(n, sink, proj, &s, &s.Q1, 1)
 				case n := <-chan2:
-					exit = zipSink9(n, sink, proj, &s, &s.Q2, 2)
+					done = zipSink9(n, sink, proj, &s, &s.Q2, 2)
 				case n := <-chan3:
-					exit = zipSink9(n, sink, proj, &s, &s.Q3, 4)
+					done = zipSink9(n, sink, proj, &s, &s.Q3, 4)
 				case n := <-chan4:
-					exit = zipSink9(n, sink, proj, &s, &s.Q4, 8)
+					done = zipSink9(n, sink, proj, &s, &s.Q4, 8)
 				case n := <-chan5:
-					exit = zipSink9(n, sink, proj, &s, &s.Q5, 16)
+					done = zipSink9(n, sink, proj, &s, &s.Q5, 16)
 				case n := <-chan6:
-					exit = zipSink9(n, sink, proj, &s, &s.Q6, 32)
+					done = zipSink9(n, sink, proj, &s, &s.Q6, 32)
 				case n := <-chan7:
-					exit = zipSink9(n, sink, proj, &s, &s.Q7, 64)
+					done = zipSink9(n, sink, proj, &s, &s.Q7, 64)
 				case n := <-chan8:
-					exit = zipSink9(n, sink, proj, &s, &s.Q8, 128)
+					done = zipSink9(n, sink, proj, &s, &s.Q8, 128)
 				case n := <-chan9:
-					exit = zipSink9(n, sink, proj, &s, &s.Q9, 256)
+					done = zipSink9(n, sink, proj, &s, &s.Q9, 256)
 				}
 			}
+
+			close(noop)
 		}()
 
-		go subscribeToChan(ctx, obs1, chan1)
-		go subscribeToChan(ctx, obs2, chan2)
-		go subscribeToChan(ctx, obs3, chan3)
-		go subscribeToChan(ctx, obs4, chan4)
-		go subscribeToChan(ctx, obs5, chan5)
-		go subscribeToChan(ctx, obs6, chan6)
-		go subscribeToChan(ctx, obs7, chan7)
-		go subscribeToChan(ctx, obs8, chan8)
-		go subscribeToChan(ctx, obs9, chan9)
+		go obs1.Subscribe(ctx, chanObserver(chan1, noop))
+		go obs2.Subscribe(ctx, chanObserver(chan2, noop))
+		go obs3.Subscribe(ctx, chanObserver(chan3, noop))
+		go obs4.Subscribe(ctx, chanObserver(chan4, noop))
+		go obs5.Subscribe(ctx, chanObserver(chan5, noop))
+		go obs6.Subscribe(ctx, chanObserver(chan6, noop))
+		go obs7.Subscribe(ctx, chanObserver(chan7, noop))
+		go obs8.Subscribe(ctx, chanObserver(chan8, noop))
+		go obs9.Subscribe(ctx, chanObserver(chan9, noop))
 	}
 }
 

@@ -22,3 +22,12 @@ func subscribeToChan[T any](ctx context.Context, obs Observable[T], c chan<- Not
 		}
 	})
 }
+
+func chanObserver[T any](c chan<- Notification[T], noop <-chan struct{}) Observer[T] {
+	return func(n Notification[T]) {
+		select {
+		case c <- n:
+		case <-noop:
+		}
+	}
+}

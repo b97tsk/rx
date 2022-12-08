@@ -49,42 +49,42 @@ func CombineLatest7[T1, T2, T3, T4, T5, T6, T7, R any](
 		chan6 := make(chan Notification[T6])
 		chan7 := make(chan Notification[T7])
 
+		noop := make(chan struct{})
+
 		go func() {
 			var s combineLatestState7[T1, T2, T3, T4, T5, T6, T7]
 
-			done := ctx.Done()
-			exit := false
+			done := false
 
-			for !exit {
+			for !done {
 				select {
-				case <-done:
-					sink.Error(ctx.Err())
-					return
 				case n := <-chan1:
-					exit = combineLatestSink7(n, sink, proj, &s, &s.V1, 1)
+					done = combineLatestSink7(n, sink, proj, &s, &s.V1, 1)
 				case n := <-chan2:
-					exit = combineLatestSink7(n, sink, proj, &s, &s.V2, 2)
+					done = combineLatestSink7(n, sink, proj, &s, &s.V2, 2)
 				case n := <-chan3:
-					exit = combineLatestSink7(n, sink, proj, &s, &s.V3, 4)
+					done = combineLatestSink7(n, sink, proj, &s, &s.V3, 4)
 				case n := <-chan4:
-					exit = combineLatestSink7(n, sink, proj, &s, &s.V4, 8)
+					done = combineLatestSink7(n, sink, proj, &s, &s.V4, 8)
 				case n := <-chan5:
-					exit = combineLatestSink7(n, sink, proj, &s, &s.V5, 16)
+					done = combineLatestSink7(n, sink, proj, &s, &s.V5, 16)
 				case n := <-chan6:
-					exit = combineLatestSink7(n, sink, proj, &s, &s.V6, 32)
+					done = combineLatestSink7(n, sink, proj, &s, &s.V6, 32)
 				case n := <-chan7:
-					exit = combineLatestSink7(n, sink, proj, &s, &s.V7, 64)
+					done = combineLatestSink7(n, sink, proj, &s, &s.V7, 64)
 				}
 			}
+
+			close(noop)
 		}()
 
-		go subscribeToChan(ctx, obs1, chan1)
-		go subscribeToChan(ctx, obs2, chan2)
-		go subscribeToChan(ctx, obs3, chan3)
-		go subscribeToChan(ctx, obs4, chan4)
-		go subscribeToChan(ctx, obs5, chan5)
-		go subscribeToChan(ctx, obs6, chan6)
-		go subscribeToChan(ctx, obs7, chan7)
+		go obs1.Subscribe(ctx, chanObserver(chan1, noop))
+		go obs2.Subscribe(ctx, chanObserver(chan2, noop))
+		go obs3.Subscribe(ctx, chanObserver(chan3, noop))
+		go obs4.Subscribe(ctx, chanObserver(chan4, noop))
+		go obs5.Subscribe(ctx, chanObserver(chan5, noop))
+		go obs6.Subscribe(ctx, chanObserver(chan6, noop))
+		go obs7.Subscribe(ctx, chanObserver(chan7, noop))
 	}
 }
 
