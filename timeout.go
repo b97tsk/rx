@@ -60,6 +60,7 @@ func (obs timeoutObservable[T]) Subscribe(ctx context.Context, sink Observer[T])
 	childCtx, cancel := context.WithCancel(ctx)
 
 	c := make(chan Notification[T])
+	noop := make(chan struct{})
 
 	go func() {
 		tm := timerpool.Get(obs.First)
@@ -73,6 +74,7 @@ func (obs timeoutObservable[T]) Subscribe(ctx context.Context, sink Observer[T])
 					timerpool.Put(tm)
 
 					cancel()
+					close(noop)
 
 					return
 				}
@@ -83,6 +85,7 @@ func (obs timeoutObservable[T]) Subscribe(ctx context.Context, sink Observer[T])
 				timerpool.PutExpired(tm)
 
 				cancel()
+				close(noop)
 
 				if obs.With != nil {
 					obs.With.Subscribe(ctx, sink)
@@ -96,5 +99,5 @@ func (obs timeoutObservable[T]) Subscribe(ctx context.Context, sink Observer[T])
 		}
 	}()
 
-	subscribeToChan(childCtx, obs.Source, c)
+	obs.Source.Subscribe(childCtx, chanObserver(c, noop))
 }
