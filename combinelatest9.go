@@ -103,7 +103,7 @@ func CombineLatest9[T1, T2, T3, T4, T5, T6, T7, T8, T9, R any](
 }
 
 type combineLatestState9[T1, T2, T3, T4, T5, T6, T7, T8, T9 any] struct {
-	RBits, CBits uint16
+	VBits, CBits uint16
 
 	V1 T1
 	V2 T2
@@ -130,7 +130,7 @@ func combineLatestSink9[T1, T2, T3, T4, T5, T6, T7, T8, T9, R, X any](
 	case n.HasValue:
 		*v = n.Value
 
-		if s.RBits |= b; s.RBits == FullBits {
+		if s.VBits |= b; s.VBits == FullBits {
 			sink.Next(proj(s.V1, s.V2, s.V3, s.V4, s.V5, s.V6, s.V7, s.V8, s.V9))
 		}
 

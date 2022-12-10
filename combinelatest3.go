@@ -61,7 +61,7 @@ func CombineLatest3[T1, T2, T3, R any](
 }
 
 type combineLatestState3[T1, T2, T3 any] struct {
-	RBits, CBits uint8
+	VBits, CBits uint8
 
 	V1 T1
 	V2 T2
@@ -82,7 +82,7 @@ func combineLatestSink3[T1, T2, T3, R, X any](
 	case n.HasValue:
 		*v = n.Value
 
-		if s.RBits |= b; s.RBits == FullBits {
+		if s.VBits |= b; s.VBits == FullBits {
 			sink.Next(proj(s.V1, s.V2, s.V3))
 		}
 

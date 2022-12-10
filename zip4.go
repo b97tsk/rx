@@ -70,7 +70,7 @@ func Zip4[T1, T2, T3, T4, R any](
 }
 
 type zipState4[T1, T2, T3, T4 any] struct {
-	RBits, CBits uint8
+	VBits, CBits uint8
 
 	Q1 queue.Queue[T1]
 	Q2 queue.Queue[T2]
@@ -92,7 +92,7 @@ func zipSink4[T1, T2, T3, T4, R, X any](
 	case n.HasValue:
 		q.Push(n.Value)
 
-		if s.RBits |= b; s.RBits == FullBits {
+		if s.VBits |= b; s.VBits == FullBits {
 			var completed bool
 
 			sink.Next(proj(
@@ -133,7 +133,7 @@ func zipPop4[T1, T2, T3, T4, X any](
 	v := q.Pop()
 
 	if q.Len() == 0 {
-		s.RBits &^= b
+		s.VBits &^= b
 
 		if s.CBits&b != 0 {
 			*completed = true
