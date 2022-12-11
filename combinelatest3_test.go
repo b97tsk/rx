@@ -17,12 +17,16 @@ func TestCombineLatest3(t *testing.T) {
 
 	NewTestSuite[string](t).Case(
 		rx.CombineLatest3(
-			rx.Pipe(rx.Just("A", "D"), AddLatencyToValues[string](1, 3)),
-			rx.Pipe(rx.Just("B", "E"), AddLatencyToValues[string](2, 3)),
-			rx.Pipe(rx.Just("C", "F"), AddLatencyToValues[string](3, 3)),
+			rx.Pipe(rx.Just("A1", "A2"), AddLatencyToValues[string](1, 3)),
+			rx.Pipe(rx.Just("B1", "B2"), AddLatencyToValues[string](2, 3)),
+			rx.Pipe(rx.Just("C1", "C2"), AddLatencyToValues[string](3, 3)),
 			toString,
 		),
-		"[A B C]", "[D B C]", "[D E C]", "[D E F]", ErrCompleted,
+		"[A1 B1 C1]",
+		"[A2 B1 C1]",
+		"[A2 B2 C1]",
+		"[A2 B2 C2]",
+		ErrCompleted,
 	).Case(
 		rx.CombineLatest3(
 			rx.Throw[string](ErrTest),
