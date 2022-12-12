@@ -93,6 +93,19 @@ func TestPanic(t *testing.T) {
 
 	shouldPanic(t, func() { _ = rx.Ticker(0) }, "Ticker with d == 0")
 
+	panicTestWithLatestFromLike(
+		t,
+		"WithLatestFrom",
+		rx.WithLatestFrom1[any, any, any],
+		rx.WithLatestFrom2[any, any, any, any],
+		rx.WithLatestFrom3[any, any, any, any, any],
+		rx.WithLatestFrom4[any, any, any, any, any, any],
+		rx.WithLatestFrom5[any, any, any, any, any, any, any],
+		rx.WithLatestFrom6[any, any, any, any, any, any, any, any],
+		rx.WithLatestFrom7[any, any, any, any, any, any, any, any, any],
+		rx.WithLatestFrom8[any, any, any, any, any, any, any, any, any, any],
+	)
+
 	panicTestZipLike(
 		t,
 		"CombineLatest",
@@ -118,6 +131,79 @@ func TestPanic(t *testing.T) {
 		rx.Zip8[any, any, any, any, any, any, any, any, any],
 		rx.Zip9[any, any, any, any, any, any, any, any, any, any],
 	)
+}
+
+func panicTestWithLatestFromLike(
+	t *testing.T,
+	name string,
+	f1 func(_ rx.Observable[any], _ func(any, any) any) rx.Operator[any, any],
+	f2 func(_, _ rx.Observable[any], _ func(any, any, any) any) rx.Operator[any, any],
+	f3 func(_, _, _ rx.Observable[any], _ func(any, any, any, any) any) rx.Operator[any, any],
+	f4 func(_, _, _, _ rx.Observable[any], _ func(any, any, any, any, any) any) rx.Operator[any, any],
+	f5 func(_, _, _, _, _ rx.Observable[any], _ func(any, any, any, any, any, any) any) rx.Operator[any, any],
+	f6 func(_, _, _, _, _, _ rx.Observable[any], _ func(any, any, any, any, any, any, any) any) rx.Operator[any, any],
+	f7 func(
+		_, _, _, _, _, _, _ rx.Observable[any],
+		_ func(any, any, any, any, any, any, any, any) any,
+	) rx.Operator[any, any],
+	f8 func(
+		_, _, _, _, _, _, _, _ rx.Observable[any],
+		_ func(any, any, any, any, any, any, any, any, any) any,
+	) rx.Operator[any, any],
+) {
+	obs := rx.Empty[any]()
+
+	shouldPanic(t, func() { _ = f1(nil, nil) }, name+"1 with obs1 == nil")
+	shouldPanic(t, func() { _ = f1(obs, nil) }, name+"1 with proj == nil")
+
+	shouldPanic(t, func() { _ = f2(nil, nil, nil) }, name+"2 with obs1 == nil")
+	shouldPanic(t, func() { _ = f2(obs, nil, nil) }, name+"2 with obs2 == nil")
+	shouldPanic(t, func() { _ = f2(obs, obs, nil) }, name+"2 with proj == nil")
+
+	shouldPanic(t, func() { _ = f3(nil, nil, nil, nil) }, name+"3 with obs1 == nil")
+	shouldPanic(t, func() { _ = f3(obs, nil, nil, nil) }, name+"3 with obs2 == nil")
+	shouldPanic(t, func() { _ = f3(obs, obs, nil, nil) }, name+"3 with obs3 == nil")
+	shouldPanic(t, func() { _ = f3(obs, obs, obs, nil) }, name+"3 with proj == nil")
+
+	shouldPanic(t, func() { _ = f4(nil, nil, nil, nil, nil) }, name+"4 with obs1 == nil")
+	shouldPanic(t, func() { _ = f4(obs, nil, nil, nil, nil) }, name+"4 with obs2 == nil")
+	shouldPanic(t, func() { _ = f4(obs, obs, nil, nil, nil) }, name+"4 with obs3 == nil")
+	shouldPanic(t, func() { _ = f4(obs, obs, obs, nil, nil) }, name+"4 with obs4 == nil")
+	shouldPanic(t, func() { _ = f4(obs, obs, obs, obs, nil) }, name+"4 with proj == nil")
+
+	shouldPanic(t, func() { _ = f5(nil, nil, nil, nil, nil, nil) }, name+"5 with obs1 == nil")
+	shouldPanic(t, func() { _ = f5(obs, nil, nil, nil, nil, nil) }, name+"5 with obs2 == nil")
+	shouldPanic(t, func() { _ = f5(obs, obs, nil, nil, nil, nil) }, name+"5 with obs3 == nil")
+	shouldPanic(t, func() { _ = f5(obs, obs, obs, nil, nil, nil) }, name+"5 with obs4 == nil")
+	shouldPanic(t, func() { _ = f5(obs, obs, obs, obs, nil, nil) }, name+"5 with obs5 == nil")
+	shouldPanic(t, func() { _ = f5(obs, obs, obs, obs, obs, nil) }, name+"5 with proj == nil")
+
+	shouldPanic(t, func() { _ = f6(nil, nil, nil, nil, nil, nil, nil) }, name+"6 with obs1 == nil")
+	shouldPanic(t, func() { _ = f6(obs, nil, nil, nil, nil, nil, nil) }, name+"6 with obs2 == nil")
+	shouldPanic(t, func() { _ = f6(obs, obs, nil, nil, nil, nil, nil) }, name+"6 with obs3 == nil")
+	shouldPanic(t, func() { _ = f6(obs, obs, obs, nil, nil, nil, nil) }, name+"6 with obs4 == nil")
+	shouldPanic(t, func() { _ = f6(obs, obs, obs, obs, nil, nil, nil) }, name+"6 with obs5 == nil")
+	shouldPanic(t, func() { _ = f6(obs, obs, obs, obs, obs, nil, nil) }, name+"6 with obs6 == nil")
+	shouldPanic(t, func() { _ = f6(obs, obs, obs, obs, obs, obs, nil) }, name+"6 with proj == nil")
+
+	shouldPanic(t, func() { _ = f7(nil, nil, nil, nil, nil, nil, nil, nil) }, name+"7 with obs1 == nil")
+	shouldPanic(t, func() { _ = f7(obs, nil, nil, nil, nil, nil, nil, nil) }, name+"7 with obs2 == nil")
+	shouldPanic(t, func() { _ = f7(obs, obs, nil, nil, nil, nil, nil, nil) }, name+"7 with obs3 == nil")
+	shouldPanic(t, func() { _ = f7(obs, obs, obs, nil, nil, nil, nil, nil) }, name+"7 with obs4 == nil")
+	shouldPanic(t, func() { _ = f7(obs, obs, obs, obs, nil, nil, nil, nil) }, name+"7 with obs5 == nil")
+	shouldPanic(t, func() { _ = f7(obs, obs, obs, obs, obs, nil, nil, nil) }, name+"7 with obs6 == nil")
+	shouldPanic(t, func() { _ = f7(obs, obs, obs, obs, obs, obs, nil, nil) }, name+"7 with obs7 == nil")
+	shouldPanic(t, func() { _ = f7(obs, obs, obs, obs, obs, obs, obs, nil) }, name+"7 with proj == nil")
+
+	shouldPanic(t, func() { _ = f8(nil, nil, nil, nil, nil, nil, nil, nil, nil) }, name+"8 with obs1 == nil")
+	shouldPanic(t, func() { _ = f8(obs, nil, nil, nil, nil, nil, nil, nil, nil) }, name+"8 with obs2 == nil")
+	shouldPanic(t, func() { _ = f8(obs, obs, nil, nil, nil, nil, nil, nil, nil) }, name+"8 with obs3 == nil")
+	shouldPanic(t, func() { _ = f8(obs, obs, obs, nil, nil, nil, nil, nil, nil) }, name+"8 with obs4 == nil")
+	shouldPanic(t, func() { _ = f8(obs, obs, obs, obs, nil, nil, nil, nil, nil) }, name+"8 with obs5 == nil")
+	shouldPanic(t, func() { _ = f8(obs, obs, obs, obs, obs, nil, nil, nil, nil) }, name+"8 with obs6 == nil")
+	shouldPanic(t, func() { _ = f8(obs, obs, obs, obs, obs, obs, nil, nil, nil) }, name+"8 with obs7 == nil")
+	shouldPanic(t, func() { _ = f8(obs, obs, obs, obs, obs, obs, obs, nil, nil) }, name+"8 with obs8 == nil")
+	shouldPanic(t, func() { _ = f8(obs, obs, obs, obs, obs, obs, obs, obs, nil) }, name+"8 with proj == nil")
 }
 
 func panicTestZipLike(
