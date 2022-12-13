@@ -23,43 +23,43 @@ func TestReduce(t *testing.T) {
 	}
 
 	NewTestSuite[int](t).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Range(1, 7),
 			rx.Reduce(0, max),
 		),
 		6, ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Just(42),
 			rx.Reduce(0, max),
 		),
 		42, ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Empty[int](),
 			rx.Reduce(0, max),
 		),
 		0, ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Range(1, 7),
 			rx.Reduce(0, sum),
 		),
 		21, ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Just(42),
 			rx.Reduce(0, sum),
 		),
 		42, ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Empty[int](),
 			rx.Reduce(0, sum),
 		),
 		0, ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Throw[int](ErrTest),
 			rx.Reduce(0, sum),
 		),

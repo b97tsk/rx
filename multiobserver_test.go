@@ -14,13 +14,13 @@ func TestMultiObserver(t *testing.T) {
 
 	m := rx.Multicast[string]()
 
-	rx.Pipe(
+	rx.Pipe1(
 		rx.Just("A", "B", "C"),
 		AddLatencyToValues[string](1, 1),
 	).Subscribe(context.Background(), m.Observer.ElementsOnly)
 
 	NewTestSuite[string](t).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			m.Observable,
 			rx.Take[string](2),
 		),
@@ -32,7 +32,7 @@ func TestMultiObserver(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), Step(1))
 	defer cancel()
 
-	rx.Pipe(
+	rx.Pipe1(
 		m.Observable,
 		rx.DoOnNext(
 			func(string) {
@@ -43,7 +43,7 @@ func TestMultiObserver(t *testing.T) {
 
 	m.Observer.Next("D")
 
-	rx.Pipe(
+	rx.Pipe1(
 		m.Observable,
 		rx.DoOnNext(
 			func(string) {

@@ -41,7 +41,7 @@ func TestMulticastReplay(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), Step(2))
 		defer cancel()
 
-		go rx.Pipe(
+		go rx.Pipe1(
 			m.Observable,
 			rx.DoOnNext(
 				func(string) {

@@ -14,7 +14,7 @@ func TestRange(t *testing.T) {
 		rx.Range(1, 10),
 		1, 2, 3, 4, 5, 6, 7, 8, 9, ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Range(1, 10),
 			rx.Take[int](5),
 		),
@@ -26,7 +26,7 @@ func TestIota(t *testing.T) {
 	t.Parallel()
 
 	NewTestSuite[int](t).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Iota(1),
 			rx.Take[int](5),
 		),

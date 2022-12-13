@@ -1,12 +1,12 @@
 package rx
 
-// Pipe applies an Operator to an Observable and returns the resulting
+// Pipe1 applies an Operator to an Observable and returns the resulting
 // Observable.
-func Pipe[A, B any](
+func Pipe1[A, B any](
 	obs Observable[A],
-	op Operator[A, B],
+	op1 Operator[A, B],
 ) Observable[B] {
-	return op.Apply(obs)
+	return op1.Apply(obs)
 }
 
 // Pipe2 applies 2 Operators to an Observable and returns the resulting

@@ -42,13 +42,13 @@ func TestDematerialize(t *testing.T) {
 		),
 		"A", "B", "C", ErrTest,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Empty[rx.Notification[string]](),
 			rx.Dematerialize[rx.Notification[string]](),
 		),
 		ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Throw[rx.Notification[string]](ErrTest),
 			rx.Dematerialize[rx.Notification[string]](),
 		),

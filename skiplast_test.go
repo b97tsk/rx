@@ -11,31 +11,31 @@ func TestSkipLast(t *testing.T) {
 	t.Parallel()
 
 	NewTestSuite[int](t).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Range(1, 7),
 			rx.SkipLast[int](0),
 		),
 		1, 2, 3, 4, 5, 6, ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Range(1, 7),
 			rx.SkipLast[int](3),
 		),
 		1, 2, 3, ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Just(1),
 			rx.SkipLast[int](3),
 		),
 		ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Empty[int](),
 			rx.SkipLast[int](3),
 		),
 		ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Concat(
 				rx.Range(1, 7),
 				rx.Throw[int](ErrTest),
@@ -44,7 +44,7 @@ func TestSkipLast(t *testing.T) {
 		),
 		1, 2, 3, 4, 5, 6, ErrTest,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Concat(
 				rx.Range(1, 7),
 				rx.Throw[int](ErrTest),
@@ -53,7 +53,7 @@ func TestSkipLast(t *testing.T) {
 		),
 		1, 2, 3, ErrTest,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Concat(
 				rx.Just(1),
 				rx.Throw[int](ErrTest),
@@ -62,7 +62,7 @@ func TestSkipLast(t *testing.T) {
 		),
 		ErrTest,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Concat(
 				rx.Empty[int](),
 				rx.Throw[int](ErrTest),

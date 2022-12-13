@@ -15,13 +15,13 @@ func TestTakeWhile(t *testing.T) {
 	}
 
 	NewTestSuite[int](t).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Just(1, 2, 3, 4, 5, 4, 3, 2, 1),
 			rx.TakeWhile(lessThanFive),
 		),
 		1, 2, 3, 4, ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Concat(
 				rx.Range(1, 10),
 				rx.Throw[int](ErrTest),
@@ -30,7 +30,7 @@ func TestTakeWhile(t *testing.T) {
 		),
 		1, 2, 3, 4, ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Concat(
 				rx.Range(1, 5),
 				rx.Throw[int](ErrTest),

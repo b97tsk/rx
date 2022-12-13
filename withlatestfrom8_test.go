@@ -16,17 +16,17 @@ func TestWithLatestFrom8(t *testing.T) {
 	}
 
 	NewTestSuite[string](t).Case(
-		rx.Pipe(
-			rx.Pipe(rx.Just("A1", "A2", "A3"), AddLatencyToValues[string](1, 9)),
+		rx.Pipe1(
+			rx.Pipe1(rx.Just("A1", "A2", "A3"), AddLatencyToValues[string](1, 9)),
 			rx.WithLatestFrom8(
-				rx.Pipe(rx.Just("B1", "B2", "B3"), AddLatencyToValues[string](2, 9)),
-				rx.Pipe(rx.Just("C1", "C2", "C3"), AddLatencyToValues[string](3, 9)),
-				rx.Pipe(rx.Just("D1", "D2", "D3"), AddLatencyToValues[string](4, 9)),
-				rx.Pipe(rx.Just("E1", "E2", "E3"), AddLatencyToValues[string](5, 9)),
-				rx.Pipe(rx.Just("F1", "F2", "F3"), AddLatencyToValues[string](6, 9)),
-				rx.Pipe(rx.Just("G1", "G2", "G3"), AddLatencyToValues[string](7, 9)),
-				rx.Pipe(rx.Just("H1", "H2", "H3"), AddLatencyToValues[string](8, 9)),
-				rx.Pipe(rx.Just("I1", "I2", "I3"), AddLatencyToValues[string](9, 9)),
+				rx.Pipe1(rx.Just("B1", "B2", "B3"), AddLatencyToValues[string](2, 9)),
+				rx.Pipe1(rx.Just("C1", "C2", "C3"), AddLatencyToValues[string](3, 9)),
+				rx.Pipe1(rx.Just("D1", "D2", "D3"), AddLatencyToValues[string](4, 9)),
+				rx.Pipe1(rx.Just("E1", "E2", "E3"), AddLatencyToValues[string](5, 9)),
+				rx.Pipe1(rx.Just("F1", "F2", "F3"), AddLatencyToValues[string](6, 9)),
+				rx.Pipe1(rx.Just("G1", "G2", "G3"), AddLatencyToValues[string](7, 9)),
+				rx.Pipe1(rx.Just("H1", "H2", "H3"), AddLatencyToValues[string](8, 9)),
+				rx.Pipe1(rx.Just("I1", "I2", "I3"), AddLatencyToValues[string](9, 9)),
 				toString,
 			),
 		),
@@ -34,7 +34,7 @@ func TestWithLatestFrom8(t *testing.T) {
 		"[A3 B2 C2 D2 E2 F2 G2 H2 I2]",
 		ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Throw[string](ErrTest),
 			rx.WithLatestFrom8(
 				rx.Throw[string](ErrTest),

@@ -46,7 +46,7 @@ func TestSample(t *testing.T) {
 			AddLatencyToValues[string](1, 2),
 			rx.Sample[string](
 				rx.Concat(
-					rx.Pipe(
+					rx.Pipe1(
 						rx.Ticker(Step(4)),
 						rx.Take[time.Time](2),
 					),
@@ -56,7 +56,7 @@ func TestSample(t *testing.T) {
 		),
 		"B", "D", ErrTest,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Throw[string](ErrTest),
 			rx.Sample[string](rx.Ticker(Step(1))),
 		),
@@ -74,7 +74,7 @@ func TestSample(t *testing.T) {
 	defer cancel()
 
 	NewTestSuite[string](t).WithContext(ctx).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Empty[string](),
 			rx.Sample[string](
 				func(ctx context.Context, sink rx.Observer[string]) {

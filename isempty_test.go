@@ -11,25 +11,25 @@ func TestIsEmpty(t *testing.T) {
 	t.Parallel()
 
 	NewTestSuite[bool](t).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Just("A", "B"),
 			rx.IsEmpty[string](),
 		),
 		false, ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Just("A"),
 			rx.IsEmpty[string](),
 		),
 		false, ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Empty[string](),
 			rx.IsEmpty[string](),
 		),
 		true, ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Throw[string](ErrTest),
 			rx.IsEmpty[string](),
 		),

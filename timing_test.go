@@ -25,7 +25,7 @@ func TestTimer(t *testing.T) {
 	t.Parallel()
 
 	NewTestSuite[int](t).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Timer(Step(1)),
 			rx.MapTo[time.Time](42),
 		),

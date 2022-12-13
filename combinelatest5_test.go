@@ -17,11 +17,11 @@ func TestCombineLatest5(t *testing.T) {
 
 	NewTestSuite[string](t).Case(
 		rx.CombineLatest5(
-			rx.Pipe(rx.Just("A1", "A2"), AddLatencyToValues[string](1, 5)),
-			rx.Pipe(rx.Just("B1", "B2"), AddLatencyToValues[string](2, 5)),
-			rx.Pipe(rx.Just("C1", "C2"), AddLatencyToValues[string](3, 5)),
-			rx.Pipe(rx.Just("D1", "D2"), AddLatencyToValues[string](4, 5)),
-			rx.Pipe(rx.Just("E1", "E2"), AddLatencyToValues[string](5, 5)),
+			rx.Pipe1(rx.Just("A1", "A2"), AddLatencyToValues[string](1, 5)),
+			rx.Pipe1(rx.Just("B1", "B2"), AddLatencyToValues[string](2, 5)),
+			rx.Pipe1(rx.Just("C1", "C2"), AddLatencyToValues[string](3, 5)),
+			rx.Pipe1(rx.Just("D1", "D2"), AddLatencyToValues[string](4, 5)),
+			rx.Pipe1(rx.Just("E1", "E2"), AddLatencyToValues[string](5, 5)),
 			toString,
 		),
 		"[A1 B1 C1 D1 E1]",

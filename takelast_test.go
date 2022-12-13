@@ -13,31 +13,31 @@ func TestTakeLast(t *testing.T) {
 	t.Parallel()
 
 	NewTestSuite[int](t).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Range(1, 10),
 			rx.TakeLast[int](0),
 		),
 		ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Range(1, 10),
 			rx.TakeLast[int](3),
 		),
 		7, 8, 9, ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Just(1),
 			rx.TakeLast[int](3),
 		),
 		1, ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Empty[int](),
 			rx.TakeLast[int](3),
 		),
 		ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Concat(
 				rx.Range(1, 10),
 				rx.Throw[int](ErrTest),
@@ -46,7 +46,7 @@ func TestTakeLast(t *testing.T) {
 		),
 		ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Concat(
 				rx.Range(1, 10),
 				rx.Throw[int](ErrTest),
@@ -55,7 +55,7 @@ func TestTakeLast(t *testing.T) {
 		),
 		ErrTest,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Concat(
 				rx.Just(1),
 				rx.Throw[int](ErrTest),
@@ -64,7 +64,7 @@ func TestTakeLast(t *testing.T) {
 		),
 		ErrTest,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Concat(
 				rx.Empty[int](),
 				rx.Throw[int](ErrTest),

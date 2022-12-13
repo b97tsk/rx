@@ -27,7 +27,7 @@ func TestMulticast(t *testing.T) {
 
 		m := rx.Multicast[int]()
 
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Just(3, 4, 5),
 			AddLatencyToValues[int](1, 1),
 		).Subscribe(context.Background(), m.Observer)
@@ -35,12 +35,12 @@ func TestMulticast(t *testing.T) {
 		NewTestSuite[string](t).Case(
 			rx.Zip2(
 				m.Observable,
-				rx.Pipe(m.Observable, rx.Scan(0, sum)),
+				rx.Pipe1(m.Observable, rx.Scan(0, sum)),
 				toString,
 			),
 			"[3 3]", "[4 7]", "[5 12]", ErrCompleted,
 		).Case(
-			rx.Pipe(
+			rx.Pipe1(
 				m.Observable,
 				ToString[int](),
 			),
@@ -53,7 +53,7 @@ func TestMulticast(t *testing.T) {
 
 		m := rx.Multicast[int]()
 
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Concat(
 				rx.Just(3, 4, 5),
 				rx.Throw[int](ErrTest),
@@ -64,12 +64,12 @@ func TestMulticast(t *testing.T) {
 		NewTestSuite[string](t).Case(
 			rx.Zip2(
 				m.Observable,
-				rx.Pipe(m.Observable, rx.Scan(0, sum)),
+				rx.Pipe1(m.Observable, rx.Scan(0, sum)),
 				toString,
 			),
 			"[3 3]", "[4 7]", "[5 12]", ErrTest,
 		).Case(
-			rx.Pipe(
+			rx.Pipe1(
 				m.Observable,
 				ToString[int](),
 			),

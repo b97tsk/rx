@@ -13,25 +13,25 @@ func TestRepeat(t *testing.T) {
 	t.Parallel()
 
 	NewTestSuite[string](t).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Just("A", "B", "C"),
 			rx.Repeat[string](0),
 		),
 		ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Just("A", "B", "C"),
 			rx.Repeat[string](1),
 		),
 		"A", "B", "C", ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Just("A", "B", "C"),
 			rx.Repeat[string](2),
 		),
 		"A", "B", "C", "A", "B", "C", ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Concat(
 				rx.Just("A", "B", "C"),
 				rx.Throw[string](ErrTest),
@@ -40,7 +40,7 @@ func TestRepeat(t *testing.T) {
 		),
 		ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Concat(
 				rx.Just("A", "B", "C"),
 				rx.Throw[string](ErrTest),
@@ -49,7 +49,7 @@ func TestRepeat(t *testing.T) {
 		),
 		"A", "B", "C", ErrTest,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Concat(
 				rx.Just("A", "B", "C"),
 				rx.Throw[string](ErrTest),
@@ -58,7 +58,7 @@ func TestRepeat(t *testing.T) {
 		),
 		"A", "B", "C", ErrTest,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Concat(
 				rx.Just("A", "B", "C"),
 				rx.Throw[string](ErrTest),

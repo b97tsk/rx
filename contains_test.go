@@ -15,19 +15,19 @@ func TestContains(t *testing.T) {
 	}
 
 	NewTestSuite[bool](t).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Range(1, 10),
 			rx.Contains(greaterThanFour),
 		),
 		true, ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Range(1, 5),
 			rx.Contains(greaterThanFour),
 		),
 		false, ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Concat(
 				rx.Range(1, 10),
 				rx.Throw[int](ErrTest),
@@ -36,7 +36,7 @@ func TestContains(t *testing.T) {
 		),
 		true, ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Concat(
 				rx.Range(1, 5),
 				rx.Throw[int](ErrTest),
@@ -51,19 +51,19 @@ func TestContainsElement(t *testing.T) {
 	t.Parallel()
 
 	NewTestSuite[bool](t).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Range(1, 10),
 			rx.ContainsElement(5),
 		),
 		true, ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Range(1, 5),
 			rx.ContainsElement(5),
 		),
 		false, ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Concat(
 				rx.Range(1, 10),
 				rx.Throw[int](ErrTest),
@@ -72,7 +72,7 @@ func TestContainsElement(t *testing.T) {
 		),
 		true, ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Concat(
 				rx.Range(1, 5),
 				rx.Throw[int](ErrTest),

@@ -25,7 +25,7 @@ func TestZip9(t *testing.T) {
 			rx.Just("F", "G"),
 			rx.Just("G", "H"),
 			rx.Just("H", "I"),
-			rx.Pipe(rx.Range(1, 4), DelaySubscription[int](1)),
+			rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
 			toString,
 		),
 		"[A B C D E F G H 1]", "[B C D E F G H I 2]", ErrCompleted,
@@ -39,7 +39,7 @@ func TestZip9(t *testing.T) {
 			rx.Just("F", "G", "H"),
 			rx.Just("G", "H", "I"),
 			rx.Just("H", "I", "J"),
-			rx.Pipe(rx.Range(1, 4), DelaySubscription[int](1)),
+			rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
 			toString,
 		),
 		"[A B C D E F G H 1]", "[B C D E F G H I 2]", "[C D E F G H I J 3]", ErrCompleted,
@@ -53,7 +53,7 @@ func TestZip9(t *testing.T) {
 			rx.Just("F", "G", "H", "I"),
 			rx.Just("G", "H", "I", "J"),
 			rx.Just("H", "I", "J", "K"),
-			rx.Pipe(rx.Range(1, 4), DelaySubscription[int](1)),
+			rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
 			toString,
 		),
 		"[A B C D E F G H 1]", "[B C D E F G H I 2]", "[C D E F G H I J 3]", ErrCompleted,
@@ -67,9 +67,9 @@ func TestZip9(t *testing.T) {
 			rx.Just("F", "G"),
 			rx.Just("G", "H"),
 			rx.Just("H", "I"),
-			rx.Pipe(
+			rx.Pipe1(
 				rx.Concat(
-					rx.Pipe(rx.Range(1, 4), DelaySubscription[int](1)),
+					rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
 					rx.Throw[int](ErrTest),
 				),
 				DelaySubscription[int](1),
@@ -87,9 +87,9 @@ func TestZip9(t *testing.T) {
 			rx.Just("F", "G", "H"),
 			rx.Just("G", "H", "I"),
 			rx.Just("H", "I", "J"),
-			rx.Pipe(
+			rx.Pipe1(
 				rx.Concat(
-					rx.Pipe(rx.Range(1, 4), DelaySubscription[int](1)),
+					rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
 					rx.Throw[int](ErrTest),
 				),
 				DelaySubscription[int](1),
@@ -107,9 +107,9 @@ func TestZip9(t *testing.T) {
 			rx.Just("F", "G", "H", "I"),
 			rx.Just("G", "H", "I", "J"),
 			rx.Just("H", "I", "J", "K"),
-			rx.Pipe(
+			rx.Pipe1(
 				rx.Concat(
-					rx.Pipe(rx.Range(1, 4), DelaySubscription[int](1)),
+					rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
 					rx.Throw[int](ErrTest),
 				),
 				DelaySubscription[int](1),

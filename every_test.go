@@ -15,19 +15,19 @@ func TestEvery(t *testing.T) {
 	}
 
 	NewTestSuite[bool](t).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Range(1, 10),
 			rx.Every(lessThanFive),
 		),
 		false, ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Range(1, 5),
 			rx.Every(lessThanFive),
 		),
 		true, ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Concat(
 				rx.Range(1, 10),
 				rx.Throw[int](ErrTest),
@@ -36,7 +36,7 @@ func TestEvery(t *testing.T) {
 		),
 		false, ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Concat(
 				rx.Range(1, 5),
 				rx.Throw[int](ErrTest),

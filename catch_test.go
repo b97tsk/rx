@@ -16,13 +16,13 @@ func TestCatch(t *testing.T) {
 	}
 
 	NewTestSuite[string](t).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Just("A", "B", "C"),
 			rx.Catch(f),
 		),
 		"A", "B", "C", ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Concat(
 				rx.Just("A", "B", "C"),
 				rx.Throw[string](ErrTest),
@@ -36,7 +36,7 @@ func TestCatch(t *testing.T) {
 	defer cancel()
 
 	NewTestSuite[string](t).WithContext(ctx).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Never[string](),
 			rx.Catch(f),
 		),
@@ -48,13 +48,13 @@ func TestOnErrorResumeWith(t *testing.T) {
 	t.Parallel()
 
 	NewTestSuite[string](t).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Just("A", "B", "C"),
 			rx.OnErrorResumeWith(rx.Just("D", "E")),
 		),
 		"A", "B", "C", ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Concat(
 				rx.Just("A", "B", "C"),
 				rx.Throw[string](ErrTest),
@@ -68,7 +68,7 @@ func TestOnErrorResumeWith(t *testing.T) {
 	defer cancel()
 
 	NewTestSuite[string](t).WithContext(ctx).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Never[string](),
 			rx.OnErrorResumeWith(rx.Just("D", "E")),
 		),
@@ -80,13 +80,13 @@ func TestOnErrorComplete(t *testing.T) {
 	t.Parallel()
 
 	NewTestSuite[string](t).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Just("A", "B", "C"),
 			rx.OnErrorComplete[string](),
 		),
 		"A", "B", "C", ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Concat(
 				rx.Just("A", "B", "C"),
 				rx.Throw[string](ErrTest),
@@ -100,7 +100,7 @@ func TestOnErrorComplete(t *testing.T) {
 	defer cancel()
 
 	NewTestSuite[string](t).WithContext(ctx).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Never[string](),
 			rx.OnErrorComplete[string](),
 		),

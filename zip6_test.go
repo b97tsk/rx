@@ -22,7 +22,7 @@ func TestZip6(t *testing.T) {
 			rx.Just("C", "D"),
 			rx.Just("D", "E"),
 			rx.Just("E", "F"),
-			rx.Pipe(rx.Range(1, 4), DelaySubscription[int](1)),
+			rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
 			toString,
 		),
 		"[A B C D E 1]", "[B C D E F 2]", ErrCompleted,
@@ -33,7 +33,7 @@ func TestZip6(t *testing.T) {
 			rx.Just("C", "D", "E"),
 			rx.Just("D", "E", "F"),
 			rx.Just("E", "F", "G"),
-			rx.Pipe(rx.Range(1, 4), DelaySubscription[int](1)),
+			rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
 			toString,
 		),
 		"[A B C D E 1]", "[B C D E F 2]", "[C D E F G 3]", ErrCompleted,
@@ -44,7 +44,7 @@ func TestZip6(t *testing.T) {
 			rx.Just("C", "D", "E", "F"),
 			rx.Just("D", "E", "F", "G"),
 			rx.Just("E", "F", "G", "H"),
-			rx.Pipe(rx.Range(1, 4), DelaySubscription[int](1)),
+			rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
 			toString,
 		),
 		"[A B C D E 1]", "[B C D E F 2]", "[C D E F G 3]", ErrCompleted,
@@ -55,9 +55,9 @@ func TestZip6(t *testing.T) {
 			rx.Just("C", "D"),
 			rx.Just("D", "E"),
 			rx.Just("E", "F"),
-			rx.Pipe(
+			rx.Pipe1(
 				rx.Concat(
-					rx.Pipe(rx.Range(1, 4), DelaySubscription[int](1)),
+					rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
 					rx.Throw[int](ErrTest),
 				),
 				DelaySubscription[int](1),
@@ -72,9 +72,9 @@ func TestZip6(t *testing.T) {
 			rx.Just("C", "D", "E"),
 			rx.Just("D", "E", "F"),
 			rx.Just("E", "F", "G"),
-			rx.Pipe(
+			rx.Pipe1(
 				rx.Concat(
-					rx.Pipe(rx.Range(1, 4), DelaySubscription[int](1)),
+					rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
 					rx.Throw[int](ErrTest),
 				),
 				DelaySubscription[int](1),
@@ -89,9 +89,9 @@ func TestZip6(t *testing.T) {
 			rx.Just("C", "D", "E", "F"),
 			rx.Just("D", "E", "F", "G"),
 			rx.Just("E", "F", "G", "H"),
-			rx.Pipe(
+			rx.Pipe1(
 				rx.Concat(
-					rx.Pipe(rx.Range(1, 4), DelaySubscription[int](1)),
+					rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
 					rx.Throw[int](ErrTest),
 				),
 				DelaySubscription[int](1),

@@ -11,19 +11,19 @@ func TestIgnoreElements(t *testing.T) {
 	t.Parallel()
 
 	NewTestSuite[string](t).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Empty[string](),
 			rx.IgnoreElements[string, string](),
 		),
 		ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Just("A", "B", "C"),
 			rx.IgnoreElements[string, string](),
 		),
 		ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Concat(
 				rx.Just("A", "B", "C"),
 				rx.Throw[string](ErrTest),

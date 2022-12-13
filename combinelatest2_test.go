@@ -17,8 +17,8 @@ func TestCombineLatest2(t *testing.T) {
 
 	NewTestSuite[string](t).Case(
 		rx.CombineLatest2(
-			rx.Pipe(rx.Just("A1", "A2"), AddLatencyToValues[string](1, 2)),
-			rx.Pipe(rx.Just("B1", "B2"), AddLatencyToValues[string](2, 2)),
+			rx.Pipe1(rx.Just("A1", "A2"), AddLatencyToValues[string](1, 2)),
+			rx.Pipe1(rx.Just("B1", "B2"), AddLatencyToValues[string](2, 2)),
 			toString,
 		),
 		"[A1 B1]",

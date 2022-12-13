@@ -17,17 +17,17 @@ func TestConcat(t *testing.T) {
 		ErrCompleted,
 	).Case(
 		rx.Concat(
-			rx.Pipe(rx.Just("A", "B"), AddLatencyToValues[string](3, 5)),
-			rx.Pipe(rx.Just("C", "D"), AddLatencyToValues[string](2, 4)),
-			rx.Pipe(rx.Just("E", "F"), AddLatencyToValues[string](1, 3)),
+			rx.Pipe1(rx.Just("A", "B"), AddLatencyToValues[string](3, 5)),
+			rx.Pipe1(rx.Just("C", "D"), AddLatencyToValues[string](2, 4)),
+			rx.Pipe1(rx.Just("E", "F"), AddLatencyToValues[string](1, 3)),
 		),
 		"A", "B", "C", "D", "E", "F", ErrCompleted,
 	).Case(
-		rx.Pipe(
-			rx.Pipe(rx.Just("A", "B"), AddLatencyToValues[string](3, 5)),
+		rx.Pipe1(
+			rx.Pipe1(rx.Just("A", "B"), AddLatencyToValues[string](3, 5)),
 			rx.ConcatWith(
-				rx.Pipe(rx.Just("C", "D"), AddLatencyToValues[string](2, 4)),
-				rx.Pipe(rx.Just("E", "F"), AddLatencyToValues[string](1, 3)),
+				rx.Pipe1(rx.Just("C", "D"), AddLatencyToValues[string](2, 4)),
+				rx.Pipe1(rx.Just("E", "F"), AddLatencyToValues[string](1, 3)),
 			),
 		),
 		"A", "B", "C", "D", "E", "F", ErrCompleted,
@@ -54,17 +54,17 @@ func TestConcat2(t *testing.T) {
 	t.Parallel()
 
 	NewTestSuite[string](t).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Just(
-				rx.Pipe(rx.Just("A", "B"), AddLatencyToValues[string](3, 5)),
-				rx.Pipe(rx.Just("C", "D"), AddLatencyToValues[string](2, 4)),
-				rx.Pipe(rx.Just("E", "F"), AddLatencyToValues[string](1, 3)),
+				rx.Pipe1(rx.Just("A", "B"), AddLatencyToValues[string](3, 5)),
+				rx.Pipe1(rx.Just("C", "D"), AddLatencyToValues[string](2, 4)),
+				rx.Pipe1(rx.Just("E", "F"), AddLatencyToValues[string](1, 3)),
 			),
 			rx.ConcatAll[rx.Observable[string]](),
 		),
 		"A", "B", "C", "D", "E", "F", ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Timer(Step(1)),
 			rx.ConcatMap(
 				func(time.Time) rx.Observable[string] {
@@ -74,13 +74,13 @@ func TestConcat2(t *testing.T) {
 		),
 		"A", ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Timer(Step(1)),
 			rx.ConcatMapTo[time.Time](rx.Just("A")),
 		),
 		"A", ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Throw[rx.Observable[string]](ErrTest),
 			rx.ConcatAll[rx.Observable[string]](),
 		),
@@ -91,7 +91,7 @@ func TestConcat2(t *testing.T) {
 	defer cancel()
 
 	NewTestSuite[string](t).WithContext(ctx).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Just[rx.Observable[string]](
 				func(_ context.Context, sink rx.Observer[string]) {
 					time.Sleep(Step(2))

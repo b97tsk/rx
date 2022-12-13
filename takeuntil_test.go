@@ -43,7 +43,7 @@ func TestTakeUntil(t *testing.T) {
 			rx.Just("A", "B", "C"),
 			AddLatencyToValues[string](0, 2),
 			rx.TakeUntil[string](
-				rx.Pipe(
+				rx.Pipe1(
 					rx.Just(42),
 					DelaySubscription[int](3),
 				),
@@ -55,7 +55,7 @@ func TestTakeUntil(t *testing.T) {
 			rx.Just("A", "B", "C"),
 			AddLatencyToValues[string](0, 2),
 			rx.TakeUntil[string](
-				rx.Pipe(
+				rx.Pipe1(
 					rx.Empty[int](),
 					DelaySubscription[int](3),
 				),
@@ -67,7 +67,7 @@ func TestTakeUntil(t *testing.T) {
 			rx.Just("A", "B", "C"),
 			AddLatencyToValues[string](0, 2),
 			rx.TakeUntil[string](
-				rx.Pipe(
+				rx.Pipe1(
 					rx.Throw[int](ErrTest),
 					DelaySubscription[int](3),
 				),

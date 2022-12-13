@@ -39,7 +39,7 @@ func TestAudit(t *testing.T) {
 			DelaySubscription[string](1),
 			rx.Audit(
 				func(string) rx.Observable[int] {
-					return rx.Pipe(
+					return rx.Pipe1(
 						rx.Empty[int](),
 						DelaySubscription[int](2),
 					)
@@ -59,11 +59,11 @@ func TestAudit(t *testing.T) {
 		),
 		ErrTest,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Just("A", "B", "C", "D", "E"),
 			rx.Audit(
 				func(string) rx.Observable[int] {
-					return rx.Pipe(
+					return rx.Pipe1(
 						rx.Throw[int](ErrTest),
 						DelaySubscription[int](1),
 					)
@@ -79,13 +79,13 @@ func TestAudit(t *testing.T) {
 		),
 		"B", "D", "E", ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Empty[string](),
 			rx.AuditTime[string](Step(3)),
 		),
 		ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Throw[string](ErrTest),
 			rx.AuditTime[string](Step(3)),
 		),

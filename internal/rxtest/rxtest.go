@@ -34,9 +34,9 @@ func AddLatencyToValues[T any](initialDelay, period int) rx.Operator[T, T] {
 func AddLatencyToNotifications[T any](initialDelay, period int) rx.Operator[T, T] {
 	return rx.NewOperator(
 		func(source rx.Observable[T]) rx.Observable[T] {
-			return rx.Pipe(
+			return rx.Pipe1(
 				rx.Zip2(
-					rx.Pipe(source, rx.Materialize[T]()),
+					rx.Pipe1(source, rx.Materialize[T]()),
 					rx.Concat(rx.Timer(Step(initialDelay)), rx.Ticker(Step(period))),
 					func(n rx.Notification[T], _ time.Time) rx.Notification[T] { return n },
 				),
@@ -50,7 +50,7 @@ func DelaySubscription[T any](n int) rx.Operator[T, T] {
 	return rx.NewOperator(
 		func(source rx.Observable[T]) rx.Observable[T] {
 			return rx.Concat(
-				rx.Pipe(
+				rx.Pipe1(
 					rx.Timer(Step(n)),
 					rx.IgnoreElements[time.Time, T](),
 				),

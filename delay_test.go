@@ -13,7 +13,7 @@ func TestDelay(t *testing.T) {
 	t.Parallel()
 
 	NewTestSuite[string](t).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Just("A", "B", "C", "D", "E"),
 			rx.Delay[string](Step(1)),
 		),
@@ -36,7 +36,7 @@ func TestDelay(t *testing.T) {
 		),
 		"A", "B", "C", "D", "E", ErrTest,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Empty[string](),
 			rx.Delay[string](Step(1)),
 		),
@@ -48,7 +48,7 @@ func TestDelay(t *testing.T) {
 		defer cancel()
 
 		NewTestSuite[string](t).WithContext(ctx).Case(
-			rx.Pipe(
+			rx.Pipe1(
 				rx.Just("A", "B", "C", "D", "E"),
 				rx.Delay[string](Step(2)),
 			),

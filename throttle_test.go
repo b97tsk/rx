@@ -39,7 +39,7 @@ func TestThrottle(t *testing.T) {
 			AddLatencyToValues[string](0, 2),
 			rx.Throttle(
 				func(string) rx.Observable[int] {
-					return rx.Pipe(
+					return rx.Pipe1(
 						rx.Empty[int](),
 						DelaySubscription[int](5),
 					)
@@ -48,7 +48,7 @@ func TestThrottle(t *testing.T) {
 		),
 		ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Throw[string](ErrTest),
 			rx.Throttle(
 				func(string) rx.Observable[int] {

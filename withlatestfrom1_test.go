@@ -16,10 +16,10 @@ func TestWithLatestFrom1(t *testing.T) {
 	}
 
 	NewTestSuite[string](t).Case(
-		rx.Pipe(
-			rx.Pipe(rx.Just("A1", "A2", "A3"), AddLatencyToValues[string](1, 2)),
+		rx.Pipe1(
+			rx.Pipe1(rx.Just("A1", "A2", "A3"), AddLatencyToValues[string](1, 2)),
 			rx.WithLatestFrom1(
-				rx.Pipe(rx.Just("B1", "B2", "B3"), AddLatencyToValues[string](2, 2)),
+				rx.Pipe1(rx.Just("B1", "B2", "B3"), AddLatencyToValues[string](2, 2)),
 				toString,
 			),
 		),
@@ -27,7 +27,7 @@ func TestWithLatestFrom1(t *testing.T) {
 		"[A3 B2]",
 		ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Throw[string](ErrTest),
 			rx.WithLatestFrom1(
 				rx.Throw[string](ErrTest),

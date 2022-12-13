@@ -19,7 +19,7 @@ func TestZip3(t *testing.T) {
 		rx.Zip3(
 			rx.Just("A", "B"),
 			rx.Just("B", "C"),
-			rx.Pipe(rx.Range(1, 4), DelaySubscription[int](1)),
+			rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
 			toString,
 		),
 		"[A B 1]", "[B C 2]", ErrCompleted,
@@ -27,7 +27,7 @@ func TestZip3(t *testing.T) {
 		rx.Zip3(
 			rx.Just("A", "B", "C"),
 			rx.Just("B", "C", "D"),
-			rx.Pipe(rx.Range(1, 4), DelaySubscription[int](1)),
+			rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
 			toString,
 		),
 		"[A B 1]", "[B C 2]", "[C D 3]", ErrCompleted,
@@ -35,7 +35,7 @@ func TestZip3(t *testing.T) {
 		rx.Zip3(
 			rx.Just("A", "B", "C", "D"),
 			rx.Just("B", "C", "D", "E"),
-			rx.Pipe(rx.Range(1, 4), DelaySubscription[int](1)),
+			rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
 			toString,
 		),
 		"[A B 1]", "[B C 2]", "[C D 3]", ErrCompleted,
@@ -43,9 +43,9 @@ func TestZip3(t *testing.T) {
 		rx.Zip3(
 			rx.Just("A", "B"),
 			rx.Just("B", "C"),
-			rx.Pipe(
+			rx.Pipe1(
 				rx.Concat(
-					rx.Pipe(rx.Range(1, 4), DelaySubscription[int](1)),
+					rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
 					rx.Throw[int](ErrTest),
 				),
 				DelaySubscription[int](1),
@@ -57,9 +57,9 @@ func TestZip3(t *testing.T) {
 		rx.Zip3(
 			rx.Just("A", "B", "C"),
 			rx.Just("B", "C", "D"),
-			rx.Pipe(
+			rx.Pipe1(
 				rx.Concat(
-					rx.Pipe(rx.Range(1, 4), DelaySubscription[int](1)),
+					rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
 					rx.Throw[int](ErrTest),
 				),
 				DelaySubscription[int](1),
@@ -71,9 +71,9 @@ func TestZip3(t *testing.T) {
 		rx.Zip3(
 			rx.Just("A", "B", "C", "D"),
 			rx.Just("B", "C", "D", "E"),
-			rx.Pipe(
+			rx.Pipe1(
 				rx.Concat(
-					rx.Pipe(rx.Range(1, 4), DelaySubscription[int](1)),
+					rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
 					rx.Throw[int](ErrTest),
 				),
 				DelaySubscription[int](1),

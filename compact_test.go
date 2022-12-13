@@ -11,13 +11,13 @@ func TestCompact(t *testing.T) {
 	t.Parallel()
 
 	NewTestSuite[int](t).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Just(1, 2, 2, 1, 3, 3, 1),
 			rx.CompactComparable[int](),
 		),
 		1, 2, 1, 3, 1, ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Just(1, 2, 2, 1, 3, 3, 1),
 			rx.Compact(
 				func(v1, v2 int) bool { return v1&1 == v2&1 },
@@ -25,7 +25,7 @@ func TestCompact(t *testing.T) {
 		),
 		1, 2, 1, ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Just(1, 2, 2, 1, 3, 3, 1),
 			rx.CompactComparableKey(
 				func(v int) int { return v & 1 },
@@ -33,7 +33,7 @@ func TestCompact(t *testing.T) {
 		),
 		1, 2, 1, ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Just(1, 2, 2, 1, 3, 3, 1),
 			rx.CompactKey(
 				func(v int) int { return v & 1 },

@@ -15,13 +15,13 @@ func TestFilter(t *testing.T) {
 	}
 
 	NewTestSuite[int](t).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Range(1, 10),
 			rx.Filter(lessThanFive),
 		),
 		1, 2, 3, 4, ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Concat(
 				rx.Range(1, 10),
 				rx.Throw[int](ErrTest),
@@ -40,13 +40,13 @@ func TestFilterOut(t *testing.T) {
 	}
 
 	NewTestSuite[int](t).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Range(1, 10),
 			rx.FilterOut(lessThanFive),
 		),
 		5, 6, 7, 8, 9, ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Concat(
 				rx.Range(1, 10),
 				rx.Throw[int](ErrTest),
@@ -65,13 +65,13 @@ func TestFilterMap(t *testing.T) {
 	}
 
 	NewTestSuite[int](t).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Range(1, 10),
 			rx.FilterMap(lessThanFive),
 		),
 		2, 4, 6, 8, ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Concat(
 				rx.Range(1, 10),
 				rx.Throw[int](ErrTest),

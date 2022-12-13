@@ -56,7 +56,7 @@ func TestDebounce(t *testing.T) {
 		),
 		ErrTest,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Throw[string](ErrTest),
 			rx.Debounce(
 				func(string) rx.Observable[time.Time] {

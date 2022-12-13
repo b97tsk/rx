@@ -15,19 +15,19 @@ func TestFind(t *testing.T) {
 	}
 
 	NewTestSuite[int](t).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Range(1, 10),
 			rx.Find(equalFive),
 		),
 		5, ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Range(1, 5),
 			rx.Find(equalFive),
 		),
 		ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Concat(
 				rx.Range(1, 10),
 				rx.Throw[int](ErrTest),
@@ -36,7 +36,7 @@ func TestFind(t *testing.T) {
 		),
 		5, ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Concat(
 				rx.Range(1, 5),
 				rx.Throw[int](ErrTest),

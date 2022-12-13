@@ -15,13 +15,13 @@ func TestSkipWhile(t *testing.T) {
 	}
 
 	NewTestSuite[int](t).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Just(1, 2, 3, 4, 5, 4, 3, 2, 1),
 			rx.SkipWhile(lessThanFive),
 		),
 		5, 4, 3, 2, 1, ErrCompleted,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Concat(
 				rx.Range(1, 10),
 				rx.Throw[int](ErrTest),
@@ -30,7 +30,7 @@ func TestSkipWhile(t *testing.T) {
 		),
 		5, 6, 7, 8, 9, ErrTest,
 	).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			rx.Concat(
 				rx.Range(1, 5),
 				rx.Throw[int](ErrTest),

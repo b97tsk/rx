@@ -62,25 +62,25 @@ func doTest(
 
 	NewTestSuite[int](t).Case(
 		rx.Concat(
-			rx.Pipe(rx.Empty[int](), do),
+			rx.Pipe1(rx.Empty[int](), do),
 			obs,
 		),
 		r1, ErrCompleted,
 	).Case(
 		rx.Concat(
-			rx.Pipe(rx.Just(-1), do),
+			rx.Pipe1(rx.Just(-1), do),
 			obs,
 		),
 		-1, r2, ErrCompleted,
 	).Case(
 		rx.Concat(
-			rx.Pipe(rx.Just(-1, -2), do),
+			rx.Pipe1(rx.Just(-1, -2), do),
 			obs,
 		),
 		-1, -2, r3, ErrCompleted,
 	).Case(
 		rx.Concat(
-			rx.Pipe(
+			rx.Pipe1(
 				rx.Concat(
 					rx.Just(-1, -2),
 					rx.Throw[int](ErrTest),

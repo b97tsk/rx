@@ -22,9 +22,9 @@ func TestShare1(t *testing.T) {
 	NewTestSuite[int](t).Case(
 		rx.Merge(
 			obs,
-			rx.Pipe(obs, DelaySubscription[int](4)),
-			rx.Pipe(obs, DelaySubscription[int](8)),
-			rx.Pipe(obs, DelaySubscription[int](13)),
+			rx.Pipe1(obs, DelaySubscription[int](4)),
+			rx.Pipe1(obs, DelaySubscription[int](8)),
+			rx.Pipe1(obs, DelaySubscription[int](13)),
 		),
 		0, 1, 1, 2, 2, 2, 3, 3, 3, 0, 1, 2, 3, ErrCompleted,
 	)
@@ -43,9 +43,9 @@ func TestShare2(t *testing.T) {
 	NewTestSuite[int](t).Case(
 		rx.Merge(
 			obs,
-			rx.Pipe(obs, DelaySubscription[int](4)),
-			rx.Pipe(obs, DelaySubscription[int](8)),
-			rx.Pipe(obs, DelaySubscription[int](19)),
+			rx.Pipe1(obs, DelaySubscription[int](4)),
+			rx.Pipe1(obs, DelaySubscription[int](8)),
+			rx.Pipe1(obs, DelaySubscription[int](19)),
 		),
 		0, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 5, 0, 1, 2, 3, ErrCompleted,
 	)
@@ -68,9 +68,9 @@ func TestShare3(t *testing.T) {
 	NewTestSuite[int](t).Case(
 		rx.Merge(
 			obs,
-			rx.Pipe(obs, DelaySubscription[int](4)),
-			rx.Pipe(obs, DelaySubscription[int](8)),
-			rx.Pipe(obs, DelaySubscription[int](13)),
+			rx.Pipe1(obs, DelaySubscription[int](4)),
+			rx.Pipe1(obs, DelaySubscription[int](8)),
+			rx.Pipe1(obs, DelaySubscription[int](13)),
 		),
 		0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 0, 1, 2, 3, ErrCompleted,
 	)
@@ -93,9 +93,9 @@ func TestShare4(t *testing.T) {
 	NewTestSuite[int](t).Case(
 		rx.Merge(
 			obs,
-			rx.Pipe(obs, DelaySubscription[int](4)),
-			rx.Pipe(obs, DelaySubscription[int](8)),
-			rx.Pipe(obs, DelaySubscription[int](16)),
+			rx.Pipe1(obs, DelaySubscription[int](4)),
+			rx.Pipe1(obs, DelaySubscription[int](8)),
+			rx.Pipe1(obs, DelaySubscription[int](16)),
 		),
 		0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 0, 1, 2, 3, ErrCompleted,
 	)
@@ -105,7 +105,7 @@ func TestShare5(t *testing.T) {
 	t.Parallel()
 
 	NewTestSuite[int](t).Case(
-		rx.Pipe(
+		rx.Pipe1(
 			func(context.Context, rx.Observer[int]) {
 				panic("should not happen")
 			},

@@ -43,7 +43,7 @@ func TestRace(t *testing.T) {
 		Step(1),
 		ErrCompleted,
 	).Case(
-		rx.Pipe(s[0], rx.RaceWith(s[1:]...)),
+		rx.Pipe1(s[0], rx.RaceWith(s[1:]...)),
 		Step(1),
 		ErrCompleted,
 	)
