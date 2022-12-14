@@ -10,8 +10,10 @@ import (
 // specified range.
 func Range[T constraints.Integer](low, high T) Observable[T] {
 	return func(ctx context.Context, sink Observer[T]) {
+		done := ctx.Done()
+
 		for v := low; v < high; v++ {
-			if err := ctx.Err(); err != nil {
+			if err := getErrWithDoneChan(ctx, done); err != nil {
 				sink.Error(err)
 				return
 			}
@@ -27,8 +29,10 @@ func Range[T constraints.Integer](low, high T) Observable[T] {
 // starting from init.
 func Iota[T constraints.Integer](init T) Observable[T] {
 	return func(ctx context.Context, sink Observer[T]) {
+		done := ctx.Done()
+
 		for v := init; ; v++ {
-			if err := ctx.Err(); err != nil {
+			if err := getErrWithDoneChan(ctx, done); err != nil {
 				sink.Error(err)
 				return
 			}

@@ -40,8 +40,10 @@ type retryObservable[T any] struct {
 func (obs retryObservable[T]) Subscribe(ctx context.Context, sink Observer[T]) {
 	var observer Observer[T]
 
+	done := ctx.Done()
+
 	subscribeToSource := norec.Wrap(func() {
-		if err := ctx.Err(); err != nil {
+		if err := getErrWithDoneChan(ctx, done); err != nil {
 			sink.Error(err)
 			return
 		}

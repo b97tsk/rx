@@ -40,8 +40,10 @@ func (obs takeLastObservable[T]) Subscribe(ctx context.Context, sink Observer[T]
 			sink(n)
 
 		default:
+			done := ctx.Done()
+
 			for i, j := 0, q.Len(); i < j; i++ {
-				if err := ctx.Err(); err != nil {
+				if err := getErrWithDoneChan(ctx, done); err != nil {
 					sink.Error(err)
 					return
 				}

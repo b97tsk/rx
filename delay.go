@@ -53,8 +53,10 @@ func (obs delayObservable[T]) Subscribe(ctx context.Context, sink Observer[T]) {
 
 			x.Scheduled = false
 
+			done := ctx.Done()
+
 			for x.Queue.Len() > 0 {
-				if err := ctx.Err(); err != nil {
+				if err := getErrWithDoneChan(ctx, done); err != nil {
 					critical.Close(&x.Section)
 
 					sink.Error(err)

@@ -26,7 +26,7 @@ func catch[T any](selector func(err error) Observable[T]) Operator[T, T] {
 						sink(n)
 
 					case n.HasError:
-						if err := ctx.Err(); err != nil {
+						if err := getErr(ctx); err != nil {
 							sink.Error(err)
 							return
 						}
@@ -65,7 +65,7 @@ func onErrorResumeWith[T any](obs Observable[T]) Operator[T, T] {
 						sink(n)
 
 					case n.HasError:
-						if err := ctx.Err(); err != nil {
+						if err := getErr(ctx); err != nil {
 							sink.Error(err)
 							return
 						}
@@ -97,7 +97,7 @@ func onErrorComplete[T any](source Observable[T]) Observable[T] {
 				sink(n)
 
 			case n.HasError:
-				if err := ctx.Err(); err != nil {
+				if err := getErr(ctx); err != nil {
 					sink.Error(err)
 					return
 				}

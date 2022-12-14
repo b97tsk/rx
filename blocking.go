@@ -34,7 +34,7 @@ func (obs Observable[T]) BlockingFirst(ctx context.Context) (v T, err error) {
 
 	<-childCtx.Done()
 
-	if err := ctx.Err(); err != nil {
+	if err := getErr(ctx); err != nil {
 		return v, err
 	}
 
@@ -87,7 +87,7 @@ func (obs Observable[T]) BlockingLast(ctx context.Context) (v T, err error) {
 
 	<-childCtx.Done()
 
-	if err := ctx.Err(); err != nil {
+	if err := getErr(ctx); err != nil {
 		return v, err
 	}
 
@@ -155,7 +155,7 @@ func (obs Observable[T]) BlockingSingle(ctx context.Context) (v T, err error) {
 
 	<-childCtx.Done()
 
-	if err := ctx.Err(); err != nil {
+	if err := getErr(ctx); err != nil {
 		return v, err
 	}
 

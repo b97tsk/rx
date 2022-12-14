@@ -8,8 +8,10 @@ import (
 // the other, and then completes.
 func FromSlice[S ~[]T, T any](s S) Observable[T] {
 	return func(ctx context.Context, sink Observer[T]) {
+		done := ctx.Done()
+
 		for _, v := range s {
-			if err := ctx.Err(); err != nil {
+			if err := getErrWithDoneChan(ctx, done); err != nil {
 				sink.Error(err)
 				return
 			}

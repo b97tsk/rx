@@ -60,7 +60,7 @@ func (obs skipUntilObservable[T, U]) Subscribe(ctx context.Context, sink Observe
 		})
 	}
 
-	if err := ctx.Err(); err != nil {
+	if err := getErr(ctx); err != nil {
 		sink.Error(err)
 		return
 	}

@@ -181,8 +181,10 @@ func (m *multicastReplay[T]) subscribe(ctx context.Context, sink Observer[T]) {
 
 	m.mu.Unlock()
 
+	done := ctx.Done()
+
 	for i, j := 0, b.Len(); i < j; i++ {
-		if err := ctx.Err(); err != nil {
+		if err := getErrWithDoneChan(ctx, done); err != nil {
 			sink.Error(err)
 			return
 		}

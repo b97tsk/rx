@@ -84,7 +84,7 @@ func (obs debounceObservable[T, U]) Subscribe(ctx context.Context, sink Observer
 
 					noop = true
 
-					if ctx.Err() != nil {
+					if getErr(ctx) != nil {
 						return
 					}
 

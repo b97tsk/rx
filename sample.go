@@ -74,7 +74,7 @@ func (obs sampleObservable[T, U]) Subscribe(ctx context.Context, sink Observer[T
 		}
 	})
 
-	if err := ctx.Err(); err != nil {
+	if err := getErr(ctx); err != nil {
 		if critical.Enter(&x.Section) {
 			critical.Close(&x.Section)
 			sink.Error(err)

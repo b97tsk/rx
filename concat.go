@@ -39,7 +39,7 @@ func (some observables[T]) Concat(ctx context.Context, sink Observer[T]) {
 			return
 		}
 
-		if err := ctx.Err(); err != nil {
+		if err := getErr(ctx); err != nil {
 			sink.Error(err)
 			return
 		}
@@ -145,7 +145,7 @@ func (obs concatMapObservable[T, R]) Subscribe(ctx context.Context, sink Observe
 			return
 		}
 
-		if err := ctx.Err(); err != nil {
+		if err := getErr(ctx); err != nil {
 			sink.Error(err)
 			return
 		}

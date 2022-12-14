@@ -78,7 +78,7 @@ func (obs *shareObservable[T]) Subscribe(ctx context.Context, sink Observer[T]) 
 
 	obs.subject.Subscribe(ctx, sink)
 
-	if ctx.Err() != nil {
+	if getErr(ctx) != nil {
 		return
 	}
 

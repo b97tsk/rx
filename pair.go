@@ -25,8 +25,10 @@ func NewPair[K, V any](k K, v V) Pair[K, V] { return Pair[K, V]{k, v} }
 // the other, and then completes. The order of those Pairs is not specified.
 func FromMap[M ~map[K]V, K comparable, V any](m M) Observable[Pair[K, V]] {
 	return func(ctx context.Context, sink Observer[Pair[K, V]]) {
+		done := ctx.Done()
+
 		for k, v := range m {
-			if err := ctx.Err(); err != nil {
+			if err := getErrWithDoneChan(ctx, done); err != nil {
 				sink.Error(err)
 				return
 			}
