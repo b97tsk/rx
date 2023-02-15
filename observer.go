@@ -22,15 +22,9 @@ func (sink Observer[T]) Complete() {
 	sink(Complete[T]())
 }
 
-// Sink passes n to *sink.
-//
-// Sink also yields an Observer that is equivalent to:
-//
-//	func(n Notification[T]) { (*sink)(n) }
-//
-// Useful when you want to set *sink to another Observer at some point.
-func (sink *Observer[T]) Sink(n Notification[T]) {
-	(*sink)(n)
+// Sink passes n to sink.
+func (sink Observer[T]) Sink(n Notification[T]) {
+	sink(n)
 }
 
 // ElementsOnly passes n to sink if n represents a value.
