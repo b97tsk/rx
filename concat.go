@@ -83,10 +83,6 @@ func ConcatMap[T, R any](proj func(v T) Observable[R]) Operator[T, R] {
 // by projecting each source value to the same Observable, then flattens it
 // into a first-order Observable using ConcatAll.
 func ConcatMapTo[T, R any](inner Observable[R]) Operator[T, R] {
-	if inner == nil {
-		panic("inner == nil")
-	}
-
 	return concatMap(func(T) Observable[R] { return inner })
 }
 

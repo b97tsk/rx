@@ -17,18 +17,7 @@ func Zip5[T1, T2, T3, T4, T5, R any](
 	obs5 Observable[T5],
 	proj func(v1 T1, v2 T2, v3 T3, v4 T4, v5 T5) R,
 ) Observable[R] {
-	switch {
-	case obs1 == nil:
-		panic("obs1 == nil")
-	case obs2 == nil:
-		panic("obs2 == nil")
-	case obs3 == nil:
-		panic("obs3 == nil")
-	case obs4 == nil:
-		panic("obs4 == nil")
-	case obs5 == nil:
-		panic("obs5 == nil")
-	case proj == nil:
+	if proj == nil {
 		panic("proj == nil")
 	}
 

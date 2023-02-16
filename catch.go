@@ -48,14 +48,6 @@ func catch[T any](selector func(err error) Observable[T]) Operator[T, T] {
 //
 // OnErrorResumeWith does not resume on context cancellation.
 func OnErrorResumeWith[T any](obs Observable[T]) Operator[T, T] {
-	if obs == nil {
-		panic("obs == nil")
-	}
-
-	return onErrorResumeWith(obs)
-}
-
-func onErrorResumeWith[T any](obs Observable[T]) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return func(ctx context.Context, sink Observer[T]) {

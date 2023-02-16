@@ -7,26 +7,18 @@ import (
 	"github.com/b97tsk/rx/internal/critical"
 )
 
+// SampleTime emits the most recently emitted value from the source Observalbe
+// within periodic time intervals.
+func SampleTime[T any](d time.Duration) Operator[T, T] {
+	return Sample[T](Ticker(d))
+}
+
 // Sample emits the most recently emitted value from the source Observable
 // whenever another Observable, the notifier, emits.
 //
 // It's like SampleTime, but samples whenever the notifier Observable emits
 // a value.
 func Sample[T, U any](notifier Observable[U]) Operator[T, T] {
-	if notifier == nil {
-		panic("notifier == nil")
-	}
-
-	return sample[T](notifier)
-}
-
-// SampleTime emits the most recently emitted value from the source Observalbe
-// within periodic time intervals.
-func SampleTime[T any](d time.Duration) Operator[T, T] {
-	return sample[T](Ticker(d))
-}
-
-func sample[T, U any](notifier Observable[U]) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return sampleObservable[T, U]{source, notifier}.Subscribe

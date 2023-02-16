@@ -14,12 +14,7 @@ func Zip2[T1, T2, R any](
 	obs2 Observable[T2],
 	proj func(v1 T1, v2 T2) R,
 ) Observable[R] {
-	switch {
-	case obs1 == nil:
-		panic("obs1 == nil")
-	case obs2 == nil:
-		panic("obs2 == nil")
-	case proj == nil:
+	if proj == nil {
 		panic("proj == nil")
 	}
 

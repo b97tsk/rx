@@ -7,14 +7,6 @@ import (
 // TakeUntil mirrors the source Observable until a second Observable emits
 // a value.
 func TakeUntil[T, U any](notifier Observable[U]) Operator[T, T] {
-	if notifier == nil {
-		panic("notifier == nil")
-	}
-
-	return takeUntil[T](notifier)
-}
-
-func takeUntil[T, U any](notifier Observable[U]) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return takeUntilObservable[T, U]{source, notifier}.Subscribe

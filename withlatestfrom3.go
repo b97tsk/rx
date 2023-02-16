@@ -13,14 +13,7 @@ func WithLatestFrom3[T0, T1, T2, T3, R any](
 	obs3 Observable[T3],
 	proj func(v0 T0, v1 T1, v2 T2, v3 T3) R,
 ) Operator[T0, R] {
-	switch {
-	case obs1 == nil:
-		panic("obs1 == nil")
-	case obs2 == nil:
-		panic("obs2 == nil")
-	case obs3 == nil:
-		panic("obs3 == nil")
-	case proj == nil:
+	if proj == nil {
 		panic("proj == nil")
 	}
 

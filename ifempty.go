@@ -60,14 +60,6 @@ func ThrowIfEmpty[T any]() Operator[T, T] {
 // SwitchIfEmpty mirrors the source or specified Observable if the source
 // completes without emitting any value.
 func SwitchIfEmpty[T any](obs Observable[T]) Operator[T, T] {
-	if obs == nil {
-		panic("obs == nil")
-	}
-
-	return switchIfEmpty(obs)
-}
-
-func switchIfEmpty[T any](obs Observable[T]) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return func(ctx context.Context, sink Observer[T]) {

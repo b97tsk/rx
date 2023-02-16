@@ -19,7 +19,30 @@ func TestPanic(t *testing.T) {
 	}, "BufferCount with StartBufferEvery == 0")
 
 	shouldPanic(t, func() { _ = rx.Catch[any](nil) }, "Catch with selector == nil")
-	shouldPanic(t, func() { _ = rx.OnErrorResumeWith[any](nil) }, "OnErrorResumeWith with obs == nil")
+
+	shouldPanic(t, func() { _ = rx.CombineLatest2[any, any, any](nil, nil, nil) }, "CombineLatest2 with proj == nil")
+	shouldPanic(t, func() {
+		_ = rx.CombineLatest3[any, any, any, any](nil, nil, nil, nil)
+	}, "CombineLatest3 with proj == nil")
+	shouldPanic(t, func() {
+		_ = rx.CombineLatest4[any, any, any, any, any](nil, nil, nil, nil, nil)
+	}, "CombineLatest4 with proj == nil")
+	shouldPanic(t, func() {
+		_ = rx.CombineLatest5[any, any, any, any, any, any](nil, nil, nil, nil, nil, nil)
+	}, "CombineLatest5 with proj == nil")
+	shouldPanic(t, func() {
+		_ = rx.CombineLatest6[any, any, any, any, any, any, any](nil, nil, nil, nil, nil, nil, nil)
+	}, "CombineLatest6 with proj == nil")
+	shouldPanic(t, func() {
+		_ = rx.CombineLatest7[any, any, any, any, any, any, any, any](nil, nil, nil, nil, nil, nil, nil, nil)
+	}, "CombineLatest7 with proj == nil")
+	shouldPanic(t, func() {
+		_ = rx.CombineLatest8[any, any, any, any, any, any, any, any, any](nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	}, "CombineLatest8 with proj == nil")
+	shouldPanic(t, func() {
+		f := rx.CombineLatest9[any, any, any, any, any, any, any, any, any, any]
+		_ = f(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	}, "CombineLatest9 with proj == nil")
 
 	shouldPanic(t, func() { _ = rx.Compact[any](nil) }, "Compact with eq == nil")
 	shouldPanic(t, func() { _ = rx.CompactComparableKey[any, string](nil) }, "CompactComparableKey with proj == nil")
@@ -27,7 +50,6 @@ func TestPanic(t *testing.T) {
 	shouldPanic(t, func() { _ = rx.CompactKey(proj, nil) }, "CompactKey with eq == nil")
 
 	shouldPanic(t, func() { _ = rx.ConcatMap[any, any](nil) }, "ConcatMap with proj == nil")
-	shouldPanic(t, func() { _ = rx.ConcatMapTo[any, any](nil) }, "ConcatMapTo with inner == nil")
 
 	shouldPanic(t, func() { _ = rx.Connect[any, any](nil) }, "Connect with selector == nil")
 	shouldPanic(t, func() {
@@ -50,7 +72,6 @@ func TestPanic(t *testing.T) {
 	shouldPanic(t, func() { _ = rx.Every[any](nil) }, "Every with cond == nil")
 
 	shouldPanic(t, func() { _ = rx.ExhaustMap[any, any](nil) }, "ExhaustMap with proj == nil")
-	shouldPanic(t, func() { _ = rx.ExhaustMapTo[any, any](nil) }, "ExhaustMapTo with inner == nil")
 
 	shouldPanic(t, func() { _ = rx.Filter[any](nil) }, "Filter with cond == nil")
 	shouldPanic(t, func() { _ = rx.FilterOut[any](nil) }, "FilterOut with cond == nil")
@@ -66,7 +87,6 @@ func TestPanic(t *testing.T) {
 	shouldPanic(t, func() { _ = rx.Map[any, any](nil) }, "Map with proj == nil")
 
 	shouldPanic(t, func() { _ = rx.MergeMap[any, any](nil) }, "MergeMap with proj == nil")
-	shouldPanic(t, func() { _ = rx.MergeMapTo[any, any](nil) }, "MergeMapTo with inner == nil")
 	shouldPanic(t, func() {
 		_ = rx.MergeMapTo[any](rx.Just(42)).WithConcurrency(0)
 	}, "MergeMapTo with Concurrency == 0")
@@ -74,217 +94,59 @@ func TestPanic(t *testing.T) {
 	shouldPanic(t, func() { _ = rx.Reduce[any, any](nil, nil) }, "Reduce with accumulator == nil")
 	shouldPanic(t, func() { _ = rx.Scan[any, any](nil, nil) }, "Scan with accumulator == nil")
 
-	shouldPanic(t, func() { _ = rx.Sample[any, any](nil) }, "Sample with notifier == nil")
-
 	shouldPanic(t, func() { _ = rx.Share[any]().WithConnector(nil) }, "Share with Connector == nil")
 
-	shouldPanic(t, func() { _ = rx.SkipUntil[any, any](nil) }, "SkipUntil with notifier == nil")
 	shouldPanic(t, func() { _ = rx.SkipWhile[any](nil) }, "SkipWhile with cond == nil")
 
-	shouldPanic(t, func() { _ = rx.SwitchIfEmpty[any](nil) }, "SwitchIfEmpty with obs == nil")
-
 	shouldPanic(t, func() { _ = rx.SwitchMap[any, any](nil) }, "SwitchMap with proj == nil")
-	shouldPanic(t, func() { _ = rx.SwitchMapTo[any, any](nil) }, "SwitchMapTo with inner == nil")
 
-	shouldPanic(t, func() { _ = rx.TakeUntil[any, any](nil) }, "TakeUntil with notifier == nil")
 	shouldPanic(t, func() { _ = rx.TakeWhile[any](nil) }, "TakeWhile with cond == nil")
 
 	shouldPanic(t, func() { _ = rx.Throttle[any, any](nil) }, "Throttle with durationSelector == nil")
 
 	shouldPanic(t, func() { _ = rx.Ticker(0) }, "Ticker with d == 0")
 
-	panicTestWithLatestFromLike(
-		t,
-		"WithLatestFrom",
-		rx.WithLatestFrom1[any, any, any],
-		rx.WithLatestFrom2[any, any, any, any],
-		rx.WithLatestFrom3[any, any, any, any, any],
-		rx.WithLatestFrom4[any, any, any, any, any, any],
-		rx.WithLatestFrom5[any, any, any, any, any, any, any],
-		rx.WithLatestFrom6[any, any, any, any, any, any, any, any],
-		rx.WithLatestFrom7[any, any, any, any, any, any, any, any, any],
-		rx.WithLatestFrom8[any, any, any, any, any, any, any, any, any, any],
-	)
+	shouldPanic(t, func() { _ = rx.WithLatestFrom1[any, any, any](nil, nil) }, "WithLatestFrom1 with proj == nil")
+	shouldPanic(t, func() {
+		_ = rx.WithLatestFrom2[any, any, any, any](nil, nil, nil)
+	}, "WithLatestFrom2 with proj == nil")
+	shouldPanic(t, func() {
+		_ = rx.WithLatestFrom3[any, any, any, any, any](nil, nil, nil, nil)
+	}, "WithLatestFrom3 with proj == nil")
+	shouldPanic(t, func() {
+		_ = rx.WithLatestFrom4[any, any, any, any, any, any](nil, nil, nil, nil, nil)
+	}, "WithLatestFrom4 with proj == nil")
+	shouldPanic(t, func() {
+		_ = rx.WithLatestFrom5[any, any, any, any, any, any, any](nil, nil, nil, nil, nil, nil)
+	}, "WithLatestFrom5 with proj == nil")
+	shouldPanic(t, func() {
+		_ = rx.WithLatestFrom6[any, any, any, any, any, any, any, any](nil, nil, nil, nil, nil, nil, nil)
+	}, "WithLatestFrom6 with proj == nil")
+	shouldPanic(t, func() {
+		_ = rx.WithLatestFrom7[any, any, any, any, any, any, any, any, any](nil, nil, nil, nil, nil, nil, nil, nil)
+	}, "WithLatestFrom7 with proj == nil")
+	shouldPanic(t, func() {
+		_ = rx.WithLatestFrom8[any, any, any, any, any, any, any, any, any, any](nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	}, "WithLatestFrom8 with proj == nil")
 
-	panicTestZipLike(
-		t,
-		"CombineLatest",
-		rx.CombineLatest2[any, any, any],
-		rx.CombineLatest3[any, any, any, any],
-		rx.CombineLatest4[any, any, any, any, any],
-		rx.CombineLatest5[any, any, any, any, any, any],
-		rx.CombineLatest6[any, any, any, any, any, any, any],
-		rx.CombineLatest7[any, any, any, any, any, any, any, any],
-		rx.CombineLatest8[any, any, any, any, any, any, any, any, any],
-		rx.CombineLatest9[any, any, any, any, any, any, any, any, any, any],
-	)
-
-	panicTestZipLike(
-		t,
-		"Zip",
-		rx.Zip2[any, any, any],
-		rx.Zip3[any, any, any, any],
-		rx.Zip4[any, any, any, any, any],
-		rx.Zip5[any, any, any, any, any, any],
-		rx.Zip6[any, any, any, any, any, any, any],
-		rx.Zip7[any, any, any, any, any, any, any, any],
-		rx.Zip8[any, any, any, any, any, any, any, any, any],
-		rx.Zip9[any, any, any, any, any, any, any, any, any, any],
-	)
-}
-
-func panicTestWithLatestFromLike(
-	t *testing.T,
-	name string,
-	f1 func(_ rx.Observable[any], _ func(any, any) any) rx.Operator[any, any],
-	f2 func(_, _ rx.Observable[any], _ func(any, any, any) any) rx.Operator[any, any],
-	f3 func(_, _, _ rx.Observable[any], _ func(any, any, any, any) any) rx.Operator[any, any],
-	f4 func(_, _, _, _ rx.Observable[any], _ func(any, any, any, any, any) any) rx.Operator[any, any],
-	f5 func(_, _, _, _, _ rx.Observable[any], _ func(any, any, any, any, any, any) any) rx.Operator[any, any],
-	f6 func(_, _, _, _, _, _ rx.Observable[any], _ func(any, any, any, any, any, any, any) any) rx.Operator[any, any],
-	f7 func(
-		_, _, _, _, _, _, _ rx.Observable[any],
-		_ func(any, any, any, any, any, any, any, any) any,
-	) rx.Operator[any, any],
-	f8 func(
-		_, _, _, _, _, _, _, _ rx.Observable[any],
-		_ func(any, any, any, any, any, any, any, any, any) any,
-	) rx.Operator[any, any],
-) {
-	obs := rx.Empty[any]()
-
-	shouldPanic(t, func() { _ = f1(nil, nil) }, name+"1 with obs1 == nil")
-	shouldPanic(t, func() { _ = f1(obs, nil) }, name+"1 with proj == nil")
-
-	shouldPanic(t, func() { _ = f2(nil, nil, nil) }, name+"2 with obs1 == nil")
-	shouldPanic(t, func() { _ = f2(obs, nil, nil) }, name+"2 with obs2 == nil")
-	shouldPanic(t, func() { _ = f2(obs, obs, nil) }, name+"2 with proj == nil")
-
-	shouldPanic(t, func() { _ = f3(nil, nil, nil, nil) }, name+"3 with obs1 == nil")
-	shouldPanic(t, func() { _ = f3(obs, nil, nil, nil) }, name+"3 with obs2 == nil")
-	shouldPanic(t, func() { _ = f3(obs, obs, nil, nil) }, name+"3 with obs3 == nil")
-	shouldPanic(t, func() { _ = f3(obs, obs, obs, nil) }, name+"3 with proj == nil")
-
-	shouldPanic(t, func() { _ = f4(nil, nil, nil, nil, nil) }, name+"4 with obs1 == nil")
-	shouldPanic(t, func() { _ = f4(obs, nil, nil, nil, nil) }, name+"4 with obs2 == nil")
-	shouldPanic(t, func() { _ = f4(obs, obs, nil, nil, nil) }, name+"4 with obs3 == nil")
-	shouldPanic(t, func() { _ = f4(obs, obs, obs, nil, nil) }, name+"4 with obs4 == nil")
-	shouldPanic(t, func() { _ = f4(obs, obs, obs, obs, nil) }, name+"4 with proj == nil")
-
-	shouldPanic(t, func() { _ = f5(nil, nil, nil, nil, nil, nil) }, name+"5 with obs1 == nil")
-	shouldPanic(t, func() { _ = f5(obs, nil, nil, nil, nil, nil) }, name+"5 with obs2 == nil")
-	shouldPanic(t, func() { _ = f5(obs, obs, nil, nil, nil, nil) }, name+"5 with obs3 == nil")
-	shouldPanic(t, func() { _ = f5(obs, obs, obs, nil, nil, nil) }, name+"5 with obs4 == nil")
-	shouldPanic(t, func() { _ = f5(obs, obs, obs, obs, nil, nil) }, name+"5 with obs5 == nil")
-	shouldPanic(t, func() { _ = f5(obs, obs, obs, obs, obs, nil) }, name+"5 with proj == nil")
-
-	shouldPanic(t, func() { _ = f6(nil, nil, nil, nil, nil, nil, nil) }, name+"6 with obs1 == nil")
-	shouldPanic(t, func() { _ = f6(obs, nil, nil, nil, nil, nil, nil) }, name+"6 with obs2 == nil")
-	shouldPanic(t, func() { _ = f6(obs, obs, nil, nil, nil, nil, nil) }, name+"6 with obs3 == nil")
-	shouldPanic(t, func() { _ = f6(obs, obs, obs, nil, nil, nil, nil) }, name+"6 with obs4 == nil")
-	shouldPanic(t, func() { _ = f6(obs, obs, obs, obs, nil, nil, nil) }, name+"6 with obs5 == nil")
-	shouldPanic(t, func() { _ = f6(obs, obs, obs, obs, obs, nil, nil) }, name+"6 with obs6 == nil")
-	shouldPanic(t, func() { _ = f6(obs, obs, obs, obs, obs, obs, nil) }, name+"6 with proj == nil")
-
-	shouldPanic(t, func() { _ = f7(nil, nil, nil, nil, nil, nil, nil, nil) }, name+"7 with obs1 == nil")
-	shouldPanic(t, func() { _ = f7(obs, nil, nil, nil, nil, nil, nil, nil) }, name+"7 with obs2 == nil")
-	shouldPanic(t, func() { _ = f7(obs, obs, nil, nil, nil, nil, nil, nil) }, name+"7 with obs3 == nil")
-	shouldPanic(t, func() { _ = f7(obs, obs, obs, nil, nil, nil, nil, nil) }, name+"7 with obs4 == nil")
-	shouldPanic(t, func() { _ = f7(obs, obs, obs, obs, nil, nil, nil, nil) }, name+"7 with obs5 == nil")
-	shouldPanic(t, func() { _ = f7(obs, obs, obs, obs, obs, nil, nil, nil) }, name+"7 with obs6 == nil")
-	shouldPanic(t, func() { _ = f7(obs, obs, obs, obs, obs, obs, nil, nil) }, name+"7 with obs7 == nil")
-	shouldPanic(t, func() { _ = f7(obs, obs, obs, obs, obs, obs, obs, nil) }, name+"7 with proj == nil")
-
-	shouldPanic(t, func() { _ = f8(nil, nil, nil, nil, nil, nil, nil, nil, nil) }, name+"8 with obs1 == nil")
-	shouldPanic(t, func() { _ = f8(obs, nil, nil, nil, nil, nil, nil, nil, nil) }, name+"8 with obs2 == nil")
-	shouldPanic(t, func() { _ = f8(obs, obs, nil, nil, nil, nil, nil, nil, nil) }, name+"8 with obs3 == nil")
-	shouldPanic(t, func() { _ = f8(obs, obs, obs, nil, nil, nil, nil, nil, nil) }, name+"8 with obs4 == nil")
-	shouldPanic(t, func() { _ = f8(obs, obs, obs, obs, nil, nil, nil, nil, nil) }, name+"8 with obs5 == nil")
-	shouldPanic(t, func() { _ = f8(obs, obs, obs, obs, obs, nil, nil, nil, nil) }, name+"8 with obs6 == nil")
-	shouldPanic(t, func() { _ = f8(obs, obs, obs, obs, obs, obs, nil, nil, nil) }, name+"8 with obs7 == nil")
-	shouldPanic(t, func() { _ = f8(obs, obs, obs, obs, obs, obs, obs, nil, nil) }, name+"8 with obs8 == nil")
-	shouldPanic(t, func() { _ = f8(obs, obs, obs, obs, obs, obs, obs, obs, nil) }, name+"8 with proj == nil")
-}
-
-func panicTestZipLike(
-	t *testing.T,
-	name string,
-	f2 func(_, _ rx.Observable[any], _ func(any, any) any) rx.Observable[any],
-	f3 func(_, _, _ rx.Observable[any], _ func(any, any, any) any) rx.Observable[any],
-	f4 func(_, _, _, _ rx.Observable[any], _ func(any, any, any, any) any) rx.Observable[any],
-	f5 func(_, _, _, _, _ rx.Observable[any], _ func(any, any, any, any, any) any) rx.Observable[any],
-	f6 func(_, _, _, _, _, _ rx.Observable[any], _ func(any, any, any, any, any, any) any) rx.Observable[any],
-	f7 func(_, _, _, _, _, _, _ rx.Observable[any], _ func(any, any, any, any, any, any, any) any) rx.Observable[any],
-	f8 func(
-		_, _, _, _, _, _, _, _ rx.Observable[any],
-		_ func(any, any, any, any, any, any, any, any) any,
-	) rx.Observable[any],
-	f9 func(
-		_, _, _, _, _, _, _, _, _ rx.Observable[any],
-		_ func(any, any, any, any, any, any, any, any, any) any,
-	) rx.Observable[any],
-) {
-	obs := rx.Empty[any]()
-
-	shouldPanic(t, func() { _ = f2(nil, nil, nil) }, name+"2 with obs1 == nil")
-	shouldPanic(t, func() { _ = f2(obs, nil, nil) }, name+"2 with obs2 == nil")
-	shouldPanic(t, func() { _ = f2(obs, obs, nil) }, name+"2 with proj == nil")
-
-	shouldPanic(t, func() { _ = f3(nil, nil, nil, nil) }, name+"3 with obs1 == nil")
-	shouldPanic(t, func() { _ = f3(obs, nil, nil, nil) }, name+"3 with obs2 == nil")
-	shouldPanic(t, func() { _ = f3(obs, obs, nil, nil) }, name+"3 with obs3 == nil")
-	shouldPanic(t, func() { _ = f3(obs, obs, obs, nil) }, name+"3 with proj == nil")
-
-	shouldPanic(t, func() { _ = f4(nil, nil, nil, nil, nil) }, name+"4 with obs1 == nil")
-	shouldPanic(t, func() { _ = f4(obs, nil, nil, nil, nil) }, name+"4 with obs2 == nil")
-	shouldPanic(t, func() { _ = f4(obs, obs, nil, nil, nil) }, name+"4 with obs3 == nil")
-	shouldPanic(t, func() { _ = f4(obs, obs, obs, nil, nil) }, name+"4 with obs4 == nil")
-	shouldPanic(t, func() { _ = f4(obs, obs, obs, obs, nil) }, name+"4 with proj == nil")
-
-	shouldPanic(t, func() { _ = f5(nil, nil, nil, nil, nil, nil) }, name+"5 with obs1 == nil")
-	shouldPanic(t, func() { _ = f5(obs, nil, nil, nil, nil, nil) }, name+"5 with obs2 == nil")
-	shouldPanic(t, func() { _ = f5(obs, obs, nil, nil, nil, nil) }, name+"5 with obs3 == nil")
-	shouldPanic(t, func() { _ = f5(obs, obs, obs, nil, nil, nil) }, name+"5 with obs4 == nil")
-	shouldPanic(t, func() { _ = f5(obs, obs, obs, obs, nil, nil) }, name+"5 with obs5 == nil")
-	shouldPanic(t, func() { _ = f5(obs, obs, obs, obs, obs, nil) }, name+"5 with proj == nil")
-
-	shouldPanic(t, func() { _ = f6(nil, nil, nil, nil, nil, nil, nil) }, name+"6 with obs1 == nil")
-	shouldPanic(t, func() { _ = f6(obs, nil, nil, nil, nil, nil, nil) }, name+"6 with obs2 == nil")
-	shouldPanic(t, func() { _ = f6(obs, obs, nil, nil, nil, nil, nil) }, name+"6 with obs3 == nil")
-	shouldPanic(t, func() { _ = f6(obs, obs, obs, nil, nil, nil, nil) }, name+"6 with obs4 == nil")
-	shouldPanic(t, func() { _ = f6(obs, obs, obs, obs, nil, nil, nil) }, name+"6 with obs5 == nil")
-	shouldPanic(t, func() { _ = f6(obs, obs, obs, obs, obs, nil, nil) }, name+"6 with obs6 == nil")
-	shouldPanic(t, func() { _ = f6(obs, obs, obs, obs, obs, obs, nil) }, name+"6 with proj == nil")
-
-	shouldPanic(t, func() { _ = f7(nil, nil, nil, nil, nil, nil, nil, nil) }, name+"7 with obs1 == nil")
-	shouldPanic(t, func() { _ = f7(obs, nil, nil, nil, nil, nil, nil, nil) }, name+"7 with obs2 == nil")
-	shouldPanic(t, func() { _ = f7(obs, obs, nil, nil, nil, nil, nil, nil) }, name+"7 with obs3 == nil")
-	shouldPanic(t, func() { _ = f7(obs, obs, obs, nil, nil, nil, nil, nil) }, name+"7 with obs4 == nil")
-	shouldPanic(t, func() { _ = f7(obs, obs, obs, obs, nil, nil, nil, nil) }, name+"7 with obs5 == nil")
-	shouldPanic(t, func() { _ = f7(obs, obs, obs, obs, obs, nil, nil, nil) }, name+"7 with obs6 == nil")
-	shouldPanic(t, func() { _ = f7(obs, obs, obs, obs, obs, obs, nil, nil) }, name+"7 with obs7 == nil")
-	shouldPanic(t, func() { _ = f7(obs, obs, obs, obs, obs, obs, obs, nil) }, name+"7 with proj == nil")
-
-	shouldPanic(t, func() { _ = f8(nil, nil, nil, nil, nil, nil, nil, nil, nil) }, name+"8 with obs1 == nil")
-	shouldPanic(t, func() { _ = f8(obs, nil, nil, nil, nil, nil, nil, nil, nil) }, name+"8 with obs2 == nil")
-	shouldPanic(t, func() { _ = f8(obs, obs, nil, nil, nil, nil, nil, nil, nil) }, name+"8 with obs3 == nil")
-	shouldPanic(t, func() { _ = f8(obs, obs, obs, nil, nil, nil, nil, nil, nil) }, name+"8 with obs4 == nil")
-	shouldPanic(t, func() { _ = f8(obs, obs, obs, obs, nil, nil, nil, nil, nil) }, name+"8 with obs5 == nil")
-	shouldPanic(t, func() { _ = f8(obs, obs, obs, obs, obs, nil, nil, nil, nil) }, name+"8 with obs6 == nil")
-	shouldPanic(t, func() { _ = f8(obs, obs, obs, obs, obs, obs, nil, nil, nil) }, name+"8 with obs7 == nil")
-	shouldPanic(t, func() { _ = f8(obs, obs, obs, obs, obs, obs, obs, nil, nil) }, name+"8 with obs8 == nil")
-	shouldPanic(t, func() { _ = f8(obs, obs, obs, obs, obs, obs, obs, obs, nil) }, name+"8 with proj == nil")
-
-	shouldPanic(t, func() { _ = f9(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil) }, name+"9 with obs1 == nil")
-	shouldPanic(t, func() { _ = f9(obs, nil, nil, nil, nil, nil, nil, nil, nil, nil) }, name+"9 with obs2 == nil")
-	shouldPanic(t, func() { _ = f9(obs, obs, nil, nil, nil, nil, nil, nil, nil, nil) }, name+"9 with obs3 == nil")
-	shouldPanic(t, func() { _ = f9(obs, obs, obs, nil, nil, nil, nil, nil, nil, nil) }, name+"9 with obs4 == nil")
-	shouldPanic(t, func() { _ = f9(obs, obs, obs, obs, nil, nil, nil, nil, nil, nil) }, name+"9 with obs5 == nil")
-	shouldPanic(t, func() { _ = f9(obs, obs, obs, obs, obs, nil, nil, nil, nil, nil) }, name+"9 with obs6 == nil")
-	shouldPanic(t, func() { _ = f9(obs, obs, obs, obs, obs, obs, nil, nil, nil, nil) }, name+"9 with obs7 == nil")
-	shouldPanic(t, func() { _ = f9(obs, obs, obs, obs, obs, obs, obs, nil, nil, nil) }, name+"9 with obs8 == nil")
-	shouldPanic(t, func() { _ = f9(obs, obs, obs, obs, obs, obs, obs, obs, nil, nil) }, name+"9 with obs9 == nil")
-	shouldPanic(t, func() { _ = f9(obs, obs, obs, obs, obs, obs, obs, obs, obs, nil) }, name+"9 with proj == nil")
+	shouldPanic(t, func() { _ = rx.Zip2[any, any, any](nil, nil, nil) }, "Zip2 with proj == nil")
+	shouldPanic(t, func() { _ = rx.Zip3[any, any, any, any](nil, nil, nil, nil) }, "Zip3 with proj == nil")
+	shouldPanic(t, func() { _ = rx.Zip4[any, any, any, any, any](nil, nil, nil, nil, nil) }, "Zip4 with proj == nil")
+	shouldPanic(t, func() {
+		_ = rx.Zip5[any, any, any, any, any, any](nil, nil, nil, nil, nil, nil)
+	}, "Zip5 with proj == nil")
+	shouldPanic(t, func() {
+		_ = rx.Zip6[any, any, any, any, any, any, any](nil, nil, nil, nil, nil, nil, nil)
+	}, "Zip6 with proj == nil")
+	shouldPanic(t, func() {
+		_ = rx.Zip7[any, any, any, any, any, any, any, any](nil, nil, nil, nil, nil, nil, nil, nil)
+	}, "Zip7 with proj == nil")
+	shouldPanic(t, func() {
+		_ = rx.Zip8[any, any, any, any, any, any, any, any, any](nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	}, "Zip8 with proj == nil")
+	shouldPanic(t, func() {
+		_ = rx.Zip9[any, any, any, any, any, any, any, any, any, any](nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	}, "Zip9 with proj == nil")
 }
 
 func shouldPanic(t *testing.T, f func(), name string) {

@@ -8,14 +8,6 @@ import (
 // SkipUntil skips items emitted by the source Observable until a second
 // Observable emits an item.
 func SkipUntil[T, U any](notifier Observable[U]) Operator[T, T] {
-	if notifier == nil {
-		panic("notifier == nil")
-	}
-
-	return skipUntil[T](notifier)
-}
-
-func skipUntil[T, U any](notifier Observable[U]) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return skipUntilObservable[T, U]{source, notifier}.Subscribe

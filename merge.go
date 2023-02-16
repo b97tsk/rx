@@ -81,10 +81,6 @@ func MergeMap[T, R any](proj func(v T) Observable[R]) MergeMapOperator[T, R] {
 // by projecting each source value to the same Observable, then flattens it
 // into a first-order Observable using MergeAll.
 func MergeMapTo[T, R any](inner Observable[R]) MergeMapOperator[T, R] {
-	if inner == nil {
-		panic("inner == nil")
-	}
-
 	return MergeMapOperator[T, R]{
 		opts: mergeMapConfig[T, R]{
 			Project:     func(T) Observable[R] { return inner },

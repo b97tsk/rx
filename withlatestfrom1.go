@@ -11,10 +11,7 @@ func WithLatestFrom1[T0, T1, R any](
 	obs1 Observable[T1],
 	proj func(v0 T0, v1 T1) R,
 ) Operator[T0, R] {
-	switch {
-	case obs1 == nil:
-		panic("obs1 == nil")
-	case proj == nil:
+	if proj == nil {
 		panic("proj == nil")
 	}
 

@@ -14,16 +14,7 @@ func CombineLatest4[T1, T2, T3, T4, R any](
 	obs4 Observable[T4],
 	proj func(v1 T1, v2 T2, v3 T3, v4 T4) R,
 ) Observable[R] {
-	switch {
-	case obs1 == nil:
-		panic("obs1 == nil")
-	case obs2 == nil:
-		panic("obs2 == nil")
-	case obs3 == nil:
-		panic("obs3 == nil")
-	case obs4 == nil:
-		panic("obs4 == nil")
-	case proj == nil:
+	if proj == nil {
 		panic("proj == nil")
 	}
 

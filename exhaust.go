@@ -27,10 +27,6 @@ func ExhaustMap[T, R any](proj func(v T) Observable[R]) Operator[T, R] {
 // by projecting each source value to the same Observable, then flattens it
 // into a first-order Observable using ExhaustAll.
 func ExhaustMapTo[T, R any](inner Observable[R]) Operator[T, R] {
-	if inner == nil {
-		panic("inner == nil")
-	}
-
 	return exhaustMap(func(T) Observable[R] { return inner })
 }
 
