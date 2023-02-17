@@ -13,35 +13,35 @@ func TestPairwise(t *testing.T) {
 	NewTestSuite[string](t).Case(
 		rx.Pipe2(
 			rx.Empty[string](),
-			rx.PairWise[string](),
+			rx.Pairwise[string](),
 			ToString[rx.Pair[string, string]](),
 		),
 		ErrCompleted,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A"),
-			rx.PairWise[string](),
+			rx.Pairwise[string](),
 			ToString[rx.Pair[string, string]](),
 		),
 		ErrCompleted,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B"),
-			rx.PairWise[string](),
+			rx.Pairwise[string](),
 			ToString[rx.Pair[string, string]](),
 		),
 		"{A B}", ErrCompleted,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B", "C"),
-			rx.PairWise[string](),
+			rx.Pairwise[string](),
 			ToString[rx.Pair[string, string]](),
 		),
 		"{A B}", "{B C}", ErrCompleted,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B", "C", "D"),
-			rx.PairWise[string](),
+			rx.Pairwise[string](),
 			ToString[rx.Pair[string, string]](),
 		),
 		"{A B}", "{B C}", "{C D}", ErrCompleted,
@@ -51,7 +51,7 @@ func TestPairwise(t *testing.T) {
 				rx.Just("A", "B", "C", "D"),
 				rx.Throw[string](ErrTest),
 			),
-			rx.PairWise[string](),
+			rx.Pairwise[string](),
 			ToString[rx.Pair[string, string]](),
 		),
 		"{A B}", "{B C}", "{C D}", ErrTest,

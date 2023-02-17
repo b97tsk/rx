@@ -4,13 +4,13 @@ import (
 	"context"
 )
 
-// PairWise groups pairs of consecutive emissions together and emits them
+// Pairwise groups pairs of consecutive emissions together and emits them
 // as Pairs.
-func PairWise[T any]() Operator[T, Pair[T, T]] {
-	return NewOperator(pairWise[T])
+func Pairwise[T any]() Operator[T, Pair[T, T]] {
+	return NewOperator(pairwise[T])
 }
 
-func pairWise[T any](source Observable[T]) Observable[Pair[T, T]] {
+func pairwise[T any](source Observable[T]) Observable[Pair[T, T]] {
 	return func(ctx context.Context, sink Observer[Pair[T, T]]) {
 		var p struct {
 			Value    T
