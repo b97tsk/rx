@@ -15,7 +15,7 @@ func TestAdd(t *testing.T) {
 	var v atomic.Int32
 
 	cancels := []context.CancelFunc(nil)
-	done := func(context.Context) { v.Add(-1) }
+	done := func() { v.Add(-1) }
 	add := func(n int) {
 		v.Add(int32(n))
 

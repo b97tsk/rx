@@ -23,7 +23,7 @@ func Never[T any]() Observable[T] {
 
 func never[T any](ctx context.Context, sink Observer[T]) {
 	if ctx.Done() != nil {
-		ctxwatch.Add(ctx, func(ctx context.Context) {
+		ctxwatch.Add(ctx, func() {
 			sink.Error(ctx.Err())
 		})
 	}

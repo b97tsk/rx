@@ -11,7 +11,7 @@ import (
 
 type watchItem struct {
 	Context  context.Context
-	Callback func(context.Context)
+	Callback func()
 }
 
 type watchService chan<- watchItem
@@ -159,7 +159,7 @@ func startWorker(
 			items[j] = watchItem{}
 			items = items[:j]
 
-			go item.Callback(item.Context)
+			go item.Callback()
 
 			itemCounter.Add(-1)
 		}
@@ -188,10 +188,11 @@ func getService() watchService {
 //
 //	go func() {
 //		<-ctx.Done()
-//		f(ctx)
+//		f()
 //	}()
 //
-// except it needs not to spawn new goroutine for each ctx to wait.
-func Add(ctx context.Context, f func(context.Context)) {
+// except it needs not to spawn new goroutines for each ctx to wait
+// at the time when Add is called.
+func Add(ctx context.Context, f func()) {
 	getService() <- watchItem{ctx, f}
 }

@@ -122,7 +122,7 @@ func (obs *shareObservable[T]) Subscribe(ctx context.Context, sink Observer[T]) 
 		obs.mu.Lock()
 	}
 
-	ctxwatch.Add(ctx, func(context.Context) {
+	ctxwatch.Add(ctx, func() {
 		obs.mu.Lock()
 
 		if connection == obs.connection {

@@ -90,7 +90,7 @@ func (m *multicast[T]) subscribe(ctx context.Context, sink Observer[T]) {
 
 		observer := sink
 		m.obs.Add(&observer)
-		ctxwatch.Add(ctx, func(ctx context.Context) {
+		ctxwatch.Add(ctx, func() {
 			m.mu.Lock()
 			m.obs.Delete(&observer)
 			m.mu.Unlock()
