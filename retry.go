@@ -2,8 +2,6 @@ package rx
 
 import (
 	"context"
-
-	"github.com/b97tsk/rx/internal/norec"
 )
 
 // RetryForever mirrors the source Observable and resubscribes to the source
@@ -42,7 +40,7 @@ func (obs retryObservable[T]) Subscribe(ctx context.Context, sink Observer[T]) {
 
 	done := ctx.Done()
 
-	subscribeToSource := norec.Wrap(func() {
+	subscribeToSource := resistReentry(func() {
 		if err := getErrWithDoneChan(ctx, done); err != nil {
 			sink.Error(err)
 			return

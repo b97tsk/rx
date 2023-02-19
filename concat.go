@@ -4,7 +4,6 @@ import (
 	"context"
 	"sync"
 
-	"github.com/b97tsk/rx/internal/norec"
 	"github.com/b97tsk/rx/internal/queue"
 )
 
@@ -33,7 +32,7 @@ func ConcatWith[T any](some ...Observable[T]) Operator[T, T] {
 func (some observables[T]) Concat(ctx context.Context, sink Observer[T]) {
 	var observer Observer[T]
 
-	subscribeToNext := norec.Wrap(func() {
+	subscribeToNext := resistReentry(func() {
 		if len(some) == 0 {
 			sink.Complete()
 			return
@@ -113,7 +112,7 @@ func (obs concatMapObservable[T, R]) Subscribe(ctx context.Context, sink Observe
 
 	var observer Observer[R]
 
-	subscribeToNext := norec.Wrap(func() {
+	subscribeToNext := resistReentry(func() {
 		x.Lock()
 
 		if x.Queue.Len() == 0 {

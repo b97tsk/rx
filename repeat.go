@@ -2,8 +2,6 @@ package rx
 
 import (
 	"context"
-
-	"github.com/b97tsk/rx/internal/norec"
 )
 
 // RepeatForever repeats the stream of items emitted by the source Observable
@@ -50,7 +48,7 @@ func (obs repeatObservable[T]) Subscribe(ctx context.Context, sink Observer[T]) 
 
 	done := ctx.Done()
 
-	subscribeToSource := norec.Wrap(func() {
+	subscribeToSource := resistReentry(func() {
 		if err := getErrWithDoneChan(ctx, done); err != nil {
 			sink.Error(err)
 			return

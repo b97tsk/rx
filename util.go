@@ -2,6 +2,7 @@ package rx
 
 import (
 	"context"
+	"sync/atomic"
 )
 
 type observables[T any] []Observable[T]
@@ -29,6 +30,26 @@ func getErrWithDoneChan(ctx context.Context, done <-chan struct{}) error {
 		return ctx.Err()
 	default:
 		return nil
+	}
+}
+
+// resistReentry returns a function that calls f in a non-recursive way
+// when the function returned is called recursively.
+func resistReentry(f func()) func() {
+	var n atomic.Uint32
+
+	return func() {
+		if n.Add(1) > 1 {
+			return
+		}
+
+		for {
+			f()
+
+			if n.Add(^uint32(0)) == 0 {
+				break
+			}
+		}
 	}
 }
 
