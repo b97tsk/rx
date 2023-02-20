@@ -96,7 +96,7 @@ func (s *TestSuite[T]) Case(obs rx.Observable[T], output ...any) *TestSuite[T] {
 			case n.HasError:
 				s.tb.Logf("want <nothing>, but got %v", tos(n.Error))
 			default:
-				s.tb.Log("want <nothing>, but got <complete>")
+				s.tb.Logf("want <nothing>, but got %v", tos(ErrCompleted))
 			}
 
 			return
@@ -123,9 +123,9 @@ func (s *TestSuite[T]) Case(obs rx.Observable[T], output ...any) *TestSuite[T] {
 		default:
 			if wanted != ErrCompleted {
 				s.tb.Fail()
-				s.tb.Logf("want %v, but got <complete>", tos(wanted))
+				s.tb.Logf("want %v, but got %v", tos(wanted), tos(ErrCompleted))
 			} else {
-				s.tb.Log("want <complete>")
+				s.tb.Logf("want %v", tos(ErrCompleted))
 			}
 		}
 	})
