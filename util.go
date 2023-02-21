@@ -7,11 +7,6 @@ import (
 
 type observables[T any] []Observable[T]
 
-type subscription struct {
-	Context context.Context
-	Cancel  context.CancelFunc
-}
-
 func identity[T any](v T) T { return v }
 
 // getErr returns ctx.Err().

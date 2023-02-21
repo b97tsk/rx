@@ -28,11 +28,10 @@ func RaceWith[T any](some ...Observable[T]) Operator[T, T] {
 }
 
 func (some observables[T]) Race(ctx context.Context, sink Observer[T]) {
-	subscriptions := make([]subscription, len(some))
+	subs := make([]Pair[context.Context, context.CancelFunc], len(some))
 
-	for i := range subscriptions {
-		ctx, cancel := context.WithCancel(ctx)
-		subscriptions[i] = subscription{ctx, cancel}
+	for i := range subs {
+		subs[i] = NewPair(context.WithCancel(ctx))
 	}
 
 	var race critical.Section
@@ -42,7 +41,7 @@ func (some observables[T]) Race(ctx context.Context, sink Observer[T]) {
 
 		var won, lost bool
 
-		go obs.Subscribe(subscriptions[i].Context, func(n Notification[T]) {
+		go obs.Subscribe(subs[i].Left(), func(n Notification[T]) {
 			switch {
 			case won:
 				sink(n)
@@ -52,9 +51,9 @@ func (some observables[T]) Race(ctx context.Context, sink Observer[T]) {
 			}
 
 			if critical.Enter(&race) {
-				for i := range subscriptions {
+				for i := range subs {
 					if i != index {
-						subscriptions[i].Cancel()
+						subs[i].Right()()
 					}
 				}
 
@@ -69,7 +68,7 @@ func (some observables[T]) Race(ctx context.Context, sink Observer[T]) {
 
 			lost = true
 
-			subscriptions[index].Cancel()
+			subs[index].Right()()
 		})
 	}
 }
