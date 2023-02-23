@@ -20,9 +20,11 @@ func TestMulticastReplay(t *testing.T) {
 
 		subscribeThenComplete := rx.NewObservable(
 			func(ctx context.Context, sink rx.Observer[string]) {
+				ctx, cancel := context.WithCancel(ctx)
 				sink = sink.Mutex()
 				m.Subscribe(ctx, sink)
 				sink.Complete()
+				cancel()
 			},
 		)
 
@@ -70,9 +72,11 @@ func TestMulticastReplay(t *testing.T) {
 
 		subscribeThenComplete := rx.NewObservable(
 			func(ctx context.Context, sink rx.Observer[string]) {
+				ctx, cancel := context.WithCancel(ctx)
 				sink = sink.Mutex()
 				m.Subscribe(ctx, sink)
 				sink.Complete()
+				cancel()
 			},
 		)
 
