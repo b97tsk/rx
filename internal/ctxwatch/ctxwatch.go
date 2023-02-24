@@ -191,8 +191,8 @@ func getService() watchService {
 //		f()
 //	}()
 //
-// except it needs not to spawn new goroutines for each ctx to wait
-// at the time when Add is called.
+// except it need not spawn new goroutines for each ctx to wait at the time
+// when Add is called.
 func Add(ctx context.Context, f func()) {
 	getService() <- watchItem{ctx, f}
 }
