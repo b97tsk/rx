@@ -66,7 +66,14 @@ type shareObservable[T any] struct {
 
 func (obs *shareObservable[T]) Subscribe(ctx context.Context, sink Observer[T]) {
 	obs.mu.Lock()
-	defer obs.mu.Unlock()
+
+	var unlocked bool
+
+	defer func() {
+		if !unlocked {
+			obs.mu.Unlock()
+		}
+	}()
 
 	if obs.subject.Observable == nil {
 		obs.subject = obs.connector()
@@ -97,6 +104,8 @@ func (obs *shareObservable[T]) Subscribe(ctx context.Context, sink Observer[T]) 
 
 		obs.mu.Unlock()
 
+		unlocked = true
+
 		obs.source.Subscribe(ctx, func(n Notification[T]) {
 			if n.HasValue {
 				sink(n)
@@ -118,8 +127,6 @@ func (obs *shareObservable[T]) Subscribe(ctx context.Context, sink Observer[T]) 
 
 			sink(n)
 		})
-
-		obs.mu.Lock()
 	}
 
 	ctxwatch.Add(ctx, func() {
