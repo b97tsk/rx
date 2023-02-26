@@ -2,6 +2,8 @@ package rx
 
 import (
 	"context"
+
+	"github.com/b97tsk/rx/internal/waitgroup"
 )
 
 // BlockingFirst subscribes to the source Observable, returns the first item
@@ -178,7 +180,7 @@ func (obs Observable[T]) BlockingSingle(ctx context.Context) (v T, err error) {
 func (obs Observable[T]) BlockingSubscribe(ctx context.Context, sink Observer[T]) error {
 	var res Notification[T]
 
-	done := make(chan struct{})
+	ctx, wg := waitgroup.Install(ctx)
 
 	obs.Subscribe(ctx, func(n Notification[T]) {
 		res = n
@@ -186,11 +188,11 @@ func (obs Observable[T]) BlockingSubscribe(ctx context.Context, sink Observer[T]
 		sink(n)
 
 		if !n.HasValue {
-			close(done)
+			wg.Done()
 		}
 	})
 
-	<-done
+	wg.Wait()
 
 	switch {
 	case res.HasValue:

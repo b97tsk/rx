@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/b97tsk/rx/internal/ctxwatch"
+	"github.com/b97tsk/rx/internal/waitgroup"
 )
 
 // Share returns a new Observable that multicasts (shares) the source
@@ -129,7 +130,16 @@ func (obs *shareObservable[T]) Subscribe(ctx context.Context, sink Observer[T]) 
 		})
 	}
 
+	wg := waitgroup.Get(ctx)
+	if wg != nil {
+		wg.Add(1)
+	}
+
 	ctxwatch.Add(ctx, func() {
+		if wg != nil {
+			defer wg.Done()
+		}
+
 		obs.mu.Lock()
 
 		if connection == obs.connection {

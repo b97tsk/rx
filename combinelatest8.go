@@ -2,6 +2,8 @@ package rx
 
 import (
 	"context"
+
+	"github.com/b97tsk/rx/internal/waitgroup"
 )
 
 // CombineLatest8 creates an Observable that combines multiple Observables to
@@ -38,7 +40,9 @@ func CombineLatest8[T1, T2, T3, T4, T5, T6, T7, T8, R any](
 
 		noop := make(chan struct{})
 
-		go func() {
+		ctxHoisted := waitgroup.Hoist(ctx)
+
+		Go(ctxHoisted, func() {
 			var s combineLatestState8[T1, T2, T3, T4, T5, T6, T7, T8]
 
 			done := false
@@ -65,16 +69,16 @@ func CombineLatest8[T1, T2, T3, T4, T5, T6, T7, T8, R any](
 			}
 
 			close(noop)
-		}()
+		})
 
-		go obs1.Subscribe(ctx, chanObserver(chan1, noop))
-		go obs2.Subscribe(ctx, chanObserver(chan2, noop))
-		go obs3.Subscribe(ctx, chanObserver(chan3, noop))
-		go obs4.Subscribe(ctx, chanObserver(chan4, noop))
-		go obs5.Subscribe(ctx, chanObserver(chan5, noop))
-		go obs6.Subscribe(ctx, chanObserver(chan6, noop))
-		go obs7.Subscribe(ctx, chanObserver(chan7, noop))
-		go obs8.Subscribe(ctx, chanObserver(chan8, noop))
+		Go(ctxHoisted, func() { obs1.Subscribe(ctx, chanObserver(chan1, noop)) })
+		Go(ctxHoisted, func() { obs2.Subscribe(ctx, chanObserver(chan2, noop)) })
+		Go(ctxHoisted, func() { obs3.Subscribe(ctx, chanObserver(chan3, noop)) })
+		Go(ctxHoisted, func() { obs4.Subscribe(ctx, chanObserver(chan4, noop)) })
+		Go(ctxHoisted, func() { obs5.Subscribe(ctx, chanObserver(chan5, noop)) })
+		Go(ctxHoisted, func() { obs6.Subscribe(ctx, chanObserver(chan6, noop)) })
+		Go(ctxHoisted, func() { obs7.Subscribe(ctx, chanObserver(chan7, noop)) })
+		Go(ctxHoisted, func() { obs8.Subscribe(ctx, chanObserver(chan8, noop)) })
 	}
 }
 

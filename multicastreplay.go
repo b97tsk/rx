@@ -8,6 +8,7 @@ import (
 
 	"github.com/b97tsk/rx/internal/ctxwatch"
 	"github.com/b97tsk/rx/internal/queue"
+	"github.com/b97tsk/rx/internal/waitgroup"
 )
 
 // ReplayConfig carries options for MulticastReplay.
@@ -166,10 +167,21 @@ func (m *multicastReplay[T]) subscribe(ctx context.Context, sink Observer[T]) {
 
 		observer := sink
 		m.obs.Add(&observer)
+
+		wg := waitgroup.Get(ctx)
+		if wg != nil {
+			wg.Add(1)
+		}
+
 		ctxwatch.Add(ctx, func() {
+			if wg != nil {
+				defer wg.Done()
+			}
+
 			m.mu.Lock()
 			m.obs.Delete(&observer)
 			m.mu.Unlock()
+
 			observer.Error(ctx.Err())
 		})
 	}

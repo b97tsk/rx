@@ -2,6 +2,8 @@ package rx
 
 import (
 	"context"
+
+	"github.com/b97tsk/rx/internal/waitgroup"
 )
 
 // WithLatestFrom3 combines the source with 3 other Observables to create an
@@ -43,7 +45,9 @@ func withLatestFrom4[T1, T2, T3, T4, R any](
 
 		noop := make(chan struct{})
 
-		go func() {
+		ctxHoisted := waitgroup.Hoist(ctx)
+
+		Go(ctxHoisted, func() {
 			var s withLatestFromState4[T1, T2, T3, T4]
 
 			done := false
@@ -62,12 +66,12 @@ func withLatestFrom4[T1, T2, T3, T4, R any](
 			}
 
 			close(noop)
-		}()
+		})
 
-		go obs1.Subscribe(ctx, chanObserver(chan1, noop))
-		go obs2.Subscribe(ctx, chanObserver(chan2, noop))
-		go obs3.Subscribe(ctx, chanObserver(chan3, noop))
-		go obs4.Subscribe(ctx, chanObserver(chan4, noop))
+		Go(ctxHoisted, func() { obs1.Subscribe(ctx, chanObserver(chan1, noop)) })
+		Go(ctxHoisted, func() { obs2.Subscribe(ctx, chanObserver(chan2, noop)) })
+		Go(ctxHoisted, func() { obs3.Subscribe(ctx, chanObserver(chan3, noop)) })
+		Go(ctxHoisted, func() { obs4.Subscribe(ctx, chanObserver(chan4, noop)) })
 	}
 }
 

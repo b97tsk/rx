@@ -62,7 +62,7 @@ func (obs timeoutObservable[T]) Subscribe(ctx context.Context, sink Observer[T])
 	c := make(chan Notification[T])
 	noop := make(chan struct{})
 
-	go func() {
+	Go(ctx, func() {
 		tm := timerpool.Get(obs.First)
 
 		for {
@@ -97,7 +97,7 @@ func (obs timeoutObservable[T]) Subscribe(ctx context.Context, sink Observer[T])
 				return
 			}
 		}
-	}()
+	})
 
 	obs.Source.Subscribe(childCtx, chanObserver(c, noop))
 }

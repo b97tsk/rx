@@ -6,6 +6,7 @@ import (
 	"sync/atomic"
 
 	"github.com/b97tsk/rx/internal/queue"
+	"github.com/b97tsk/rx/internal/waitgroup"
 )
 
 // Merge creates an Observable that concurrently emits all values from every
@@ -44,8 +45,12 @@ func (some observables[T]) Merge(ctx context.Context, sink Observer[T]) {
 		}
 	}
 
+	ctxHoisted := waitgroup.Hoist(ctx)
+
 	for _, obs := range some {
-		go obs.Subscribe(ctx, observer)
+		obs := obs
+
+		Go(ctxHoisted, func() { obs.Subscribe(ctx, observer) })
 	}
 }
 
@@ -140,8 +145,12 @@ func (obs mergeMapObservable[T, R]) Subscribe(ctx context.Context, sink Observer
 
 	var observer Observer[R]
 
+	ctxHoisted := waitgroup.Hoist(ctx)
+
 	subscribeToNext := func() {
-		go obs.Project(x.Queue.Pop()).Subscribe(ctx, observer)
+		obs1 := obs.Project(x.Queue.Pop())
+
+		Go(ctxHoisted, func() { obs1.Subscribe(ctx, observer) })
 	}
 
 	observer = func(n Notification[R]) {

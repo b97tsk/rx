@@ -38,18 +38,18 @@ func (obs congestObservable[T]) Subscribe(ctx context.Context, sink Observer[T])
 
 	cout := make(chan Notification[T])
 
-	go func() {
+	Go(ctx, func() {
 		for n := range cout {
 			sink(n)
 		}
-	}()
+	})
 
 	bufferSize := obs.BufferSize
 
 	cin := make(chan Notification[T])
 	noop := make(chan struct{})
 
-	go func() {
+	Go(ctx, func() {
 		var q queue.Queue[Notification[T]]
 
 		for {
@@ -83,7 +83,7 @@ func (obs congestObservable[T]) Subscribe(ctx context.Context, sink Observer[T])
 				}
 			}
 		}
-	}()
+	})
 
 	obs.Source.Subscribe(ctx, chanObserver(cin, noop))
 }

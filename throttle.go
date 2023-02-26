@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/b97tsk/rx/internal/critical"
+	"github.com/b97tsk/rx/internal/waitgroup"
 )
 
 // Throttle emits a value from the source Observable, then ignores subsequent
@@ -101,6 +102,8 @@ func (obs throttleObservable[T, U]) Subscribe(ctx context.Context, sink Observer
 
 	var doThrottle func(T)
 
+	ctxHoisted := waitgroup.Hoist(ctx)
+
 	doThrottle = func(v T) {
 		x.Throttling = true
 
@@ -108,48 +111,52 @@ func (obs throttleObservable[T, U]) Subscribe(ctx context.Context, sink Observer
 
 		var noop bool
 
-		go obs.DurationSelector(v).Subscribe(ctx, func(n Notification[U]) {
-			if noop {
-				return
-			}
+		obs1 := obs.DurationSelector(v)
 
-			noop = true
-
-			cancel()
-
-			if critical.Enter(&x.Section) {
-				x.Throttling = false
-
-				switch {
-				case n.HasValue:
-					if obs.Trailing && x.Trailing.HasValue {
-						sink.Next(x.Trailing.Value)
-						x.Trailing.HasValue = false
-
-						if !x.Completed {
-							doThrottle(x.Trailing.Value)
-						}
-					}
-
-					if x.Completed {
-						sink.Complete()
-					}
-
-					critical.Leave(&x.Section)
-
-				case n.HasError:
-					critical.Close(&x.Section)
-
-					sink.Error(n.Error)
-
-				default:
-					if x.Completed {
-						sink.Complete()
-					}
-
-					critical.Leave(&x.Section)
+		Go(ctxHoisted, func() {
+			obs1.Subscribe(ctx, func(n Notification[U]) {
+				if noop {
+					return
 				}
-			}
+
+				noop = true
+
+				cancel()
+
+				if critical.Enter(&x.Section) {
+					x.Throttling = false
+
+					switch {
+					case n.HasValue:
+						if obs.Trailing && x.Trailing.HasValue {
+							sink.Next(x.Trailing.Value)
+							x.Trailing.HasValue = false
+
+							if !x.Completed {
+								doThrottle(x.Trailing.Value)
+							}
+						}
+
+						if x.Completed {
+							sink.Complete()
+						}
+
+						critical.Leave(&x.Section)
+
+					case n.HasError:
+						critical.Close(&x.Section)
+
+						sink.Error(n.Error)
+
+					default:
+						if x.Completed {
+							sink.Complete()
+						}
+
+						critical.Leave(&x.Section)
+					}
+				}
+			})
 		})
 	}
 

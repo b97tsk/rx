@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/b97tsk/rx/internal/critical"
+	"github.com/b97tsk/rx/internal/waitgroup"
 )
 
 // Race creates an Observable that mirrors the first Observable to emit an
@@ -36,39 +37,43 @@ func (some observables[T]) Race(ctx context.Context, sink Observer[T]) {
 
 	var race critical.Section
 
-	for i, obs := range some {
-		index := i
+	ctxHoisted := waitgroup.Hoist(ctx)
+
+	for index, obs := range some {
+		index, obs := index, obs
 
 		var won, lost bool
 
-		go obs.Subscribe(subs[i].Left(), func(n Notification[T]) {
-			switch {
-			case won:
-				sink(n)
-				return
-			case lost:
-				return
-			}
-
-			if critical.Enter(&race) {
-				for i := range subs {
-					if i != index {
-						subs[i].Right()()
-					}
+		Go(ctxHoisted, func() {
+			obs.Subscribe(subs[index].Left(), func(n Notification[T]) {
+				switch {
+				case won:
+					sink(n)
+					return
+				case lost:
+					return
 				}
 
-				critical.Close(&race)
+				if critical.Enter(&race) {
+					for i := range subs {
+						if i != index {
+							subs[i].Right()()
+						}
+					}
 
-				won = true
+					critical.Close(&race)
 
-				sink(n)
+					won = true
 
-				return
-			}
+					sink(n)
 
-			lost = true
+					return
+				}
 
-			subs[index].Right()()
+				lost = true
+
+				subs[index].Right()()
+			})
 		})
 	}
 }
