@@ -163,7 +163,7 @@ func (m *multicastReplay[T]) subscribe(ctx context.Context, sink Observer[T]) {
 		var cancel context.CancelFunc
 
 		ctx, cancel = context.WithCancel(ctx)
-		sink = sink.WithCancel(cancel).Mutex()
+		sink = sink.WithCancel(cancel).WithMutex()
 
 		observer := sink
 		m.obs.Add(&observer)

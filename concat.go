@@ -101,7 +101,7 @@ type concatMapObservable[T, R any] struct {
 func (obs concatMapObservable[T, R]) Subscribe(ctx context.Context, sink Observer[R]) {
 	ctx, cancel := context.WithCancel(ctx)
 
-	sink = sink.WithCancel(cancel).Mutex()
+	sink = sink.WithCancel(cancel).WithMutex()
 
 	var x struct {
 		sync.Mutex

@@ -33,7 +33,7 @@ func MergeWith[T any](some ...Observable[T]) Operator[T, T] {
 func (some observables[T]) Merge(ctx context.Context, sink Observer[T]) {
 	ctx, cancel := context.WithCancel(ctx)
 
-	sink = sink.WithCancel(cancel).Mutex()
+	sink = sink.WithCancel(cancel).WithMutex()
 
 	var workers atomic.Uint32
 
@@ -134,7 +134,7 @@ type mergeMapObservable[T, R any] struct {
 func (obs mergeMapObservable[T, R]) Subscribe(ctx context.Context, sink Observer[R]) {
 	ctx, cancel := context.WithCancel(ctx)
 
-	sink = sink.WithCancel(cancel).Mutex()
+	sink = sink.WithCancel(cancel).WithMutex()
 
 	var x struct {
 		sync.Mutex

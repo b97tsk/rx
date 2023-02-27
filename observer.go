@@ -34,9 +34,22 @@ func (sink Observer[T]) ElementsOnly(n Notification[T]) {
 	}
 }
 
-// Mutex creates an Observer that passes incoming emissions to sink in a
-// mutually exclusive way.
-func (sink Observer[T]) Mutex() Observer[T] {
+// WithCancel creates an Observer that passes incoming emissions to sink and,
+// when an error or a completion passes in, calls a specified function just
+// before passing it to sink.
+func (sink Observer[T]) WithCancel(cancel func()) Observer[T] {
+	return func(n Notification[T]) {
+		if !n.HasValue {
+			cancel()
+		}
+
+		sink(n)
+	}
+}
+
+// WithMutex creates an Observer that passes incoming emissions to sink
+// in a mutually exclusive way.
+func (sink Observer[T]) WithMutex() Observer[T] {
 	var lock critical.Section
 
 	return func(n Notification[T]) {
@@ -50,19 +63,6 @@ func (sink Observer[T]) Mutex() Observer[T] {
 				sink(n)
 			}
 		}
-	}
-}
-
-// WithCancel creates an Observer that passes incoming emissions to sink and,
-// when an error or a completion passes in, calls a specified function just
-// before passing it to sink.
-func (sink Observer[T]) WithCancel(cancel func()) Observer[T] {
-	return func(n Notification[T]) {
-		if !n.HasValue {
-			cancel()
-		}
-
-		sink(n)
 	}
 }
 
