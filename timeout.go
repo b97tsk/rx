@@ -68,14 +68,15 @@ func (obs timeoutObservable[T]) Subscribe(ctx context.Context, sink Observer[T])
 		for {
 			select {
 			case n := <-c:
+				if !n.HasValue {
+					cancel()
+					close(noop)
+				}
+
 				sink(n)
 
 				if !n.HasValue {
 					timerpool.Put(tm)
-
-					cancel()
-					close(noop)
-
 					return
 				}
 

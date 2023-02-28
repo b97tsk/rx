@@ -40,7 +40,12 @@ func withLatestFrom6[T1, T2, T3, T4, T5, T6, R any](
 	return func(ctx context.Context, sink Observer[R]) {
 		ctx, cancel := context.WithCancel(ctx)
 
-		sink = sink.WithCancel(cancel)
+		noop := make(chan struct{})
+
+		sink = sink.WithCancel(func() {
+			cancel()
+			close(noop)
+		})
 
 		chan1 := make(chan Notification[T1])
 		chan2 := make(chan Notification[T2])
@@ -48,8 +53,6 @@ func withLatestFrom6[T1, T2, T3, T4, T5, T6, R any](
 		chan4 := make(chan Notification[T4])
 		chan5 := make(chan Notification[T5])
 		chan6 := make(chan Notification[T6])
-
-		noop := make(chan struct{})
 
 		ctxHoisted := waitgroup.Hoist(ctx)
 
@@ -74,8 +77,6 @@ func withLatestFrom6[T1, T2, T3, T4, T5, T6, R any](
 					done = withLatestFromSink6(n, sink, proj, &s, &s.V6, 32)
 				}
 			}
-
-			close(noop)
 		})
 
 		Go(ctxHoisted, func() { obs1.Subscribe(ctx, chanObserver(chan1, noop)) })

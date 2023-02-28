@@ -27,7 +27,12 @@ func CombineLatest8[T1, T2, T3, T4, T5, T6, T7, T8, R any](
 	return func(ctx context.Context, sink Observer[R]) {
 		ctx, cancel := context.WithCancel(ctx)
 
-		sink = sink.WithCancel(cancel)
+		noop := make(chan struct{})
+
+		sink = sink.WithCancel(func() {
+			cancel()
+			close(noop)
+		})
 
 		chan1 := make(chan Notification[T1])
 		chan2 := make(chan Notification[T2])
@@ -37,8 +42,6 @@ func CombineLatest8[T1, T2, T3, T4, T5, T6, T7, T8, R any](
 		chan6 := make(chan Notification[T6])
 		chan7 := make(chan Notification[T7])
 		chan8 := make(chan Notification[T8])
-
-		noop := make(chan struct{})
 
 		ctxHoisted := waitgroup.Hoist(ctx)
 
@@ -67,8 +70,6 @@ func CombineLatest8[T1, T2, T3, T4, T5, T6, T7, T8, R any](
 					done = combineLatestSink8(n, sink, proj, &s, &s.V8, 128)
 				}
 			}
-
-			close(noop)
 		})
 
 		Go(ctxHoisted, func() { obs1.Subscribe(ctx, chanObserver(chan1, noop)) })

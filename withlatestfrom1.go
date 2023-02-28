@@ -32,12 +32,15 @@ func withLatestFrom2[T1, T2, R any](
 	return func(ctx context.Context, sink Observer[R]) {
 		ctx, cancel := context.WithCancel(ctx)
 
-		sink = sink.WithCancel(cancel)
+		noop := make(chan struct{})
+
+		sink = sink.WithCancel(func() {
+			cancel()
+			close(noop)
+		})
 
 		chan1 := make(chan Notification[T1])
 		chan2 := make(chan Notification[T2])
-
-		noop := make(chan struct{})
 
 		ctxHoisted := waitgroup.Hoist(ctx)
 
@@ -54,8 +57,6 @@ func withLatestFrom2[T1, T2, R any](
 					done = withLatestFromSink2(n, sink, proj, &s, &s.V2, 2)
 				}
 			}
-
-			close(noop)
 		})
 
 		Go(ctxHoisted, func() { obs1.Subscribe(ctx, chanObserver(chan1, noop)) })

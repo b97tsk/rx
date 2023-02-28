@@ -29,7 +29,12 @@ func Zip9[T1, T2, T3, T4, T5, T6, T7, T8, T9, R any](
 	return func(ctx context.Context, sink Observer[R]) {
 		ctx, cancel := context.WithCancel(ctx)
 
-		sink = sink.WithCancel(cancel)
+		noop := make(chan struct{})
+
+		sink = sink.WithCancel(func() {
+			cancel()
+			close(noop)
+		})
 
 		chan1 := make(chan Notification[T1])
 		chan2 := make(chan Notification[T2])
@@ -40,8 +45,6 @@ func Zip9[T1, T2, T3, T4, T5, T6, T7, T8, T9, R any](
 		chan7 := make(chan Notification[T7])
 		chan8 := make(chan Notification[T8])
 		chan9 := make(chan Notification[T9])
-
-		noop := make(chan struct{})
 
 		ctxHoisted := waitgroup.Hoist(ctx)
 
@@ -72,8 +75,6 @@ func Zip9[T1, T2, T3, T4, T5, T6, T7, T8, T9, R any](
 					done = zipSink9(n, sink, proj, &s, &s.Q9, 256)
 				}
 			}
-
-			close(noop)
 		})
 
 		Go(ctxHoisted, func() { obs1.Subscribe(ctx, chanObserver(chan1, noop)) })
