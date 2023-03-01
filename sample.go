@@ -14,10 +14,7 @@ func SampleTime[T any](d time.Duration) Operator[T, T] {
 }
 
 // Sample emits the most recently emitted value from the source Observable
-// whenever another Observable, the notifier, emits.
-//
-// It's like SampleTime, but samples whenever the notifier Observable emits
-// a value.
+// whenever notifier, another Observable, emits a value.
 func Sample[T, U any](notifier Observable[U]) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {

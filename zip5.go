@@ -7,9 +7,8 @@ import (
 	"github.com/b97tsk/rx/internal/waitgroup"
 )
 
-// Zip5 creates an Observable that combines multiple Observables to create
-// an Observable that emits projection of values of each of its input
-// Observables.
+// Zip5 combines multiple Observables to create an Observable that emits
+// projection of values of each of its input Observables.
 func Zip5[T1, T2, T3, T4, T5, R any](
 	obs1 Observable[T1],
 	obs2 Observable[T2],

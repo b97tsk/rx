@@ -1,8 +1,8 @@
 package rx
 
-// An Operator is an operation on an Observable. When called, they do not
-// change the existing Observable instance. Instead, they return a new
-// Observable, whose subscription logic is based on the first Observable.
+// An Operator is an operation on an Observable. When applied, they do not
+// change the existing Observable value. Instead, they return a new one,
+// whose subscription logic is based on the first Observable.
 type Operator[T, R any] interface {
 	Apply(source Observable[T]) Observable[R]
 }

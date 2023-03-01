@@ -7,8 +7,8 @@ import (
 	"github.com/b97tsk/rx/internal/waitgroup"
 )
 
-// Race creates an Observable that mirrors the first Observable to emit an
-// item from given input Observables.
+// Race creates an Observable that mirrors the first Observable to emit
+// a value, from given input Observables.
 func Race[T any](some ...Observable[T]) Observable[T] {
 	if len(some) == 0 {
 		return Empty[T]()
@@ -17,9 +17,8 @@ func Race[T any](some ...Observable[T]) Observable[T] {
 	return observables[T](some).Race
 }
 
-// RaceWith applies Race to the source Observable along with some other
-// Observables to create a first-order Observable, then mirrors the resulting
-// Observable.
+// RaceWith applies [Race] to the source Observable along with some other
+// Observables to create a first-order Observable.
 func RaceWith[T any](some ...Observable[T]) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {

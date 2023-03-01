@@ -4,7 +4,7 @@ import (
 	"context"
 )
 
-// CompactComparable emits all items emitted by the source Observable that
+// CompactComparable emits all values emitted by the source Observable that
 // are distinct from the previous.
 func CompactComparable[T comparable]() Operator[T, T] {
 	return NewOperator(
@@ -32,7 +32,7 @@ func CompactComparable[T comparable]() Operator[T, T] {
 	)
 }
 
-// Compact emits all items emitted by the source Observable that are distinct
+// Compact emits all values emitted by the source Observable that are distinct
 // from the previous, given a comparison function.
 func Compact[T any](eq func(v1, v2 T) bool) Operator[T, T] {
 	if eq == nil {
@@ -68,7 +68,7 @@ func compact[T any](eq func(v1, v2 T) bool) Operator[T, T] {
 	)
 }
 
-// CompactComparableKey emits all items emitted by the source Observable whose
+// CompactComparableKey emits all values emitted by the source Observable whose
 // projections are distinct from the previous.
 func CompactComparableKey[T any, K comparable](proj func(v T) K) Operator[T, T] {
 	if proj == nil {
@@ -106,7 +106,7 @@ func compactComparableKey[T any, K comparable](proj func(v T) K) Operator[T, T] 
 	)
 }
 
-// CompactKey emits all items emitted by the source Observable whose
+// CompactKey emits all values emitted by the source Observable whose
 // projections are distinct from the previous, given a comparison function.
 func CompactKey[T, K any](proj func(v T) K, eq func(v1, v2 K) bool) Operator[T, T] {
 	switch {

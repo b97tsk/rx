@@ -4,7 +4,7 @@ import (
 	"context"
 )
 
-// Contains emits a boolean to indicate whether any item of the source
+// Contains emits a boolean to indicate whether any value of the source
 // Observable satisfies a given condition.
 func Contains[T any](cond func(v T) bool) Operator[T, bool] {
 	if cond == nil {

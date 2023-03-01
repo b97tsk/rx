@@ -6,8 +6,8 @@ import (
 	"github.com/b97tsk/rx/internal/waitgroup"
 )
 
-// WithLatestFrom3 combines the source with 3 other Observables to create an
-// Observable that emits projection of the latest values of each Observable,
+// WithLatestFrom3 combines the source with 3 other Observables to create
+// an Observable that emits projection of latest values of each Observable,
 // only when the source emits.
 func WithLatestFrom3[T0, T1, T2, T3, R any](
 	obs1 Observable[T1],

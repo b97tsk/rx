@@ -6,7 +6,7 @@ package rx
 //
 // An Observable can only emit N+1 Notifications: either N values and an error,
 // or N values and a completion. The last Notification emitted by an Observable
-// must be an error or a completion.
+// must be of an error or completion.
 type Notification[T any] struct {
 	HasValue bool
 	HasError bool

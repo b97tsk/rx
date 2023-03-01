@@ -4,8 +4,8 @@ import (
 	"context"
 )
 
-// Scan applies an accumulator function over the source Observable, and
-// emits each intermediate result, given an initial value.
+// Scan applies an accumulator function over the source Observable,
+// and emits each intermediate result, given an initial value.
 func Scan[T, R any](init R, accumulator func(v1 R, v2 T) R) Operator[T, R] {
 	if accumulator == nil {
 		panic("accumulator == nil")

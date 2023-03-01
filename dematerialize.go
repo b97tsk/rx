@@ -4,8 +4,8 @@ import (
 	"context"
 )
 
-// Dematerialize converts an Observable of Notification objects into the
-// emissions that they represent. It's the opposite of Materialize.
+// Dematerialize converts an Observable of Notification values into
+// the emissions that they represent. It's the opposite of [Materialize].
 func Dematerialize[_ Notification[T], T any]() Operator[Notification[T], T] {
 	return NewOperator(dematerialize[Notification[T]])
 }

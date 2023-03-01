@@ -4,7 +4,7 @@ import (
 	"context"
 )
 
-// DistinctComparable emits all items emitted by the source Observable that
+// DistinctComparable emits all values emitted by the source Observable that
 // are distinct from each other.
 func DistinctComparable[T comparable]() Operator[T, T] {
 	return NewOperator(
@@ -30,7 +30,7 @@ func DistinctComparable[T comparable]() Operator[T, T] {
 	)
 }
 
-// Distinct emits all items emitted by the source Observable whose projections
+// Distinct emits all values emitted by the source Observable whose projections
 // are distinct from each other.
 func Distinct[T any, K comparable](proj func(v T) K) Operator[T, T] {
 	if proj == nil {

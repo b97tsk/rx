@@ -4,8 +4,8 @@ import (
 	"context"
 )
 
-// SkipWhile skips all items emitted by the source Observable as long as
-// a given condition holds true, but emits all further source items as
+// SkipWhile skips all values emitted by the source Observable as long as
+// a given condition holds true, but emits all further source values as
 // soon as the condition becomes false.
 func SkipWhile[T any](cond func(v T) bool) Operator[T, T] {
 	if cond == nil {

@@ -1,6 +1,6 @@
 package rx
 
-// StartWith emits the items you specify as arguments before it begins to
+// StartWith emits the values you specify as arguments before it begins to
 // mirrors the source Observable.
 func StartWith[T any](s ...T) Operator[T, T] {
 	if len(s) == 0 {

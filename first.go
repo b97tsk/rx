@@ -4,8 +4,9 @@ import (
 	"context"
 )
 
-// First emits only the first value emitted by the source Observable;
-// if the source turns out to be empty, throws ErrEmpty.
+// First emits only the first value emitted by the source Observable.
+// If the source turns out to be empty, it emits an error notification
+// of ErrEmpty.
 func First[T any]() Operator[T, T] {
 	return NewOperator(first[T])
 }
@@ -38,8 +39,8 @@ func first[T any](source Observable[T]) Observable[T] {
 	}
 }
 
-// FirstOrDefault emits only the first value emitted by the source Observable;
-// if the source turns out to be empty, emits a specified default value.
+// FirstOrDefault emits only the first value emitted by the source Observable.
+// If the source turns out to be empty, it emits a specified default value.
 func FirstOrDefault[T any](def T) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {

@@ -4,8 +4,8 @@ import (
 	"context"
 )
 
-// GroupBy groups the items emitted by the source Observable according to
-// a specified criterion, and emits these grouped items as Pairs, one Pair
+// GroupBy groups the values emitted by the source Observable according to
+// a specified criterion, and emits these grouped values as Pairs, one Pair
 // per group.
 func GroupBy[T any, K comparable](
 	keySelector func(v T) K,

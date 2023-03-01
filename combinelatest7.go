@@ -6,9 +6,8 @@ import (
 	"github.com/b97tsk/rx/internal/waitgroup"
 )
 
-// CombineLatest7 creates an Observable that combines multiple Observables to
-// create an Observable that emits projection of the latest values of each of
-// its input Observables.
+// CombineLatest7 combines multiple Observables to create an Observable that
+// emits projection of latest values of each of its input Observables.
 func CombineLatest7[T1, T2, T3, T4, T5, T6, T7, R any](
 	obs1 Observable[T1],
 	obs2 Observable[T2],

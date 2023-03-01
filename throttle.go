@@ -8,12 +8,12 @@ import (
 	"github.com/b97tsk/rx/internal/waitgroup"
 )
 
-// Throttle emits a value from the source Observable, then ignores subsequent
-// source values for a duration determined by another Observable, then repeats
-// this process.
+// Throttle emits a value from the source Observable, then ignores
+// subsequent source values for a duration determined by another Observable,
+// then repeats this process until the source completes.
 //
-// It's like ThrottleTime, but the silencing duration is determined by a second
-// Observable.
+// It's like [ThrottleTime], but the silencing duration is determined
+// by a second Observable.
 func Throttle[T, U any](durationSelector func(v T) Observable[U]) ThrottleOperator[T, U] {
 	if durationSelector == nil {
 		panic("durationSelector == nil")
@@ -29,10 +29,11 @@ func Throttle[T, U any](durationSelector func(v T) Observable[U]) ThrottleOperat
 }
 
 // ThrottleTime emits a value from the source Observable, then ignores
-// subsequent source values for a duration, then repeats this process.
+// subsequent source values for a duration, then repeats this process until
+// the source completes.
 //
-// ThrottleTime lets a value pass, then ignores source values for the next
-// duration time.
+// ThrottleTime lets a value pass, then ignores source values
+// for the next duration time.
 func ThrottleTime[T any](d time.Duration) ThrottleOperator[T, time.Time] {
 	obsTimer := Timer(d)
 
@@ -53,7 +54,7 @@ type throttleConfig[T, U any] struct {
 	Trailing         bool
 }
 
-// ThrottleOperator is an Operator type for Throttle.
+// ThrottleOperator is an [Operator] type for [Throttle].
 type ThrottleOperator[T, U any] struct {
 	opts throttleConfig[T, U]
 }

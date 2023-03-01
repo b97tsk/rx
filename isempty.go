@@ -4,7 +4,7 @@ import (
 	"context"
 )
 
-// IsEmpty emits a boolean to indicate whether the source emits no items.
+// IsEmpty emits a boolean to indicate whether the source emits no values.
 func IsEmpty[T any]() Operator[T, bool] {
 	return NewOperator(isEmpty[T])
 }

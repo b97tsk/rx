@@ -6,10 +6,11 @@ import (
 	"github.com/b97tsk/rx/internal/waitgroup"
 )
 
-// BlockingFirst subscribes to the source Observable, returns the first item
-// emitted by the source; if the source emits no items, it returns zero value
-// of T and ErrEmpty; if the source throws an error, it returns zero value of
-// T and this error.
+// BlockingFirst subscribes to the source Observable, and returns
+// the first value emitted by the source.
+// If the source emits no values, it returns zero value of T and ErrEmpty;
+// if the source emits a notification of error, it returns zero value of T
+// and the error.
 //
 // A cancellation of ctx will cause BlockingFirst to immediately return zero
 // value of T and ctx.Err().
@@ -50,9 +51,9 @@ func (obs Observable[T]) BlockingFirst(ctx context.Context) (v T, err error) {
 	}
 }
 
-// BlockingFirstOrDefault subscribes to the source Observable, returns
-// the first item emitted by the source, or returns def if the source emits
-// no items or throws an error.
+// BlockingFirstOrDefault subscribes to the source Observable, and returns
+// the first value emitted by the source, or returns def if the source emits
+// no values or a notification of error.
 //
 // A cancellation of ctx will cause BlockingFirstOrDefault to immediately
 // return def.
@@ -65,10 +66,11 @@ func (obs Observable[T]) BlockingFirstOrDefault(ctx context.Context, def T) T {
 	return v
 }
 
-// BlockingLast subscribes to the source Observable, returns the last item
-// emitted by the source; if the source emits no items, it returns zero value
-// of T and ErrEmpty; if the source throws an error, it returns zero value of
-// T and this error.
+// BlockingLast subscribes to the source Observable, and returns
+// the last value emitted by the source.
+// If the source emits no values, it returns zero value of T and ErrEmpty;
+// if the source emits a notification of error, it returns zero value of T
+// and the error.
 //
 // A cancellation of ctx will cause BlockingLast to immediately return zero
 // value of T and ctx.Err().
@@ -103,12 +105,12 @@ func (obs Observable[T]) BlockingLast(ctx context.Context) (v T, err error) {
 	}
 }
 
-// BlockingLastOrDefault subscribes to the source Observable, returns the last
-// item emitted by the source, or returns def if the source emits no items or
-// throws an error.
+// BlockingLastOrDefault subscribes to the source Observable, and returns
+// the last value emitted by the source, or returns def if the source emits
+// no values or a notification of error.
 //
-// A cancellation of ctx will cause BlockingLastOrDefault to immediately return
-// def.
+// A cancellation of ctx will cause BlockingLastOrDefault to immediately
+// return def.
 func (obs Observable[T]) BlockingLastOrDefault(ctx context.Context, def T) T {
 	v, err := obs.BlockingLast(ctx)
 	if err != nil {
@@ -118,13 +120,15 @@ func (obs Observable[T]) BlockingLastOrDefault(ctx context.Context, def T) T {
 	return v
 }
 
-// BlockingSingle subscribes to the source Observable, returns the single item
-// emitted by the source; if the source emits more than one item or no items,
-// it returns zero value of T and ErrNotSingle or ErrEmpty respectively;
-// if the source throws an error, it returns zero value of T and this error.
+// BlockingSingle subscribes to the source Observable, and returns
+// the single value emitted by the source.
+// If the source emits more than one value or no values, it returns
+// zero value of T and ErrNotSingle or ErrEmpty respectively;
+// if the source emits a notification of error, it returns
+// zero value of T and the error.
 //
-// A cancellation of ctx will cause BlockingSingle to immediately return zero
-// value of T and ctx.Err().
+// A cancellation of ctx will cause BlockingSingle to immediately
+// return zero value of T and ctx.Err().
 func (obs Observable[T]) BlockingSingle(ctx context.Context) (v T, err error) {
 	childCtx, cancel := context.WithCancel(ctx)
 
@@ -171,9 +175,9 @@ func (obs Observable[T]) BlockingSingle(ctx context.Context) (v T, err error) {
 	}
 }
 
-// BlockingSubscribe subscribes to the source Observable, returns only when
-// the source completes or throws an error; if the source completes, it returns
-// nil; if the source throws an error, it returns this error.
+// BlockingSubscribe subscribes to the source Observable, and returns nil
+// when the source completes, or returns an error when the source emits
+// a notification of error.
 //
 // The source Observable must honor the cancellation of ctx; otherwise,
 // BlockingSubscribe might still block even after ctx has been cancelled.

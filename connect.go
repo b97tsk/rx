@@ -24,7 +24,7 @@ type connectConfig[T, R any] struct {
 	Selector  func(Observable[T]) Observable[R]
 }
 
-// ConnectOperator is an Operator type for Connect.
+// ConnectOperator is an [Operator] type for [Connect].
 type ConnectOperator[T, R any] struct {
 	opts connectConfig[T, R]
 }

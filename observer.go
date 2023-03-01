@@ -4,7 +4,7 @@ import (
 	"github.com/b97tsk/rx/internal/critical"
 )
 
-// An Observer is a consumer of notifications delivered by an Observable.
+// An Observer is a consumer of notifications delivered by an [Observable].
 type Observer[T any] func(n Notification[T])
 
 // Next passes a value to sink.
@@ -34,9 +34,9 @@ func (sink Observer[T]) ElementsOnly(n Notification[T]) {
 	}
 }
 
-// WithCancel creates an Observer that passes incoming emissions to sink and,
-// when an error or a completion passes in, calls a specified function just
-// before passing it to sink.
+// WithCancel creates an Observer that passes incoming emissions to sink,
+// and when a notification of error or completion passes in, calls f
+// just before passing it to sink.
 func (sink Observer[T]) WithCancel(cancel func()) Observer[T] {
 	return func(n Notification[T]) {
 		if !n.HasValue {

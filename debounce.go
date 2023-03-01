@@ -11,8 +11,8 @@ import (
 // time span, determined by another Observable, has passed without another
 // source emission.
 //
-// It's like DebounceTime, but the time span of emission silence is determined
-// by a second Observable.
+// It's like [DebounceTime], but the time span of emission silence is
+// determined by a second Observable.
 func Debounce[T, U any](durationSelector func(v T) Observable[U]) Operator[T, T] {
 	if durationSelector == nil {
 		panic("durationSelector == nil")

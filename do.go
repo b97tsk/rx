@@ -4,7 +4,7 @@ import (
 	"context"
 )
 
-// Do mirrors the source Observable and performs a side effect before
+// Do mirrors the source Observable, passing emissions to tap before
 // each emission.
 func Do[T any](tap Observer[T]) Operator[T, T] {
 	if tap == nil {
@@ -27,8 +27,8 @@ func do[T any](tap Observer[T]) Operator[T, T] {
 	)
 }
 
-// DoOnNext mirrors the source Observable and performs a side effect before
-// each value.
+// DoOnNext mirrors the source Observable, passing values to f before
+// each value emission.
 func DoOnNext[T any](f func(v T)) Operator[T, T] {
 	if f == nil {
 		panic("f == nil")
@@ -53,8 +53,8 @@ func doOnNext[T any](f func(v T)) Operator[T, T] {
 	)
 }
 
-// DoOnComplete mirrors the source Observable and performs a side effect when
-// the source completes.
+// DoOnComplete mirrors the source Observable, and calls f when the source
+// completes.
 func DoOnComplete[T any](f func()) Operator[T, T] {
 	if f == nil {
 		panic("f == nil")
@@ -79,8 +79,8 @@ func doOnComplete[T any](f func()) Operator[T, T] {
 	)
 }
 
-// DoOnError mirrors the source Observable and performs a side effect when
-// the source throws an error.
+// DoOnError mirrors the source Observable, and calls f when the source emits
+// a notification of error.
 func DoOnError[T any](f func(err error)) Operator[T, T] {
 	if f == nil {
 		panic("f == nil")
@@ -105,8 +105,8 @@ func doOnError[T any](f func(err error)) Operator[T, T] {
 	)
 }
 
-// DoOnErrorOrComplete mirrors the source Observable and performs a side effect
-// when the source throws an error or completes.
+// DoOnErrorOrComplete mirrors the source Observable, and calls f when
+// the source completes or emits a notification of error.
 func DoOnErrorOrComplete[T any](f func()) Operator[T, T] {
 	if f == nil {
 		panic("f == nil")

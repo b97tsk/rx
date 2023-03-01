@@ -11,7 +11,7 @@ import (
 // then emits the most recent value from the source Observable, then repeats
 // this process.
 //
-// It's like AuditTime, but the silencing duration is determined by a second
+// It's like [AuditTime], but the silencing duration is determined by a second
 // Observable.
 func Audit[T, U any](durationSelector func(v T) Observable[U]) Operator[T, T] {
 	if durationSelector == nil {

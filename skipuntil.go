@@ -5,8 +5,8 @@ import (
 	"sync/atomic"
 )
 
-// SkipUntil skips items emitted by the source Observable until a second
-// Observable emits an item.
+// SkipUntil skips values emitted by the source Observable
+// until a second Observable emits an value.
 func SkipUntil[T, U any](notifier Observable[U]) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {

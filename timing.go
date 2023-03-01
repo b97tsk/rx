@@ -7,8 +7,8 @@ import (
 	"github.com/b97tsk/rx/internal/timerpool"
 )
 
-// Ticker creates an Observable that emits time.Time values every specified
-// interval of time.
+// Ticker creates an Observable that emits [time.Time] values
+// every specified interval of time.
 func Ticker(d time.Duration) Observable[time.Time] {
 	if d <= 0 {
 		panic("d <= 0")
@@ -35,8 +35,8 @@ func Ticker(d time.Duration) Observable[time.Time] {
 	}
 }
 
-// Timer creates an Observable that emits only a time.Time value after
-// a particular time span has passed.
+// Timer creates an Observable that emits a [time.Time] value
+// after a particular time span has passed, and then completes.
 func Timer(d time.Duration) Observable[time.Time] {
 	return func(ctx context.Context, sink Observer[time.Time]) {
 		tm := timerpool.Get(d)

@@ -4,8 +4,8 @@ import (
 	"context"
 )
 
-// ToSlice collects all the values emitted by the source Observable, and then
-// emits them as a slice when the source completes.
+// ToSlice collects all the values emitted by the source Observable,
+// and then emits them as a slice when the source completes.
 func ToSlice[T any]() Operator[T, []T] {
 	return NewOperator(toSlice[T])
 }

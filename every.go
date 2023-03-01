@@ -4,7 +4,7 @@ import (
 	"context"
 )
 
-// Every emits a boolean to indicate whether every item of the source
+// Every emits a boolean to indicate whether every value of the source
 // Observable satisfies a given condition.
 func Every[T any](cond func(v T) bool) Operator[T, bool] {
 	if cond == nil {

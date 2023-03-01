@@ -18,9 +18,8 @@ func Concat[T any](some ...Observable[T]) Observable[T] {
 	return observables[T](some).Concat
 }
 
-// ConcatWith applies Concat to the source Observable along with some other
-// Observables to create a first-order Observable, then mirrors the resulting
-// Observable.
+// ConcatWith applies [Concat] to the source Observable along with some other
+// Observables to create a first-order Observable.
 func ConcatWith[T any](some ...Observable[T]) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {

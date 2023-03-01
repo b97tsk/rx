@@ -19,9 +19,8 @@ func Merge[T any](some ...Observable[T]) Observable[T] {
 	return observables[T](some).Merge
 }
 
-// MergeWith applies Merge to the source Observable along with some other
-// Observables to create a first-order Observable, then mirrors the resulting
-// Observable.
+// MergeWith applies [Merge] to the source Observable along with some other
+// Observables to create a first-order Observable.
 func MergeWith[T any](some ...Observable[T]) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
@@ -99,7 +98,7 @@ type mergeMapConfig[T, R any] struct {
 	Concurrency int
 }
 
-// MergeMapOperator is an Operator type for MergeMap.
+// MergeMapOperator is an [Operator] type for [MergeMap].
 type MergeMapOperator[T, R any] struct {
 	opts mergeMapConfig[T, R]
 }

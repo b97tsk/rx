@@ -4,8 +4,9 @@ import (
 	"context"
 )
 
-// Last emits only the last value emitted by the source Observable;
-// if the source turns out to be empty, throws ErrEmpty.
+// Last emits only the last value emitted by the source Observable.
+// If the source turns out to be empty, it emits an error notification
+// of ErrEmpty.
 func Last[T any]() Operator[T, T] {
 	return NewOperator(last[T])
 }
@@ -36,8 +37,8 @@ func last[T any](source Observable[T]) Observable[T] {
 	}
 }
 
-// LastOrDefault emits only the last value emitted by the source Observable;
-// if the source turns out to be empty, emits a specified default value.
+// LastOrDefault emits only the last value emitted by the source Observable.
+// If the source turns out to be empty, it emits a specified default value.
 func LastOrDefault[T any](def T) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {

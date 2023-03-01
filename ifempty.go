@@ -4,8 +4,8 @@ import (
 	"context"
 )
 
-// DefaultIfEmpty mirrors the source Observable, emits a given value if
-// the source completes without emitting any value.
+// DefaultIfEmpty mirrors the source Observable, or emits a given value
+// if the source completes without emitting any value.
 func DefaultIfEmpty[T any](def T) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
@@ -30,8 +30,8 @@ func DefaultIfEmpty[T any](def T) Operator[T, T] {
 	)
 }
 
-// ThrowIfEmpty mirrors the source Observable, throws ErrEmpty if the source
-// completes without emitting any value.
+// ThrowIfEmpty mirrors the source Observable, or emits an error notification
+// of ErrEmpty if the source completes without emitting any value.
 func ThrowIfEmpty[T any]() Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {

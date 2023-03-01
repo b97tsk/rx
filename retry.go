@@ -4,20 +4,21 @@ import (
 	"context"
 )
 
-// RetryForever mirrors the source Observable and resubscribes to the source
-// whenever the source throws an error.
+// RetryForever mirrors the source Observable, and resubscribes to the source
+// whenever the source emits a notification of error.
 //
-// RetryForever does not retry on context cancellation.
+// RetryForever does not retry after context cancellation.
 func RetryForever[T any]() Operator[T, T] {
 	return Retry[T](-1)
 }
 
-// Retry mirrors the source Observable and resubscribes to the source when
-// the source throws an error for a maximum of count resubscriptions.
+// Retry mirrors the source Observable, and resubscribes to the source
+// when the source emits a notification of error, for a maximum of count
+// resubscriptions.
 //
 // Retry(0) is a no-op.
 //
-// Retry does not retry on context cancellation.
+// Retry does not retry after context cancellation.
 func Retry[T any](count int) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {

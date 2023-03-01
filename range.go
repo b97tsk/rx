@@ -6,8 +6,8 @@ import (
 	"golang.org/x/exp/constraints"
 )
 
-// Range creates an Observable that emits a sequence of integers within a
-// specified range.
+// Range creates an Observable that emits a sequence of integers
+// within a specified range.
 func Range[T constraints.Integer](low, high T) Observable[T] {
 	return func(ctx context.Context, sink Observer[T]) {
 		done := ctx.Done()

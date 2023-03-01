@@ -4,9 +4,9 @@ import (
 	"context"
 )
 
-// Single emits the single item emitted by the source Observable.
-// If the source emits more than one item or no items, Single throws
-// ErrNotSingle or ErrEmpty respectively.
+// Single emits the single value emitted by the source Observable.
+// If the source emits more than one value or no values, it emits
+// an error notification of ErrNotSingle or ErrEmpty respectively.
 func Single[T any]() Operator[T, T] {
 	return NewOperator(single[T])
 }

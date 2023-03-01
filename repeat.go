@@ -4,20 +4,20 @@ import (
 	"context"
 )
 
-// RepeatForever repeats the stream of items emitted by the source Observable
+// RepeatForever repeats the stream of values emitted by the source Observable
 // forever.
 //
-// RepeatForever does not repeat on context cancellation.
+// RepeatForever does not repeat after context cancellation.
 func RepeatForever[T any]() Operator[T, T] {
 	return Repeat[T](-1)
 }
 
-// Repeat repeats the stream of items emitted by the source Observable at
-// most count times.
+// Repeat repeats the stream of values emitted by the source Observable
+// at most count times.
 //
 // Repeat(0) results in an empty Observable; Repeat(1) is a no-op.
 //
-// Repeat does not repeat on context cancellation.
+// Repeat does not repeat after context cancellation.
 func Repeat[T any](count int) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {

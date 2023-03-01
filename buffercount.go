@@ -29,7 +29,7 @@ type bufferCountConfig struct {
 	StartBufferEvery int
 }
 
-// BufferCountOperator is an Operator type for BufferCount.
+// BufferCountOperator is an [Operator] type for [BufferCount].
 type BufferCountOperator[T any] struct {
 	opts bufferCountConfig
 }

@@ -6,8 +6,8 @@ import (
 	"github.com/b97tsk/rx/internal/queue"
 )
 
-// Congest mirrors the source Observable, buffers emissions if the source
-// emits too fast, and blocks the source if the buffer is full.
+// Congest mirrors the source Observable, buffering emissions if the source
+// emits too fast, and blocking the source if the buffer is full.
 //
 // Congest has no effect if bufferSize < 1.
 func Congest[T any](bufferSize int) Operator[T, T] {

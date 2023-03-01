@@ -4,7 +4,7 @@ import (
 	"context"
 )
 
-// Skip skips the first count items emitted by the source Observable.
+// Skip skips the first count values emitted by the source Observable.
 func Skip[T any](count int) Operator[T, T] {
 	if count <= 0 {
 		return NewOperator(identity[Observable[T]])

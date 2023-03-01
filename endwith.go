@@ -1,7 +1,7 @@
 package rx
 
-// EndWith mirrors the source Observable, emits the items you specify as
-// arguments when the source completes.
+// EndWith mirrors the source Observable, and emits the values
+// you specify as arguments when the source completes.
 func EndWith[T any](s ...T) Operator[T, T] {
 	if len(s) == 0 {
 		return NewOperator(identity[Observable[T]])

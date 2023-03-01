@@ -23,8 +23,8 @@ type ReplayConfig struct {
 //
 // Subjects are subject to memory leaks. Once you have done using a Subject,
 // you should at least call its Error or Complete method once to avoid that.
-// If you can guarantee that every subscription to the Subject is canceled,
-// then you are fine.
+// If you can guarantee that every subscription to a Subject is canceled
+// sooner or later, then you are fine.
 //
 // Internally, a runtime finalizer is set to call Error(ErrFinalized), but
 // it is not guaranteed to work.

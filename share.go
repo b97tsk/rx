@@ -24,7 +24,7 @@ type shareConfig[T any] struct {
 	Connector func() Subject[T]
 }
 
-// ShareOperator is an Operator type for Share.
+// ShareOperator is an [Operator] type for [Share].
 type ShareOperator[T any] struct {
 	opts shareConfig[T]
 }

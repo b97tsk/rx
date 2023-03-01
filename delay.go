@@ -8,8 +8,8 @@ import (
 	"github.com/b97tsk/rx/internal/queue"
 )
 
-// Delay delays the emission of items from the source Observable by a given
-// timeout.
+// Delay postpones each emission of values from the source Observable
+// by a given duration.
 func Delay[T any](d time.Duration) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
