@@ -31,8 +31,7 @@ func Install(ctx context.Context) (context.Context, *WaitGroup) {
 
 	wg.Add(1)
 
-	if v := ctx.Value(&ctxKey); v != nil {
-		pwg := v.(*WaitGroup)
+	if pwg := Get(ctx); pwg != nil {
 		pwg.Add(1)
 
 		go func() {
