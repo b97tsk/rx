@@ -46,7 +46,7 @@ type exhaustMapObservable[T, R any] struct {
 func (obs exhaustMapObservable[T, R]) Subscribe(ctx context.Context, sink Observer[R]) {
 	ctx, cancel := context.WithCancel(ctx)
 
-	sink = sink.WithCancel(cancel).WithMutex()
+	sink = sink.OnLastNotification(cancel).WithMutex()
 
 	var workers atomic.Uint32
 

@@ -57,7 +57,7 @@ type connectObservable[T, R any] struct {
 
 func (obs connectObservable[T, R]) Subscribe(ctx context.Context, sink Observer[R]) {
 	ctx, cancel := context.WithCancel(ctx)
-	sink = sink.WithCancel(cancel)
+	sink = sink.OnLastNotification(cancel)
 	subject := obs.Connector()
 	obs.Selector(subject.Observable).Subscribe(ctx, sink)
 	obs.Source.Subscribe(ctx, subject.Observer)

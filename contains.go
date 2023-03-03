@@ -40,7 +40,7 @@ type containsObservable[T any] struct {
 func (obs containsObservable[T]) Subscribe(ctx context.Context, sink Observer[bool]) {
 	ctx, cancel := context.WithCancel(ctx)
 
-	sink = sink.WithCancel(cancel)
+	sink = sink.OnLastNotification(cancel)
 
 	var noop bool
 
@@ -71,7 +71,7 @@ type containsElementObservable[T comparable] struct {
 func (obs containsElementObservable[T]) Subscribe(ctx context.Context, sink Observer[bool]) {
 	ctx, cancel := context.WithCancel(ctx)
 
-	sink = sink.WithCancel(cancel)
+	sink = sink.OnLastNotification(cancel)
 
 	var noop bool
 

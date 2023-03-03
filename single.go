@@ -15,7 +15,7 @@ func single[T any](source Observable[T]) Observable[T] {
 	return func(ctx context.Context, sink Observer[T]) {
 		ctx, cancel := context.WithCancel(ctx)
 
-		sink = sink.WithCancel(cancel)
+		sink = sink.OnLastNotification(cancel)
 
 		var (
 			value     T

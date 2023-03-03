@@ -31,7 +31,7 @@ type takeWhileObservable[T any] struct {
 func (obs takeWhileObservable[T]) Subscribe(ctx context.Context, sink Observer[T]) {
 	ctx, cancel := context.WithCancel(ctx)
 
-	sink = sink.WithCancel(cancel)
+	sink = sink.OnLastNotification(cancel)
 
 	var noop bool
 

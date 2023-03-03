@@ -22,7 +22,7 @@ type takeUntilObservable[T, U any] struct {
 func (obs takeUntilObservable[T, U]) Subscribe(ctx context.Context, sink Observer[T]) {
 	ctx, cancel := context.WithCancel(ctx)
 
-	sink = sink.WithCancel(cancel).WithMutex()
+	sink = sink.OnLastNotification(cancel).WithMutex()
 
 	obs.Notifier.Subscribe(ctx, func(n Notification[U]) {
 		switch {

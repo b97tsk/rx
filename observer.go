@@ -34,13 +34,13 @@ func (sink Observer[T]) ElementsOnly(n Notification[T]) {
 	}
 }
 
-// WithCancel creates an Observer that passes incoming emissions to sink,
-// and when a notification of error or completion passes in, calls f
+// OnLastNotification creates an Observer that passes incoming emissions to
+// sink, and when a notification of error or completion passes in, calls f
 // just before passing it to sink.
-func (sink Observer[T]) WithCancel(cancel func()) Observer[T] {
+func (sink Observer[T]) OnLastNotification(f func()) Observer[T] {
 	return func(n Notification[T]) {
 		if !n.HasValue {
-			cancel()
+			f()
 		}
 
 		sink(n)

@@ -34,7 +34,7 @@ type congestObservable[T any] struct {
 func (obs congestObservable[T]) Subscribe(ctx context.Context, sink Observer[T]) {
 	ctx, cancel := context.WithCancel(ctx)
 
-	sink = sink.WithCancel(cancel)
+	sink = sink.OnLastNotification(cancel)
 
 	cout := make(chan Notification[T])
 

@@ -30,7 +30,7 @@ type everyObservable[T any] struct {
 func (obs everyObservable[T]) Subscribe(ctx context.Context, sink Observer[bool]) {
 	ctx, cancel := context.WithCancel(ctx)
 
-	sink = sink.WithCancel(cancel)
+	sink = sink.OnLastNotification(cancel)
 
 	var noop bool
 

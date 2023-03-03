@@ -50,7 +50,7 @@ type auditObservable[T, U any] struct {
 func (obs auditObservable[T, U]) Subscribe(ctx context.Context, sink Observer[T]) {
 	ctx, cancel := context.WithCancel(ctx)
 
-	sink = sink.WithCancel(cancel)
+	sink = sink.OnLastNotification(cancel)
 
 	var x struct {
 		critical.Section

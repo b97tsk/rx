@@ -25,7 +25,7 @@ func (obs skipUntilObservable[T, U]) Subscribe(ctx context.Context, sink Observe
 
 	originalSink := sink
 
-	sink = sink.WithCancel(cancel).WithMutex()
+	sink = sink.OnLastNotification(cancel).WithMutex()
 
 	var noSkipping atomic.Bool
 
