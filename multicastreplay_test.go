@@ -45,7 +45,7 @@ func TestMulticastReplay(t *testing.T) {
 
 		go rx.Pipe1(
 			m.Observable,
-			rx.DoOnNext(
+			rx.OnNext(
 				func(string) {
 					time.Sleep(Step(2))
 				},

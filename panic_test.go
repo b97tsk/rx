@@ -64,10 +64,10 @@ func TestPanic(t *testing.T) {
 	shouldPanic(t, func() { _ = rx.Distinct[any, string](nil) }, "Distinct with proj == nil")
 
 	shouldPanic(t, func() { _ = rx.Do[any](nil) }, "Do with tap == nil")
-	shouldPanic(t, func() { _ = rx.DoOnNext[any](nil) }, "DoOnNext with f == nil")
-	shouldPanic(t, func() { _ = rx.DoOnComplete[any](nil) }, "DoOnComplete with f == nil")
-	shouldPanic(t, func() { _ = rx.DoOnError[any](nil) }, "DoOnError with f == nil")
-	shouldPanic(t, func() { _ = rx.DoOnErrorOrComplete[any](nil) }, "DoOnErrorOrComplete with f == nil")
+	shouldPanic(t, func() { _ = rx.OnNext[any](nil) }, "OnNext with f == nil")
+	shouldPanic(t, func() { _ = rx.OnComplete[any](nil) }, "OnComplete with f == nil")
+	shouldPanic(t, func() { _ = rx.OnError[any](nil) }, "OnError with f == nil")
+	shouldPanic(t, func() { _ = rx.OnLastNotification[any](nil) }, "OnLastNotification with f == nil")
 
 	shouldPanic(t, func() { _ = rx.Every[any](nil) }, "Every with cond == nil")
 

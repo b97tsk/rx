@@ -27,17 +27,17 @@ func do[T any](tap Observer[T]) Operator[T, T] {
 	)
 }
 
-// DoOnNext mirrors the source Observable, passing values to f before
+// OnNext mirrors the source Observable, passing values to f before
 // each value emission.
-func DoOnNext[T any](f func(v T)) Operator[T, T] {
+func OnNext[T any](f func(v T)) Operator[T, T] {
 	if f == nil {
 		panic("f == nil")
 	}
 
-	return doOnNext(f)
+	return onNext(f)
 }
 
-func doOnNext[T any](f func(v T)) Operator[T, T] {
+func onNext[T any](f func(v T)) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return func(ctx context.Context, sink Observer[T]) {
@@ -53,17 +53,17 @@ func doOnNext[T any](f func(v T)) Operator[T, T] {
 	)
 }
 
-// DoOnComplete mirrors the source Observable, and calls f when the source
+// OnComplete mirrors the source Observable, and calls f when the source
 // completes.
-func DoOnComplete[T any](f func()) Operator[T, T] {
+func OnComplete[T any](f func()) Operator[T, T] {
 	if f == nil {
 		panic("f == nil")
 	}
 
-	return doOnComplete[T](f)
+	return onComplete[T](f)
 }
 
-func doOnComplete[T any](f func()) Operator[T, T] {
+func onComplete[T any](f func()) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return func(ctx context.Context, sink Observer[T]) {
@@ -79,17 +79,17 @@ func doOnComplete[T any](f func()) Operator[T, T] {
 	)
 }
 
-// DoOnError mirrors the source Observable, and calls f when the source emits
+// OnError mirrors the source Observable, and calls f when the source emits
 // a notification of error.
-func DoOnError[T any](f func(err error)) Operator[T, T] {
+func OnError[T any](f func(err error)) Operator[T, T] {
 	if f == nil {
 		panic("f == nil")
 	}
 
-	return doOnError[T](f)
+	return onError[T](f)
 }
 
-func doOnError[T any](f func(err error)) Operator[T, T] {
+func onError[T any](f func(err error)) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return func(ctx context.Context, sink Observer[T]) {
@@ -105,17 +105,17 @@ func doOnError[T any](f func(err error)) Operator[T, T] {
 	)
 }
 
-// DoOnErrorOrComplete mirrors the source Observable, and calls f when
+// OnLastNotification mirrors the source Observable, and calls f when
 // the source completes or emits a notification of error.
-func DoOnErrorOrComplete[T any](f func()) Operator[T, T] {
+func OnLastNotification[T any](f func()) Operator[T, T] {
 	if f == nil {
 		panic("f == nil")
 	}
 
-	return doOnErrorOrComplete[T](f)
+	return onLastNotification[T](f)
 }
 
-func doOnErrorOrComplete[T any](f func()) Operator[T, T] {
+func onLastNotification[T any](f func()) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return func(ctx context.Context, sink Observer[T]) {

@@ -16,32 +16,32 @@ func TestDo(t *testing.T) {
 	}, 1, 3, 6, 9)
 }
 
-func TestDoOnNext(t *testing.T) {
+func TestOnNext(t *testing.T) {
 	t.Parallel()
 
 	doTest(t, func(f func()) rx.Operator[int, int] {
-		return rx.DoOnNext(func(int) { f() })
+		return rx.OnNext(func(int) { f() })
 	}, 0, 1, 3, 5)
 }
 
-func TestDoOnComplete(t *testing.T) {
+func TestOnComplete(t *testing.T) {
 	t.Parallel()
 
-	doTest(t, rx.DoOnComplete[int], 1, 2, 3, 3)
+	doTest(t, rx.OnComplete[int], 1, 2, 3, 3)
 }
 
-func TestDoOnError(t *testing.T) {
+func TestOnError(t *testing.T) {
 	t.Parallel()
 
 	doTest(t, func(f func()) rx.Operator[int, int] {
-		return rx.DoOnError[int](func(error) { f() })
+		return rx.OnError[int](func(error) { f() })
 	}, 0, 0, 0, 1)
 }
 
-func TestDoOnErrorOrComplete(t *testing.T) {
+func TestOnLastNotification(t *testing.T) {
 	t.Parallel()
 
-	doTest(t, rx.DoOnErrorOrComplete[int], 1, 2, 3, 4)
+	doTest(t, rx.OnLastNotification[int], 1, 2, 3, 4)
 }
 
 func doTest(
