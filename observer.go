@@ -22,8 +22,8 @@ func (sink Observer[T]) Complete() {
 	sink(Complete[T]())
 }
 
-// Sink passes n to sink.
-func (sink Observer[T]) Sink(n Notification[T]) {
+// Emit passes n to sink.
+func (sink Observer[T]) Emit(n Notification[T]) {
 	sink(n)
 }
 

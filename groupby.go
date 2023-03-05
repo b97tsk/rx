@@ -57,11 +57,11 @@ func (obs groupByObservable[T, K]) Subscribe(ctx context.Context, sink Observer[
 				sink.Next(NewPair(key, g.Observable))
 			}
 
-			group.Sink(n)
+			group.Emit(n)
 
 		default:
 			for _, group := range groups {
-				group.Sink(n)
+				group.Emit(n)
 			}
 
 			if n.HasError {

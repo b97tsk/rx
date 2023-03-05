@@ -11,7 +11,7 @@ func TestAdditionalCoverage(t *testing.T) {
 	t.Parallel()
 
 	observer := rx.NewObserver(rx.Noop[int])
-	observer.Sink(rx.Next(0))
+	observer.Emit(rx.Next(0))
 
 	op := rx.IgnoreElements[int, int]()
 	obs := rx.Empty[int]()

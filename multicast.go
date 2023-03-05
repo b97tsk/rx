@@ -30,13 +30,13 @@ func Multicast[T any]() Subject[T] {
 			m.subscribe(ctx, sink)
 		},
 		Observer: func(n Notification[T]) {
-			m.sink(n)
+			m.emit(n)
 		},
 	}
 }
 
 func multicastFinalizer[T any](m **multicast[T]) {
-	go (*m).sink(Error[T](ErrFinalized))
+	go (*m).emit(Error[T](ErrFinalized))
 }
 
 type multicast[T any] struct {
@@ -45,7 +45,7 @@ type multicast[T any] struct {
 	err error
 }
 
-func (m *multicast[T]) sink(n Notification[T]) {
+func (m *multicast[T]) emit(n Notification[T]) {
 	m.mu.Lock()
 
 	switch {
@@ -59,7 +59,7 @@ func (m *multicast[T]) sink(n Notification[T]) {
 		m.mu.Unlock()
 
 		for _, observer := range obs.Observers {
-			observer.Sink(n)
+			observer.Emit(n)
 		}
 
 	default:
@@ -74,7 +74,7 @@ func (m *multicast[T]) sink(n Notification[T]) {
 		m.mu.Unlock()
 
 		for _, observer := range obs.Observers {
-			observer.Sink(n)
+			observer.Emit(n)
 		}
 	}
 }
