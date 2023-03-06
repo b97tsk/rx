@@ -49,9 +49,9 @@ func (obs switchMapObservable[T, R]) Subscribe(ctx context.Context, sink Observe
 
 	var x struct {
 		critical.Section
-		Ctx       atomic.Value
-		Cancel    context.CancelFunc
-		Completed atomic.Bool
+		Ctx      atomic.Value
+		Cancel   context.CancelFunc
+		Complete atomic.Bool
 	}
 
 	x.Ctx.Store(ctx)
@@ -92,7 +92,7 @@ func (obs switchMapObservable[T, R]) Subscribe(ctx context.Context, sink Observe
 				cancel()
 
 				if x.Ctx.CompareAndSwap(childCtx, ctx) {
-					if n.HasError || x.Completed.Load() && x.Ctx.Load() == ctx {
+					if n.HasError || x.Complete.Load() && x.Ctx.Load() == ctx {
 						sinkAndDone(n)
 					}
 				}
@@ -102,7 +102,7 @@ func (obs switchMapObservable[T, R]) Subscribe(ctx context.Context, sink Observe
 			sinkAndDone(Error[R](n.Error))
 
 		default:
-			x.Completed.Store(true)
+			x.Complete.Store(true)
 
 			if x.Ctx.Load() == ctx {
 				sinkAndDone(Complete[R]())

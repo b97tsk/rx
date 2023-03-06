@@ -30,15 +30,15 @@ func TestMulticastReplay(t *testing.T) {
 
 		m.Next("A")
 
-		NewTestSuite[string](t).Case(subscribeThenComplete, "A", ErrCompleted)
+		NewTestSuite[string](t).Case(subscribeThenComplete, "A", ErrComplete)
 
 		m.Next("B")
 
-		NewTestSuite[string](t).Case(subscribeThenComplete, "A", "B", ErrCompleted)
+		NewTestSuite[string](t).Case(subscribeThenComplete, "A", "B", ErrComplete)
 
 		m.Next("C")
 
-		NewTestSuite[string](t).Case(subscribeThenComplete, "A", "B", "C", ErrCompleted)
+		NewTestSuite[string](t).Case(subscribeThenComplete, "A", "B", "C", ErrComplete)
 
 		ctx, cancel := context.WithTimeout(context.Background(), Step(2))
 		defer cancel()
@@ -58,7 +58,7 @@ func TestMulticastReplay(t *testing.T) {
 
 		time.Sleep(Step(2))
 
-		NewTestSuite[string](t).Case(subscribeThenComplete, "B", "C", "D", ErrCompleted)
+		NewTestSuite[string](t).Case(subscribeThenComplete, "B", "C", "D", ErrComplete)
 
 		m.Error(ErrTest)
 
@@ -82,35 +82,35 @@ func TestMulticastReplay(t *testing.T) {
 
 		m.Next("A")
 
-		NewTestSuite[string](t).Case(subscribeThenComplete, "A", ErrCompleted)
+		NewTestSuite[string](t).Case(subscribeThenComplete, "A", ErrComplete)
 
 		time.Sleep(Step(2))
 		m.Next("B")
 
-		NewTestSuite[string](t).Case(subscribeThenComplete, "A", "B", ErrCompleted)
+		NewTestSuite[string](t).Case(subscribeThenComplete, "A", "B", ErrComplete)
 
 		time.Sleep(Step(2))
 		m.Next("C")
 
-		NewTestSuite[string](t).Case(subscribeThenComplete, "A", "B", "C", ErrCompleted)
+		NewTestSuite[string](t).Case(subscribeThenComplete, "A", "B", "C", ErrComplete)
 
 		time.Sleep(Step(2))
 		m.Next("D")
 		m.Complete()
 
-		NewTestSuite[string](t).Case(subscribeThenComplete, "B", "C", "D", ErrCompleted)
+		NewTestSuite[string](t).Case(subscribeThenComplete, "B", "C", "D", ErrComplete)
 
 		time.Sleep(Step(2))
 
-		NewTestSuite[string](t).Case(subscribeThenComplete, "C", "D", ErrCompleted)
+		NewTestSuite[string](t).Case(subscribeThenComplete, "C", "D", ErrComplete)
 
 		time.Sleep(Step(2))
 
-		NewTestSuite[string](t).Case(subscribeThenComplete, "D", ErrCompleted)
+		NewTestSuite[string](t).Case(subscribeThenComplete, "D", ErrComplete)
 
 		time.Sleep(Step(2))
 
-		NewTestSuite[string](t).Case(subscribeThenComplete, ErrCompleted)
+		NewTestSuite[string](t).Case(subscribeThenComplete, ErrComplete)
 	})
 
 	t.Run("AfterComplete", func(t *testing.T) {
@@ -120,11 +120,11 @@ func TestMulticastReplay(t *testing.T) {
 
 		m.Complete()
 
-		NewTestSuite[string](t).Case(m.Observable, ErrCompleted)
+		NewTestSuite[string](t).Case(m.Observable, ErrComplete)
 
 		m.Error(ErrTest)
 
-		NewTestSuite[string](t).Case(m.Observable, ErrCompleted)
+		NewTestSuite[string](t).Case(m.Observable, ErrComplete)
 	})
 
 	t.Run("AfterError", func(t *testing.T) {

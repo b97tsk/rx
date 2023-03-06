@@ -17,25 +17,25 @@ func TestTakeLast(t *testing.T) {
 			rx.Range(1, 10),
 			rx.TakeLast[int](0),
 		),
-		ErrCompleted,
+		ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Range(1, 10),
 			rx.TakeLast[int](3),
 		),
-		7, 8, 9, ErrCompleted,
+		7, 8, 9, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Just(1),
 			rx.TakeLast[int](3),
 		),
-		1, ErrCompleted,
+		1, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Empty[int](),
 			rx.TakeLast[int](3),
 		),
-		ErrCompleted,
+		ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Concat(
@@ -44,7 +44,7 @@ func TestTakeLast(t *testing.T) {
 			),
 			rx.TakeLast[int](0),
 		),
-		ErrCompleted,
+		ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Concat(

@@ -19,13 +19,13 @@ func TestMap(t *testing.T) {
 			rx.Empty[int](),
 			rx.Map(double),
 		),
-		ErrCompleted,
+		ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Range(1, 5),
 			rx.Map(double),
 		),
-		2, 4, 6, 8, ErrCompleted,
+		2, 4, 6, 8, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Concat(
@@ -46,13 +46,13 @@ func TestMapTo(t *testing.T) {
 			rx.Empty[string](),
 			rx.MapTo[string](42),
 		),
-		ErrCompleted,
+		ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Just("A", "B", "C"),
 			rx.MapTo[string](42),
 		),
-		42, 42, 42, ErrCompleted,
+		42, 42, 42, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Concat(

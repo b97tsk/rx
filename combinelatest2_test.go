@@ -24,7 +24,7 @@ func TestCombineLatest2(t *testing.T) {
 		"[A1 B1]",
 		"[A2 B1]",
 		"[A2 B2]",
-		ErrCompleted,
+		ErrComplete,
 	).Case(
 		rx.CombineLatest2(
 			rx.Throw[string](ErrTest),

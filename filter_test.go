@@ -19,7 +19,7 @@ func TestFilter(t *testing.T) {
 			rx.Range(1, 10),
 			rx.Filter(lessThanFive),
 		),
-		1, 2, 3, 4, ErrCompleted,
+		1, 2, 3, 4, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Concat(
@@ -44,7 +44,7 @@ func TestFilterOut(t *testing.T) {
 			rx.Range(1, 10),
 			rx.FilterOut(lessThanFive),
 		),
-		5, 6, 7, 8, 9, ErrCompleted,
+		5, 6, 7, 8, 9, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Concat(
@@ -69,7 +69,7 @@ func TestFilterMap(t *testing.T) {
 			rx.Range(1, 10),
 			rx.FilterMap(lessThanFive),
 		),
-		2, 4, 6, 8, ErrCompleted,
+		2, 4, 6, 8, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Concat(

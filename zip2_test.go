@@ -21,21 +21,21 @@ func TestZip2(t *testing.T) {
 			rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
 			toString,
 		),
-		"[A 1]", "[B 2]", ErrCompleted,
+		"[A 1]", "[B 2]", ErrComplete,
 	).Case(
 		rx.Zip2(
 			rx.Just("A", "B", "C"),
 			rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
 			toString,
 		),
-		"[A 1]", "[B 2]", "[C 3]", ErrCompleted,
+		"[A 1]", "[B 2]", "[C 3]", ErrComplete,
 	).Case(
 		rx.Zip2(
 			rx.Just("A", "B", "C", "D"),
 			rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
 			toString,
 		),
-		"[A 1]", "[B 2]", "[C 3]", ErrCompleted,
+		"[A 1]", "[B 2]", "[C 3]", ErrComplete,
 	).Case(
 		rx.Zip2(
 			rx.Just("A", "B"),
@@ -48,7 +48,7 @@ func TestZip2(t *testing.T) {
 			),
 			toString,
 		),
-		"[A 1]", "[B 2]", ErrCompleted,
+		"[A 1]", "[B 2]", ErrComplete,
 	).Case(
 		rx.Zip2(
 			rx.Just("A", "B", "C"),
@@ -61,7 +61,7 @@ func TestZip2(t *testing.T) {
 			),
 			toString,
 		),
-		"[A 1]", "[B 2]", "[C 3]", ErrCompleted,
+		"[A 1]", "[B 2]", "[C 3]", ErrComplete,
 	).Case(
 		rx.Zip2(
 			rx.Just("A", "B", "C", "D"),

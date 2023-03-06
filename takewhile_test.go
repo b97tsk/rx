@@ -19,7 +19,7 @@ func TestTakeWhile(t *testing.T) {
 			rx.Just(1, 2, 3, 4, 5, 4, 3, 2, 1),
 			rx.TakeWhile(lessThanFive),
 		),
-		1, 2, 3, 4, ErrCompleted,
+		1, 2, 3, 4, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Concat(
@@ -28,7 +28,7 @@ func TestTakeWhile(t *testing.T) {
 			),
 			rx.TakeWhile(lessThanFive),
 		),
-		1, 2, 3, 4, ErrCompleted,
+		1, 2, 3, 4, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Concat(

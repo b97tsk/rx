@@ -16,21 +16,21 @@ func TestTakeUntil(t *testing.T) {
 			AddLatencyToValues[string](0, 2),
 			rx.TakeUntil[string](rx.Just(42)),
 		),
-		ErrCompleted,
+		ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B", "C"),
 			AddLatencyToValues[string](0, 2),
 			rx.TakeUntil[string](rx.Empty[int]()),
 		),
-		"A", "B", "C", ErrCompleted,
+		"A", "B", "C", ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B", "C"),
 			AddLatencyToValues[string](0, 2),
 			rx.TakeUntil[string](rx.Never[int]()),
 		),
-		"A", "B", "C", ErrCompleted,
+		"A", "B", "C", ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B", "C"),
@@ -49,7 +49,7 @@ func TestTakeUntil(t *testing.T) {
 				),
 			),
 		),
-		"A", "B", ErrCompleted,
+		"A", "B", ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B", "C"),
@@ -61,7 +61,7 @@ func TestTakeUntil(t *testing.T) {
 				),
 			),
 		),
-		"A", "B", "C", ErrCompleted,
+		"A", "B", "C", ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B", "C"),

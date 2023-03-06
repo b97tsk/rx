@@ -18,6 +18,6 @@ func TestCongest(t *testing.T) {
 			rx.Congest[int](3),
 			AddLatencyToValues[int](3, 4),
 		),
-		1, 2, 3, 4, 5, 6, 7, 8, 9, ErrCompleted,
+		1, 2, 3, 4, 5, 6, 7, 8, 9, ErrComplete,
 	)
 }

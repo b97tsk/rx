@@ -21,7 +21,7 @@ func TestSwitch(t *testing.T) {
 			AddLatencyToValues[rx.Observable[string]](0, 5),
 			rx.SwitchAll[rx.Observable[string]](),
 		),
-		"A", "B", "C", "E", "F", "I", "J", "K", "L", ErrCompleted,
+		"A", "B", "C", "E", "F", "I", "J", "K", "L", ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Just(
@@ -33,7 +33,7 @@ func TestSwitch(t *testing.T) {
 			AddLatencyToValues[rx.Observable[string]](0, 5),
 			rx.SwitchAll[rx.Observable[string]](),
 		),
-		"A", "B", "C", "E", "F", "I", "J", "K", ErrCompleted,
+		"A", "B", "C", "E", "F", "I", "J", "K", ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Just(
@@ -55,13 +55,13 @@ func TestSwitch(t *testing.T) {
 				},
 			),
 		),
-		"A", ErrCompleted,
+		"A", ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Timer(Step(1)),
 			rx.SwitchMapTo[time.Time](rx.Just("A")),
 		),
-		"A", ErrCompleted,
+		"A", ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Throw[rx.Observable[string]](ErrTest),

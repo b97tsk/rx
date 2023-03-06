@@ -14,14 +14,14 @@ func TestConcat(t *testing.T) {
 
 	NewTestSuite[string](t).Case(
 		rx.Concat[string](),
-		ErrCompleted,
+		ErrComplete,
 	).Case(
 		rx.Concat(
 			rx.Pipe1(rx.Just("A", "B"), AddLatencyToValues[string](3, 5)),
 			rx.Pipe1(rx.Just("C", "D"), AddLatencyToValues[string](2, 4)),
 			rx.Pipe1(rx.Just("E", "F"), AddLatencyToValues[string](1, 3)),
 		),
-		"A", "B", "C", "D", "E", "F", ErrCompleted,
+		"A", "B", "C", "D", "E", "F", ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Pipe1(rx.Just("A", "B"), AddLatencyToValues[string](3, 5)),
@@ -30,7 +30,7 @@ func TestConcat(t *testing.T) {
 				rx.Pipe1(rx.Just("E", "F"), AddLatencyToValues[string](1, 3)),
 			),
 		),
-		"A", "B", "C", "D", "E", "F", ErrCompleted,
+		"A", "B", "C", "D", "E", "F", ErrComplete,
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), Step(1))
@@ -62,7 +62,7 @@ func TestConcat2(t *testing.T) {
 			),
 			rx.ConcatAll[rx.Observable[string]](),
 		),
-		"A", "B", "C", "D", "E", "F", ErrCompleted,
+		"A", "B", "C", "D", "E", "F", ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Timer(Step(1)),
@@ -72,13 +72,13 @@ func TestConcat2(t *testing.T) {
 				},
 			),
 		),
-		"A", ErrCompleted,
+		"A", ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Timer(Step(1)),
 			rx.ConcatMapTo[time.Time](rx.Just("A")),
 		),
-		"A", ErrCompleted,
+		"A", ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Throw[rx.Observable[string]](ErrTest),

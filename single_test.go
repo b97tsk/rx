@@ -15,7 +15,7 @@ func TestSingle(t *testing.T) {
 			rx.Just("A"),
 			rx.Single[string](),
 		),
-		"A", ErrCompleted,
+		"A", ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Just("A", "B"),

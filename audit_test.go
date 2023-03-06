@@ -21,7 +21,7 @@ func TestAudit(t *testing.T) {
 				},
 			),
 		),
-		"B", "D", "E", ErrCompleted,
+		"B", "D", "E", ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B", "C", "D", "E"),
@@ -32,7 +32,7 @@ func TestAudit(t *testing.T) {
 				},
 			),
 		),
-		ErrCompleted,
+		ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B", "C", "D", "E"),
@@ -46,7 +46,7 @@ func TestAudit(t *testing.T) {
 				},
 			),
 		),
-		ErrCompleted,
+		ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B", "C", "D", "E"),
@@ -77,13 +77,13 @@ func TestAudit(t *testing.T) {
 			AddLatencyToValues[string](1, 2),
 			rx.AuditTime[string](Step(3)),
 		),
-		"B", "D", "E", ErrCompleted,
+		"B", "D", "E", ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Empty[string](),
 			rx.AuditTime[string](Step(3)),
 		),
-		ErrCompleted,
+		ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Throw[string](ErrTest),

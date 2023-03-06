@@ -38,13 +38,13 @@ func TestMulticast(t *testing.T) {
 				rx.Pipe1(m.Observable, rx.Scan(0, sum)),
 				toString,
 			),
-			"[3 3]", "[4 7]", "[5 12]", ErrCompleted,
+			"[3 3]", "[4 7]", "[5 12]", ErrComplete,
 		).Case(
 			rx.Pipe1(
 				m.Observable,
 				ToString[int](),
 			),
-			ErrCompleted,
+			ErrComplete,
 		)
 	})
 
@@ -84,11 +84,11 @@ func TestMulticast(t *testing.T) {
 
 		m.Complete()
 
-		NewTestSuite[int](t).Case(m.Observable, ErrCompleted)
+		NewTestSuite[int](t).Case(m.Observable, ErrComplete)
 
 		m.Error(ErrTest)
 
-		NewTestSuite[int](t).Case(m.Observable, ErrCompleted)
+		NewTestSuite[int](t).Case(m.Observable, ErrComplete)
 	})
 
 	t.Run("AfterError", func(t *testing.T) {

@@ -19,13 +19,13 @@ func TestFind(t *testing.T) {
 			rx.Range(1, 10),
 			rx.Find(equalFive),
 		),
-		5, ErrCompleted,
+		5, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Range(1, 5),
 			rx.Find(equalFive),
 		),
-		ErrCompleted,
+		ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Concat(
@@ -34,7 +34,7 @@ func TestFind(t *testing.T) {
 			),
 			rx.Find(equalFive),
 		),
-		5, ErrCompleted,
+		5, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Concat(

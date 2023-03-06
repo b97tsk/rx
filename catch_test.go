@@ -20,7 +20,7 @@ func TestCatch(t *testing.T) {
 			rx.Just("A", "B", "C"),
 			rx.Catch(f),
 		),
-		"A", "B", "C", ErrCompleted,
+		"A", "B", "C", ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Concat(
@@ -29,7 +29,7 @@ func TestCatch(t *testing.T) {
 			),
 			rx.Catch(f),
 		),
-		"A", "B", "C", "D", "E", ErrCompleted,
+		"A", "B", "C", "D", "E", ErrComplete,
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), Step(1))
@@ -52,7 +52,7 @@ func TestOnErrorResumeWith(t *testing.T) {
 			rx.Just("A", "B", "C"),
 			rx.OnErrorResumeWith(rx.Just("D", "E")),
 		),
-		"A", "B", "C", ErrCompleted,
+		"A", "B", "C", ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Concat(
@@ -61,7 +61,7 @@ func TestOnErrorResumeWith(t *testing.T) {
 			),
 			rx.OnErrorResumeWith(rx.Just("D", "E")),
 		),
-		"A", "B", "C", "D", "E", ErrCompleted,
+		"A", "B", "C", "D", "E", ErrComplete,
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), Step(1))
@@ -84,7 +84,7 @@ func TestOnErrorComplete(t *testing.T) {
 			rx.Just("A", "B", "C"),
 			rx.OnErrorComplete[string](),
 		),
-		"A", "B", "C", ErrCompleted,
+		"A", "B", "C", ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Concat(
@@ -93,7 +93,7 @@ func TestOnErrorComplete(t *testing.T) {
 			),
 			rx.OnErrorComplete[string](),
 		),
-		"A", "B", "C", ErrCompleted,
+		"A", "B", "C", ErrComplete,
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), Step(1))

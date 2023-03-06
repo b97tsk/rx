@@ -81,15 +81,15 @@ func zipSink3[T1, T2, T3, R, X any](
 		q.Push(n.Value)
 
 		if s.VBits |= b; s.VBits == FullBits {
-			var completed bool
+			var complete bool
 
 			sink.Next(proj(
-				zipPop3(s, &s.Q1, 1, &completed),
-				zipPop3(s, &s.Q2, 2, &completed),
-				zipPop3(s, &s.Q3, 4, &completed),
+				zipPop3(s, &s.Q1, 1, &complete),
+				zipPop3(s, &s.Q2, 2, &complete),
+				zipPop3(s, &s.Q3, 4, &complete),
 			))
 
-			if completed {
+			if complete {
 				sink.Complete()
 				return true
 			}
@@ -115,7 +115,7 @@ func zipPop3[T1, T2, T3, X any](
 	s *zipState3[T1, T2, T3],
 	q *queue.Queue[X],
 	b uint8,
-	completed *bool,
+	complete *bool,
 ) X {
 	v := q.Pop()
 
@@ -123,7 +123,7 @@ func zipPop3[T1, T2, T3, X any](
 		s.VBits &^= b
 
 		if s.CBits&b != 0 {
-			*completed = true
+			*complete = true
 		}
 	}
 

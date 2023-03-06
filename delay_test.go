@@ -17,14 +17,14 @@ func TestDelay(t *testing.T) {
 			rx.Just("A", "B", "C", "D", "E"),
 			rx.Delay[string](Step(1)),
 		),
-		"A", "B", "C", "D", "E", ErrCompleted,
+		"A", "B", "C", "D", "E", ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B", "C", "D", "E"),
 			AddLatencyToValues[string](0, 1),
 			rx.Delay[string](Step(2)),
 		),
-		"A", "B", "C", "D", "E", ErrCompleted,
+		"A", "B", "C", "D", "E", ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Concat(
@@ -40,7 +40,7 @@ func TestDelay(t *testing.T) {
 			rx.Empty[string](),
 			rx.Delay[string](Step(1)),
 		),
-		ErrCompleted,
+		ErrComplete,
 	)
 
 	{

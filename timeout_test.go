@@ -16,7 +16,7 @@ func TestTimeout(t *testing.T) {
 			AddLatencyToValues[string](1, 1),
 			rx.Timeout[string](Step(2)).AsOperator(),
 		),
-		"A", "B", "C", ErrCompleted,
+		"A", "B", "C", ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B", "C"),

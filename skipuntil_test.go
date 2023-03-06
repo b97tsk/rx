@@ -16,21 +16,21 @@ func TestSkipUntil(t *testing.T) {
 			AddLatencyToValues[string](0, 2),
 			rx.SkipUntil[string](rx.Just(42)),
 		),
-		"A", "B", "C", ErrCompleted,
+		"A", "B", "C", ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B", "C"),
 			AddLatencyToValues[string](0, 2),
 			rx.SkipUntil[string](rx.Empty[int]()),
 		),
-		ErrCompleted,
+		ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B", "C"),
 			AddLatencyToValues[string](0, 2),
 			rx.SkipUntil[string](rx.Never[int]()),
 		),
-		ErrCompleted,
+		ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B", "C"),
@@ -49,7 +49,7 @@ func TestSkipUntil(t *testing.T) {
 				),
 			),
 		),
-		"C", ErrCompleted,
+		"C", ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B", "C"),
@@ -61,7 +61,7 @@ func TestSkipUntil(t *testing.T) {
 				),
 			),
 		),
-		ErrCompleted,
+		ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B", "C"),

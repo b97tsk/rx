@@ -56,7 +56,7 @@ func (obs auditObservable[T, U]) Subscribe(ctx context.Context, sink Observer[T]
 		critical.Section
 		LatestValue T
 		Scheduled   bool
-		Completed   bool
+		Complete    bool
 	}
 
 	obs.Source.Subscribe(ctx, func(n Notification[T]) {
@@ -91,7 +91,7 @@ func (obs auditObservable[T, U]) Subscribe(ctx context.Context, sink Observer[T]
 							case n.HasValue:
 								sink.Next(x.LatestValue)
 
-								if x.Completed {
+								if x.Complete {
 									sink.Complete()
 								}
 
@@ -103,7 +103,7 @@ func (obs auditObservable[T, U]) Subscribe(ctx context.Context, sink Observer[T]
 								sink.Error(n.Error)
 
 							default:
-								if x.Completed {
+								if x.Complete {
 									sink.Complete()
 								}
 
@@ -119,7 +119,7 @@ func (obs auditObservable[T, U]) Subscribe(ctx context.Context, sink Observer[T]
 				sink(n)
 
 			default:
-				x.Completed = true
+				x.Complete = true
 
 				if x.Scheduled {
 					critical.Leave(&x.Section)

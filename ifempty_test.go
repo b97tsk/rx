@@ -15,13 +15,13 @@ func TestDefaultIfEmpty(t *testing.T) {
 			rx.Empty[int](),
 			rx.DefaultIfEmpty(42),
 		),
-		42, ErrCompleted,
+		42, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Range(1, 4),
 			rx.DefaultIfEmpty(42),
 		),
-		1, 2, 3, ErrCompleted,
+		1, 2, 3, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Concat(
@@ -48,7 +48,7 @@ func TestThrowIfEmpty(t *testing.T) {
 			rx.Range(1, 4),
 			rx.ThrowIfEmpty[int](),
 		),
-		1, 2, 3, ErrCompleted,
+		1, 2, 3, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Concat(
@@ -69,13 +69,13 @@ func TestSwitchIfEmpty(t *testing.T) {
 			rx.Empty[int](),
 			rx.SwitchIfEmpty(rx.Just(42)),
 		),
-		42, ErrCompleted,
+		42, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Range(1, 4),
 			rx.SwitchIfEmpty(rx.Just(42)),
 		),
-		1, 2, 3, ErrCompleted,
+		1, 2, 3, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Concat(

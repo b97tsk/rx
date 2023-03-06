@@ -25,7 +25,7 @@ func TestWithLatestFrom1(t *testing.T) {
 		),
 		"[A2 B1]",
 		"[A3 B2]",
-		ErrCompleted,
+		ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Throw[string](ErrTest),

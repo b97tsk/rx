@@ -17,19 +17,19 @@ func TestRepeat(t *testing.T) {
 			rx.Just("A", "B", "C"),
 			rx.Repeat[string](0),
 		),
-		ErrCompleted,
+		ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Just("A", "B", "C"),
 			rx.Repeat[string](1),
 		),
-		"A", "B", "C", ErrCompleted,
+		"A", "B", "C", ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Just("A", "B", "C"),
 			rx.Repeat[string](2),
 		),
-		"A", "B", "C", "A", "B", "C", ErrCompleted,
+		"A", "B", "C", "A", "B", "C", ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Concat(
@@ -38,7 +38,7 @@ func TestRepeat(t *testing.T) {
 			),
 			rx.Repeat[string](0),
 		),
-		ErrCompleted,
+		ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Concat(

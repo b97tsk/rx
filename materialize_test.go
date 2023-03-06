@@ -20,21 +20,21 @@ func TestMaterialize(t *testing.T) {
 			rx.Materialize[string](),
 			rx.Reduce(0, count),
 		),
-		1, ErrCompleted,
+		1, ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Throw[string](ErrTest),
 			rx.Materialize[string](),
 			rx.Reduce(0, count),
 		),
-		1, ErrCompleted,
+		1, ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B", "C"),
 			rx.Materialize[string](),
 			rx.Reduce(0, count),
 		),
-		4, ErrCompleted,
+		4, ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Concat(
@@ -44,6 +44,6 @@ func TestMaterialize(t *testing.T) {
 			rx.Materialize[string](),
 			rx.Reduce(0, count),
 		),
-		4, ErrCompleted,
+		4, ErrComplete,
 	)
 }

@@ -66,7 +66,7 @@ func (m *multicast[T]) emit(n Notification[T]) {
 		var obs multiObserver[T]
 		obs, m.obs = m.obs, obs
 
-		m.err = errCompleted
+		m.err = errComplete
 		if n.HasError {
 			m.err = errOrErrNil(n.Error)
 		}
@@ -113,7 +113,7 @@ func (m *multicast[T]) subscribe(ctx context.Context, sink Observer[T]) {
 	m.mu.Unlock()
 
 	if err != nil {
-		if err == errCompleted {
+		if err == errComplete {
 			sink.Complete()
 			return
 		}

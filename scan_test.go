@@ -27,37 +27,37 @@ func TestScan(t *testing.T) {
 			rx.Range(1, 7),
 			rx.Scan(0, max),
 		),
-		1, 2, 3, 4, 5, 6, ErrCompleted,
+		1, 2, 3, 4, 5, 6, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Just(42),
 			rx.Scan(0, max),
 		),
-		42, ErrCompleted,
+		42, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Empty[int](),
 			rx.Scan(0, max),
 		),
-		ErrCompleted,
+		ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Range(1, 7),
 			rx.Scan(0, sum),
 		),
-		1, 3, 6, 10, 15, 21, ErrCompleted,
+		1, 3, 6, 10, 15, 21, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Just(42),
 			rx.Scan(0, sum),
 		),
-		42, ErrCompleted,
+		42, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Empty[int](),
 			rx.Scan(0, sum),
 		),
-		ErrCompleted,
+		ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Throw[int](ErrTest),

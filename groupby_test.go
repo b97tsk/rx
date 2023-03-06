@@ -37,7 +37,7 @@ func TestGroupBy(t *testing.T) {
 			count,
 			ToString[rx.Pair[string, int]](),
 		),
-		"{A 3}", "{B 2}", "{C 2}", "{D 1}", ErrCompleted,
+		"{A 3}", "{B 2}", "{C 2}", "{D 1}", ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Throw[string](ErrTest),

@@ -21,7 +21,7 @@ func TestThrottle(t *testing.T) {
 				},
 			).AsOperator(),
 		),
-		"A", "C", "E", ErrCompleted,
+		"A", "C", "E", ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B", "C", "D", "E"),
@@ -32,7 +32,7 @@ func TestThrottle(t *testing.T) {
 				},
 			).AsOperator(),
 		),
-		"A", "B", "C", "D", "E", ErrCompleted,
+		"A", "B", "C", "D", "E", ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B", "C", "D", "E"),
@@ -46,7 +46,7 @@ func TestThrottle(t *testing.T) {
 				},
 			).WithLeading(false).WithTrailing(true).AsOperator(),
 		),
-		ErrCompleted,
+		ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Throw[string](ErrTest),
@@ -78,7 +78,7 @@ func TestThrottle(t *testing.T) {
 				},
 			).WithLeading(false).WithTrailing(true).AsOperator(),
 		),
-		"C", "E", ErrCompleted,
+		"C", "E", ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B", "C", "D", "E"),
@@ -89,27 +89,27 @@ func TestThrottle(t *testing.T) {
 				},
 			).WithLeading(true).WithTrailing(true).AsOperator(),
 		),
-		"A", "C", "E", ErrCompleted,
+		"A", "C", "E", ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B", "C", "D", "E"),
 			AddLatencyToValues[string](0, 2),
 			rx.ThrottleTime[string](Step(3)).AsOperator(),
 		),
-		"A", "C", "E", ErrCompleted,
+		"A", "C", "E", ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B", "C", "D", "E"),
 			AddLatencyToValues[string](0, 4),
 			rx.ThrottleTime[string](Step(9)).WithLeading(false).WithTrailing(true).AsOperator(),
 		),
-		"C", "E", ErrCompleted,
+		"C", "E", ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B", "C", "D", "E"),
 			AddLatencyToValues[string](0, 4),
 			rx.ThrottleTime[string](Step(9)).WithLeading(true).WithTrailing(true).AsOperator(),
 		),
-		"A", "C", "E", ErrCompleted,
+		"A", "C", "E", ErrComplete,
 	)
 }

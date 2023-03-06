@@ -15,25 +15,25 @@ func TestSkipLast(t *testing.T) {
 			rx.Range(1, 7),
 			rx.SkipLast[int](0),
 		),
-		1, 2, 3, 4, 5, 6, ErrCompleted,
+		1, 2, 3, 4, 5, 6, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Range(1, 7),
 			rx.SkipLast[int](3),
 		),
-		1, 2, 3, ErrCompleted,
+		1, 2, 3, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Just(1),
 			rx.SkipLast[int](3),
 		),
-		ErrCompleted,
+		ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Empty[int](),
 			rx.SkipLast[int](3),
 		),
-		ErrCompleted,
+		ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Concat(

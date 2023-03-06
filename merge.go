@@ -137,9 +137,9 @@ func (obs mergeMapObservable[T, R]) Subscribe(ctx context.Context, sink Observer
 
 	var x struct {
 		sync.Mutex
-		Queue     queue.Queue[T]
-		Workers   int
-		Completed bool
+		Queue    queue.Queue[T]
+		Workers  int
+		Complete bool
 	}
 
 	var observer Observer[R]
@@ -168,7 +168,7 @@ func (obs mergeMapObservable[T, R]) Subscribe(ctx context.Context, sink Observer
 
 		x.Workers--
 
-		if x.Completed && x.Workers == 0 {
+		if x.Complete && x.Workers == 0 {
 			sink(n)
 		}
 	}
@@ -193,7 +193,7 @@ func (obs mergeMapObservable[T, R]) Subscribe(ctx context.Context, sink Observer
 		default:
 			x.Lock()
 
-			x.Completed = true
+			x.Complete = true
 
 			if x.Workers == 0 {
 				sink.Complete()

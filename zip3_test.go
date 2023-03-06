@@ -22,7 +22,7 @@ func TestZip3(t *testing.T) {
 			rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
 			toString,
 		),
-		"[A B 1]", "[B C 2]", ErrCompleted,
+		"[A B 1]", "[B C 2]", ErrComplete,
 	).Case(
 		rx.Zip3(
 			rx.Just("A", "B", "C"),
@@ -30,7 +30,7 @@ func TestZip3(t *testing.T) {
 			rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
 			toString,
 		),
-		"[A B 1]", "[B C 2]", "[C D 3]", ErrCompleted,
+		"[A B 1]", "[B C 2]", "[C D 3]", ErrComplete,
 	).Case(
 		rx.Zip3(
 			rx.Just("A", "B", "C", "D"),
@@ -38,7 +38,7 @@ func TestZip3(t *testing.T) {
 			rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
 			toString,
 		),
-		"[A B 1]", "[B C 2]", "[C D 3]", ErrCompleted,
+		"[A B 1]", "[B C 2]", "[C D 3]", ErrComplete,
 	).Case(
 		rx.Zip3(
 			rx.Just("A", "B"),
@@ -52,7 +52,7 @@ func TestZip3(t *testing.T) {
 			),
 			toString,
 		),
-		"[A B 1]", "[B C 2]", ErrCompleted,
+		"[A B 1]", "[B C 2]", ErrComplete,
 	).Case(
 		rx.Zip3(
 			rx.Just("A", "B", "C"),
@@ -66,7 +66,7 @@ func TestZip3(t *testing.T) {
 			),
 			toString,
 		),
-		"[A B 1]", "[B C 2]", "[C D 3]", ErrCompleted,
+		"[A B 1]", "[B C 2]", "[C D 3]", ErrComplete,
 	).Case(
 		rx.Zip3(
 			rx.Just("A", "B", "C", "D"),

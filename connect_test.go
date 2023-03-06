@@ -29,6 +29,6 @@ func TestConnect(t *testing.T) {
 				},
 			).WithConnector(rx.Multicast[int]).AsOperator(),
 		),
-		"[0 5 12 21]", ErrCompleted,
+		"[0 5 12 21]", ErrComplete,
 	)
 }

@@ -15,25 +15,25 @@ func TestTake(t *testing.T) {
 			rx.Range(1, 10),
 			rx.Take[int](0),
 		),
-		ErrCompleted,
+		ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Range(1, 10),
 			rx.Take[int](3),
 		),
-		1, 2, 3, ErrCompleted,
+		1, 2, 3, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Just(1),
 			rx.Take[int](3),
 		),
-		1, ErrCompleted,
+		1, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Empty[int](),
 			rx.Take[int](3),
 		),
-		ErrCompleted,
+		ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Concat(
@@ -42,7 +42,7 @@ func TestTake(t *testing.T) {
 			),
 			rx.Take[int](0),
 		),
-		ErrCompleted,
+		ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Concat(
@@ -51,7 +51,7 @@ func TestTake(t *testing.T) {
 			),
 			rx.Take[int](3),
 		),
-		1, 2, 3, ErrCompleted,
+		1, 2, 3, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Concat(

@@ -15,13 +15,13 @@ func TestIgnoreElements(t *testing.T) {
 			rx.Empty[string](),
 			rx.IgnoreElements[string, string](),
 		),
-		ErrCompleted,
+		ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Just("A", "B", "C"),
 			rx.IgnoreElements[string, string](),
 		),
-		ErrCompleted,
+		ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Concat(

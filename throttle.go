@@ -98,7 +98,7 @@ func (obs throttleObservable[T, U]) Subscribe(ctx context.Context, sink Observer
 			HasValue bool
 		}
 		Throttling bool
-		Completed  bool
+		Complete   bool
 	}
 
 	var doThrottle func(T)
@@ -133,12 +133,12 @@ func (obs throttleObservable[T, U]) Subscribe(ctx context.Context, sink Observer
 							sink.Next(x.Trailing.Value)
 							x.Trailing.HasValue = false
 
-							if !x.Completed {
+							if !x.Complete {
 								doThrottle(x.Trailing.Value)
 							}
 						}
 
-						if x.Completed {
+						if x.Complete {
 							sink.Complete()
 						}
 
@@ -150,7 +150,7 @@ func (obs throttleObservable[T, U]) Subscribe(ctx context.Context, sink Observer
 						sink.Error(n.Error)
 
 					default:
-						if x.Completed {
+						if x.Complete {
 							sink.Complete()
 						}
 
@@ -186,7 +186,7 @@ func (obs throttleObservable[T, U]) Subscribe(ctx context.Context, sink Observer
 				sink(n)
 
 			default:
-				x.Completed = true
+				x.Complete = true
 
 				if obs.Trailing && x.Trailing.HasValue && x.Throttling {
 					critical.Leave(&x.Section)

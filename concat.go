@@ -104,9 +104,9 @@ func (obs concatMapObservable[T, R]) Subscribe(ctx context.Context, sink Observe
 
 	var x struct {
 		sync.Mutex
-		Queue     queue.Queue[T]
-		Working   bool
-		Completed bool
+		Queue    queue.Queue[T]
+		Working  bool
+		Complete bool
 	}
 
 	var observer Observer[R]
@@ -117,7 +117,7 @@ func (obs concatMapObservable[T, R]) Subscribe(ctx context.Context, sink Observe
 		if x.Queue.Len() == 0 {
 			x.Working = false
 
-			if x.Completed {
+			if x.Complete {
 				sink.Complete()
 			}
 
@@ -173,7 +173,7 @@ func (obs concatMapObservable[T, R]) Subscribe(ctx context.Context, sink Observe
 		default:
 			x.Lock()
 
-			x.Completed = true
+			x.Complete = true
 
 			if !x.Working {
 				sink.Complete()

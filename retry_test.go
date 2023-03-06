@@ -16,25 +16,25 @@ func TestRetry(t *testing.T) {
 			rx.Just("A", "B", "C"),
 			rx.Retry[string](0),
 		),
-		"A", "B", "C", ErrCompleted,
+		"A", "B", "C", ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Just("A", "B", "C"),
 			rx.Retry[string](1),
 		),
-		"A", "B", "C", ErrCompleted,
+		"A", "B", "C", ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Just("A", "B", "C"),
 			rx.Retry[string](2),
 		),
-		"A", "B", "C", ErrCompleted,
+		"A", "B", "C", ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Just("A", "B", "C"),
 			rx.RetryForever[string](),
 		),
-		"A", "B", "C", ErrCompleted,
+		"A", "B", "C", ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Concat(

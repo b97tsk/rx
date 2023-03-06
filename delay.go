@@ -32,7 +32,7 @@ func (obs delayObservable[T]) Subscribe(ctx context.Context, sink Observer[T]) {
 		critical.Section
 		Queue     queue.Queue[Pair[time.Time, T]]
 		Scheduled bool
-		Completed bool
+		Complete  bool
 	}
 
 	var onTimer Observer[time.Time]
@@ -79,7 +79,7 @@ func (obs delayObservable[T]) Subscribe(ctx context.Context, sink Observer[T]) {
 				sink.Next(n.Value)
 			}
 
-			if x.Completed && x.Queue.Len() == 0 {
+			if x.Complete && x.Queue.Len() == 0 {
 				sink.Complete()
 			}
 
@@ -108,7 +108,7 @@ func (obs delayObservable[T]) Subscribe(ctx context.Context, sink Observer[T]) {
 				sink(n)
 
 			default:
-				x.Completed = true
+				x.Complete = true
 
 				if x.Queue.Len() > 0 {
 					critical.Leave(&x.Section)

@@ -20,7 +20,7 @@ func TestSuccess(t *testing.T) {
 			ToString[int](),
 		),
 		"42",
-		ErrCompleted,
+		ErrComplete,
 	).Case(
 		rx.Throw[string](ErrTest),
 		ErrTest,
@@ -32,8 +32,8 @@ func TestFailure(t *testing.T) {
 
 	failtest(t, rx.Just(ErrTest))
 	failtest(t, rx.Throw[string](ErrTest))
-	failtest(t, rx.Just(ErrTest), ErrCompleted, ErrTest)
-	failtest(t, rx.Throw[string](ErrTest), ErrCompleted, ErrTest)
+	failtest(t, rx.Just(ErrTest), ErrComplete, ErrTest)
+	failtest(t, rx.Throw[string](ErrTest), ErrComplete, ErrTest)
 }
 
 func failtest[T any](tb testing.TB, obs rx.Observable[T], output ...any) {

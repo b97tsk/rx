@@ -30,7 +30,7 @@ func TestWithLatestFrom6(t *testing.T) {
 		),
 		"[A2 B1 C1 D1 E1 F1 G1]",
 		"[A3 B2 C2 D2 E2 F2 G2]",
-		ErrCompleted,
+		ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Throw[string](ErrTest),

@@ -34,7 +34,7 @@ func TestCombineLatest7(t *testing.T) {
 		"[A2 B2 C2 D2 E2 F1 G1]",
 		"[A2 B2 C2 D2 E2 F2 G1]",
 		"[A2 B2 C2 D2 E2 F2 G2]",
-		ErrCompleted,
+		ErrComplete,
 	).Case(
 		rx.CombineLatest7(
 			rx.Throw[string](ErrTest),

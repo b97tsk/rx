@@ -18,21 +18,21 @@ func TestSample(t *testing.T) {
 			AddLatencyToValues[string](1, 2),
 			rx.Sample[string](rx.Ticker(Step(4))),
 		),
-		"B", "D", ErrCompleted,
+		"B", "D", ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B", "C", "D", "E"),
 			AddLatencyToValues[string](1, 2),
 			rx.Sample[string](rx.Empty[int]()),
 		),
-		ErrCompleted,
+		ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B", "C", "D", "E"),
 			AddLatencyToValues[string](1, 2),
 			rx.Sample[string](rx.Never[int]()),
 		),
-		ErrCompleted,
+		ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B", "C", "D", "E"),
@@ -67,7 +67,7 @@ func TestSample(t *testing.T) {
 			AddLatencyToValues[string](1, 2),
 			rx.SampleTime[string](Step(4)),
 		),
-		"B", "D", ErrCompleted,
+		"B", "D", ErrComplete,
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), Step(1))

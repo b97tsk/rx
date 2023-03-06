@@ -19,7 +19,7 @@ func TestSkipWhile(t *testing.T) {
 			rx.Just(1, 2, 3, 4, 5, 4, 3, 2, 1),
 			rx.SkipWhile(lessThanFive),
 		),
-		5, 4, 3, 2, 1, ErrCompleted,
+		5, 4, 3, 2, 1, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Concat(

@@ -15,13 +15,13 @@ func TestStartWith(t *testing.T) {
 			rx.Just("D", "E"),
 			rx.StartWith("A", "B", "C"),
 		),
-		"A", "B", "C", "D", "E", ErrCompleted,
+		"A", "B", "C", "D", "E", ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Empty[string](),
 			rx.StartWith("A", "B", "C"),
 		),
-		"A", "B", "C", ErrCompleted,
+		"A", "B", "C", ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Throw[string](ErrTest),

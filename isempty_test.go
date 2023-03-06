@@ -15,19 +15,19 @@ func TestIsEmpty(t *testing.T) {
 			rx.Just("A", "B"),
 			rx.IsEmpty[string](),
 		),
-		false, ErrCompleted,
+		false, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Just("A"),
 			rx.IsEmpty[string](),
 		),
-		false, ErrCompleted,
+		false, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Empty[string](),
 			rx.IsEmpty[string](),
 		),
-		true, ErrCompleted,
+		true, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Throw[string](ErrTest),

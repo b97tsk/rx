@@ -16,21 +16,21 @@ func TestToSlice(t *testing.T) {
 			rx.ToSlice[string](),
 			ToString[[]string](),
 		),
-		"[A B C]", ErrCompleted,
+		"[A B C]", ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A"),
 			rx.ToSlice[string](),
 			ToString[[]string](),
 		),
-		"[A]", ErrCompleted,
+		"[A]", ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Empty[string](),
 			rx.ToSlice[string](),
 			ToString[[]string](),
 		),
-		"[]", ErrCompleted,
+		"[]", ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Throw[string](ErrTest),

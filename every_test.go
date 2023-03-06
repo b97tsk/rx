@@ -19,13 +19,13 @@ func TestEvery(t *testing.T) {
 			rx.Range(1, 10),
 			rx.Every(lessThanFive),
 		),
-		false, ErrCompleted,
+		false, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Range(1, 5),
 			rx.Every(lessThanFive),
 		),
-		true, ErrCompleted,
+		true, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Concat(
@@ -34,7 +34,7 @@ func TestEvery(t *testing.T) {
 			),
 			rx.Every(lessThanFive),
 		),
-		false, ErrCompleted,
+		false, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Concat(

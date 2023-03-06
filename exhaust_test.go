@@ -21,7 +21,7 @@ func TestExhaust(t *testing.T) {
 			AddLatencyToValues[rx.Observable[string]](0, 5),
 			rx.ExhaustAll[rx.Observable[string]](),
 		),
-		"A", "B", "C", "D", "I", "J", "K", "L", ErrCompleted,
+		"A", "B", "C", "D", "I", "J", "K", "L", ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Just(
@@ -33,7 +33,7 @@ func TestExhaust(t *testing.T) {
 			AddLatencyToValues[rx.Observable[string]](0, 5),
 			rx.ExhaustAll[rx.Observable[string]](),
 		),
-		"A", "B", "C", "D", "I", "J", "K", "L", ErrCompleted,
+		"A", "B", "C", "D", "I", "J", "K", "L", ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Just(
@@ -56,13 +56,13 @@ func TestExhaust(t *testing.T) {
 				},
 			),
 		),
-		"A", ErrCompleted,
+		"A", ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Timer(Step(1)),
 			rx.ExhaustMapTo[time.Time](rx.Just("A")),
 		),
-		"A", ErrCompleted,
+		"A", ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Throw[rx.Observable[string]](ErrTest),

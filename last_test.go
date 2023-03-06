@@ -27,13 +27,13 @@ func TestLast(t *testing.T) {
 			rx.Just(1),
 			rx.Last[int](),
 		),
-		1, ErrCompleted,
+		1, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Just(1, 2),
 			rx.Last[int](),
 		),
-		2, ErrCompleted,
+		2, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Concat(
@@ -63,7 +63,7 @@ func TestLastOrDefault(t *testing.T) {
 			rx.Empty[int](),
 			rx.LastOrDefault(404),
 		),
-		404, ErrCompleted,
+		404, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Throw[int](ErrTest),
@@ -75,13 +75,13 @@ func TestLastOrDefault(t *testing.T) {
 			rx.Just(1),
 			rx.LastOrDefault(404),
 		),
-		1, ErrCompleted,
+		1, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Just(1, 2),
 			rx.LastOrDefault(404),
 		),
-		2, ErrCompleted,
+		2, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Concat(

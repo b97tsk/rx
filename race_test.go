@@ -37,15 +37,15 @@ func TestRace(t *testing.T) {
 
 	NewTestSuite[time.Duration](t).Case(
 		rx.Race[time.Duration](),
-		ErrCompleted,
+		ErrComplete,
 	).Case(
 		rx.Race(s[:]...),
 		Step(1),
-		ErrCompleted,
+		ErrComplete,
 	).Case(
 		rx.Pipe1(s[0], rx.RaceWith(s[1:]...)),
 		Step(1),
-		ErrCompleted,
+		ErrComplete,
 	)
 
 	time.Sleep(Step(len(s)))

@@ -23,7 +23,7 @@ func TestFromMap(t *testing.T) {
 			rx.Reduce(make(map[int]string), add),
 			ToString[map[int]string](),
 		),
-		"map[1:A 2:B 3:C]", ErrCompleted,
+		"map[1:A 2:B 3:C]", ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.FromMap(m),
@@ -49,7 +49,7 @@ func TestKeyOf(t *testing.T) {
 			rx.KeyOf[rx.Pair[int, string]](),
 			rx.Reduce(0, sum),
 		),
-		6, ErrCompleted,
+		6, ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Throw[rx.Pair[int, string]](ErrTest),
@@ -79,7 +79,7 @@ func TestValueOf(t *testing.T) {
 			rx.ValueOf[rx.Pair[int, string]](),
 			rx.Reduce("", max),
 		),
-		"C", ErrCompleted,
+		"C", ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Throw[rx.Pair[int, string]](ErrTest),
@@ -105,7 +105,7 @@ func TestWithIndex(t *testing.T) {
 			rx.Reduce(make(map[int]string), add),
 			ToString[map[int]string](),
 		),
-		"map[1:A 2:B 3:C]", ErrCompleted,
+		"map[1:A 2:B 3:C]", ErrComplete,
 	).Case(
 		rx.Pipe3(
 			rx.Throw[string](ErrTest),

@@ -99,18 +99,18 @@ func zipSink6[T1, T2, T3, T4, T5, T6, R, X any](
 		q.Push(n.Value)
 
 		if s.VBits |= b; s.VBits == FullBits {
-			var completed bool
+			var complete bool
 
 			sink.Next(proj(
-				zipPop6(s, &s.Q1, 1, &completed),
-				zipPop6(s, &s.Q2, 2, &completed),
-				zipPop6(s, &s.Q3, 4, &completed),
-				zipPop6(s, &s.Q4, 8, &completed),
-				zipPop6(s, &s.Q5, 16, &completed),
-				zipPop6(s, &s.Q6, 32, &completed),
+				zipPop6(s, &s.Q1, 1, &complete),
+				zipPop6(s, &s.Q2, 2, &complete),
+				zipPop6(s, &s.Q3, 4, &complete),
+				zipPop6(s, &s.Q4, 8, &complete),
+				zipPop6(s, &s.Q5, 16, &complete),
+				zipPop6(s, &s.Q6, 32, &complete),
 			))
 
-			if completed {
+			if complete {
 				sink.Complete()
 				return true
 			}
@@ -136,7 +136,7 @@ func zipPop6[T1, T2, T3, T4, T5, T6, X any](
 	s *zipState6[T1, T2, T3, T4, T5, T6],
 	q *queue.Queue[X],
 	b uint8,
-	completed *bool,
+	complete *bool,
 ) X {
 	v := q.Pop()
 
@@ -144,7 +144,7 @@ func zipPop6[T1, T2, T3, T4, T5, T6, X any](
 		s.VBits &^= b
 
 		if s.CBits&b != 0 {
-			*completed = true
+			*complete = true
 		}
 	}
 

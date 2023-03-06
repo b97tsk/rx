@@ -141,7 +141,7 @@ func (m *multicastReplay[T]) emit(n Notification[T]) {
 		var obs multiObserver[T]
 		obs, m.obs = m.obs, obs
 
-		m.err = errCompleted
+		m.err = errComplete
 		if n.HasError {
 			m.err = errOrErrNil(n.Error)
 			m.buffer.Init()
@@ -205,7 +205,7 @@ func (m *multicastReplay[T]) subscribe(ctx context.Context, sink Observer[T]) {
 	}
 
 	if err != nil {
-		if err == errCompleted {
+		if err == errComplete {
 			sink.Complete()
 			return
 		}

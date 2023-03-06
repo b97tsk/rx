@@ -11,8 +11,8 @@ import (
 )
 
 var (
-	ErrCompleted = errors.New("completed")
-	ErrTest      = errors.New("test")
+	ErrComplete = errors.New("complete")
+	ErrTest     = errors.New("test")
 )
 
 func Step(n int) time.Duration {
@@ -96,7 +96,7 @@ func (s *TestSuite[T]) Case(obs rx.Observable[T], output ...any) *TestSuite[T] {
 			case n.HasError:
 				s.tb.Logf("want <nothing>, but got %v", tos(n.Error))
 			default:
-				s.tb.Logf("want <nothing>, but got %v", tos(ErrCompleted))
+				s.tb.Logf("want <nothing>, but got %v", tos(ErrComplete))
 			}
 
 			return
@@ -121,11 +121,11 @@ func (s *TestSuite[T]) Case(obs rx.Observable[T], output ...any) *TestSuite[T] {
 				s.tb.Logf("want %v", tos(wanted))
 			}
 		default:
-			if wanted != ErrCompleted {
+			if wanted != ErrComplete {
 				s.tb.Fail()
-				s.tb.Logf("want %v, but got %v", tos(wanted), tos(ErrCompleted))
+				s.tb.Logf("want %v, but got %v", tos(wanted), tos(ErrComplete))
 			} else {
-				s.tb.Logf("want %v", tos(ErrCompleted))
+				s.tb.Logf("want %v", tos(ErrComplete))
 			}
 		}
 	})

@@ -21,7 +21,7 @@ func TestDebounce(t *testing.T) {
 				},
 			),
 		),
-		"C", ErrCompleted,
+		"C", ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B", "C"),
@@ -32,7 +32,7 @@ func TestDebounce(t *testing.T) {
 				},
 			),
 		),
-		"A", "B", "C", ErrCompleted,
+		"A", "B", "C", ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B", "C"),
@@ -43,7 +43,7 @@ func TestDebounce(t *testing.T) {
 				},
 			),
 		),
-		"C", ErrCompleted,
+		"C", ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B", "C"),
@@ -71,13 +71,13 @@ func TestDebounce(t *testing.T) {
 			AddLatencyToValues[string](1, 2),
 			rx.DebounceTime[string](Step(3)),
 		),
-		"C", ErrCompleted,
+		"C", ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B", "C"),
 			AddLatencyToValues[string](1, 3),
 			rx.DebounceTime[string](Step(2)),
 		),
-		"A", "B", "C", ErrCompleted,
+		"A", "B", "C", ErrComplete,
 	)
 }

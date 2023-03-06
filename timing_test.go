@@ -17,7 +17,7 @@ func TestTicker(t *testing.T) {
 			rx.Scan(-1, func(i int, _ time.Time) int { return i + 1 }),
 			rx.Take[int](3),
 		),
-		0, 1, 2, ErrCompleted,
+		0, 1, 2, ErrComplete,
 	)
 }
 
@@ -29,6 +29,6 @@ func TestTimer(t *testing.T) {
 			rx.Timer(Step(1)),
 			rx.MapTo[time.Time](42),
 		),
-		42, ErrCompleted,
+		42, ErrComplete,
 	)
 }

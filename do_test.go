@@ -65,19 +65,19 @@ func doTest(
 			rx.Pipe1(rx.Empty[int](), do),
 			obs,
 		),
-		r1, ErrCompleted,
+		r1, ErrComplete,
 	).Case(
 		rx.Concat(
 			rx.Pipe1(rx.Just(-1), do),
 			obs,
 		),
-		-1, r2, ErrCompleted,
+		-1, r2, ErrComplete,
 	).Case(
 		rx.Concat(
 			rx.Pipe1(rx.Just(-1, -2), do),
 			obs,
 		),
-		-1, -2, r3, ErrCompleted,
+		-1, -2, r3, ErrComplete,
 	).Case(
 		rx.Concat(
 			rx.Pipe1(
@@ -92,6 +92,6 @@ func doTest(
 		-1, -2, ErrTest,
 	).Case(
 		obs,
-		r4, ErrCompleted,
+		r4, ErrComplete,
 	)
 }

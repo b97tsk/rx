@@ -15,7 +15,7 @@ func TestCompact(t *testing.T) {
 			rx.Just(1, 2, 2, 1, 3, 3, 1),
 			rx.CompactComparable[int](),
 		),
-		1, 2, 1, 3, 1, ErrCompleted,
+		1, 2, 1, 3, 1, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Just(1, 2, 2, 1, 3, 3, 1),
@@ -23,7 +23,7 @@ func TestCompact(t *testing.T) {
 				func(v1, v2 int) bool { return v1&1 == v2&1 },
 			),
 		),
-		1, 2, 1, ErrCompleted,
+		1, 2, 1, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Just(1, 2, 2, 1, 3, 3, 1),
@@ -31,7 +31,7 @@ func TestCompact(t *testing.T) {
 				func(v int) int { return v & 1 },
 			),
 		),
-		1, 2, 1, ErrCompleted,
+		1, 2, 1, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Just(1, 2, 2, 1, 3, 3, 1),
@@ -40,6 +40,6 @@ func TestCompact(t *testing.T) {
 				func(v1, v2 int) bool { return v1 == v2 },
 			),
 		),
-		1, 2, 1, ErrCompleted,
+		1, 2, 1, ErrComplete,
 	)
 }

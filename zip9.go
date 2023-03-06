@@ -117,21 +117,21 @@ func zipSink9[T1, T2, T3, T4, T5, T6, T7, T8, T9, R, X any](
 		q.Push(n.Value)
 
 		if s.VBits |= b; s.VBits == FullBits {
-			var completed bool
+			var complete bool
 
 			sink.Next(proj(
-				zipPop9(s, &s.Q1, 1, &completed),
-				zipPop9(s, &s.Q2, 2, &completed),
-				zipPop9(s, &s.Q3, 4, &completed),
-				zipPop9(s, &s.Q4, 8, &completed),
-				zipPop9(s, &s.Q5, 16, &completed),
-				zipPop9(s, &s.Q6, 32, &completed),
-				zipPop9(s, &s.Q7, 64, &completed),
-				zipPop9(s, &s.Q8, 128, &completed),
-				zipPop9(s, &s.Q9, 256, &completed),
+				zipPop9(s, &s.Q1, 1, &complete),
+				zipPop9(s, &s.Q2, 2, &complete),
+				zipPop9(s, &s.Q3, 4, &complete),
+				zipPop9(s, &s.Q4, 8, &complete),
+				zipPop9(s, &s.Q5, 16, &complete),
+				zipPop9(s, &s.Q6, 32, &complete),
+				zipPop9(s, &s.Q7, 64, &complete),
+				zipPop9(s, &s.Q8, 128, &complete),
+				zipPop9(s, &s.Q9, 256, &complete),
 			))
 
-			if completed {
+			if complete {
 				sink.Complete()
 				return true
 			}
@@ -157,7 +157,7 @@ func zipPop9[T1, T2, T3, T4, T5, T6, T7, T8, T9, X any](
 	s *zipState9[T1, T2, T3, T4, T5, T6, T7, T8, T9],
 	q *queue.Queue[X],
 	b uint16,
-	completed *bool,
+	complete *bool,
 ) X {
 	v := q.Pop()
 
@@ -165,7 +165,7 @@ func zipPop9[T1, T2, T3, T4, T5, T6, T7, T8, T9, X any](
 		s.VBits &^= b
 
 		if s.CBits&b != 0 {
-			*completed = true
+			*complete = true
 		}
 	}
 

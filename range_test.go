@@ -12,13 +12,13 @@ func TestRange(t *testing.T) {
 
 	NewTestSuite[int](t).Case(
 		rx.Range(1, 10),
-		1, 2, 3, 4, 5, 6, 7, 8, 9, ErrCompleted,
+		1, 2, 3, 4, 5, 6, 7, 8, 9, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Range(1, 10),
 			rx.Take[int](5),
 		),
-		1, 2, 3, 4, 5, ErrCompleted,
+		1, 2, 3, 4, 5, ErrComplete,
 	)
 }
 
@@ -30,6 +30,6 @@ func TestIota(t *testing.T) {
 			rx.Iota(1),
 			rx.Take[int](5),
 		),
-		1, 2, 3, 4, 5, ErrCompleted,
+		1, 2, 3, 4, 5, ErrComplete,
 	)
 }

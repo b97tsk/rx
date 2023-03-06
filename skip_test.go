@@ -15,25 +15,25 @@ func TestSkip(t *testing.T) {
 			rx.Range(1, 7),
 			rx.Skip[int](0),
 		),
-		1, 2, 3, 4, 5, 6, ErrCompleted,
+		1, 2, 3, 4, 5, 6, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Range(1, 7),
 			rx.Skip[int](3),
 		),
-		4, 5, 6, ErrCompleted,
+		4, 5, 6, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Just(1),
 			rx.Skip[int](3),
 		),
-		ErrCompleted,
+		ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Empty[int](),
 			rx.Skip[int](3),
 		),
-		ErrCompleted,
+		ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Concat(

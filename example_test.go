@@ -32,7 +32,7 @@ func Example() {
 				case n.HasError:
 					fmt.Println(n.Error)
 				default:
-					fmt.Println("Completed")
+					fmt.Println("Complete")
 				}
 			},
 		),
@@ -52,5 +52,5 @@ func Example() {
 	// 10
 	// 14
 	// 18
-	// Completed
+	// Complete
 }

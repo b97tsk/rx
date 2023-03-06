@@ -38,7 +38,7 @@ func TestCombineLatest9(t *testing.T) {
 		"[A2 B2 C2 D2 E2 F2 G2 H1 I1]",
 		"[A2 B2 C2 D2 E2 F2 G2 H2 I1]",
 		"[A2 B2 C2 D2 E2 F2 G2 H2 I2]",
-		ErrCompleted,
+		ErrComplete,
 	).Case(
 		rx.CombineLatest9(
 			rx.Throw[string](ErrTest),

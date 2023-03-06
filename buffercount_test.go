@@ -16,35 +16,35 @@ func TestBufferCount(t *testing.T) {
 			rx.BufferCount[string](2).AsOperator(),
 			ToString[[]string](),
 		),
-		"[A B]", "[C D]", "[E]", ErrCompleted,
+		"[A B]", "[C D]", "[E]", ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B", "C", "D", "E"),
 			rx.BufferCount[string](3).AsOperator(),
 			ToString[[]string](),
 		),
-		"[A B C]", "[D E]", ErrCompleted,
+		"[A B C]", "[D E]", ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B", "C", "D", "E"),
 			rx.BufferCount[string](3).WithStartBufferEvery(1).AsOperator(),
 			ToString[[]string](),
 		),
-		"[A B C]", "[B C D]", "[C D E]", "[D E]", "[E]", ErrCompleted,
+		"[A B C]", "[B C D]", "[C D E]", "[D E]", "[E]", ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B", "C", "D", "E"),
 			rx.BufferCount[string](3).WithStartBufferEvery(2).AsOperator(),
 			ToString[[]string](),
 		),
-		"[A B C]", "[C D E]", "[E]", ErrCompleted,
+		"[A B C]", "[C D E]", "[E]", ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B", "C", "D", "E"),
 			rx.BufferCount[string](3).WithStartBufferEvery(4).AsOperator(),
 			ToString[[]string](),
 		),
-		"[A B C]", "[E]", ErrCompleted,
+		"[A B C]", "[E]", ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Throw[string](ErrTest),

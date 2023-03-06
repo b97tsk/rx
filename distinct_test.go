@@ -15,7 +15,7 @@ func TestDistinct(t *testing.T) {
 			rx.Just(1, 2, 2, 1, 3, 3, 1),
 			rx.DistinctComparable[int](),
 		),
-		1, 2, 3, ErrCompleted,
+		1, 2, 3, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Just(1, 2, 2, 1, 3, 3, 1),
@@ -23,6 +23,6 @@ func TestDistinct(t *testing.T) {
 				func(v int) int { return v & 1 },
 			),
 		),
-		1, 2, ErrCompleted,
+		1, 2, ErrComplete,
 	)
 }

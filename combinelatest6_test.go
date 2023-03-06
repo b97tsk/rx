@@ -32,7 +32,7 @@ func TestCombineLatest6(t *testing.T) {
 		"[A2 B2 C2 D2 E1 F1]",
 		"[A2 B2 C2 D2 E2 F1]",
 		"[A2 B2 C2 D2 E2 F2]",
-		ErrCompleted,
+		ErrComplete,
 	).Case(
 		rx.CombineLatest6(
 			rx.Throw[string](ErrTest),

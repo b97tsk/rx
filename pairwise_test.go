@@ -16,35 +16,35 @@ func TestPairwise(t *testing.T) {
 			rx.Pairwise[string](),
 			ToString[rx.Pair[string, string]](),
 		),
-		ErrCompleted,
+		ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A"),
 			rx.Pairwise[string](),
 			ToString[rx.Pair[string, string]](),
 		),
-		ErrCompleted,
+		ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B"),
 			rx.Pairwise[string](),
 			ToString[rx.Pair[string, string]](),
 		),
-		"{A B}", ErrCompleted,
+		"{A B}", ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B", "C"),
 			rx.Pairwise[string](),
 			ToString[rx.Pair[string, string]](),
 		),
-		"{A B}", "{B C}", ErrCompleted,
+		"{A B}", "{B C}", ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B", "C", "D"),
 			rx.Pairwise[string](),
 			ToString[rx.Pair[string, string]](),
 		),
-		"{A B}", "{B C}", "{C D}", ErrCompleted,
+		"{A B}", "{B C}", "{C D}", ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Concat(

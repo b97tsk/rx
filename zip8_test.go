@@ -27,7 +27,7 @@ func TestZip8(t *testing.T) {
 			rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
 			toString,
 		),
-		"[A B C D E F G 1]", "[B C D E F G H 2]", ErrCompleted,
+		"[A B C D E F G 1]", "[B C D E F G H 2]", ErrComplete,
 	).Case(
 		rx.Zip8(
 			rx.Just("A", "B", "C"),
@@ -40,7 +40,7 @@ func TestZip8(t *testing.T) {
 			rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
 			toString,
 		),
-		"[A B C D E F G 1]", "[B C D E F G H 2]", "[C D E F G H I 3]", ErrCompleted,
+		"[A B C D E F G 1]", "[B C D E F G H 2]", "[C D E F G H I 3]", ErrComplete,
 	).Case(
 		rx.Zip8(
 			rx.Just("A", "B", "C", "D"),
@@ -53,7 +53,7 @@ func TestZip8(t *testing.T) {
 			rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
 			toString,
 		),
-		"[A B C D E F G 1]", "[B C D E F G H 2]", "[C D E F G H I 3]", ErrCompleted,
+		"[A B C D E F G 1]", "[B C D E F G H 2]", "[C D E F G H I 3]", ErrComplete,
 	).Case(
 		rx.Zip8(
 			rx.Just("A", "B"),
@@ -72,7 +72,7 @@ func TestZip8(t *testing.T) {
 			),
 			toString,
 		),
-		"[A B C D E F G 1]", "[B C D E F G H 2]", ErrCompleted,
+		"[A B C D E F G 1]", "[B C D E F G H 2]", ErrComplete,
 	).Case(
 		rx.Zip8(
 			rx.Just("A", "B", "C"),
@@ -91,7 +91,7 @@ func TestZip8(t *testing.T) {
 			),
 			toString,
 		),
-		"[A B C D E F G 1]", "[B C D E F G H 2]", "[C D E F G H I 3]", ErrCompleted,
+		"[A B C D E F G 1]", "[B C D E F G H 2]", "[C D E F G H I 3]", ErrComplete,
 	).Case(
 		rx.Zip8(
 			rx.Just("A", "B", "C", "D"),

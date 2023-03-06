@@ -26,7 +26,7 @@ func TestShare1(t *testing.T) {
 			rx.Pipe1(obs, DelaySubscription[int](8)),
 			rx.Pipe1(obs, DelaySubscription[int](13)),
 		),
-		0, 1, 1, 2, 2, 2, 3, 3, 3, 0, 1, 2, 3, ErrCompleted,
+		0, 1, 1, 2, 2, 2, 3, 3, 3, 0, 1, 2, 3, ErrComplete,
 	)
 }
 
@@ -47,7 +47,7 @@ func TestShare2(t *testing.T) {
 			rx.Pipe1(obs, DelaySubscription[int](8)),
 			rx.Pipe1(obs, DelaySubscription[int](19)),
 		),
-		0, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 5, 0, 1, 2, 3, ErrCompleted,
+		0, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 5, 0, 1, 2, 3, ErrComplete,
 	)
 }
 
@@ -72,7 +72,7 @@ func TestShare3(t *testing.T) {
 			rx.Pipe1(obs, DelaySubscription[int](8)),
 			rx.Pipe1(obs, DelaySubscription[int](13)),
 		),
-		0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 0, 1, 2, 3, ErrCompleted,
+		0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 0, 1, 2, 3, ErrComplete,
 	)
 }
 
@@ -97,7 +97,7 @@ func TestShare4(t *testing.T) {
 			rx.Pipe1(obs, DelaySubscription[int](8)),
 			rx.Pipe1(obs, DelaySubscription[int](16)),
 		),
-		0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 0, 1, 2, 3, ErrCompleted,
+		0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 0, 1, 2, 3, ErrComplete,
 	)
 }
 

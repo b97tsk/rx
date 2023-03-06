@@ -13,8 +13,8 @@ var (
 )
 
 var (
-	errCompleted = errors.New("completed")
-	errNil       = errors.New("nil")
+	errComplete = errors.New("complete")
+	errNil      = errors.New("nil")
 )
 
 func errOrErrNil(err error) error {

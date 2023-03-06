@@ -24,7 +24,7 @@ func TestMultiObserver(t *testing.T) {
 			m.Observable,
 			rx.Take[string](2),
 		),
-		"A", "B", ErrCompleted,
+		"A", "B", ErrComplete,
 	)
 
 	time.Sleep(Step(5))

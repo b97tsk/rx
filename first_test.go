@@ -27,13 +27,13 @@ func TestFirst(t *testing.T) {
 			rx.Just(1),
 			rx.First[int](),
 		),
-		1, ErrCompleted,
+		1, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Just(1, 2),
 			rx.First[int](),
 		),
-		1, ErrCompleted,
+		1, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Concat(
@@ -42,7 +42,7 @@ func TestFirst(t *testing.T) {
 			),
 			rx.First[int](),
 		),
-		1, ErrCompleted,
+		1, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Concat(
@@ -51,7 +51,7 @@ func TestFirst(t *testing.T) {
 			),
 			rx.First[int](),
 		),
-		1, ErrCompleted,
+		1, ErrComplete,
 	)
 }
 
@@ -63,7 +63,7 @@ func TestFirstOrDefault(t *testing.T) {
 			rx.Empty[int](),
 			rx.FirstOrDefault(404),
 		),
-		404, ErrCompleted,
+		404, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Throw[int](ErrTest),
@@ -75,13 +75,13 @@ func TestFirstOrDefault(t *testing.T) {
 			rx.Just(1),
 			rx.FirstOrDefault(404),
 		),
-		1, ErrCompleted,
+		1, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Just(1, 2),
 			rx.FirstOrDefault(404),
 		),
-		1, ErrCompleted,
+		1, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Concat(
@@ -90,7 +90,7 @@ func TestFirstOrDefault(t *testing.T) {
 			),
 			rx.FirstOrDefault(404),
 		),
-		1, ErrCompleted,
+		1, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Concat(
@@ -99,6 +99,6 @@ func TestFirstOrDefault(t *testing.T) {
 			),
 			rx.FirstOrDefault(404),
 		),
-		1, ErrCompleted,
+		1, ErrComplete,
 	)
 }

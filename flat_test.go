@@ -19,7 +19,7 @@ func TestFlat(t *testing.T) {
 			),
 			rx.Flat(rx.Concat[string]),
 		),
-		"A", "B", "C", "D", "E", "F", ErrCompleted,
+		"A", "B", "C", "D", "E", "F", ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Throw[rx.Observable[string]](ErrTest),
