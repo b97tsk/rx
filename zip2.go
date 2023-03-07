@@ -66,7 +66,7 @@ func zipSink2[T1, T2, R, X any](
 	proj func(T1, T2) R,
 	s *zipState2[T1, T2],
 	q *queue.Queue[X],
-	b uint8,
+	bit uint8,
 ) bool {
 	const FullBits = 3
 
@@ -74,7 +74,7 @@ func zipSink2[T1, T2, R, X any](
 	case n.HasValue:
 		q.Push(n.Value)
 
-		if s.VBits |= b; s.VBits == FullBits {
+		if s.VBits |= bit; s.VBits == FullBits {
 			var complete bool
 
 			sink.Next(proj(
@@ -93,7 +93,7 @@ func zipSink2[T1, T2, R, X any](
 		return true
 
 	default:
-		s.CBits |= b
+		s.CBits |= bit
 
 		if q.Len() == 0 {
 			sink.Complete()
@@ -107,15 +107,15 @@ func zipSink2[T1, T2, R, X any](
 func zipPop2[T1, T2, X any](
 	s *zipState2[T1, T2],
 	q *queue.Queue[X],
-	b uint8,
+	bit uint8,
 	complete *bool,
 ) X {
 	v := q.Pop()
 
 	if q.Len() == 0 {
-		s.VBits &^= b
+		s.VBits &^= bit
 
-		if s.CBits&b != 0 {
+		if s.CBits&bit != 0 {
 			*complete = true
 		}
 	}

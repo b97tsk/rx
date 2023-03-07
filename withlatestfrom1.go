@@ -77,7 +77,7 @@ func withLatestFromSink2[T1, T2, R, X any](
 	proj func(T1, T2) R,
 	s *withLatestFromState2[T1, T2],
 	v *X,
-	b uint8,
+	bit uint8,
 ) bool {
 	const FullBits = 3
 
@@ -85,7 +85,7 @@ func withLatestFromSink2[T1, T2, R, X any](
 	case n.HasValue:
 		*v = n.Value
 
-		if s.VBits |= b; s.VBits == FullBits && b == 1 {
+		if s.VBits |= bit; s.VBits == FullBits && bit == 1 {
 			sink.Next(proj(s.V1, s.V2))
 		}
 
@@ -94,7 +94,7 @@ func withLatestFromSink2[T1, T2, R, X any](
 		return true
 
 	default:
-		if b == 1 {
+		if bit == 1 {
 			sink.Complete()
 			return true
 		}

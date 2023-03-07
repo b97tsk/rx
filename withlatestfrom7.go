@@ -119,7 +119,7 @@ func withLatestFromSink8[T1, T2, T3, T4, T5, T6, T7, T8, R, X any](
 	proj func(T1, T2, T3, T4, T5, T6, T7, T8) R,
 	s *withLatestFromState8[T1, T2, T3, T4, T5, T6, T7, T8],
 	v *X,
-	b uint8,
+	bit uint8,
 ) bool {
 	const FullBits = 255
 
@@ -127,7 +127,7 @@ func withLatestFromSink8[T1, T2, T3, T4, T5, T6, T7, T8, R, X any](
 	case n.HasValue:
 		*v = n.Value
 
-		if s.VBits |= b; s.VBits == FullBits && b == 1 {
+		if s.VBits |= bit; s.VBits == FullBits && bit == 1 {
 			sink.Next(proj(s.V1, s.V2, s.V3, s.V4, s.V5, s.V6, s.V7, s.V8))
 		}
 
@@ -136,7 +136,7 @@ func withLatestFromSink8[T1, T2, T3, T4, T5, T6, T7, T8, R, X any](
 		return true
 
 	default:
-		if b == 1 {
+		if bit == 1 {
 			sink.Complete()
 			return true
 		}

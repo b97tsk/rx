@@ -89,7 +89,7 @@ func combineLatestSink6[T1, T2, T3, T4, T5, T6, R, X any](
 	proj func(T1, T2, T3, T4, T5, T6) R,
 	s *combineLatestState6[T1, T2, T3, T4, T5, T6],
 	v *X,
-	b uint8,
+	bit uint8,
 ) bool {
 	const FullBits = 63
 
@@ -97,7 +97,7 @@ func combineLatestSink6[T1, T2, T3, T4, T5, T6, R, X any](
 	case n.HasValue:
 		*v = n.Value
 
-		if s.VBits |= b; s.VBits == FullBits {
+		if s.VBits |= bit; s.VBits == FullBits {
 			sink.Next(proj(s.V1, s.V2, s.V3, s.V4, s.V5, s.V6))
 		}
 
@@ -106,7 +106,7 @@ func combineLatestSink6[T1, T2, T3, T4, T5, T6, R, X any](
 		return true
 
 	default:
-		if s.CBits |= b; s.CBits == FullBits {
+		if s.CBits |= bit; s.CBits == FullBits {
 			sink.Complete()
 			return true
 		}
