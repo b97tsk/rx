@@ -13,8 +13,8 @@ func TestAdditionalCoverage(t *testing.T) {
 	observer := rx.NewObserver(rx.Noop[int])
 	observer.Emit(rx.Next(0))
 
-	op := rx.IgnoreElements[int, int]()
 	obs := rx.Empty[int]()
+	op := rx.SkipAll[int]()
 
 	_ = rx.Compose2(op, op).Apply(obs)
 	_ = rx.Compose3(op, op, op).Apply(obs)

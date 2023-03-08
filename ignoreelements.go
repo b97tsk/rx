@@ -4,8 +4,10 @@ import (
 	"context"
 )
 
-// IgnoreElements ignores all values emitted by the source Observable
-// and only mirrors notifications of error or completion.
+// IgnoreElements ignores all values emitted by the source Observable.
+//
+// It's like [SkipAll], but it can also change the output Observable to be
+// of another type.
 func IgnoreElements[T, R any]() Operator[T, R] {
 	return NewOperator(ignoreElements[T, R])
 }
