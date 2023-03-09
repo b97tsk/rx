@@ -18,11 +18,12 @@ type ReplayConfig struct {
 }
 
 // MulticastReplay returns a Subject whose Observable part takes care of
-// all Observers that subscribed to it, all of which will receive buffered
-// emissions and new emissions from Subject's Observer part.
+// all Observers that subscribed to it, all of which will receive
+// buffered emissions and new emissions from Subject's Observer part.
 //
-// Subjects are subject to memory leaks. Once you have done using a Subject,
-// you should at least call its Error or Complete method once to avoid that.
+// Subjects are subject to memory leaks.
+// After finishing using a Subject, you should call either its Error method
+// or its Complete method to avoid that.
 // If you can guarantee that every subscription to a Subject is canceled
 // sooner or later, then you are fine.
 //
@@ -43,6 +44,10 @@ func MulticastReplay[T any](opts *ReplayConfig) Subject[T] {
 		},
 		Observer: func(n Notification[T]) {
 			m.emit(n)
+
+			if !n.HasValue {
+				runtime.SetFinalizer(&m, nil)
+			}
 		},
 	}
 }
