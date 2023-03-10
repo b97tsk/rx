@@ -12,10 +12,11 @@ import (
 // if the source emits a notification of error, it returns zero value of T
 // and the error.
 //
-// A cancellation of ctx will cause BlockingFirst to immediately return zero
-// value of T and ctx.Err().
+// The source Observable must honor the cancellation of ctx; otherwise,
+// BlockingFirst might still block even after ctx has been cancelled.
 func (obs Observable[T]) BlockingFirst(ctx context.Context) (v T, err error) {
 	childCtx, cancel := context.WithCancel(ctx)
+	childCtx, wg := waitgroup.Install(childCtx)
 
 	res := Error[T](ErrEmpty)
 
@@ -33,9 +34,10 @@ func (obs Observable[T]) BlockingFirst(ctx context.Context) (v T, err error) {
 		}
 
 		cancel()
+		wg.Done()
 	})
 
-	<-childCtx.Done()
+	wg.Wait()
 
 	if err := getErr(ctx); err != nil {
 		return v, err
@@ -55,8 +57,8 @@ func (obs Observable[T]) BlockingFirst(ctx context.Context) (v T, err error) {
 // the first value emitted by the source, or returns def if the source emits
 // no values or a notification of error.
 //
-// A cancellation of ctx will cause BlockingFirstOrDefault to immediately
-// return def.
+// The source Observable must honor the cancellation of ctx; otherwise,
+// BlockingFirstOrDefault might still block even after ctx has been cancelled.
 func (obs Observable[T]) BlockingFirstOrDefault(ctx context.Context, def T) T {
 	v, err := obs.BlockingFirst(ctx)
 	if err != nil {
@@ -72,10 +74,11 @@ func (obs Observable[T]) BlockingFirstOrDefault(ctx context.Context, def T) T {
 // if the source emits a notification of error, it returns zero value of T
 // and the error.
 //
-// A cancellation of ctx will cause BlockingLast to immediately return zero
-// value of T and ctx.Err().
+// The source Observable must honor the cancellation of ctx; otherwise,
+// BlockingLast might still block even after ctx has been cancelled.
 func (obs Observable[T]) BlockingLast(ctx context.Context) (v T, err error) {
 	childCtx, cancel := context.WithCancel(ctx)
+	childCtx, wg := waitgroup.Install(childCtx)
 
 	res := Error[T](ErrEmpty)
 
@@ -86,10 +89,11 @@ func (obs Observable[T]) BlockingLast(ctx context.Context) (v T, err error) {
 
 		if !n.HasValue {
 			cancel()
+			wg.Done()
 		}
 	})
 
-	<-childCtx.Done()
+	wg.Wait()
 
 	if err := getErr(ctx); err != nil {
 		return v, err
@@ -109,8 +113,8 @@ func (obs Observable[T]) BlockingLast(ctx context.Context) (v T, err error) {
 // the last value emitted by the source, or returns def if the source emits
 // no values or a notification of error.
 //
-// A cancellation of ctx will cause BlockingLastOrDefault to immediately
-// return def.
+// The source Observable must honor the cancellation of ctx; otherwise,
+// BlockingLastOrDefault might still block even after ctx has been cancelled.
 func (obs Observable[T]) BlockingLastOrDefault(ctx context.Context, def T) T {
 	v, err := obs.BlockingLast(ctx)
 	if err != nil {
@@ -127,10 +131,11 @@ func (obs Observable[T]) BlockingLastOrDefault(ctx context.Context, def T) T {
 // if the source emits a notification of error, it returns
 // zero value of T and the error.
 //
-// A cancellation of ctx will cause BlockingSingle to immediately
-// return zero value of T and ctx.Err().
+// The source Observable must honor the cancellation of ctx; otherwise,
+// BlockingSingle might still block even after ctx has been cancelled.
 func (obs Observable[T]) BlockingSingle(ctx context.Context) (v T, err error) {
 	childCtx, cancel := context.WithCancel(ctx)
+	childCtx, wg := waitgroup.Install(childCtx)
 
 	res := Error[T](ErrEmpty)
 
@@ -146,6 +151,7 @@ func (obs Observable[T]) BlockingSingle(ctx context.Context) (v T, err error) {
 			noop = true
 
 			cancel()
+			wg.Done()
 
 			return
 		}
@@ -156,10 +162,11 @@ func (obs Observable[T]) BlockingSingle(ctx context.Context) (v T, err error) {
 
 		if !n.HasValue {
 			cancel()
+			wg.Done()
 		}
 	})
 
-	<-childCtx.Done()
+	wg.Wait()
 
 	if err := getErr(ctx); err != nil {
 		return v, err
