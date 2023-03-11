@@ -53,13 +53,13 @@ func (obs Observable[T]) BlockingFirst(ctx context.Context) (v T, err error) {
 	}
 }
 
-// BlockingFirstOrDefault subscribes to the source Observable, and returns
+// BlockingFirstOrElse subscribes to the source Observable, and returns
 // the first value emitted by the source, or returns def if the source emits
 // no values or a notification of error.
 //
 // The source Observable must honor the cancellation of ctx; otherwise,
-// BlockingFirstOrDefault might still block even after ctx has been cancelled.
-func (obs Observable[T]) BlockingFirstOrDefault(ctx context.Context, def T) T {
+// BlockingFirstOrElse might still block even after ctx has been cancelled.
+func (obs Observable[T]) BlockingFirstOrElse(ctx context.Context, def T) T {
 	v, err := obs.BlockingFirst(ctx)
 	if err != nil {
 		return def
@@ -109,13 +109,13 @@ func (obs Observable[T]) BlockingLast(ctx context.Context) (v T, err error) {
 	}
 }
 
-// BlockingLastOrDefault subscribes to the source Observable, and returns
+// BlockingLastOrElse subscribes to the source Observable, and returns
 // the last value emitted by the source, or returns def if the source emits
 // no values or a notification of error.
 //
 // The source Observable must honor the cancellation of ctx; otherwise,
-// BlockingLastOrDefault might still block even after ctx has been cancelled.
-func (obs Observable[T]) BlockingLastOrDefault(ctx context.Context, def T) T {
+// BlockingLastOrElse might still block even after ctx has been cancelled.
+func (obs Observable[T]) BlockingLastOrElse(ctx context.Context, def T) T {
 	v, err := obs.BlockingLast(ctx)
 	if err != nil {
 		return def

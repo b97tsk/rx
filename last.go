@@ -37,9 +37,9 @@ func last[T any](source Observable[T]) Observable[T] {
 	}
 }
 
-// LastOrDefault emits only the last value emitted by the source Observable.
+// LastOrElse emits only the last value emitted by the source Observable.
 // If the source turns out to be empty, it emits a specified default value.
-func LastOrDefault[T any](def T) Operator[T, T] {
+func LastOrElse[T any](def T) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return func(ctx context.Context, sink Observer[T]) {

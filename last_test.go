@@ -55,31 +55,31 @@ func TestLast(t *testing.T) {
 	)
 }
 
-func TestLastOrDefault(t *testing.T) {
+func TestLastOrElse(t *testing.T) {
 	t.Parallel()
 
 	NewTestSuite[int](t).Case(
 		rx.Pipe1(
 			rx.Empty[int](),
-			rx.LastOrDefault(404),
+			rx.LastOrElse(404),
 		),
 		404, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Throw[int](ErrTest),
-			rx.LastOrDefault(404),
+			rx.LastOrElse(404),
 		),
 		ErrTest,
 	).Case(
 		rx.Pipe1(
 			rx.Just(1),
-			rx.LastOrDefault(404),
+			rx.LastOrElse(404),
 		),
 		1, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Just(1, 2),
-			rx.LastOrDefault(404),
+			rx.LastOrElse(404),
 		),
 		2, ErrComplete,
 	).Case(
@@ -88,7 +88,7 @@ func TestLastOrDefault(t *testing.T) {
 				rx.Just(1),
 				rx.Throw[int](ErrTest),
 			),
-			rx.LastOrDefault(404),
+			rx.LastOrElse(404),
 		),
 		ErrTest,
 	).Case(
@@ -97,7 +97,7 @@ func TestLastOrDefault(t *testing.T) {
 				rx.Just(1, 2),
 				rx.Throw[int](ErrTest),
 			),
-			rx.LastOrDefault(404),
+			rx.LastOrElse(404),
 		),
 		ErrTest,
 	)

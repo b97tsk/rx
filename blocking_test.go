@@ -34,7 +34,7 @@ func TestBlockingFirst(t *testing.T) {
 	}
 }
 
-func TestBlockingFirstOrDefault(t *testing.T) {
+func TestBlockingFirstOrElse(t *testing.T) {
 	t.Parallel()
 
 	testCases := [...]struct {
@@ -52,7 +52,7 @@ func TestBlockingFirstOrDefault(t *testing.T) {
 	defer cancel()
 
 	for _, tc := range testCases {
-		v := tc.obs.BlockingFirstOrDefault(ctx, "C")
+		v := tc.obs.BlockingFirstOrElse(ctx, "C")
 		if v != tc.val {
 			t.Fail()
 		}
@@ -85,7 +85,7 @@ func TestBlockingLast(t *testing.T) {
 	}
 }
 
-func TestBlockingLastOrDefault(t *testing.T) {
+func TestBlockingLastOrElse(t *testing.T) {
 	t.Parallel()
 
 	testCases := [...]struct {
@@ -103,7 +103,7 @@ func TestBlockingLastOrDefault(t *testing.T) {
 	defer cancel()
 
 	for _, tc := range testCases {
-		v := tc.obs.BlockingLastOrDefault(ctx, "C")
+		v := tc.obs.BlockingLastOrElse(ctx, "C")
 		if v != tc.val {
 			t.Fail()
 		}

@@ -39,9 +39,9 @@ func first[T any](source Observable[T]) Observable[T] {
 	}
 }
 
-// FirstOrDefault emits only the first value emitted by the source Observable.
+// FirstOrElse emits only the first value emitted by the source Observable.
 // If the source turns out to be empty, it emits a specified default value.
-func FirstOrDefault[T any](def T) Operator[T, T] {
+func FirstOrElse[T any](def T) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return func(ctx context.Context, sink Observer[T]) {

@@ -55,31 +55,31 @@ func TestFirst(t *testing.T) {
 	)
 }
 
-func TestFirstOrDefault(t *testing.T) {
+func TestFirstOrElse(t *testing.T) {
 	t.Parallel()
 
 	NewTestSuite[int](t).Case(
 		rx.Pipe1(
 			rx.Empty[int](),
-			rx.FirstOrDefault(404),
+			rx.FirstOrElse(404),
 		),
 		404, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Throw[int](ErrTest),
-			rx.FirstOrDefault(404),
+			rx.FirstOrElse(404),
 		),
 		ErrTest,
 	).Case(
 		rx.Pipe1(
 			rx.Just(1),
-			rx.FirstOrDefault(404),
+			rx.FirstOrElse(404),
 		),
 		1, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Just(1, 2),
-			rx.FirstOrDefault(404),
+			rx.FirstOrElse(404),
 		),
 		1, ErrComplete,
 	).Case(
@@ -88,7 +88,7 @@ func TestFirstOrDefault(t *testing.T) {
 				rx.Just(1),
 				rx.Throw[int](ErrTest),
 			),
-			rx.FirstOrDefault(404),
+			rx.FirstOrElse(404),
 		),
 		1, ErrComplete,
 	).Case(
@@ -97,7 +97,7 @@ func TestFirstOrDefault(t *testing.T) {
 				rx.Just(1, 2),
 				rx.Throw[int](ErrTest),
 			),
-			rx.FirstOrDefault(404),
+			rx.FirstOrElse(404),
 		),
 		1, ErrComplete,
 	)
