@@ -4,9 +4,9 @@ import (
 	"context"
 )
 
-// DefaultIfEmpty mirrors the source Observable, or emits a given value
+// JustIfEmpty mirrors the source Observable, or emits given values
 // if the source completes without emitting any value.
-func DefaultIfEmpty[T any](def T) Operator[T, T] {
+func JustIfEmpty[T any](s ...T) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return func(ctx context.Context, sink Observer[T]) {
@@ -19,7 +19,16 @@ func DefaultIfEmpty[T any](def T) Operator[T, T] {
 					case n.HasError:
 					default:
 						if !haveValue {
-							sink.Next(def)
+							done := ctx.Done()
+
+							for _, v := range s {
+								if err := getErrWithDoneChan(ctx, done); err != nil {
+									sink.Error(err)
+									return
+								}
+
+								sink.Next(v)
+							}
 						}
 					}
 

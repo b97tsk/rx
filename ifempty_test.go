@@ -7,19 +7,26 @@ import (
 	. "github.com/b97tsk/rx/internal/rxtest"
 )
 
-func TestDefaultIfEmpty(t *testing.T) {
+func TestJustIfEmpty(t *testing.T) {
 	t.Parallel()
 
 	NewTestSuite[int](t).Case(
 		rx.Pipe1(
 			rx.Empty[int](),
-			rx.DefaultIfEmpty(42),
+			rx.JustIfEmpty(1, 2, 3),
 		),
-		42, ErrComplete,
+		1, 2, 3, ErrComplete,
+	).Case(
+		rx.Pipe2(
+			rx.Empty[int](),
+			rx.JustIfEmpty(1, 2, 3),
+			rx.Take[int](1),
+		),
+		1, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Range(1, 4),
-			rx.DefaultIfEmpty(42),
+			rx.JustIfEmpty(4, 5, 6),
 		),
 		1, 2, 3, ErrComplete,
 	).Case(
@@ -28,7 +35,7 @@ func TestDefaultIfEmpty(t *testing.T) {
 				rx.Range(1, 4),
 				rx.Throw[int](ErrTest),
 			),
-			rx.DefaultIfEmpty(42),
+			rx.JustIfEmpty(4, 5, 6),
 		),
 		1, 2, 3, ErrTest,
 	)
@@ -67,13 +74,13 @@ func TestSwitchIfEmpty(t *testing.T) {
 	NewTestSuite[int](t).Case(
 		rx.Pipe1(
 			rx.Empty[int](),
-			rx.SwitchIfEmpty(rx.Just(42)),
+			rx.SwitchIfEmpty(rx.Just(1, 2, 3)),
 		),
-		42, ErrComplete,
+		1, 2, 3, ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Range(1, 4),
-			rx.SwitchIfEmpty(rx.Just(42)),
+			rx.SwitchIfEmpty(rx.Just(4, 5, 6)),
 		),
 		1, 2, 3, ErrComplete,
 	).Case(
@@ -82,7 +89,7 @@ func TestSwitchIfEmpty(t *testing.T) {
 				rx.Range(1, 4),
 				rx.Throw[int](ErrTest),
 			),
-			rx.SwitchIfEmpty(rx.Just(42)),
+			rx.SwitchIfEmpty(rx.Just(4, 5, 6)),
 		),
 		1, 2, 3, ErrTest,
 	)
