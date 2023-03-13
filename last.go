@@ -13,21 +13,21 @@ func Last[T any]() Operator[T, T] {
 
 func last[T any](source Observable[T]) Observable[T] {
 	return func(ctx context.Context, sink Observer[T]) {
-		var (
-			value     T
-			haveValue bool
-		)
+		var last struct {
+			Value    T
+			HasValue bool
+		}
 
 		source.Subscribe(ctx, func(n Notification[T]) {
 			switch {
 			case n.HasValue:
-				value = n.Value
-				haveValue = true
+				last.Value = n.Value
+				last.HasValue = true
 			case n.HasError:
 				sink(n)
 			default:
-				if haveValue {
-					sink.Next(value)
+				if last.HasValue {
+					sink.Next(last.Value)
 					sink.Complete()
 				} else {
 					sink.Error(ErrEmpty)
@@ -43,21 +43,21 @@ func LastOrElse[T any](def T) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return func(ctx context.Context, sink Observer[T]) {
-				var (
-					value     T
-					haveValue bool
-				)
+				var last struct {
+					Value    T
+					HasValue bool
+				}
 
 				source.Subscribe(ctx, func(n Notification[T]) {
 					switch {
 					case n.HasValue:
-						value = n.Value
-						haveValue = true
+						last.Value = n.Value
+						last.HasValue = true
 					case n.HasError:
 						sink(n)
 					default:
-						if haveValue {
-							sink.Next(value)
+						if last.HasValue {
+							sink.Next(last.Value)
 						} else {
 							sink.Next(def)
 						}

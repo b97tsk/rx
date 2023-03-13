@@ -44,8 +44,10 @@ func (obs everyObservable[T]) Subscribe(ctx context.Context, sink Observer[bool]
 				sink.Next(false)
 				sink.Complete()
 			}
+
 		case n.HasError:
 			sink.Error(n.Error)
+
 		default:
 			sink.Next(true)
 			sink.Complete()

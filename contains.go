@@ -54,8 +54,10 @@ func (obs containsObservable[T]) Subscribe(ctx context.Context, sink Observer[bo
 				sink.Next(true)
 				sink.Complete()
 			}
+
 		case n.HasError:
 			sink.Error(n.Error)
+
 		default:
 			sink.Next(false)
 			sink.Complete()
@@ -85,8 +87,10 @@ func (obs containsElementObservable[T]) Subscribe(ctx context.Context, sink Obse
 				sink.Next(true)
 				sink.Complete()
 			}
+
 		case n.HasError:
 			sink.Error(n.Error)
+
 		default:
 			sink.Next(false)
 			sink.Complete()

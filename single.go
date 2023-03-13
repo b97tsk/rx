@@ -17,10 +17,10 @@ func single[T any](source Observable[T]) Observable[T] {
 
 		sink = sink.OnLastNotification(cancel)
 
-		var (
-			value     T
-			haveValue bool
-		)
+		var first struct {
+			Value    T
+			HasValue bool
+		}
 
 		var noop bool
 
@@ -28,19 +28,23 @@ func single[T any](source Observable[T]) Observable[T] {
 			switch {
 			case noop:
 			case n.HasValue:
-				if !haveValue {
-					value = n.Value
-					haveValue = true
-				} else {
-					noop = true
+				if !first.HasValue {
+					first.Value = n.Value
+					first.HasValue = true
 
-					sink.Error(ErrNotSingle)
+					return
 				}
+
+				noop = true
+
+				sink.Error(ErrNotSingle)
+
 			case n.HasError:
 				sink(n)
+
 			default:
-				if haveValue {
-					sink.Next(value)
+				if first.HasValue {
+					sink.Next(first.Value)
 					sink.Complete()
 				} else {
 					sink.Error(ErrEmpty)

@@ -41,11 +41,13 @@ func (obs takeWhileObservable[T]) Subscribe(ctx context.Context, sink Observer[T
 		case n.HasValue:
 			if obs.Condition(n.Value) {
 				sink(n)
-			} else {
-				noop = true
-
-				sink.Complete()
+				return
 			}
+
+			noop = true
+
+			sink.Complete()
+
 		default:
 			sink(n)
 		}
