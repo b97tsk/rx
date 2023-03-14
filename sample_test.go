@@ -77,7 +77,7 @@ func TestSample(t *testing.T) {
 		rx.Pipe1(
 			rx.Empty[string](),
 			rx.Sample[string](
-				func(ctx context.Context, sink rx.Observer[string]) {
+				func(_ context.Context, sink rx.Observer[string]) {
 					time.Sleep(Step(2))
 					sink.Complete()
 				},
