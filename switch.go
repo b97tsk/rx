@@ -2,9 +2,8 @@ package rx
 
 import (
 	"context"
+	"sync"
 	"sync/atomic"
-
-	"github.com/b97tsk/rx/internal/critical"
 )
 
 // SwitchAll flattens a higher-order Observable into a first-order Observable
@@ -45,67 +44,83 @@ type switchMapObservable[T, R any] struct {
 }
 
 func (obs switchMapObservable[T, R]) Subscribe(ctx context.Context, sink Observer[R]) {
-	ctx, cancel := context.WithCancel(ctx)
+	source, cancel := context.WithCancel(ctx)
+
+	sink = sink.OnLastNotification(cancel)
 
 	var x struct {
-		critical.Section
-		Ctx      atomic.Value
-		Cancel   context.CancelFunc
+		Context  atomic.Value
 		Complete atomic.Bool
-	}
-
-	x.Ctx.Store(ctx)
-
-	sinkAndDone := func(n Notification[R]) {
-		if critical.Enter(&x.Section) {
-			critical.Close(&x.Section)
-			cancel()
-			sink(n)
+		Worker   struct {
+			sync.WaitGroup
+			Cancel context.CancelFunc
 		}
 	}
 
-	obs.Source.Subscribe(ctx, func(n Notification[T]) {
-		switch {
-		case n.HasValue:
-			childCtx, cancel := context.WithCancel(ctx)
-			x.Ctx.Store(childCtx)
+	x.Context.Store(source)
 
-			if x.Cancel != nil {
-				x.Cancel()
+	startWorker := func(v T) {
+		worker, cancel := context.WithCancel(source)
+		x.Context.Store(worker)
+
+		x.Worker.Cancel = cancel
+
+		x.Worker.Add(1)
+
+		obs.Project(v).Subscribe(worker, func(n Notification[R]) {
+			switch {
+			case n.HasValue:
+				sink(n)
+				return
+
+			case n.HasError:
+				if x.Context.CompareAndSwap(worker, sentinel) {
+					sink(n)
+				}
+
+			default:
+				if x.Context.CompareAndSwap(worker, source) && x.Complete.Load() && x.Context.CompareAndSwap(source, sentinel) {
+					sink(n)
+				}
 			}
 
-			x.Cancel = cancel
+			cancel()
+			x.Worker.Done()
+		})
+	}
 
-			obs.Project(n.Value).Subscribe(childCtx, func(n Notification[R]) {
-				if n.HasValue {
-					if critical.Enter(&x.Section) {
-						if x.Ctx.Load() == childCtx {
-							sink(n)
-						}
+	obs.Source.Subscribe(source, func(n Notification[T]) {
+		switch {
+		case n.HasValue:
+			if x.Context.Swap(source) == sentinel {
+				x.Context.Store(sentinel)
+				return
+			}
 
-						critical.Leave(&x.Section)
-					}
+			if x.Worker.Cancel != nil {
+				x.Worker.Cancel()
+				x.Worker.Wait()
+			}
 
-					return
-				}
-
-				cancel()
-
-				if x.Ctx.CompareAndSwap(childCtx, ctx) {
-					if n.HasError || x.Complete.Load() && x.Ctx.Load() == ctx {
-						sinkAndDone(n)
-					}
-				}
-			})
+			startWorker(n.Value)
 
 		case n.HasError:
-			sinkAndDone(Error[R](n.Error))
+			ctx := x.Context.Swap(source)
+
+			if x.Worker.Cancel != nil {
+				x.Worker.Cancel()
+				x.Worker.Wait()
+			}
+
+			if x.Context.Swap(sentinel) != sentinel && ctx != sentinel {
+				sink.Error(n.Error)
+			}
 
 		default:
 			x.Complete.Store(true)
 
-			if x.Ctx.Load() == ctx {
-				sinkAndDone(Complete[R]())
+			if x.Context.CompareAndSwap(source, sentinel) {
+				sink.Complete()
 			}
 		}
 	})

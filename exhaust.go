@@ -2,6 +2,7 @@ package rx
 
 import (
 	"context"
+	"sync"
 	"sync/atomic"
 )
 
@@ -44,30 +45,74 @@ type exhaustMapObservable[T, R any] struct {
 }
 
 func (obs exhaustMapObservable[T, R]) Subscribe(ctx context.Context, sink Observer[R]) {
-	ctx, cancel := context.WithCancel(ctx)
+	source, cancel := context.WithCancel(ctx)
 
-	sink = sink.OnLastNotification(cancel).WithMutex()
+	sink = sink.OnLastNotification(cancel)
 
-	var workers atomic.Uint32
-
-	workers.Store(1)
-
-	observer := func(n Notification[R]) {
-		if n.HasValue || n.HasError || workers.Add(^uint32(0)) == 0 {
-			sink(n)
+	var x struct {
+		Context  atomic.Value
+		Complete atomic.Bool
+		Worker   struct {
+			sync.WaitGroup
+			Cancel context.CancelFunc
 		}
 	}
 
-	obs.Source.Subscribe(ctx, func(n Notification[T]) {
+	x.Context.Store(source)
+
+	startWorker := func(v T) {
+		worker, cancel := context.WithCancel(source)
+		x.Context.Store(worker)
+
+		x.Worker.Cancel = cancel
+
+		x.Worker.Add(1)
+
+		obs.Project(v).Subscribe(worker, func(n Notification[R]) {
+			switch {
+			case n.HasValue:
+				sink(n)
+				return
+
+			case n.HasError:
+				if x.Context.CompareAndSwap(worker, sentinel) {
+					sink(n)
+				}
+
+			default:
+				if x.Context.CompareAndSwap(worker, source) && x.Complete.Load() && x.Context.CompareAndSwap(source, sentinel) {
+					sink(n)
+				}
+			}
+
+			cancel()
+			x.Worker.Done()
+		})
+	}
+
+	obs.Source.Subscribe(source, func(n Notification[T]) {
 		switch {
 		case n.HasValue:
-			if workers.CompareAndSwap(1, 2) {
-				obs.Project(n.Value).Subscribe(ctx, observer)
+			if x.Context.Load() == source {
+				startWorker(n.Value)
 			}
+
 		case n.HasError:
-			sink.Error(n.Error)
+			ctx := x.Context.Swap(source)
+
+			if x.Worker.Cancel != nil {
+				x.Worker.Cancel()
+				x.Worker.Wait()
+			}
+
+			if x.Context.Swap(sentinel) != sentinel && ctx != sentinel {
+				sink.Error(n.Error)
+			}
+
 		default:
-			if workers.Add(^uint32(0)) == 0 {
+			x.Complete.Store(true)
+
+			if x.Context.CompareAndSwap(source, sentinel) {
 				sink.Complete()
 			}
 		}

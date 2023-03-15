@@ -1,6 +1,7 @@
 package rx_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -64,9 +65,26 @@ func TestSwitch(t *testing.T) {
 		"A", ErrComplete,
 	).Case(
 		rx.Pipe1(
-			rx.Throw[rx.Observable[string]](ErrTest),
+			func(_ context.Context, sink rx.Observer[rx.Observable[string]]) {
+				sink.Next(rx.Pipe1(rx.Just("A", "B", "C", "D"), AddLatencyToValues[string](0, 2)))
+				time.Sleep(Step(5))
+				sink.Error(ErrTest)
+			},
 			rx.SwitchAll[rx.Observable[string]](),
 		),
-		ErrTest,
+		"A", "B", "C", ErrTest,
+	).Case(
+		rx.Pipe1(
+			func(_ context.Context, sink rx.Observer[rx.Observable[string]]) {
+				sink.Next(rx.Pipe1(rx.Just("A", "B", "C", "D"), AddLatencyToValues[string](0, 2)))
+				time.Sleep(Step(5))
+				sink.Next(rx.Throw[string](ErrTest))
+				time.Sleep(Step(5))
+				sink.Next(rx.Pipe1(rx.Just("E", "F", "G", "H"), AddLatencyToValues[string](0, 3)))
+				sink.Complete()
+			},
+			rx.SwitchAll[rx.Observable[string]](),
+		),
+		"A", "B", "C", ErrTest,
 	)
 }

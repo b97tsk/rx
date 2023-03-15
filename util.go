@@ -5,6 +5,14 @@ import (
 	"sync/atomic"
 )
 
+// sentinel provides a distinct value for atomic operations.
+var sentinel = func() context.Context {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	return ctx
+}()
+
 type observables[T any] []Observable[T]
 
 func identity[T any](v T) T { return v }
