@@ -2,9 +2,9 @@ package rx
 
 import (
 	"context"
+	"sync"
+	"sync/atomic"
 	"time"
-
-	"github.com/b97tsk/rx/internal/critical"
 )
 
 // Audit ignores source values for a duration determined by another Observable,
@@ -48,86 +48,98 @@ type auditObservable[T, U any] struct {
 }
 
 func (obs auditObservable[T, U]) Subscribe(ctx context.Context, sink Observer[T]) {
-	ctx, cancel := context.WithCancel(ctx)
+	source, cancel := context.WithCancel(ctx)
 
 	sink = sink.OnLastNotification(cancel)
 
 	var x struct {
-		critical.Section
-		LatestValue T
-		Scheduled   bool
-		Complete    bool
+		Context  atomic.Value
+		Complete atomic.Bool
+		Latest   struct {
+			sync.Mutex
+			Value T
+		}
+		Worker struct {
+			sync.WaitGroup
+			Cancel context.CancelFunc
+		}
 	}
 
-	obs.Source.Subscribe(ctx, func(n Notification[T]) {
-		if critical.Enter(&x.Section) {
+	x.Context.Store(source)
+
+	startWorker := func(v T) {
+		worker, cancel := context.WithCancel(source)
+		x.Context.Store(worker)
+
+		x.Worker.Cancel = cancel
+
+		x.Worker.Add(1)
+
+		var noop bool
+
+		obs.DurationSelector(v).Subscribe(worker, func(n Notification[U]) {
+			if noop {
+				return
+			}
+
+			noop = true
+
+			cancel()
+
 			switch {
 			case n.HasValue:
-				shouldSchedule := !x.Scheduled
+				x.Latest.Lock()
+				value := x.Latest.Value
+				x.Latest.Unlock()
 
-				x.LatestValue = n.Value
-				x.Scheduled = true
+				sink.Next(value)
 
-				critical.Leave(&x.Section)
-
-				if shouldSchedule {
-					ctx, cancel := context.WithCancel(ctx)
-
-					var noop bool
-
-					obs.DurationSelector(n.Value).Subscribe(ctx, func(n Notification[U]) {
-						if noop {
-							return
-						}
-
-						noop = true
-
-						cancel()
-
-						if critical.Enter(&x.Section) {
-							x.Scheduled = false
-
-							switch {
-							case n.HasValue:
-								sink.Next(x.LatestValue)
-
-								if x.Complete {
-									sink.Complete()
-								}
-
-								critical.Leave(&x.Section)
-
-							case n.HasError:
-								critical.Close(&x.Section)
-
-								sink.Error(n.Error)
-
-							default:
-								if x.Complete {
-									sink.Complete()
-								}
-
-								critical.Leave(&x.Section)
-							}
-						}
-					})
+				if x.Context.CompareAndSwap(worker, source) && x.Complete.Load() && x.Context.CompareAndSwap(source, sentinel) {
+					sink.Complete()
 				}
 
 			case n.HasError:
-				critical.Close(&x.Section)
-
-				sink(n)
-
-			default:
-				x.Complete = true
-
-				if x.Scheduled {
-					critical.Leave(&x.Section)
-					break
+				if x.Context.CompareAndSwap(worker, sentinel) {
+					sink.Error(n.Error)
 				}
 
-				critical.Close(&x.Section)
+			default:
+				if x.Context.CompareAndSwap(worker, source) && x.Complete.Load() && x.Context.CompareAndSwap(source, sentinel) {
+					sink.Complete()
+				}
+			}
 
+			x.Worker.Done()
+		})
+	}
+
+	obs.Source.Subscribe(source, func(n Notification[T]) {
+		switch {
+		case n.HasValue:
+			x.Latest.Lock()
+			x.Latest.Value = n.Value
+			x.Latest.Unlock()
+
+			if x.Context.Load() == source {
+				startWorker(n.Value)
+			}
+
+		case n.HasError:
+			ctx := x.Context.Swap(source)
+
+			if x.Worker.Cancel != nil {
+				x.Worker.Cancel()
+				x.Worker.Wait()
+			}
+
+			if x.Context.Swap(sentinel) != sentinel && ctx != sentinel {
+				sink(n)
+			}
+
+		default:
+			x.Complete.Store(true)
+
+			if x.Context.CompareAndSwap(source, sentinel) {
 				sink(n)
 			}
 		}

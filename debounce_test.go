@@ -1,6 +1,7 @@
 package rx_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -45,9 +46,15 @@ func TestDebounce(t *testing.T) {
 		),
 		"C", ErrComplete,
 	).Case(
-		rx.Pipe2(
-			rx.Just("A", "B", "C"),
-			AddLatencyToValues[string](1, 3),
+		rx.Pipe1(
+			func(_ context.Context, sink rx.Observer[string]) {
+				sink.Next("A")
+				time.Sleep(Step(1))
+				sink.Next("B")
+				time.Sleep(Step(1))
+				sink.Next("C")
+				sink.Complete()
+			},
 			rx.Debounce(
 				func(string) rx.Observable[int] {
 					return rx.Throw[int](ErrTest)
