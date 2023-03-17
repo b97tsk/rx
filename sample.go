@@ -2,9 +2,9 @@ package rx
 
 import (
 	"context"
+	"sync"
+	"sync/atomic"
 	"time"
-
-	"github.com/b97tsk/rx/internal/critical"
 )
 
 // SampleTime emits the most recently emitted value from the source Observalbe
@@ -29,63 +29,84 @@ type sampleObservable[T, U any] struct {
 }
 
 func (obs sampleObservable[T, U]) Subscribe(ctx context.Context, sink Observer[T]) {
-	ctx, cancel := context.WithCancel(ctx)
+	source, cancel := context.WithCancel(ctx)
 
 	sink = sink.OnLastNotification(cancel)
 
 	var x struct {
-		critical.Section
-		Latest struct {
+		Context atomic.Value
+		Latest  struct {
+			sync.Mutex
 			Value    T
-			HasValue bool
+			HasValue atomic.Bool
+		}
+		Worker struct {
+			sync.WaitGroup
+			Cancel context.CancelFunc
 		}
 	}
 
-	obs.Notifier.Subscribe(ctx, func(n Notification[U]) {
-		if critical.Enter(&x.Section) {
+	{
+		worker, cancel := context.WithCancel(source)
+		x.Context.Store(worker)
+
+		x.Worker.Cancel = cancel
+
+		x.Worker.Add(1)
+
+		obs.Notifier.Subscribe(worker, func(n Notification[U]) {
 			switch {
 			case n.HasValue:
-				if x.Latest.HasValue {
-					sink.Next(x.Latest.Value)
-					x.Latest.HasValue = false
+				if x.Latest.HasValue.Load() {
+					x.Latest.Lock()
+					value := x.Latest.Value
+					x.Latest.HasValue.Store(false)
+					x.Latest.Unlock()
+					sink.Next(value)
 				}
 
-				critical.Leave(&x.Section)
+				return
 
 			case n.HasError:
-				critical.Close(&x.Section)
-
-				sink.Error(n.Error)
+				if x.Context.CompareAndSwap(worker, sentinel) {
+					sink.Error(n.Error)
+				}
 
 			default:
-				critical.Leave(&x.Section)
+				break
 			}
-		}
-	})
 
-	if err := getErr(ctx); err != nil {
-		if critical.Enter(&x.Section) {
-			critical.Close(&x.Section)
-			sink.Error(err)
-		}
+			cancel()
+			x.Worker.Done()
+		})
+	}
 
+	finish := func(n Notification[T]) {
+		ctx := x.Context.Swap(source)
+
+		x.Worker.Cancel()
+		x.Worker.Wait()
+
+		if x.Context.Swap(sentinel) != sentinel && ctx != sentinel {
+			sink(n)
+		}
+	}
+
+	if err := getErr(source); err != nil {
+		finish(Error[T](err))
 		return
 	}
 
-	obs.Source.Subscribe(ctx, func(n Notification[T]) {
-		if critical.Enter(&x.Section) {
-			switch {
-			case n.HasValue:
-				x.Latest.Value = n.Value
-				x.Latest.HasValue = true
+	obs.Source.Subscribe(source, func(n Notification[T]) {
+		switch {
+		case n.HasValue:
+			x.Latest.Lock()
+			x.Latest.Value = n.Value
+			x.Latest.HasValue.Store(true)
+			x.Latest.Unlock()
 
-				critical.Leave(&x.Section)
-
-			default:
-				critical.Close(&x.Section)
-
-				sink(n)
-			}
+		default:
+			finish(n)
 		}
 	})
 }

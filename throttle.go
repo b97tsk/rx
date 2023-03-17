@@ -2,10 +2,9 @@ package rx
 
 import (
 	"context"
+	"sync"
+	"sync/atomic"
 	"time"
-
-	"github.com/b97tsk/rx/internal/critical"
-	"github.com/b97tsk/rx/internal/waitgroup"
 )
 
 // Throttle emits a value from the source Observable, then ignores
@@ -87,114 +86,113 @@ type throttleObservable[T, U any] struct {
 }
 
 func (obs throttleObservable[T, U]) Subscribe(ctx context.Context, sink Observer[T]) {
-	ctx, cancel := context.WithCancel(ctx)
+	source, cancel := context.WithCancel(ctx)
 
 	sink = sink.OnLastNotification(cancel)
 
 	var x struct {
-		critical.Section
+		Context  atomic.Value
+		Complete atomic.Bool
 		Trailing struct {
+			sync.Mutex
 			Value    T
-			HasValue bool
+			HasValue atomic.Bool
 		}
-		Throttling bool
-		Complete   bool
+		Worker struct {
+			sync.WaitGroup
+			Cancel context.CancelFunc
+		}
 	}
+
+	x.Context.Store(source)
 
 	var doThrottle func(T)
 
-	ctxHoisted := waitgroup.Hoist(ctx)
-
 	doThrottle = func(v T) {
-		x.Throttling = true
+		worker, cancel := context.WithCancel(source)
+		x.Context.Store(worker)
 
-		ctx, cancel := context.WithCancel(ctx)
+		x.Worker.Cancel = cancel
+
+		x.Worker.Add(1)
 
 		var noop bool
 
-		obs1 := obs.DurationSelector(v)
+		obs.DurationSelector(v).Subscribe(worker, func(n Notification[U]) {
+			if noop {
+				return
+			}
 
-		Go(ctxHoisted, func() {
-			obs1.Subscribe(ctx, func(n Notification[U]) {
-				if noop {
-					return
-				}
+			noop = true
 
-				noop = true
+			cancel()
 
-				cancel()
+			switch {
+			case n.HasValue:
+				if obs.Trailing && x.Trailing.HasValue.Load() {
+					x.Trailing.Lock()
+					value := x.Trailing.Value
+					x.Trailing.HasValue.Store(false)
+					x.Trailing.Unlock()
+					sink.Next(value)
 
-				if critical.Enter(&x.Section) {
-					x.Throttling = false
-
-					switch {
-					case n.HasValue:
-						if obs.Trailing && x.Trailing.HasValue {
-							sink.Next(x.Trailing.Value)
-							x.Trailing.HasValue = false
-
-							if !x.Complete {
-								doThrottle(x.Trailing.Value)
-							}
-						}
-
-						if x.Complete {
-							sink.Complete()
-						}
-
-						critical.Leave(&x.Section)
-
-					case n.HasError:
-						critical.Close(&x.Section)
-
-						sink.Error(n.Error)
-
-					default:
-						if x.Complete {
-							sink.Complete()
-						}
-
-						critical.Leave(&x.Section)
+					if !x.Complete.Load() {
+						doThrottle(value)
 					}
 				}
-			})
+
+				if x.Context.CompareAndSwap(worker, source) && x.Complete.Load() && x.Context.CompareAndSwap(source, sentinel) {
+					sink.Complete()
+				}
+
+			case n.HasError:
+				if x.Context.CompareAndSwap(worker, sentinel) {
+					sink.Error(n.Error)
+				}
+
+			default:
+				if x.Context.CompareAndSwap(worker, source) && x.Complete.Load() && x.Context.CompareAndSwap(source, sentinel) {
+					sink.Complete()
+				}
+			}
+
+			x.Worker.Done()
 		})
 	}
 
-	obs.Source.Subscribe(ctx, func(n Notification[T]) {
-		if critical.Enter(&x.Section) {
-			switch {
-			case n.HasValue:
-				x.Trailing.Value = n.Value
-				x.Trailing.HasValue = true
+	obs.Source.Subscribe(source, func(n Notification[T]) {
+		switch {
+		case n.HasValue:
+			x.Trailing.Lock()
+			x.Trailing.Value = n.Value
+			x.Trailing.HasValue.Store(true)
+			x.Trailing.Unlock()
 
-				if !x.Throttling {
-					doThrottle(n.Value)
-
-					if obs.Leading {
-						x.Trailing.HasValue = false
-
-						sink(n)
-					}
+			if x.Context.Load() == source {
+				if obs.Leading {
+					x.Trailing.HasValue.Store(false)
+					sink(n)
 				}
 
-				critical.Leave(&x.Section)
+				doThrottle(n.Value)
+			}
 
-			case n.HasError:
-				critical.Close(&x.Section)
+		case n.HasError:
+			ctx := x.Context.Swap(source)
 
+			if x.Worker.Cancel != nil {
+				x.Worker.Cancel()
+				x.Worker.Wait()
+			}
+
+			if x.Context.Swap(sentinel) != sentinel && ctx != sentinel {
 				sink(n)
+			}
 
-			default:
-				x.Complete = true
+		default:
+			x.Complete.Store(true)
 
-				if obs.Trailing && x.Trailing.HasValue && x.Throttling {
-					critical.Leave(&x.Section)
-					break
-				}
-
-				critical.Close(&x.Section)
-
+			if x.Context.CompareAndSwap(source, sentinel) {
 				sink(n)
 			}
 		}
