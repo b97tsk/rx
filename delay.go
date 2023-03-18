@@ -2,9 +2,10 @@ package rx
 
 import (
 	"context"
+	"sync"
+	"sync/atomic"
 	"time"
 
-	"github.com/b97tsk/rx/internal/critical"
 	"github.com/b97tsk/rx/internal/queue"
 )
 
@@ -24,99 +25,140 @@ type delayObservable[T any] struct {
 }
 
 func (obs delayObservable[T]) Subscribe(ctx context.Context, sink Observer[T]) {
-	ctx, cancel := context.WithCancel(ctx)
+	source, cancel := context.WithCancel(ctx)
 
 	sink = sink.OnLastNotification(cancel)
 
 	var x struct {
-		critical.Section
-		Queue     queue.Queue[Pair[time.Time, T]]
-		Scheduled bool
-		Complete  bool
-	}
-
-	var onTimer Observer[time.Time]
-
-	doSchedule := func(timeout time.Duration) {
-		Timer(timeout).Subscribe(ctx, onTimer)
-	}
-
-	onTimer = func(n Notification[time.Time]) {
-		if !n.HasValue && critical.Enter(&x.Section) {
-			if n.HasError {
-				critical.Close(&x.Section)
-
-				sink.Error(n.Error)
-
-				return
-			}
-
-			x.Scheduled = false
-
-			done := ctx.Done()
-
-			for x.Queue.Len() > 0 {
-				if err := getErrWithDoneChan(ctx, done); err != nil {
-					critical.Close(&x.Section)
-
-					sink.Error(err)
-
-					return
-				}
-
-				n := x.Queue.Front()
-
-				if d := time.Until(n.Key); d > 0 {
-					x.Scheduled = true
-
-					doSchedule(d)
-
-					break
-				}
-
-				x.Queue.Pop()
-
-				sink.Next(n.Value)
-			}
-
-			if x.Complete && x.Queue.Len() == 0 {
-				sink.Complete()
-			}
-
-			critical.Leave(&x.Section)
+		Context  atomic.Value
+		Complete atomic.Bool
+		Queue    struct {
+			sync.Mutex
+			queue.Queue[Pair[time.Time, T]]
+		}
+		Worker struct {
+			sync.WaitGroup
+			Cancel context.CancelFunc
 		}
 	}
 
-	obs.Source.Subscribe(ctx, func(n Notification[T]) {
-		if critical.Enter(&x.Section) {
+	x.Context.Store(source)
+
+	var startWorker func(time.Duration)
+
+	startWorker = func(timeout time.Duration) {
+		worker, cancel := context.WithCancel(source)
+		x.Context.Store(worker)
+
+		x.Worker.Cancel = cancel
+
+		x.Worker.Add(1)
+
+		Timer(timeout).Subscribe(worker, func(n Notification[time.Time]) {
 			switch {
 			case n.HasValue:
-				x.Queue.Push(NewPair(time.Now().Add(obs.Duration), n.Value))
+				x.Queue.Lock()
 
-				if !x.Scheduled {
-					x.Scheduled = true
-					doSchedule(obs.Duration)
+				done := worker.Done()
+
+				for {
+					if err := getErrWithDoneChan(worker, done); err != nil {
+						swapped := x.Context.CompareAndSwap(worker, sentinel)
+
+						x.Queue.Init()
+						x.Queue.Unlock()
+
+						if swapped {
+							sink.Error(err)
+						}
+
+						return
+					}
+
+					n := x.Queue.Front()
+
+					if d := time.Until(n.Key); d > 0 {
+						x.Queue.Unlock()
+
+						startWorker(d)
+
+						return
+					}
+
+					x.Queue.Pop()
+
+					x.Queue.Unlock()
+					sink.Next(n.Value)
+					x.Queue.Lock()
+
+					if x.Queue.Len() == 0 {
+						swapped := x.Context.CompareAndSwap(worker, source)
+
+						x.Queue.Unlock()
+
+						if swapped && x.Complete.Load() && x.Context.CompareAndSwap(source, sentinel) {
+							sink.Complete()
+						}
+
+						return
+					}
 				}
-
-				critical.Leave(&x.Section)
 
 			case n.HasError:
+				x.Queue.Lock()
+
+				swapped := x.Context.CompareAndSwap(worker, sentinel)
+
 				x.Queue.Init()
+				x.Queue.Unlock()
 
-				critical.Close(&x.Section)
-
-				sink(n)
-
-			default:
-				x.Complete = true
-
-				if x.Queue.Len() > 0 {
-					critical.Leave(&x.Section)
-					break
+				if swapped {
+					sink.Error(n.Error)
 				}
 
-				critical.Close(&x.Section)
+			default:
+				break
+			}
 
+			cancel()
+			x.Worker.Done()
+		})
+	}
+
+	obs.Source.Subscribe(source, func(n Notification[T]) {
+		switch {
+		case n.HasValue:
+			x.Queue.Lock()
+
+			ctx := x.Context.Load()
+			if ctx != sentinel {
+				x.Queue.Push(NewPair(time.Now().Add(obs.Duration), n.Value))
+			}
+
+			x.Queue.Unlock()
+
+			if ctx == source {
+				startWorker(obs.Duration)
+			}
+
+		case n.HasError:
+			ctx := x.Context.Swap(source)
+
+			if x.Worker.Cancel != nil {
+				x.Worker.Cancel()
+				x.Worker.Wait()
+			}
+
+			if x.Context.Swap(sentinel) != sentinel && ctx != sentinel {
+				sink(n)
+			}
+
+			x.Queue.Init()
+
+		default:
+			x.Complete.Store(true)
+
+			if x.Context.CompareAndSwap(source, sentinel) {
 				sink(n)
 			}
 		}
