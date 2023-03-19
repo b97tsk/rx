@@ -2,8 +2,8 @@ package rx
 
 import (
 	"context"
+	"sync/atomic"
 
-	"github.com/b97tsk/rx/internal/critical"
 	"github.com/b97tsk/rx/internal/waitgroup"
 )
 
@@ -34,16 +34,16 @@ func (some observables[T]) Race(ctx context.Context, sink Observer[T]) {
 		subs[i] = NewPair(context.WithCancel(ctx))
 	}
 
-	var race critical.Section
+	var race atomic.Value
 
 	ctxHoisted := waitgroup.Hoist(ctx)
 
 	for index, obs := range some {
 		index, obs := index, obs
 
-		var won, lost bool
-
 		Go(ctxHoisted, func() {
+			var won, lost bool
+
 			obs.Subscribe(subs[index].Left(), func(n Notification[T]) {
 				switch {
 				case won:
@@ -53,14 +53,12 @@ func (some observables[T]) Race(ctx context.Context, sink Observer[T]) {
 					return
 				}
 
-				if critical.Enter(&race) {
+				if race.CompareAndSwap(nil, subs[index].Left()) {
 					for i := range subs {
 						if i != index {
 							subs[i].Right()()
 						}
 					}
-
-					critical.Close(&race)
 
 					won = true
 
