@@ -1,9 +1,5 @@
 package rx
 
-import (
-	"github.com/b97tsk/rx/internal/critical"
-)
-
 // An Observer is a consumer of notifications delivered by an [Observable].
 type Observer[T any] func(n Notification[T])
 
@@ -50,16 +46,17 @@ func (sink Observer[T]) OnLastNotification(f func()) Observer[T] {
 // WithMutex creates an Observer that passes incoming emissions to sink
 // in a mutually exclusive way.
 func (sink Observer[T]) WithMutex() Observer[T] {
-	var lock critical.Section
+	c := make(chan Observer[T], 1)
+	c <- sink
 
 	return func(n Notification[T]) {
-		if critical.Enter(&lock) {
+		if sink, ok := <-c; ok {
 			switch {
 			case n.HasValue:
 				sink(n)
-				critical.Leave(&lock)
+				c <- sink
 			default:
-				critical.Close(&lock)
+				close(c)
 				sink(n)
 			}
 		}
