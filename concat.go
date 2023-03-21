@@ -3,6 +3,7 @@ package rx
 import (
 	"context"
 	"sync"
+	"sync/atomic"
 
 	"github.com/b97tsk/rx/internal/queue"
 )
@@ -98,88 +99,124 @@ type concatMapObservable[T, R any] struct {
 }
 
 func (obs concatMapObservable[T, R]) Subscribe(ctx context.Context, sink Observer[R]) {
-	ctx, cancel := context.WithCancel(ctx)
+	source, cancel := context.WithCancel(ctx)
 
-	sink = sink.OnLastNotification(cancel).WithMutex()
+	sink = sink.OnLastNotification(cancel)
 
 	var x struct {
-		sync.Mutex
-		Queue    queue.Queue[T]
-		Working  bool
-		Complete bool
+		Context  atomic.Value
+		Complete atomic.Bool
+		Queue    struct {
+			sync.Mutex
+			queue.Queue[T]
+		}
+		Worker struct {
+			sync.WaitGroup
+			Cancel context.CancelFunc
+		}
 	}
 
-	var observer Observer[R]
+	x.Context.Store(source)
 
-	subscribeToNext := resistReentry(func() {
-		x.Lock()
+	var startWorker func()
 
-		if x.Queue.Len() == 0 {
-			x.Working = false
-
-			if x.Complete {
-				sink.Complete()
-			}
-
-			x.Unlock()
-
-			return
-		}
-
+	startWorker = resistReentry(func() {
 		v := x.Queue.Pop()
 
-		x.Unlock()
+		x.Queue.Unlock()
 
-		obs.Project(v).Subscribe(ctx, observer)
+		worker, cancel := context.WithCancel(source)
+		x.Context.Store(worker)
+
+		x.Worker.Cancel = cancel
+
+		x.Worker.Add(1)
+
+		obs.Project(v).Subscribe(worker, func(n Notification[R]) {
+			switch {
+			case n.HasValue:
+				sink(n)
+				return
+
+			default:
+				x.Queue.Lock()
+
+				if !n.HasError {
+					if err := getErr(worker); err != nil {
+						n = Error[R](err)
+					}
+				}
+
+				if n.HasError {
+					swapped := x.Context.CompareAndSwap(worker, sentinel)
+
+					x.Queue.Init()
+					x.Queue.Unlock()
+
+					if swapped {
+						sink(n)
+					}
+
+					break
+				}
+
+				if x.Queue.Len() == 0 {
+					swapped := x.Context.CompareAndSwap(worker, source)
+
+					x.Queue.Unlock()
+
+					if swapped && x.Complete.Load() && x.Context.CompareAndSwap(source, sentinel) {
+						sink.Complete()
+					}
+
+					break
+				}
+
+				startWorker()
+			}
+
+			cancel()
+			x.Worker.Done()
+		})
 	})
 
-	observer = func(n Notification[R]) {
-		if n.HasValue || n.HasError {
-			sink(n)
-			return
-		}
-
-		if err := getErr(ctx); err != nil {
-			sink.Error(err)
-			return
-		}
-
-		subscribeToNext()
-	}
-
-	obs.Source.Subscribe(ctx, func(n Notification[T]) {
+	obs.Source.Subscribe(source, func(n Notification[T]) {
 		switch {
 		case n.HasValue:
-			x.Lock()
+			x.Queue.Lock()
 
-			x.Queue.Push(n.Value)
-
-			var subscribe bool
-
-			if !x.Working {
-				x.Working = true
-				subscribe = true
+			ctx := x.Context.Load()
+			if ctx != sentinel {
+				x.Queue.Push(n.Value)
 			}
 
-			x.Unlock()
-
-			if subscribe {
-				subscribeToNext()
+			if ctx == source {
+				startWorker()
+				return
 			}
+
+			x.Queue.Unlock()
 
 		case n.HasError:
-			sink.Error(n.Error)
+			ctx := x.Context.Swap(source)
 
-		default:
-			x.Lock()
-
-			x.Complete = true
-
-			if !x.Working {
-				sink.Complete()
+			if x.Worker.Cancel != nil {
+				x.Worker.Cancel()
+				x.Worker.Wait()
 			}
 
-			x.Unlock()
+			if x.Context.Swap(sentinel) != sentinel && ctx != sentinel {
+				sink.Error(n.Error)
+			}
+
+			x.Queue.Init()
+
+		default:
+			x.Complete.Store(true)
+
+			if x.Context.CompareAndSwap(source, sentinel) {
+				sink.Complete()
+			}
 		}
 	})
 }
