@@ -2,6 +2,8 @@ package rx
 
 import (
 	"context"
+	"sync"
+	"sync/atomic"
 )
 
 // TakeUntil mirrors the source Observable until a second Observable emits
@@ -20,23 +22,93 @@ type takeUntilObservable[T, U any] struct {
 }
 
 func (obs takeUntilObservable[T, U]) Subscribe(ctx context.Context, sink Observer[T]) {
-	ctx, cancel := context.WithCancel(ctx)
+	source, cancel := context.WithCancel(ctx)
 
-	sink = sink.OnLastNotification(cancel).WithMutex()
+	sink = sink.OnLastNotification(cancel)
 
-	obs.Notifier.Subscribe(ctx, func(n Notification[U]) {
-		switch {
-		case n.HasValue:
-			sink.Complete()
-		case n.HasError:
-			sink.Error(n.Error)
+	var x struct {
+		Context atomic.Value
+		Source  struct {
+			sync.Mutex
+			sync.WaitGroup
+			Cancel context.CancelFunc
 		}
-	})
+		Worker struct {
+			sync.WaitGroup
+			Cancel context.CancelFunc
+		}
+	}
 
-	if err := getErr(ctx); err != nil {
-		sink.Error(err)
+	x.Source.Cancel = cancel
+
+	{
+		worker, cancel := context.WithCancel(source)
+		x.Context.Store(worker)
+
+		x.Worker.Cancel = cancel
+
+		x.Worker.Add(1)
+
+		var noop bool
+
+		obs.Notifier.Subscribe(worker, func(n Notification[U]) {
+			if noop {
+				return
+			}
+
+			noop = true
+
+			cancel()
+
+			if (n.HasValue || n.HasError) && x.Context.CompareAndSwap(worker, sentinel) {
+				x.Worker.Done()
+
+				x.Source.Cancel()
+				x.Source.Lock()
+				x.Source.Wait()
+				x.Source.Unlock()
+
+				if n.HasValue {
+					sink.Complete()
+				} else {
+					sink.Error(n.Error)
+				}
+
+				return
+			}
+
+			x.Worker.Done()
+		})
+	}
+
+	x.Source.Lock()
+	x.Source.Add(1)
+	x.Source.Unlock()
+
+	finish := func(n Notification[T]) {
+		ctx := x.Context.Swap(source)
+
+		x.Worker.Cancel()
+		x.Worker.Wait()
+
+		if x.Context.Swap(sentinel) != sentinel && ctx != sentinel {
+			sink(n)
+		}
+
+		x.Source.Done()
+	}
+
+	if err := getErr(source); err != nil {
+		finish(Error[T](err))
 		return
 	}
 
-	obs.Source.Subscribe(ctx, sink)
+	obs.Source.Subscribe(source, func(n Notification[T]) {
+		switch {
+		case n.HasValue:
+			sink(n)
+		default:
+			finish(n)
+		}
+	})
 }

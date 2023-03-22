@@ -2,6 +2,7 @@ package rx
 
 import (
 	"context"
+	"sync"
 	"sync/atomic"
 )
 
@@ -21,20 +22,29 @@ type skipUntilObservable[T, U any] struct {
 }
 
 func (obs skipUntilObservable[T, U]) Subscribe(ctx context.Context, sink Observer[T]) {
-	ctx, cancel := context.WithCancel(ctx)
+	source, cancel := context.WithCancel(ctx)
 
-	originalSink := sink
+	sink = sink.OnLastNotification(cancel)
 
-	sink = sink.OnLastNotification(cancel).WithMutex()
-
-	var noSkipping atomic.Bool
+	var x struct {
+		Context atomic.Value
+		Worker  struct {
+			sync.WaitGroup
+			Cancel context.CancelFunc
+		}
+	}
 
 	{
-		ctx, cancel := context.WithCancel(ctx)
+		worker, cancel := context.WithCancel(source)
+		x.Context.Store(worker)
+
+		x.Worker.Cancel = cancel
+
+		x.Worker.Add(1)
 
 		var noop bool
 
-		obs.Notifier.Subscribe(ctx, func(n Notification[U]) {
+		obs.Notifier.Subscribe(worker, func(n Notification[U]) {
 			if noop {
 				return
 			}
@@ -45,37 +55,51 @@ func (obs skipUntilObservable[T, U]) Subscribe(ctx context.Context, sink Observe
 
 			switch {
 			case n.HasValue:
-				noSkipping.Store(true)
+				x.Context.Store(source)
+
 			case n.HasError:
-				sink.Error(n.Error)
+				if x.Context.CompareAndSwap(worker, sentinel) {
+					sink.Error(n.Error)
+				}
+
+			default:
+				break
 			}
+
+			x.Worker.Done()
 		})
 	}
 
-	if err := getErr(ctx); err != nil {
-		sink.Error(err)
-		return
-	}
+	finish := func(n Notification[T]) {
+		ctx := x.Context.Swap(source)
 
-	if noSkipping.Load() {
-		obs.Source.Subscribe(ctx, originalSink)
-		return
-	}
+		x.Worker.Cancel()
+		x.Worker.Wait()
 
-	var taking bool
-
-	obs.Source.Subscribe(ctx, func(n Notification[T]) {
-		switch {
-		case taking:
-			originalSink(n)
-		case n.HasValue:
-			if noSkipping.Load() {
-				taking = true
-
-				originalSink(n)
-			}
-		default:
+		if x.Context.Swap(sentinel) != sentinel && ctx != sentinel {
 			sink(n)
+		}
+	}
+
+	if err := getErr(source); err != nil {
+		finish(Error[T](err))
+		return
+	}
+
+	if x.Context.Load() == source {
+		obs.Source.Subscribe(source, sink)
+		return
+	}
+
+	obs.Source.Subscribe(source, func(n Notification[T]) {
+		switch {
+		case n.HasValue:
+			if x.Context.Load() == source {
+				sink(n)
+			}
+
+		default:
+			finish(n)
 		}
 	})
 }
