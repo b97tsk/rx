@@ -136,70 +136,92 @@ func (obs mergeMapObservable[T, R]) Subscribe(ctx context.Context, sink Observer
 	sink = sink.OnLastNotification(cancel).WithMutex()
 
 	var x struct {
-		sync.Mutex
-		Queue    queue.Queue[T]
-		Workers  int
-		Complete bool
+		Workers  atomic.Uint32
+		Complete atomic.Bool
+		Queue    struct {
+			sync.Mutex
+			queue.Queue[T]
+			Sealed bool
+		}
 	}
 
-	var observer Observer[R]
+	var startWorker func()
 
 	ctxHoisted := waitgroup.Hoist(ctx)
 
-	subscribeToNext := func() {
+	startWorker = func() {
 		obs1 := obs.Project(x.Queue.Pop())
 
-		Go(ctxHoisted, func() { obs1.Subscribe(ctx, observer) })
-	}
+		x.Queue.Unlock()
 
-	observer = func(n Notification[R]) {
-		if n.HasValue || n.HasError {
-			sink(n)
-			return
-		}
+		Go(ctxHoisted, func() {
+			obs1.Subscribe(ctx, func(n Notification[R]) {
+				if n.HasValue {
+					sink(n)
+					return
+				}
 
-		x.Lock()
-		defer x.Unlock()
+				x.Queue.Lock()
 
-		if x.Queue.Len() > 0 {
-			subscribeToNext()
-			return
-		}
+				if n.HasError {
+					x.Queue.Sealed = true
 
-		x.Workers--
+					x.Queue.Init()
+					x.Queue.Unlock()
 
-		if x.Complete && x.Workers == 0 {
-			sink(n)
-		}
+					sink(n)
+
+					return
+				}
+
+				if x.Queue.Len() == 0 {
+					workers := x.Workers.Add(^uint32(0))
+
+					x.Queue.Unlock()
+
+					if workers == 0 && x.Complete.Load() && x.Workers.Load() == 0 {
+						sink(n)
+					}
+
+					return
+				}
+
+				startWorker()
+			})
+		})
 	}
 
 	obs.Source.Subscribe(ctx, func(n Notification[T]) {
 		switch {
 		case n.HasValue:
-			x.Lock()
+			x.Queue.Lock()
+
+			if x.Queue.Sealed {
+				x.Queue.Unlock()
+				return
+			}
 
 			x.Queue.Push(n.Value)
 
-			if x.Workers != obs.Concurrency {
-				x.Workers++
-				subscribeToNext()
+			if x.Workers.Load() != uint32(obs.Concurrency) {
+				x.Workers.Add(1)
+
+				startWorker()
+
+				return
 			}
 
-			x.Unlock()
+			x.Queue.Unlock()
 
 		case n.HasError:
 			sink.Error(n.Error)
 
 		default:
-			x.Lock()
+			x.Complete.Store(true)
 
-			x.Complete = true
-
-			if x.Workers == 0 {
+			if x.Workers.Load() == 0 {
 				sink.Complete()
 			}
-
-			x.Unlock()
 		}
 	})
 }

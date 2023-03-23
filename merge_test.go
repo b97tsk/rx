@@ -1,6 +1,7 @@
 package rx_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -76,5 +77,20 @@ func TestMerge2(t *testing.T) {
 			rx.MergeAll[rx.Observable[string]]().AsOperator(),
 		),
 		ErrTest,
+	).Case(
+		rx.Pipe1(
+			func(_ context.Context, sink rx.Observer[rx.Observable[string]]) {
+				sink.Next(rx.Just("A", "B"))
+				time.Sleep(Step(1))
+				sink.Next(rx.Throw[string](ErrTest))
+				time.Sleep(Step(1))
+				sink.Next(rx.Just("C", "D"))
+				time.Sleep(Step(1))
+				sink.Next(rx.Just("E", "F"))
+				sink.Complete()
+			},
+			rx.MergeAll[rx.Observable[string]]().AsOperator(),
+		),
+		"A", "B", ErrTest,
 	)
 }
