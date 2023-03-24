@@ -38,8 +38,10 @@ func (some observables[T]) Concat(ctx context.Context, sink Observer[T]) {
 			return
 		}
 
-		if err := getErr(ctx); err != nil {
-			sink.Error(err)
+		select {
+		default:
+		case <-ctx.Done():
+			sink.Error(ctx.Err())
 			return
 		}
 
@@ -142,8 +144,10 @@ func (obs concatMapObservable[T, R]) Subscribe(ctx context.Context, sink Observe
 				x.Queue.Lock()
 
 				if !n.HasError {
-					if err := getErr(worker); err != nil {
-						n = Error[R](err)
+					select {
+					default:
+					case <-worker.Done():
+						n = Error[R](worker.Err())
 					}
 				}
 

@@ -86,7 +86,9 @@ func (obs *shareObservable[T]) Subscribe(ctx context.Context, sink Observer[T]) 
 
 	obs.subject.Subscribe(ctx, sink)
 
-	if getErr(ctx) != nil {
+	select {
+	default:
+	case <-ctx.Done():
 		return
 	}
 

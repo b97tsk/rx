@@ -13,8 +13,10 @@ func Range[T constraints.Integer](low, high T) Observable[T] {
 		done := ctx.Done()
 
 		for v := low; v < high; v++ {
-			if err := getErrWithDoneChan(ctx, done); err != nil {
-				sink.Error(err)
+			select {
+			default:
+			case <-done:
+				sink.Error(ctx.Err())
 				return
 			}
 
@@ -32,8 +34,10 @@ func Iota[T constraints.Integer](init T) Observable[T] {
 		done := ctx.Done()
 
 		for v := init; ; v++ {
-			if err := getErrWithDoneChan(ctx, done); err != nil {
-				sink.Error(err)
+			select {
+			default:
+			case <-done:
+				sink.Error(ctx.Err())
 				return
 			}
 

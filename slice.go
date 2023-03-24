@@ -11,8 +11,10 @@ func FromSlice[S ~[]T, T any](s S) Observable[T] {
 		done := ctx.Done()
 
 		for _, v := range s {
-			if err := getErrWithDoneChan(ctx, done); err != nil {
-				sink.Error(err)
+			select {
+			default:
+			case <-done:
+				sink.Error(ctx.Err())
 				return
 			}
 

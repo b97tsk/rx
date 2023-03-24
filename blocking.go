@@ -39,8 +39,10 @@ func (obs Observable[T]) BlockingFirst(ctx context.Context) (v T, err error) {
 
 	wg.Wait()
 
-	if err := getErr(ctx); err != nil {
-		return v, err
+	select {
+	default:
+	case <-ctx.Done():
+		return v, ctx.Err()
 	}
 
 	switch {
@@ -95,8 +97,10 @@ func (obs Observable[T]) BlockingLast(ctx context.Context) (v T, err error) {
 
 	wg.Wait()
 
-	if err := getErr(ctx); err != nil {
-		return v, err
+	select {
+	default:
+	case <-ctx.Done():
+		return v, ctx.Err()
 	}
 
 	switch {
@@ -168,8 +172,10 @@ func (obs Observable[T]) BlockingSingle(ctx context.Context) (v T, err error) {
 
 	wg.Wait()
 
-	if err := getErr(ctx); err != nil {
-		return v, err
+	select {
+	default:
+	case <-ctx.Done():
+		return v, ctx.Err()
 	}
 
 	switch {

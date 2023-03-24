@@ -22,8 +22,10 @@ func JustIfEmpty[T any](s ...T) Operator[T, T] {
 							done := ctx.Done()
 
 							for _, v := range s {
-								if err := getErrWithDoneChan(ctx, done); err != nil {
-									sink.Error(err)
+								select {
+								default:
+								case <-done:
+									sink.Error(ctx.Err())
 									return
 								}
 

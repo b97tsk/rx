@@ -81,8 +81,10 @@ func (obs skipUntilObservable[T, U]) Subscribe(ctx context.Context, sink Observe
 		}
 	}
 
-	if err := getErr(source); err != nil {
-		finish(Error[T](err))
+	select {
+	default:
+	case <-source.Done():
+		finish(Error[T](source.Err()))
 		return
 	}
 

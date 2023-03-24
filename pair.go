@@ -28,8 +28,10 @@ func FromMap[M ~map[K]V, K comparable, V any](m M) Observable[Pair[K, V]] {
 		done := ctx.Done()
 
 		for k, v := range m {
-			if err := getErrWithDoneChan(ctx, done); err != nil {
-				sink.Error(err)
+			select {
+			default:
+			case <-done:
+				sink.Error(ctx.Err())
 				return
 			}
 

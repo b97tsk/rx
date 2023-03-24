@@ -17,25 +17,6 @@ type observables[T any] []Observable[T]
 
 func identity[T any](v T) T { return v }
 
-// getErr returns ctx.Err().
-//
-// ctx.Err() is a bit slower than ctx.Done(), getErr avoids calling it
-// when possible.
-func getErr(ctx context.Context) error {
-	return getErrWithDoneChan(ctx, ctx.Done())
-}
-
-// getErrWithDoneChan returns ctx.Err() if done is closed; otherwise
-// it returns nil.
-func getErrWithDoneChan(ctx context.Context, done <-chan struct{}) error {
-	select {
-	case <-done:
-		return ctx.Err()
-	default:
-		return nil
-	}
-}
-
 // resistReentry returns a function that calls f in a non-recursive way
 // when the function returned is called recursively.
 func resistReentry(f func()) func() {

@@ -49,8 +49,10 @@ func (obs repeatObservable[T]) Subscribe(ctx context.Context, sink Observer[T]) 
 	done := ctx.Done()
 
 	subscribeToSource := resistReentry(func() {
-		if err := getErrWithDoneChan(ctx, done); err != nil {
-			sink.Error(err)
+		select {
+		default:
+		case <-done:
+			sink.Error(ctx.Err())
 			return
 		}
 

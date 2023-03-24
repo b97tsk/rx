@@ -62,14 +62,16 @@ func (obs delayObservable[T]) Subscribe(ctx context.Context, sink Observer[T]) {
 				done := worker.Done()
 
 				for {
-					if err := getErrWithDoneChan(worker, done); err != nil {
+					select {
+					default:
+					case <-done:
 						swapped := x.Context.CompareAndSwap(worker, sentinel)
 
 						x.Queue.Init()
 						x.Queue.Unlock()
 
 						if swapped {
-							sink.Error(err)
+							sink.Error(worker.Err())
 						}
 
 						return
