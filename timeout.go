@@ -57,7 +57,7 @@ type timeoutObservable[T any] struct {
 }
 
 func (obs timeoutObservable[T]) Subscribe(ctx context.Context, sink Observer[T]) {
-	childCtx, cancel := context.WithCancel(ctx)
+	source, cancel := context.WithCancel(ctx)
 
 	c := make(chan Notification[T])
 	noop := make(chan struct{})
@@ -100,5 +100,5 @@ func (obs timeoutObservable[T]) Subscribe(ctx context.Context, sink Observer[T])
 		}
 	})
 
-	obs.Source.Subscribe(childCtx, chanObserver(c, noop))
+	obs.Source.Subscribe(source, chanObserver(c, noop))
 }

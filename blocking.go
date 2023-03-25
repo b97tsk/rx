@@ -15,14 +15,14 @@ import (
 // The source Observable must honor the cancellation of ctx; otherwise,
 // BlockingFirst might still block even after ctx has been cancelled.
 func (obs Observable[T]) BlockingFirst(ctx context.Context) (v T, err error) {
-	childCtx, cancel := context.WithCancel(ctx)
-	childCtx, wg := waitgroup.Install(childCtx)
+	child, cancel := context.WithCancel(ctx)
+	child, wg := waitgroup.Install(child)
 
 	res := Error[T](ErrEmpty)
 
 	var noop bool
 
-	obs.Subscribe(childCtx, func(n Notification[T]) {
+	obs.Subscribe(child, func(n Notification[T]) {
 		if noop {
 			return
 		}
@@ -79,12 +79,12 @@ func (obs Observable[T]) BlockingFirstOrElse(ctx context.Context, def T) T {
 // The source Observable must honor the cancellation of ctx; otherwise,
 // BlockingLast might still block even after ctx has been cancelled.
 func (obs Observable[T]) BlockingLast(ctx context.Context) (v T, err error) {
-	childCtx, cancel := context.WithCancel(ctx)
-	childCtx, wg := waitgroup.Install(childCtx)
+	child, cancel := context.WithCancel(ctx)
+	child, wg := waitgroup.Install(child)
 
 	res := Error[T](ErrEmpty)
 
-	obs.Subscribe(childCtx, func(n Notification[T]) {
+	obs.Subscribe(child, func(n Notification[T]) {
 		if n.HasValue || n.HasError {
 			res = n
 		}
@@ -138,14 +138,14 @@ func (obs Observable[T]) BlockingLastOrElse(ctx context.Context, def T) T {
 // The source Observable must honor the cancellation of ctx; otherwise,
 // BlockingSingle might still block even after ctx has been cancelled.
 func (obs Observable[T]) BlockingSingle(ctx context.Context) (v T, err error) {
-	childCtx, cancel := context.WithCancel(ctx)
-	childCtx, wg := waitgroup.Install(childCtx)
+	child, cancel := context.WithCancel(ctx)
+	child, wg := waitgroup.Install(child)
 
 	res := Error[T](ErrEmpty)
 
 	var noop bool
 
-	obs.Subscribe(childCtx, func(n Notification[T]) {
+	obs.Subscribe(child, func(n Notification[T]) {
 		if noop {
 			return
 		}
@@ -197,9 +197,9 @@ func (obs Observable[T]) BlockingSingle(ctx context.Context) (v T, err error) {
 func (obs Observable[T]) BlockingSubscribe(ctx context.Context, sink Observer[T]) error {
 	var res Notification[T]
 
-	ctx, wg := waitgroup.Install(ctx)
+	child, wg := waitgroup.Install(ctx)
 
-	obs.Subscribe(ctx, func(n Notification[T]) {
+	obs.Subscribe(child, func(n Notification[T]) {
 		res = n
 
 		sink(n)
