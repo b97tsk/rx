@@ -11,14 +11,19 @@ import (
 // To cancel a subscription to an Observable, cancel the given [context.Context]
 // value.
 //
-// An Observable must honor the Observable protocol, that is,
-// no more emissions can pass to the given Observer after
-// a notification of error or completion has passed to it.
-// Violations of this protocol result in undefined behaviors.
+// An Observable must honor the Observable protocol:
+//   - An Observable can emit zero or more values of specific type;
+//   - An Observable must emit a notification of error or completion as
+//     a termination;
+//   - An Observable must not emit anything after a termination.
+//
+// Missing a termination may lead to memory leaks;
+// Emissions after a termination cause undefined behavior.
 //
 // An Observable must honor the cancellation of the given context.
 // When the cancellation of the given context is detected, an Observable must
-// emits a notification of error to the given Observer as soon as possible.
+// emit a notification of error (as a termination) to the given Observer
+// as soon as possible.
 //
 // Observables are expected to be sequential. If you want to do something
 // parallel, you will need to divide it (as an Observable) into pieces
