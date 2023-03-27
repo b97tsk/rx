@@ -168,7 +168,7 @@ func (m *multicastReplay[T]) subscribe(ctx context.Context, sink Observer[T]) {
 		var cancel context.CancelFunc
 
 		ctx, cancel = context.WithCancel(ctx)
-		sink = sink.OnLastNotification(cancel).WithMutex()
+		sink = sink.OnLastNotification(cancel).Serialized()
 
 		observer := sink
 		m.obs.Add(&observer)

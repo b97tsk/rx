@@ -43,9 +43,9 @@ func (sink Observer[T]) OnLastNotification(f func()) Observer[T] {
 	}
 }
 
-// WithMutex creates an Observer that passes incoming emissions to sink
+// Serialized creates an Observer that passes incoming emissions to sink
 // in a mutually exclusive way.
-func (sink Observer[T]) WithMutex() Observer[T] {
+func (sink Observer[T]) Serialized() Observer[T] {
 	c := make(chan Observer[T], 1)
 	c <- sink
 
