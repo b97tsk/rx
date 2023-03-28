@@ -32,16 +32,18 @@ func ConcatWith[T any](some ...Observable[T]) Operator[T, T] {
 func (some observables[T]) Concat(ctx context.Context, sink Observer[T]) {
 	var observer Observer[T]
 
+	done := ctx.Done()
+
 	subscribeToNext := resistReentry(func() {
-		if len(some) == 0 {
-			sink.Complete()
+		select {
+		default:
+		case <-done:
+			sink.Error(ctx.Err())
 			return
 		}
 
-		select {
-		default:
-		case <-ctx.Done():
-			sink.Error(ctx.Err())
+		if len(some) == 0 {
+			sink.Complete()
 			return
 		}
 
