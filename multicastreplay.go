@@ -59,32 +59,34 @@ func multicastReplayFinalizer[T any](m **multicastReplay[T]) {
 type multicastReplay[T any] struct {
 	multicast[T]
 	ReplayConfig
-	buffer   queue.Queue[Pair[time.Time, T]]
-	bufferRc *atomic.Uint32
+	b struct {
+		q  queue.Queue[Pair[time.Time, T]]
+		rc *atomic.Uint32
+	}
 }
 
 func (m *multicastReplay[T]) bufferForRead() (queue.Queue[Pair[time.Time, T]], *atomic.Uint32) {
-	rc := m.bufferRc
+	rc := m.b.rc
 
 	if rc == nil {
 		rc = new(atomic.Uint32)
-		m.bufferRc = rc
+		m.b.rc = rc
 	}
 
 	rc.Add(1)
 
-	return m.buffer, rc
+	return m.b.q, rc
 }
 
 func (m *multicastReplay[T]) bufferForWrite() *queue.Queue[Pair[time.Time, T]] {
-	rc := m.bufferRc
+	rc := m.b.rc
 
 	if rc != nil && rc.Load() != 0 {
-		m.buffer = m.buffer.Clone()
-		m.bufferRc = nil
+		m.b.q = m.b.q.Clone()
+		m.b.rc = nil
 	}
 
-	return &m.buffer
+	return &m.b.q
 }
 
 func (m *multicastReplay[T]) trimBuffer(b *queue.Queue[Pair[time.Time, T]]) {
@@ -149,7 +151,7 @@ func (m *multicastReplay[T]) emit(n Notification[T]) {
 		m.err = errComplete
 		if n.HasError {
 			m.err = errOrErrNil(n.Error)
-			m.buffer.Init()
+			m.b.q.Init()
 		}
 
 		m.mu.Unlock()
