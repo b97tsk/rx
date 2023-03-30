@@ -25,6 +25,10 @@ import (
 // emit a notification of error (as a termination) to the given Observer
 // as soon as possible.
 //
+// An Observable must use [Go] function rather than go statements to start
+// new goroutines; otherwise, your program might panic randomly when using
+// any of the Blocking methods.
+//
 // Observables are expected to be sequential. If you want to do something
 // parallel, you will need to divide it (as an Observable) into pieces
 // (Observables), process (subscribe to) them concurrently, and then later
