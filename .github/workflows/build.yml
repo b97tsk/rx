@@ -11,17 +11,19 @@ on:
     paths:
       - '**.go'
 jobs:
-  test:
+  build:
     name: Test with coverage
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Setup Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v4
         with:
-          go-version: '1.19'
+          go-version: '1.21'
       - name: Run tests
-        run: go test -race -coverprofile=coverage.txt -coverpkg=./... ./...
+        run: go test -race -coverprofile=profile.cov -coverpkg=./... ./...
       - name: Send coverage
-        uses: codecov/codecov-action@v3
+        uses: shogo82148/actions-goveralls@v1
+        with:
+          path-to-profile: profile.cov
