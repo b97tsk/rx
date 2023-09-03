@@ -6,7 +6,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/b97tsk/rx/internal/ctxwatch"
 	"github.com/b97tsk/rx/internal/queue"
 	"github.com/b97tsk/rx/internal/waitgroup"
 )
@@ -180,7 +179,7 @@ func (m *multicastReplay[T]) subscribe(ctx context.Context, sink Observer[T]) {
 			wg.Add(1)
 		}
 
-		ctxwatch.Add(ctx, func() {
+		context.AfterFunc(ctx, func() {
 			if wg != nil {
 				defer wg.Done()
 			}
