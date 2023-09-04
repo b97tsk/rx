@@ -49,11 +49,6 @@ func (op ShareOperator[T]) Apply(source Observable[T]) Observable[T] {
 	return obs.Subscribe
 }
 
-// AsOperator converts op to an Operator.
-//
-// Once type inference has improved in Go, this method will be removed.
-func (op ShareOperator[T]) AsOperator() Operator[T, T] { return op }
-
 type shareObservable[T any] struct {
 	mu         sync.Mutex
 	source     Observable[T]

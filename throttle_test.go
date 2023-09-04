@@ -19,7 +19,7 @@ func TestThrottle(t *testing.T) {
 				func(string) rx.Observable[time.Time] {
 					return rx.Timer(Step(3))
 				},
-			).AsOperator(),
+			),
 		),
 		"A", "C", "E", ErrComplete,
 	).Case(
@@ -30,7 +30,7 @@ func TestThrottle(t *testing.T) {
 				func(string) rx.Observable[int] {
 					return rx.Empty[int]()
 				},
-			).AsOperator(),
+			),
 		),
 		"A", "B", "C", "D", "E", ErrComplete,
 	).Case(
@@ -44,7 +44,7 @@ func TestThrottle(t *testing.T) {
 						DelaySubscription[int](5),
 					)
 				},
-			).WithLeading(false).WithTrailing(true).AsOperator(),
+			).WithLeading(false).WithTrailing(true),
 		),
 		ErrComplete,
 	).Case(
@@ -54,7 +54,7 @@ func TestThrottle(t *testing.T) {
 				func(string) rx.Observable[int] {
 					return rx.Throw[int](ErrTest)
 				},
-			).AsOperator(),
+			),
 		),
 		ErrTest,
 	).Case(
@@ -65,7 +65,7 @@ func TestThrottle(t *testing.T) {
 				func(string) rx.Observable[int] {
 					return rx.Throw[int](ErrTest)
 				},
-			).AsOperator(),
+			),
 		),
 		"A", ErrTest,
 	).Case(
@@ -76,7 +76,7 @@ func TestThrottle(t *testing.T) {
 				func(string) rx.Observable[time.Time] {
 					return rx.Timer(Step(9))
 				},
-			).WithLeading(false).WithTrailing(true).AsOperator(),
+			).WithLeading(false).WithTrailing(true),
 		),
 		"C", "E", ErrComplete,
 	).Case(
@@ -87,28 +87,28 @@ func TestThrottle(t *testing.T) {
 				func(string) rx.Observable[time.Time] {
 					return rx.Timer(Step(9))
 				},
-			).WithLeading(true).WithTrailing(true).AsOperator(),
+			).WithLeading(true).WithTrailing(true),
 		),
 		"A", "C", "E", ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B", "C", "D", "E"),
 			AddLatencyToValues[string](0, 2),
-			rx.ThrottleTime[string](Step(3)).AsOperator(),
+			rx.ThrottleTime[string](Step(3)),
 		),
 		"A", "C", "E", ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B", "C", "D", "E"),
 			AddLatencyToValues[string](0, 4),
-			rx.ThrottleTime[string](Step(9)).WithLeading(false).WithTrailing(true).AsOperator(),
+			rx.ThrottleTime[string](Step(9)).WithLeading(false).WithTrailing(true),
 		),
 		"C", "E", ErrComplete,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B", "C", "D", "E"),
 			AddLatencyToValues[string](0, 4),
-			rx.ThrottleTime[string](Step(9)).WithLeading(true).WithTrailing(true).AsOperator(),
+			rx.ThrottleTime[string](Step(9)).WithLeading(true).WithTrailing(true),
 		),
 		"A", "C", "E", ErrComplete,
 	)

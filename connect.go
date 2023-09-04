@@ -45,11 +45,6 @@ func (op ConnectOperator[T, R]) Apply(source Observable[T]) Observable[R] {
 	return connectObservable[T, R]{source, op.opts}.Subscribe
 }
 
-// AsOperator converts op to an Operator.
-//
-// Once type inference has improved in Go, this method will be removed.
-func (op ConnectOperator[T, R]) AsOperator() Operator[T, R] { return op }
-
 type connectObservable[T, R any] struct {
 	Source Observable[T]
 	connectConfig[T, R]

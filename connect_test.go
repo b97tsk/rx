@@ -27,7 +27,7 @@ func TestConnect(t *testing.T) {
 						ToString[[]int](),
 					)
 				},
-			).WithConnector(rx.Multicast[int]).AsOperator(),
+			).WithConnector(rx.Multicast[int]),
 		),
 		"[0 5 12 21]", ErrComplete,
 	)

@@ -75,11 +75,6 @@ func (op ThrottleOperator[T, U]) Apply(source Observable[T]) Observable[T] {
 	return throttleObservable[T, U]{source, op.opts}.Subscribe
 }
 
-// AsOperator converts op to an Operator.
-//
-// Once type inference has improved in Go, this method will be removed.
-func (op ThrottleOperator[T, U]) AsOperator() Operator[T, T] { return op }
-
 type throttleObservable[T, U any] struct {
 	Source Observable[T]
 	throttleConfig[T, U]

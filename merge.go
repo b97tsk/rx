@@ -120,11 +120,6 @@ func (op MergeMapOperator[T, R]) Apply(source Observable[T]) Observable[R] {
 	return mergeMapObservable[T, R]{source, op.opts}.Subscribe
 }
 
-// AsOperator converts op to an Operator.
-//
-// Once type inference has improved in Go, this method will be removed.
-func (op MergeMapOperator[T, R]) AsOperator() Operator[T, R] { return op }
-
 type mergeMapObservable[T, R any] struct {
 	Source Observable[T]
 	mergeMapConfig[T, R]

@@ -46,11 +46,6 @@ func (op TimeoutOperator[T]) Apply(source Observable[T]) Observable[T] {
 	return timeoutObservable[T]{source, op.opts}.Subscribe
 }
 
-// AsOperator converts op to an Operator.
-//
-// Once type inference has improved in Go, this method will be removed.
-func (op TimeoutOperator[T]) AsOperator() Operator[T, T] { return op }
-
 type timeoutObservable[T any] struct {
 	Source Observable[T]
 	timeoutConfig[T]

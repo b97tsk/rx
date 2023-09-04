@@ -16,7 +16,7 @@ func TestShare1(t *testing.T) {
 		rx.Ticker(Step(3)),
 		rx.Scan(-1, func(i int, _ time.Time) int { return i + 1 }),
 		rx.Take[int](4),
-		rx.Share[int]().AsOperator(),
+		rx.Share[int](),
 	)
 
 	NewTestSuite[int](t).Case(
@@ -36,7 +36,7 @@ func TestShare2(t *testing.T) {
 	obs := rx.Pipe3(
 		rx.Ticker(Step(3)),
 		rx.Scan(-1, func(i int, _ time.Time) int { return i + 1 }),
-		rx.Share[int]().AsOperator(),
+		rx.Share[int](),
 		rx.Take[int](4),
 	)
 
@@ -62,7 +62,7 @@ func TestShare3(t *testing.T) {
 			func() rx.Subject[int] {
 				return rx.MulticastReplay[int](&rx.ReplayConfig{BufferSize: 1})
 			},
-		).AsOperator(),
+		),
 	)
 
 	NewTestSuite[int](t).Case(
@@ -86,7 +86,7 @@ func TestShare4(t *testing.T) {
 			func() rx.Subject[int] {
 				return rx.MulticastReplay[int](&rx.ReplayConfig{BufferSize: 1})
 			},
-		).AsOperator(),
+		),
 		rx.Take[int](4),
 	)
 
@@ -116,7 +116,7 @@ func TestShare5(t *testing.T) {
 						Observer:   rx.Noop[int],
 					}
 				},
-			).AsOperator(),
+			),
 		),
 		ErrTest,
 	)

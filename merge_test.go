@@ -44,7 +44,7 @@ func TestMerge2(t *testing.T) {
 				rx.Pipe1(rx.Just("C", "D"), AddLatencyToValues[string](2, 4)),
 				rx.Pipe1(rx.Just("E", "F"), AddLatencyToValues[string](1, 3)),
 			),
-			rx.MergeAll[rx.Observable[string]]().AsOperator(),
+			rx.MergeAll[rx.Observable[string]](),
 		),
 		"E", "C", "A", "F", "D", "B", ErrComplete,
 	).Case(
@@ -54,7 +54,7 @@ func TestMerge2(t *testing.T) {
 				func(v int) rx.Observable[int] {
 					return rx.Pipe1(rx.Just(v), DelaySubscription[int](1))
 				},
-			).WithConcurrency(3).AsOperator(),
+			).WithConcurrency(3),
 			rx.Reduce(0, func(v1, v2 int) int { return v1 + v2 }),
 			ToString[int](),
 		),
@@ -62,19 +62,19 @@ func TestMerge2(t *testing.T) {
 	).Case(
 		rx.Pipe1(
 			rx.Timer(Step(1)),
-			rx.MergeMapTo[time.Time](rx.Just("A")).AsOperator(),
+			rx.MergeMapTo[time.Time](rx.Just("A")),
 		),
 		"A", ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Empty[rx.Observable[string]](),
-			rx.MergeAll[rx.Observable[string]]().AsOperator(),
+			rx.MergeAll[rx.Observable[string]](),
 		),
 		ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Throw[rx.Observable[string]](ErrTest),
-			rx.MergeAll[rx.Observable[string]]().AsOperator(),
+			rx.MergeAll[rx.Observable[string]](),
 		),
 		ErrTest,
 	).Case(
@@ -89,7 +89,7 @@ func TestMerge2(t *testing.T) {
 				sink.Next(rx.Just("E", "F"))
 				sink.Complete()
 			},
-			rx.MergeAll[rx.Observable[string]]().AsOperator(),
+			rx.MergeAll[rx.Observable[string]](),
 		),
 		"A", "B", ErrTest,
 	)

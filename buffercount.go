@@ -50,11 +50,6 @@ func (op BufferCountOperator[T]) Apply(source Observable[T]) Observable[[]T] {
 	return bufferCountObservable[T]{source, op.opts}.Subscribe
 }
 
-// AsOperator converts op to an Operator.
-//
-// Once type inference has improved in Go, this method will be removed.
-func (op BufferCountOperator[T]) AsOperator() Operator[T, []T] { return op }
-
 type bufferCountObservable[T any] struct {
 	Source Observable[T]
 	bufferCountConfig
