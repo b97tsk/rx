@@ -45,26 +45,23 @@ type exhaustMapObservable[T, R any] struct {
 }
 
 func (obs exhaustMapObservable[T, R]) Subscribe(ctx context.Context, sink Observer[R]) {
-	source, cancel := context.WithCancel(ctx)
+	source, cancelSource := context.WithCancel(ctx)
 
-	sink = sink.OnLastNotification(cancel)
+	sink = sink.OnLastNotification(cancelSource)
 
 	var x struct {
 		Context  atomic.Value
 		Complete atomic.Bool
 		Worker   struct {
 			sync.WaitGroup
-			Cancel context.CancelFunc
 		}
 	}
 
 	x.Context.Store(source)
 
 	startWorker := func(v T) {
-		worker, cancel := context.WithCancel(source)
+		worker, cancelWorker := context.WithCancel(source)
 		x.Context.Store(worker)
-
-		x.Worker.Cancel = cancel
 
 		x.Worker.Add(1)
 
@@ -85,7 +82,7 @@ func (obs exhaustMapObservable[T, R]) Subscribe(ctx context.Context, sink Observ
 				}
 			}
 
-			cancel()
+			cancelWorker()
 			x.Worker.Done()
 		})
 	}
@@ -100,10 +97,8 @@ func (obs exhaustMapObservable[T, R]) Subscribe(ctx context.Context, sink Observ
 		case n.HasError:
 			ctx := x.Context.Swap(source)
 
-			if x.Worker.Cancel != nil {
-				x.Worker.Cancel()
-				x.Worker.Wait()
-			}
+			cancelSource()
+			x.Worker.Wait()
 
 			if x.Context.Swap(sentinel) != sentinel && ctx != sentinel {
 				sink.Error(n.Error)

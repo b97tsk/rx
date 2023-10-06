@@ -29,9 +29,9 @@ type sampleObservable[T, U any] struct {
 }
 
 func (obs sampleObservable[T, U]) Subscribe(ctx context.Context, sink Observer[T]) {
-	source, cancel := context.WithCancel(ctx)
+	source, cancelSource := context.WithCancel(ctx)
 
-	sink = sink.OnLastNotification(cancel)
+	sink = sink.OnLastNotification(cancelSource)
 
 	var x struct {
 		Context atomic.Value
@@ -42,15 +42,12 @@ func (obs sampleObservable[T, U]) Subscribe(ctx context.Context, sink Observer[T
 		}
 		Worker struct {
 			sync.WaitGroup
-			Cancel context.CancelFunc
 		}
 	}
 
 	{
-		worker, cancel := context.WithCancel(source)
+		worker, cancelWorker := context.WithCancel(source)
 		x.Context.Store(worker)
-
-		x.Worker.Cancel = cancel
 
 		x.Worker.Add(1)
 
@@ -76,7 +73,7 @@ func (obs sampleObservable[T, U]) Subscribe(ctx context.Context, sink Observer[T
 				break
 			}
 
-			cancel()
+			cancelWorker()
 			x.Worker.Done()
 		})
 	}
@@ -84,7 +81,7 @@ func (obs sampleObservable[T, U]) Subscribe(ctx context.Context, sink Observer[T
 	finish := func(n Notification[T]) {
 		ctx := x.Context.Swap(source)
 
-		x.Worker.Cancel()
+		cancelSource()
 		x.Worker.Wait()
 
 		if x.Context.Swap(sentinel) != sentinel && ctx != sentinel {

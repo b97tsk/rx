@@ -52,7 +52,7 @@ type timeoutObservable[T any] struct {
 }
 
 func (obs timeoutObservable[T]) Subscribe(ctx context.Context, sink Observer[T]) {
-	source, cancel := context.WithCancel(ctx)
+	source, cancelSource := context.WithCancel(ctx)
 
 	c := make(chan Notification[T])
 	noop := make(chan struct{})
@@ -64,7 +64,7 @@ func (obs timeoutObservable[T]) Subscribe(ctx context.Context, sink Observer[T])
 			select {
 			case n := <-c:
 				if !n.HasValue {
-					cancel()
+					cancelSource()
 					close(noop)
 				}
 
@@ -80,7 +80,7 @@ func (obs timeoutObservable[T]) Subscribe(ctx context.Context, sink Observer[T])
 			case <-tm.C:
 				timerpool.PutExpired(tm)
 
-				cancel()
+				cancelSource()
 				close(noop)
 
 				if obs.With != nil {

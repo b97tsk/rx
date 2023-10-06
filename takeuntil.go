@@ -22,30 +22,24 @@ type takeUntilObservable[T, U any] struct {
 }
 
 func (obs takeUntilObservable[T, U]) Subscribe(ctx context.Context, sink Observer[T]) {
-	source, cancel := context.WithCancel(ctx)
+	source, cancelSource := context.WithCancel(ctx)
 
-	sink = sink.OnLastNotification(cancel)
+	sink = sink.OnLastNotification(cancelSource)
 
 	var x struct {
 		Context atomic.Value
 		Source  struct {
 			sync.Mutex
 			sync.WaitGroup
-			Cancel context.CancelFunc
 		}
 		Worker struct {
 			sync.WaitGroup
-			Cancel context.CancelFunc
 		}
 	}
 
-	x.Source.Cancel = cancel
-
 	{
-		worker, cancel := context.WithCancel(source)
+		worker, cancelWorker := context.WithCancel(source)
 		x.Context.Store(worker)
-
-		x.Worker.Cancel = cancel
 
 		x.Worker.Add(1)
 
@@ -58,12 +52,12 @@ func (obs takeUntilObservable[T, U]) Subscribe(ctx context.Context, sink Observe
 
 			noop = true
 
-			cancel()
+			cancelWorker()
 
 			if (n.HasValue || n.HasError) && x.Context.CompareAndSwap(worker, sentinel) {
 				x.Worker.Done()
 
-				x.Source.Cancel()
+				cancelSource()
 				x.Source.Lock()
 				x.Source.Wait()
 				x.Source.Unlock()
@@ -88,7 +82,7 @@ func (obs takeUntilObservable[T, U]) Subscribe(ctx context.Context, sink Observe
 	finish := func(n Notification[T]) {
 		ctx := x.Context.Swap(source)
 
-		x.Worker.Cancel()
+		cancelSource()
 		x.Worker.Wait()
 
 		if x.Context.Swap(sentinel) != sentinel && ctx != sentinel {

@@ -81,9 +81,9 @@ type throttleObservable[T, U any] struct {
 }
 
 func (obs throttleObservable[T, U]) Subscribe(ctx context.Context, sink Observer[T]) {
-	source, cancel := context.WithCancel(ctx)
+	source, cancelSource := context.WithCancel(ctx)
 
-	sink = sink.OnLastNotification(cancel)
+	sink = sink.OnLastNotification(cancelSource)
 
 	var x struct {
 		Context  atomic.Value
@@ -95,7 +95,6 @@ func (obs throttleObservable[T, U]) Subscribe(ctx context.Context, sink Observer
 		}
 		Worker struct {
 			sync.WaitGroup
-			Cancel context.CancelFunc
 		}
 	}
 
@@ -104,10 +103,8 @@ func (obs throttleObservable[T, U]) Subscribe(ctx context.Context, sink Observer
 	var doThrottle func(T)
 
 	doThrottle = func(v T) {
-		worker, cancel := context.WithCancel(source)
+		worker, cancelWorker := context.WithCancel(source)
 		x.Context.Store(worker)
-
-		x.Worker.Cancel = cancel
 
 		x.Worker.Add(1)
 
@@ -120,7 +117,7 @@ func (obs throttleObservable[T, U]) Subscribe(ctx context.Context, sink Observer
 
 			noop = true
 
-			cancel()
+			cancelWorker()
 
 			switch {
 			case n.HasValue:
@@ -175,10 +172,8 @@ func (obs throttleObservable[T, U]) Subscribe(ctx context.Context, sink Observer
 		case n.HasError:
 			ctx := x.Context.Swap(source)
 
-			if x.Worker.Cancel != nil {
-				x.Worker.Cancel()
-				x.Worker.Wait()
-			}
+			cancelSource()
+			x.Worker.Wait()
 
 			if x.Context.Swap(sentinel) != sentinel && ctx != sentinel {
 				sink(n)

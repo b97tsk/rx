@@ -45,9 +45,9 @@ type debounceObservable[T, U any] struct {
 }
 
 func (obs debounceObservable[T, U]) Subscribe(ctx context.Context, sink Observer[T]) {
-	source, cancel := context.WithCancel(ctx)
+	source, cancelSource := context.WithCancel(ctx)
 
-	sink = sink.OnLastNotification(cancel)
+	sink = sink.OnLastNotification(cancelSource)
 
 	var x struct {
 		Context atomic.Value
@@ -65,12 +65,12 @@ func (obs debounceObservable[T, U]) Subscribe(ctx context.Context, sink Observer
 	x.Context.Store(source)
 
 	startWorker := func(v T) {
-		worker, cancel := context.WithCancel(source)
+		worker, cancelWorker := context.WithCancel(source)
 		x.Context.Store(worker)
 
-		x.Worker.Cancel = cancel
-
 		x.Worker.Add(1)
+
+		x.Worker.Cancel = cancelWorker
 
 		var noop bool
 
@@ -81,7 +81,7 @@ func (obs debounceObservable[T, U]) Subscribe(ctx context.Context, sink Observer
 
 			noop = true
 
-			cancel()
+			cancelWorker()
 
 			switch {
 			case n.HasValue:
@@ -129,10 +129,8 @@ func (obs debounceObservable[T, U]) Subscribe(ctx context.Context, sink Observer
 		default:
 			ctx := x.Context.Swap(source)
 
-			if x.Worker.Cancel != nil {
-				x.Worker.Cancel()
-				x.Worker.Wait()
-			}
+			cancelSource()
+			x.Worker.Wait()
 
 			if x.Context.Swap(sentinel) != sentinel && ctx != sentinel {
 				if !n.HasError && x.Latest.HasValue.Load() {
