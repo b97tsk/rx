@@ -32,7 +32,6 @@ func TestRace(t *testing.T) {
 		)
 	}
 
-	rand.Seed(time.Now().UnixNano())
 	rand.Shuffle(len(s), func(i, j int) { s[i], s[j] = s[j], s[i] })
 
 	NewTestSuite[time.Duration](t).Case(

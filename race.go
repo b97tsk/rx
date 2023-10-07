@@ -34,7 +34,7 @@ func (some observables[T]) Race(ctx context.Context, sink Observer[T]) {
 		subs[i] = NewPair(context.WithCancel(ctx))
 	}
 
-	var race atomic.Value
+	var race atomic.Uint32
 
 	ctxHoisted := waitgroup.Hoist(ctx)
 
@@ -53,7 +53,7 @@ func (some observables[T]) Race(ctx context.Context, sink Observer[T]) {
 					return
 				}
 
-				if race.CompareAndSwap(nil, subs[index].Left()) {
+				if race.CompareAndSwap(0, 1) {
 					for i := range subs {
 						if i != index {
 							subs[i].Right()()
