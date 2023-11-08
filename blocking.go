@@ -1,10 +1,6 @@
 package rx
 
-import (
-	"context"
-
-	"github.com/b97tsk/rx/internal/waitgroup"
-)
+import "context"
 
 // BlockingFirst subscribes to the source Observable, and returns
 // the first value emitted by the source.
@@ -17,17 +13,21 @@ import (
 //
 // Like any other Blocking methods, this method waits for every goroutine
 // started during subscription to complete before returning.
-// To have this works properly, one must use [Go] function rather than
-// go statements to start new goroutines during subscription, especially
-// when one need to subscribe to other Observables in a goroutine (otherwise,
-// their program might panic randomly).
+// To have this work properly, Observables must use [WaitGroupFromContext]
+// to obtain a WaitGroup and use [WaitGroup.Go] rather than built-in go
+// statements to start new goroutines during subscription, especially when
+// they need to subscribe to other Observables in a goroutine; otherwise,
+// runtime panicking might happen randomly (WaitGroup misuse).
 func (obs Observable[T]) BlockingFirst(ctx context.Context) (v T, err error) {
-	child, cancel := context.WithCancel(ctx)
-	child, wg := waitgroup.Install(child)
+	var wg WaitGroup
+
+	child, cancel := context.WithCancel(WithWaitGroup(ctx, &wg))
 
 	res := Error[T](ErrEmpty)
 
 	var noop bool
+
+	wg.Add(1)
 
 	obs.Subscribe(child, func(n Notification[T]) {
 		if noop {
@@ -71,10 +71,11 @@ func (obs Observable[T]) BlockingFirst(ctx context.Context) (v T, err error) {
 //
 // Like any other Blocking methods, this method waits for every goroutine
 // started during subscription to complete before returning.
-// To have this works properly, one must use [Go] function rather than
-// go statements to start new goroutines during subscription, especially
-// when one need to subscribe to other Observables in a goroutine (otherwise,
-// their program might panic randomly).
+// To have this work properly, Observables must use [WaitGroupFromContext]
+// to obtain a WaitGroup and use [WaitGroup.Go] rather than built-in go
+// statements to start new goroutines during subscription, especially when
+// they need to subscribe to other Observables in a goroutine; otherwise,
+// runtime panicking might happen randomly (WaitGroup misuse).
 func (obs Observable[T]) BlockingFirstOrElse(ctx context.Context, def T) T {
 	v, err := obs.BlockingFirst(ctx)
 	if err != nil {
@@ -95,15 +96,19 @@ func (obs Observable[T]) BlockingFirstOrElse(ctx context.Context, def T) T {
 //
 // Like any other Blocking methods, this method waits for every goroutine
 // started during subscription to complete before returning.
-// To have this works properly, one must use [Go] function rather than
-// go statements to start new goroutines during subscription, especially
-// when one need to subscribe to other Observables in a goroutine (otherwise,
-// their program might panic randomly).
+// To have this work properly, Observables must use [WaitGroupFromContext]
+// to obtain a WaitGroup and use [WaitGroup.Go] rather than built-in go
+// statements to start new goroutines during subscription, especially when
+// they need to subscribe to other Observables in a goroutine; otherwise,
+// runtime panicking might happen randomly (WaitGroup misuse).
 func (obs Observable[T]) BlockingLast(ctx context.Context) (v T, err error) {
-	child, cancel := context.WithCancel(ctx)
-	child, wg := waitgroup.Install(child)
+	var wg WaitGroup
+
+	child, cancel := context.WithCancel(WithWaitGroup(ctx, &wg))
 
 	res := Error[T](ErrEmpty)
+
+	wg.Add(1)
 
 	obs.Subscribe(child, func(n Notification[T]) {
 		if n.HasValue || n.HasError {
@@ -143,10 +148,11 @@ func (obs Observable[T]) BlockingLast(ctx context.Context) (v T, err error) {
 //
 // Like any other Blocking methods, this method waits for every goroutine
 // started during subscription to complete before returning.
-// To have this works properly, one must use [Go] function rather than
-// go statements to start new goroutines during subscription, especially
-// when one need to subscribe to other Observables in a goroutine (otherwise,
-// their program might panic randomly).
+// To have this work properly, Observables must use [WaitGroupFromContext]
+// to obtain a WaitGroup and use [WaitGroup.Go] rather than built-in go
+// statements to start new goroutines during subscription, especially when
+// they need to subscribe to other Observables in a goroutine; otherwise,
+// runtime panicking might happen randomly (WaitGroup misuse).
 func (obs Observable[T]) BlockingLastOrElse(ctx context.Context, def T) T {
 	v, err := obs.BlockingLast(ctx)
 	if err != nil {
@@ -168,17 +174,21 @@ func (obs Observable[T]) BlockingLastOrElse(ctx context.Context, def T) T {
 //
 // Like any other Blocking methods, this method waits for every goroutine
 // started during subscription to complete before returning.
-// To have this works properly, one must use [Go] function rather than
-// go statements to start new goroutines during subscription, especially
-// when one need to subscribe to other Observables in a goroutine (otherwise,
-// their program might panic randomly).
+// To have this work properly, Observables must use [WaitGroupFromContext]
+// to obtain a WaitGroup and use [WaitGroup.Go] rather than built-in go
+// statements to start new goroutines during subscription, especially when
+// they need to subscribe to other Observables in a goroutine; otherwise,
+// runtime panicking might happen randomly (WaitGroup misuse).
 func (obs Observable[T]) BlockingSingle(ctx context.Context) (v T, err error) {
-	child, cancel := context.WithCancel(ctx)
-	child, wg := waitgroup.Install(child)
+	var wg WaitGroup
+
+	child, cancel := context.WithCancel(WithWaitGroup(ctx, &wg))
 
 	res := Error[T](ErrEmpty)
 
 	var noop bool
+
+	wg.Add(1)
 
 	obs.Subscribe(child, func(n Notification[T]) {
 		if noop {
@@ -232,14 +242,19 @@ func (obs Observable[T]) BlockingSingle(ctx context.Context) (v T, err error) {
 //
 // Like any other Blocking methods, this method waits for every goroutine
 // started during subscription to complete before returning.
-// To have this works properly, one must use [Go] function rather than
-// go statements to start new goroutines during subscription, especially
-// when one need to subscribe to other Observables in a goroutine (otherwise,
-// their program might panic randomly).
+// To have this work properly, Observables must use [WaitGroupFromContext]
+// to obtain a WaitGroup and use [WaitGroup.Go] rather than built-in go
+// statements to start new goroutines during subscription, especially when
+// they need to subscribe to other Observables in a goroutine; otherwise,
+// runtime panicking might happen randomly (WaitGroup misuse).
 func (obs Observable[T]) BlockingSubscribe(ctx context.Context, sink Observer[T]) error {
+	var wg WaitGroup
+
+	child := WithWaitGroup(ctx, &wg)
+
 	var res Notification[T]
 
-	child, wg := waitgroup.Install(ctx)
+	wg.Add(1)
 
 	obs.Subscribe(child, func(n Notification[T]) {
 		res = n

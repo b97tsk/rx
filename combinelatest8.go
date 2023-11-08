@@ -1,10 +1,6 @@
 package rx
 
-import (
-	"context"
-
-	"github.com/b97tsk/rx/internal/waitgroup"
-)
+import "context"
 
 // CombineLatest8 combines multiple Observables to create an Observable that
 // emits projection of latest values of each of its input Observables.
@@ -24,6 +20,7 @@ func CombineLatest8[T1, T2, T3, T4, T5, T6, T7, T8, R any](
 	}
 
 	return func(ctx context.Context, sink Observer[R]) {
+		wg := WaitGroupFromContext(ctx)
 		ctx, cancel := context.WithCancel(ctx)
 
 		noop := make(chan struct{})
@@ -42,9 +39,7 @@ func CombineLatest8[T1, T2, T3, T4, T5, T6, T7, T8, R any](
 		chan7 := make(chan Notification[T7])
 		chan8 := make(chan Notification[T8])
 
-		ctxHoisted := waitgroup.Hoist(ctx)
-
-		Go(ctxHoisted, func() {
+		wg.Go(func() {
 			var s combineLatestState8[T1, T2, T3, T4, T5, T6, T7, T8]
 
 			done := false
@@ -71,14 +66,14 @@ func CombineLatest8[T1, T2, T3, T4, T5, T6, T7, T8, R any](
 			}
 		})
 
-		Go(ctxHoisted, func() { obs1.Subscribe(ctx, chanObserver(chan1, noop)) })
-		Go(ctxHoisted, func() { obs2.Subscribe(ctx, chanObserver(chan2, noop)) })
-		Go(ctxHoisted, func() { obs3.Subscribe(ctx, chanObserver(chan3, noop)) })
-		Go(ctxHoisted, func() { obs4.Subscribe(ctx, chanObserver(chan4, noop)) })
-		Go(ctxHoisted, func() { obs5.Subscribe(ctx, chanObserver(chan5, noop)) })
-		Go(ctxHoisted, func() { obs6.Subscribe(ctx, chanObserver(chan6, noop)) })
-		Go(ctxHoisted, func() { obs7.Subscribe(ctx, chanObserver(chan7, noop)) })
-		Go(ctxHoisted, func() { obs8.Subscribe(ctx, chanObserver(chan8, noop)) })
+		wg.Go(func() { obs1.Subscribe(ctx, chanObserver(chan1, noop)) })
+		wg.Go(func() { obs2.Subscribe(ctx, chanObserver(chan2, noop)) })
+		wg.Go(func() { obs3.Subscribe(ctx, chanObserver(chan3, noop)) })
+		wg.Go(func() { obs4.Subscribe(ctx, chanObserver(chan4, noop)) })
+		wg.Go(func() { obs5.Subscribe(ctx, chanObserver(chan5, noop)) })
+		wg.Go(func() { obs6.Subscribe(ctx, chanObserver(chan6, noop)) })
+		wg.Go(func() { obs7.Subscribe(ctx, chanObserver(chan7, noop)) })
+		wg.Go(func() { obs8.Subscribe(ctx, chanObserver(chan8, noop)) })
 	}
 }
 

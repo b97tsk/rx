@@ -57,7 +57,7 @@ func (obs timeoutObservable[T]) Subscribe(ctx context.Context, sink Observer[T])
 	c := make(chan Notification[T])
 	noop := make(chan struct{})
 
-	Go(ctx, func() {
+	WaitGroupFromContext(ctx).Go(func() {
 		tm := timerpool.Get(obs.First)
 
 		for {

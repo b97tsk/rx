@@ -38,7 +38,9 @@ func (obs congestObservable[T]) Subscribe(ctx context.Context, sink Observer[T])
 
 	cout := make(chan Notification[T])
 
-	Go(ctx, func() {
+	wg := WaitGroupFromContext(ctx)
+
+	wg.Go(func() {
 		for n := range cout {
 			sink(n)
 		}
@@ -49,7 +51,7 @@ func (obs congestObservable[T]) Subscribe(ctx context.Context, sink Observer[T])
 	cin := make(chan Notification[T])
 	noop := make(chan struct{})
 
-	Go(ctx, func() {
+	wg.Go(func() {
 		var q queue.Queue[Notification[T]]
 
 		for {

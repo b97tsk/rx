@@ -3,8 +3,6 @@ package rx
 import (
 	"context"
 	"sync/atomic"
-
-	"github.com/b97tsk/rx/internal/waitgroup"
 )
 
 // Race creates an Observable that mirrors the first Observable to emit
@@ -36,12 +34,12 @@ func (some observables[T]) Race(ctx context.Context, sink Observer[T]) {
 
 	var race atomic.Uint32
 
-	ctxHoisted := waitgroup.Hoist(ctx)
+	wg := WaitGroupFromContext(ctx)
 
 	for index, obs := range some {
 		index, obs := index, obs
 
-		Go(ctxHoisted, func() {
+		wg.Go(func() {
 			var won, lost bool
 
 			obs.Subscribe(subs[index].Left(), func(n Notification[T]) {

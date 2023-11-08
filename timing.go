@@ -17,7 +17,7 @@ func Ticker(d time.Duration) Observable[time.Time] {
 	return func(ctx context.Context, sink Observer[time.Time]) {
 		tk := time.NewTicker(d)
 
-		Go(ctx, func() {
+		WaitGroupFromContext(ctx).Go(func() {
 			defer tk.Stop()
 
 			done := ctx.Done()
@@ -41,7 +41,7 @@ func Timer(d time.Duration) Observable[time.Time] {
 	return func(ctx context.Context, sink Observer[time.Time]) {
 		tm := timerpool.Get(d)
 
-		Go(ctx, func() {
+		WaitGroupFromContext(ctx).Go(func() {
 			select {
 			case <-ctx.Done():
 				timerpool.Put(tm)

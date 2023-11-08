@@ -6,7 +6,6 @@ import (
 	"sync/atomic"
 
 	"github.com/b97tsk/rx/internal/queue"
-	"github.com/b97tsk/rx/internal/waitgroup"
 )
 
 // Merge creates an Observable that concurrently emits all values from every
@@ -30,6 +29,7 @@ func MergeWith[T any](some ...Observable[T]) Operator[T, T] {
 }
 
 func (some observables[T]) Merge(ctx context.Context, sink Observer[T]) {
+	wg := WaitGroupFromContext(ctx)
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = sink.OnLastNotification(cancel).Serialized()
@@ -44,12 +44,10 @@ func (some observables[T]) Merge(ctx context.Context, sink Observer[T]) {
 		}
 	}
 
-	ctxHoisted := waitgroup.Hoist(ctx)
-
 	for _, obs := range some {
 		obs := obs
 
-		Go(ctxHoisted, func() { obs.Subscribe(ctx, observer) })
+		wg.Go(func() { obs.Subscribe(ctx, observer) })
 	}
 }
 
@@ -126,6 +124,7 @@ type mergeMapObservable[T, R any] struct {
 }
 
 func (obs mergeMapObservable[T, R]) Subscribe(ctx context.Context, sink Observer[R]) {
+	wg := WaitGroupFromContext(ctx)
 	ctx, cancel := context.WithCancel(ctx)
 
 	sink = sink.OnLastNotification(cancel).Serialized()
@@ -142,14 +141,12 @@ func (obs mergeMapObservable[T, R]) Subscribe(ctx context.Context, sink Observer
 
 	var startWorker func()
 
-	ctxHoisted := waitgroup.Hoist(ctx)
-
 	startWorker = func() {
 		obs1 := obs.Project(x.Queue.Pop())
 
 		x.Queue.Unlock()
 
-		Go(ctxHoisted, func() {
+		wg.Go(func() {
 			obs1.Subscribe(ctx, func(n Notification[R]) {
 				if n.HasValue {
 					sink(n)

@@ -3,8 +3,6 @@ package rx
 import (
 	"context"
 	"sync"
-
-	"github.com/b97tsk/rx/internal/waitgroup"
 )
 
 // Share returns a new Observable that multicasts (shares) the source
@@ -126,7 +124,7 @@ func (obs *shareObservable[T]) Subscribe(ctx context.Context, sink Observer[T]) 
 		})
 	}
 
-	wg := waitgroup.Get(ctx)
+	wg := WaitGroupFromContext(ctx)
 	if wg != nil {
 		wg.Add(1)
 	}

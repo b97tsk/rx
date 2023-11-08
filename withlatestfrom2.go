@@ -1,10 +1,6 @@
 package rx
 
-import (
-	"context"
-
-	"github.com/b97tsk/rx/internal/waitgroup"
-)
+import "context"
 
 // WithLatestFrom2 combines the source with 2 other Observables to create
 // an Observable that emits projection of latest values of each Observable,
@@ -32,6 +28,7 @@ func withLatestFrom3[T1, T2, T3, R any](
 	proj func(v1 T1, v2 T2, v3 T3) R,
 ) Observable[R] {
 	return func(ctx context.Context, sink Observer[R]) {
+		wg := WaitGroupFromContext(ctx)
 		ctx, cancel := context.WithCancel(ctx)
 
 		noop := make(chan struct{})
@@ -45,9 +42,7 @@ func withLatestFrom3[T1, T2, T3, R any](
 		chan2 := make(chan Notification[T2])
 		chan3 := make(chan Notification[T3])
 
-		ctxHoisted := waitgroup.Hoist(ctx)
-
-		Go(ctxHoisted, func() {
+		wg.Go(func() {
 			var s withLatestFromState3[T1, T2, T3]
 
 			done := false
@@ -64,9 +59,9 @@ func withLatestFrom3[T1, T2, T3, R any](
 			}
 		})
 
-		Go(ctxHoisted, func() { obs1.Subscribe(ctx, chanObserver(chan1, noop)) })
-		Go(ctxHoisted, func() { obs2.Subscribe(ctx, chanObserver(chan2, noop)) })
-		Go(ctxHoisted, func() { obs3.Subscribe(ctx, chanObserver(chan3, noop)) })
+		wg.Go(func() { obs1.Subscribe(ctx, chanObserver(chan1, noop)) })
+		wg.Go(func() { obs2.Subscribe(ctx, chanObserver(chan2, noop)) })
+		wg.Go(func() { obs3.Subscribe(ctx, chanObserver(chan3, noop)) })
 	}
 }
 

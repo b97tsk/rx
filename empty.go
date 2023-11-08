@@ -1,10 +1,6 @@
 package rx
 
-import (
-	"context"
-
-	"github.com/b97tsk/rx/internal/waitgroup"
-)
+import "context"
 
 // Empty returns an Observable that emits no values and immediately completes.
 func Empty[T any]() Observable[T] {
@@ -24,7 +20,7 @@ func Never[T any]() Observable[T] {
 
 func never[T any](ctx context.Context, sink Observer[T]) {
 	if ctx.Done() != nil {
-		wg := waitgroup.Get(ctx)
+		wg := WaitGroupFromContext(ctx)
 		if wg != nil {
 			wg.Add(1)
 		}

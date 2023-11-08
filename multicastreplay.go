@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/b97tsk/rx/internal/queue"
-	"github.com/b97tsk/rx/internal/waitgroup"
 )
 
 // ReplayConfig carries options for MulticastReplay.
@@ -174,7 +173,7 @@ func (m *multicastReplay[T]) subscribe(ctx context.Context, sink Observer[T]) {
 		observer := sink
 		m.obs.Add(&observer)
 
-		wg := waitgroup.Get(ctx)
+		wg := WaitGroupFromContext(ctx)
 		if wg != nil {
 			wg.Add(1)
 		}

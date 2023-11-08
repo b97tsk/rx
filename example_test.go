@@ -56,7 +56,7 @@ func Example() {
 }
 
 func Example_blocking() {
-	ctx, cancel := context.WithTimeout(context.Background(), 700*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.TODO(), 700*time.Millisecond)
 	defer cancel()
 
 	obs := rx.Pipe4(
@@ -80,4 +80,27 @@ func Example_blocking() {
 	// 15
 	// 21
 	// context deadline exceeded
+}
+
+func Example_waitGroup() {
+	var wg rx.WaitGroup
+
+	ctx := rx.WithWaitGroup(context.TODO(), &wg)
+
+	wg.Go(func() {
+		for n := 1; n < 4; n++ {
+			rx.Pipe2(
+				rx.Timer(50*time.Millisecond*time.Duration(n)),
+				rx.MapTo[time.Time](n),
+				rx.OnNext(func(v int) { fmt.Println(v) }),
+			).Subscribe(ctx, rx.Noop[int])
+		}
+	})
+
+	wg.Wait()
+
+	// Output:
+	// 1
+	// 2
+	// 3
 }

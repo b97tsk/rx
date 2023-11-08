@@ -4,8 +4,6 @@ import (
 	"context"
 	"runtime"
 	"sync"
-
-	"github.com/b97tsk/rx/internal/waitgroup"
 )
 
 // Multicast returns a Subject whose Observable part takes care of
@@ -96,7 +94,7 @@ func (m *multicast[T]) subscribe(ctx context.Context, sink Observer[T]) {
 		observer := sink
 		m.obs.Add(&observer)
 
-		wg := waitgroup.Get(ctx)
+		wg := WaitGroupFromContext(ctx)
 		if wg != nil {
 			wg.Add(1)
 		}
