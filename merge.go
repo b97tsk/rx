@@ -39,7 +39,7 @@ func (some observables[T]) Merge(ctx context.Context, sink Observer[T]) {
 	workers.Store(uint32(len(some)))
 
 	observer := func(n Notification[T]) {
-		if n.HasValue || n.HasError || workers.Add(^uint32(0)) == 0 {
+		if n.Kind != KindComplete || workers.Add(^uint32(0)) == 0 {
 			sink(n)
 		}
 	}
@@ -148,14 +148,13 @@ func (obs mergeMapObservable[T, R]) Subscribe(ctx context.Context, sink Observer
 
 		wg.Go(func() {
 			obs1.Subscribe(ctx, func(n Notification[R]) {
-				if n.HasValue {
+				switch n.Kind {
+				case KindNext:
 					sink(n)
-					return
-				}
 
-				x.Queue.Lock()
+				case KindError:
+					x.Queue.Lock()
 
-				if n.HasError {
 					x.Queue.Sealed = true
 
 					x.Queue.Init()
@@ -163,29 +162,30 @@ func (obs mergeMapObservable[T, R]) Subscribe(ctx context.Context, sink Observer
 
 					sink(n)
 
-					return
-				}
+				case KindComplete:
+					x.Queue.Lock()
 
-				if x.Queue.Len() == 0 {
-					workers := x.Workers.Add(^uint32(0))
+					if x.Queue.Len() == 0 {
+						workers := x.Workers.Add(^uint32(0))
 
-					x.Queue.Unlock()
+						x.Queue.Unlock()
 
-					if workers == 0 && x.Complete.Load() && x.Workers.Load() == 0 {
-						sink(n)
+						if workers == 0 && x.Complete.Load() && x.Workers.Load() == 0 {
+							sink(n)
+						}
+
+						return
 					}
 
-					return
+					startWorker()
 				}
-
-				startWorker()
 			})
 		})
 	}
 
 	obs.Source.Subscribe(ctx, func(n Notification[T]) {
-		switch {
-		case n.HasValue:
+		switch n.Kind {
+		case KindNext:
 			x.Queue.Lock()
 
 			if x.Queue.Sealed {
@@ -205,10 +205,10 @@ func (obs mergeMapObservable[T, R]) Subscribe(ctx context.Context, sink Observer
 
 			x.Queue.Unlock()
 
-		case n.HasError:
+		case KindError:
 			sink.Error(n.Error)
 
-		default:
+		case KindComplete:
 			x.Complete.Store(true)
 
 			if x.Workers.Load() == 0 {

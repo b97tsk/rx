@@ -54,7 +54,7 @@ func (some observables[T]) Concat(ctx context.Context, sink Observer[T]) {
 	})
 
 	observer = func(n Notification[T]) {
-		if n.HasValue || n.HasError {
+		if n.Kind != KindComplete {
 			sink(n)
 			return
 		}
@@ -134,15 +134,14 @@ func (obs concatMapObservable[T, R]) Subscribe(ctx context.Context, sink Observe
 		x.Worker.Add(1)
 
 		obs.Project(v).Subscribe(worker, func(n Notification[R]) {
-			switch {
-			case n.HasValue:
+			switch n.Kind {
+			case KindNext:
 				sink(n)
-				return
 
-			default:
+			case KindError, KindComplete:
 				x.Queue.Lock()
 
-				if !n.HasError {
+				if n.Kind == KindComplete {
 					select {
 					default:
 					case <-worker.Done():
@@ -150,7 +149,8 @@ func (obs concatMapObservable[T, R]) Subscribe(ctx context.Context, sink Observe
 					}
 				}
 
-				if n.HasError {
+				switch n.Kind {
+				case KindError:
 					swapped := x.Context.CompareAndSwap(worker, sentinel)
 
 					x.Queue.Init()
@@ -160,32 +160,31 @@ func (obs concatMapObservable[T, R]) Subscribe(ctx context.Context, sink Observe
 						sink(n)
 					}
 
-					break
-				}
+				case KindComplete:
+					if x.Queue.Len() == 0 {
+						swapped := x.Context.CompareAndSwap(worker, source)
 
-				if x.Queue.Len() == 0 {
-					swapped := x.Context.CompareAndSwap(worker, source)
+						x.Queue.Unlock()
 
-					x.Queue.Unlock()
+						if swapped && x.Complete.Load() && x.Context.CompareAndSwap(source, sentinel) {
+							sink.Complete()
+						}
 
-					if swapped && x.Complete.Load() && x.Context.CompareAndSwap(source, sentinel) {
-						sink.Complete()
+						break
 					}
 
-					break
+					startWorker()
 				}
 
-				startWorker()
+				cancelWorker()
+				x.Worker.Done()
 			}
-
-			cancelWorker()
-			x.Worker.Done()
 		})
 	})
 
 	obs.Source.Subscribe(source, func(n Notification[T]) {
-		switch {
-		case n.HasValue:
+		switch n.Kind {
+		case KindNext:
 			x.Queue.Lock()
 
 			ctx := x.Context.Load()
@@ -200,7 +199,7 @@ func (obs concatMapObservable[T, R]) Subscribe(ctx context.Context, sink Observe
 
 			x.Queue.Unlock()
 
-		case n.HasError:
+		case KindError:
 			ctx := x.Context.Swap(source)
 
 			cancelSource()
@@ -212,7 +211,7 @@ func (obs concatMapObservable[T, R]) Subscribe(ctx context.Context, sink Observe
 
 			x.Queue.Init()
 
-		default:
+		case KindComplete:
 			x.Complete.Store(true)
 
 			if x.Context.CompareAndSwap(source, sentinel) {

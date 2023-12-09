@@ -19,13 +19,13 @@ func last[T any](source Observable[T]) Observable[T] {
 		}
 
 		source.Subscribe(ctx, func(n Notification[T]) {
-			switch {
-			case n.HasValue:
+			switch n.Kind {
+			case KindNext:
 				last.Value = n.Value
 				last.HasValue = true
-			case n.HasError:
+			case KindError:
 				sink(n)
-			default:
+			case KindComplete:
 				if last.HasValue {
 					sink.Next(last.Value)
 					sink.Complete()
@@ -49,13 +49,13 @@ func LastOrElse[T any](def T) Operator[T, T] {
 				}
 
 				source.Subscribe(ctx, func(n Notification[T]) {
-					switch {
-					case n.HasValue:
+					switch n.Kind {
+					case KindNext:
 						last.Value = n.Value
 						last.HasValue = true
-					case n.HasError:
+					case KindError:
 						sink(n)
-					default:
+					case KindComplete:
 						if last.HasValue {
 							sink.Next(last.Value)
 						} else {

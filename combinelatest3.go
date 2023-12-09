@@ -70,19 +70,19 @@ func combineLatestSink3[T1, T2, T3, R, X any](
 ) bool {
 	const FullBits = 7
 
-	switch {
-	case n.HasValue:
+	switch n.Kind {
+	case KindNext:
 		*v = n.Value
 
 		if s.VBits |= bit; s.VBits == FullBits {
 			sink.Next(proj(s.V1, s.V2, s.V3))
 		}
 
-	case n.HasError:
+	case KindError:
 		sink.Error(n.Error)
 		return true
 
-	default:
+	case KindComplete:
 		if s.CBits |= bit; s.CBits == FullBits {
 			sink.Complete()
 			return true

@@ -28,18 +28,18 @@ func (obs takeLastObservable[T]) Subscribe(ctx context.Context, sink Observer[T]
 	var q queue.Queue[T]
 
 	obs.Source.Subscribe(ctx, func(n Notification[T]) {
-		switch {
-		case n.HasValue:
+		switch n.Kind {
+		case KindNext:
 			if q.Len() == obs.Count {
 				q.Pop()
 			}
 
 			q.Push(n.Value)
 
-		case n.HasError:
+		case KindError:
 			sink(n)
 
-		default:
+		case KindComplete:
 			done := ctx.Done()
 
 			for i, j := 0, q.Len(); i < j; i++ {

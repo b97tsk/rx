@@ -33,8 +33,8 @@ func (obs skipLastObservable[T]) Subscribe(ctx context.Context, sink Observer[T]
 	var index, count int
 
 	obs.Source.Subscribe(ctx, func(n Notification[T]) {
-		switch {
-		case n.HasValue:
+		switch n.Kind {
+		case KindNext:
 			if count < bufferSize {
 				count++
 			} else {
@@ -44,7 +44,7 @@ func (obs skipLastObservable[T]) Subscribe(ctx context.Context, sink Observer[T]
 			buffer[index] = n.Value
 			index = (index + 1) % bufferSize
 
-		default:
+		case KindError, KindComplete:
 			sink(n)
 		}
 	})

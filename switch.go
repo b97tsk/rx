@@ -68,30 +68,31 @@ func (obs switchMapObservable[T, R]) Subscribe(ctx context.Context, sink Observe
 		x.Worker.Cancel = cancelWorker
 
 		obs.Project(v).Subscribe(worker, func(n Notification[R]) {
-			switch {
-			case n.HasValue:
+			switch n.Kind {
+			case KindNext:
 				sink(n)
-				return
 
-			case n.HasError:
-				if x.Context.CompareAndSwap(worker, sentinel) {
-					sink(n)
+			case KindError, KindComplete:
+				switch n.Kind {
+				case KindError:
+					if x.Context.CompareAndSwap(worker, sentinel) {
+						sink(n)
+					}
+				case KindComplete:
+					if x.Context.CompareAndSwap(worker, source) && x.Complete.Load() && x.Context.CompareAndSwap(source, sentinel) {
+						sink(n)
+					}
 				}
 
-			default:
-				if x.Context.CompareAndSwap(worker, source) && x.Complete.Load() && x.Context.CompareAndSwap(source, sentinel) {
-					sink(n)
-				}
+				cancelWorker()
+				x.Worker.Done()
 			}
-
-			cancelWorker()
-			x.Worker.Done()
 		})
 	}
 
 	obs.Source.Subscribe(source, func(n Notification[T]) {
-		switch {
-		case n.HasValue:
+		switch n.Kind {
+		case KindNext:
 			if x.Context.Swap(source) == sentinel {
 				x.Context.Store(sentinel)
 				return
@@ -104,7 +105,7 @@ func (obs switchMapObservable[T, R]) Subscribe(ctx context.Context, sink Observe
 
 			startWorker(n.Value)
 
-		case n.HasError:
+		case KindError:
 			ctx := x.Context.Swap(source)
 
 			cancelSource()
@@ -114,7 +115,7 @@ func (obs switchMapObservable[T, R]) Subscribe(ctx context.Context, sink Observe
 				sink.Error(n.Error)
 			}
 
-		default:
+		case KindComplete:
 			x.Complete.Store(true)
 
 			if x.Context.CompareAndSwap(source, sentinel) {

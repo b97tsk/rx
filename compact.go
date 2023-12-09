@@ -16,7 +16,7 @@ func CompactComparable[T comparable]() Operator[T, T] {
 				}
 
 				source.Subscribe(ctx, func(n Notification[T]) {
-					if n.HasValue {
+					if n.Kind == KindNext {
 						if last.HasValue && last.Value == n.Value {
 							return
 						}
@@ -52,7 +52,7 @@ func compact[T any](eq func(v1, v2 T) bool) Operator[T, T] {
 				}
 
 				source.Subscribe(ctx, func(n Notification[T]) {
-					if n.HasValue {
+					if n.Kind == KindNext {
 						if last.HasValue && eq(last.Value, n.Value) {
 							return
 						}
@@ -88,7 +88,7 @@ func compactComparableKey[T any, K comparable](proj func(v T) K) Operator[T, T] 
 				}
 
 				source.Subscribe(ctx, func(n Notification[T]) {
-					if n.HasValue {
+					if n.Kind == KindNext {
 						keyValue := proj(n.Value)
 
 						if last.HasValue && last.Value == keyValue {
@@ -129,7 +129,7 @@ func compactKey[T, K any](proj func(v T) K, eq func(v1, v2 K) bool) Operator[T, 
 				}
 
 				source.Subscribe(ctx, func(n Notification[T]) {
-					if n.HasValue {
+					if n.Kind == KindNext {
 						keyValue := proj(n.Value)
 
 						if last.HasValue && eq(last.Value, keyValue) {

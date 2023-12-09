@@ -60,8 +60,8 @@ func (obs bufferCountObservable[T]) Subscribe(ctx context.Context, sink Observer
 	skip := 0
 
 	obs.Source.Subscribe(ctx, func(n Notification[T]) {
-		switch {
-		case n.HasValue:
+		switch n.Kind {
+		case KindNext:
 			if skip > 0 {
 				skip--
 				break
@@ -82,10 +82,10 @@ func (obs bufferCountObservable[T]) Subscribe(ctx context.Context, sink Observer
 				skip = obs.StartBufferEvery - obs.BufferSize
 			}
 
-		case n.HasError:
+		case KindError:
 			sink.Error(n.Error)
 
-		default:
+		case KindComplete:
 			if len(s) > 0 {
 				for {
 					sink.Next(s)

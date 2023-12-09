@@ -13,11 +13,11 @@ func JustIfEmpty[T any](s ...T) Operator[T, T] {
 				haveValue := false
 
 				source.Subscribe(ctx, func(n Notification[T]) {
-					switch {
-					case n.HasValue:
+					switch n.Kind {
+					case KindNext:
 						haveValue = true
-					case n.HasError:
-					default:
+					case KindError:
+					case KindComplete:
 						if !haveValue {
 							done := ctx.Done()
 
@@ -50,11 +50,11 @@ func ThrowIfEmpty[T any]() Operator[T, T] {
 				haveValue := false
 
 				source.Subscribe(ctx, func(n Notification[T]) {
-					switch {
-					case n.HasValue:
+					switch n.Kind {
+					case KindNext:
 						haveValue = true
-					case n.HasError:
-					default:
+					case KindError:
+					case KindComplete:
 						if !haveValue {
 							sink.Error(ErrEmpty)
 							return
@@ -77,11 +77,11 @@ func SwitchIfEmpty[T any](obs Observable[T]) Operator[T, T] {
 				haveValue := false
 
 				source.Subscribe(ctx, func(n Notification[T]) {
-					switch {
-					case n.HasValue:
+					switch n.Kind {
+					case KindNext:
 						haveValue = true
-					case n.HasError:
-					default:
+					case KindError:
+					case KindComplete:
 						if !haveValue {
 							obs.Subscribe(ctx, sink)
 							return

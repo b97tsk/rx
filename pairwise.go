@@ -18,8 +18,8 @@ func pairwise[T any](source Observable[T]) Observable[Pair[T, T]] {
 		}
 
 		source.Subscribe(ctx, func(n Notification[T]) {
-			switch {
-			case n.HasValue:
+			switch n.Kind {
+			case KindNext:
 				if p.HasValue {
 					sink.Next(NewPair(p.Value, n.Value))
 				}
@@ -27,10 +27,10 @@ func pairwise[T any](source Observable[T]) Observable[Pair[T, T]] {
 				p.Value = n.Value
 				p.HasValue = true
 
-			case n.HasError:
+			case KindError:
 				sink.Error(n.Error)
 
-			default:
+			case KindComplete:
 				sink.Complete()
 			}
 		})

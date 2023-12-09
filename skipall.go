@@ -12,7 +12,8 @@ func SkipAll[T any]() Operator[T, T] {
 func skipAll[T any](source Observable[T]) Observable[T] {
 	return func(ctx context.Context, sink Observer[T]) {
 		source.Subscribe(ctx, func(n Notification[T]) {
-			if !n.HasValue {
+			switch n.Kind {
+			case KindError, KindComplete:
 				sink(n)
 			}
 		})

@@ -13,7 +13,7 @@ func DistinctComparable[T comparable]() Operator[T, T] {
 				seen := make(map[T]struct{})
 
 				source.Subscribe(ctx, func(n Notification[T]) {
-					if n.HasValue {
+					if n.Kind == KindNext {
 						v := n.Value
 
 						if _, exists := seen[v]; exists {
@@ -47,7 +47,7 @@ func distinct[T any, K comparable](proj func(v T) K) Operator[T, T] {
 				seen := make(map[K]struct{})
 
 				source.Subscribe(ctx, func(n Notification[T]) {
-					if n.HasValue {
+					if n.Kind == KindNext {
 						v := proj(n.Value)
 
 						if _, exists := seen[v]; exists {

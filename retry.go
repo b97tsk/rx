@@ -55,7 +55,7 @@ func (obs retryObservable[T]) Subscribe(ctx context.Context, sink Observer[T]) {
 	count := obs.Count
 
 	observer = func(n Notification[T]) {
-		if n.HasValue || !n.HasError || count == 0 {
+		if n.Kind != KindError || count == 0 {
 			sink(n)
 			return
 		}

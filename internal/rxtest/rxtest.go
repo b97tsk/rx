@@ -90,12 +90,12 @@ func (s *TestSuite[T]) Case(obs rx.Observable[T], output ...any) *TestSuite[T] {
 		if len(output) == 0 {
 			s.tb.Fail()
 
-			switch {
-			case n.HasValue:
+			switch n.Kind {
+			case rx.KindNext:
 				s.tb.Logf("want <nothing>, but got %v", tos(n.Value))
-			case n.HasError:
+			case rx.KindError:
 				s.tb.Logf("want <nothing>, but got %v", tos(n.Error))
-			default:
+			case rx.KindComplete:
 				s.tb.Logf("want <nothing>, but got %v", tos(ErrComplete))
 			}
 
@@ -105,22 +105,22 @@ func (s *TestSuite[T]) Case(obs rx.Observable[T], output ...any) *TestSuite[T] {
 		wanted := output[0]
 		output = output[1:]
 
-		switch {
-		case n.HasValue:
+		switch n.Kind {
+		case rx.KindNext:
 			if wanted != any(n.Value) {
 				s.tb.Fail()
 				s.tb.Logf("want %v, but got %v", tos(wanted), tos(n.Value))
 			} else {
 				s.tb.Logf("want %v", tos(wanted))
 			}
-		case n.HasError:
+		case rx.KindError:
 			if wanted != n.Error {
 				s.tb.Fail()
 				s.tb.Logf("want %v, but got %v", tos(wanted), tos(n.Error))
 			} else {
 				s.tb.Logf("want %v", tos(wanted))
 			}
-		default:
+		case rx.KindComplete:
 			if wanted != ErrComplete {
 				s.tb.Fail()
 				s.tb.Logf("want %v, but got %v", tos(wanted), tos(ErrComplete))

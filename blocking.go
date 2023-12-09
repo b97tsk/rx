@@ -34,14 +34,18 @@ func (obs Observable[T]) BlockingFirst(ctx context.Context) (v T, err error) {
 			return
 		}
 
-		noop = true
+		switch n.Kind {
+		case KindNext, KindError, KindComplete:
+			noop = true
 
-		if n.HasValue || n.HasError {
-			res = n
+			switch n.Kind {
+			case KindNext, KindError:
+				res = n
+			}
+
+			cancel()
+			wg.Done()
 		}
-
-		cancel()
-		wg.Done()
 	})
 
 	wg.Wait()
@@ -52,10 +56,10 @@ func (obs Observable[T]) BlockingFirst(ctx context.Context) (v T, err error) {
 		return v, ctx.Err()
 	}
 
-	switch {
-	case res.HasValue:
+	switch res.Kind {
+	case KindNext:
 		return res.Value, nil
-	case res.HasError:
+	case KindError:
 		return v, res.Error
 	default:
 		panic("unreachable")
@@ -111,11 +115,13 @@ func (obs Observable[T]) BlockingLast(ctx context.Context) (v T, err error) {
 	wg.Add(1)
 
 	obs.Subscribe(child, func(n Notification[T]) {
-		if n.HasValue || n.HasError {
+		switch n.Kind {
+		case KindNext, KindError:
 			res = n
 		}
 
-		if !n.HasValue {
+		switch n.Kind {
+		case KindError, KindComplete:
 			cancel()
 			wg.Done()
 		}
@@ -129,10 +135,10 @@ func (obs Observable[T]) BlockingLast(ctx context.Context) (v T, err error) {
 		return v, ctx.Err()
 	}
 
-	switch {
-	case res.HasValue:
+	switch res.Kind {
+	case KindNext:
 		return res.Value, nil
-	case res.HasError:
+	case KindError:
 		return v, res.Error
 	default:
 		panic("unreachable")
@@ -195,7 +201,7 @@ func (obs Observable[T]) BlockingSingle(ctx context.Context) (v T, err error) {
 			return
 		}
 
-		if n.HasValue && res.HasValue {
+		if n.Kind == KindNext && res.Kind == KindNext {
 			res = Error[T](ErrNotSingle)
 			noop = true
 
@@ -205,11 +211,13 @@ func (obs Observable[T]) BlockingSingle(ctx context.Context) (v T, err error) {
 			return
 		}
 
-		if n.HasValue || n.HasError {
+		switch n.Kind {
+		case KindNext, KindError:
 			res = n
 		}
 
-		if !n.HasValue {
+		switch n.Kind {
+		case KindError, KindComplete:
 			cancel()
 			wg.Done()
 		}
@@ -223,10 +231,10 @@ func (obs Observable[T]) BlockingSingle(ctx context.Context) (v T, err error) {
 		return v, ctx.Err()
 	}
 
-	switch {
-	case res.HasValue:
+	switch res.Kind {
+	case KindNext:
 		return res.Value, nil
-	case res.HasError:
+	case KindError:
 		return v, res.Error
 	default:
 		panic("unreachable")
@@ -261,19 +269,20 @@ func (obs Observable[T]) BlockingSubscribe(ctx context.Context, sink Observer[T]
 
 		sink(n)
 
-		if !n.HasValue {
+		switch n.Kind {
+		case KindError, KindComplete:
 			wg.Done()
 		}
 	})
 
 	wg.Wait()
 
-	switch {
-	case res.HasValue:
-		panic("unreachable")
-	case res.HasError:
+	switch res.Kind {
+	case KindError:
 		return res.Error
-	default:
+	case KindComplete:
 		return nil
+	default:
+		panic("unreachable")
 	}
 }

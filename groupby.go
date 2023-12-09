@@ -42,8 +42,8 @@ func (obs groupByObservable[T, K]) Subscribe(ctx context.Context, sink Observer[
 	groups := make(map[K]Observer[T])
 
 	obs.Source.Subscribe(ctx, func(n Notification[T]) {
-		switch {
-		case n.HasValue:
+		switch n.Kind {
+		case KindNext:
 			key := obs.KeySelector(n.Value)
 
 			group, exists := groups[key]
@@ -59,14 +59,15 @@ func (obs groupByObservable[T, K]) Subscribe(ctx context.Context, sink Observer[
 
 			group.Emit(n)
 
-		default:
+		case KindError, KindComplete:
 			for _, group := range groups {
 				group.Emit(n)
 			}
 
-			if n.HasError {
+			switch n.Kind {
+			case KindError:
 				sink.Error(n.Error)
-			} else {
+			case KindComplete:
 				sink.Complete()
 			}
 		}

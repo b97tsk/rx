@@ -36,9 +36,12 @@ func (obs takeWhileObservable[T]) Subscribe(ctx context.Context, sink Observer[T
 	var noop bool
 
 	obs.Source.Subscribe(ctx, func(n Notification[T]) {
-		switch {
-		case noop:
-		case n.HasValue:
+		if noop {
+			return
+		}
+
+		switch n.Kind {
+		case KindNext:
 			if obs.Condition(n.Value) {
 				sink(n)
 				return
@@ -48,7 +51,7 @@ func (obs takeWhileObservable[T]) Subscribe(ctx context.Context, sink Observer[T
 
 			sink.Complete()
 
-		default:
+		case KindError, KindComplete:
 			sink(n)
 		}
 	})

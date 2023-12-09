@@ -19,16 +19,23 @@ func dematerialize[_ Notification[T], T any](source Observable[Notification[T]])
 		var noop bool
 
 		source.Subscribe(ctx, func(n Notification[Notification[T]]) {
-			switch {
-			case noop:
-			case n.HasValue:
+			if noop {
+				return
+			}
+
+			switch n.Kind {
+			case KindNext:
 				n := n.Value
-				noop = !n.HasValue
+
+				switch n.Kind {
+				case KindError, KindComplete:
+					noop = true
+				}
 
 				sink(n)
-			case n.HasError:
+			case KindError:
 				sink.Error(n.Error)
-			default:
+			case KindComplete:
 				sink.Complete()
 			}
 		})

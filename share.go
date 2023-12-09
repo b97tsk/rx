@@ -102,25 +102,25 @@ func (obs *shareObservable[T]) Subscribe(ctx context.Context, sink Observer[T]) 
 		unlocked = true
 
 		obs.source.Subscribe(ctx, func(n Notification[T]) {
-			if n.HasValue {
+			switch n.Kind {
+			case KindNext:
 				sink(n)
-				return
+			case KindError, KindComplete:
+				cancel()
+
+				obs.mu.Lock()
+
+				if connection == obs.connection {
+					obs.subject = Subject[T]{}
+					obs.connection = nil
+					obs.disconnect = nil
+					obs.shareCount = 0
+				}
+
+				obs.mu.Unlock()
+
+				sink(n)
 			}
-
-			cancel()
-
-			obs.mu.Lock()
-
-			if connection == obs.connection {
-				obs.subject = Subject[T]{}
-				obs.connection = nil
-				obs.disconnect = nil
-				obs.shareCount = 0
-			}
-
-			obs.mu.Unlock()
-
-			sink(n)
 		})
 	}
 

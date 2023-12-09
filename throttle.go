@@ -119,8 +119,8 @@ func (obs throttleObservable[T, U]) Subscribe(ctx context.Context, sink Observer
 
 			cancelWorker()
 
-			switch {
-			case n.HasValue:
+			switch n.Kind {
+			case KindNext:
 				if obs.Trailing && x.Trailing.HasValue.Load() {
 					x.Trailing.Lock()
 					value := x.Trailing.Value
@@ -137,12 +137,12 @@ func (obs throttleObservable[T, U]) Subscribe(ctx context.Context, sink Observer
 					sink.Complete()
 				}
 
-			case n.HasError:
+			case KindError:
 				if x.Context.CompareAndSwap(worker, sentinel) {
 					sink.Error(n.Error)
 				}
 
-			default:
+			case KindComplete:
 				if x.Context.CompareAndSwap(worker, source) && x.Complete.Load() && x.Context.CompareAndSwap(source, sentinel) {
 					sink.Complete()
 				}
@@ -153,8 +153,8 @@ func (obs throttleObservable[T, U]) Subscribe(ctx context.Context, sink Observer
 	}
 
 	obs.Source.Subscribe(source, func(n Notification[T]) {
-		switch {
-		case n.HasValue:
+		switch n.Kind {
+		case KindNext:
 			x.Trailing.Lock()
 			x.Trailing.Value = n.Value
 			x.Trailing.HasValue.Store(true)
@@ -169,7 +169,7 @@ func (obs throttleObservable[T, U]) Subscribe(ctx context.Context, sink Observer
 				doThrottle(n.Value)
 			}
 
-		case n.HasError:
+		case KindError:
 			ctx := x.Context.Swap(source)
 
 			cancelSource()
@@ -179,7 +179,7 @@ func (obs throttleObservable[T, U]) Subscribe(ctx context.Context, sink Observer
 				sink(n)
 			}
 
-		default:
+		case KindComplete:
 			x.Complete.Store(true)
 
 			if x.Context.CompareAndSwap(source, sentinel) {

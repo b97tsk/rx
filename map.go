@@ -19,12 +19,12 @@ func map1[T, R any](proj func(v T) R) Operator[T, R] {
 		func(source Observable[T]) Observable[R] {
 			return func(ctx context.Context, sink Observer[R]) {
 				source.Subscribe(ctx, func(n Notification[T]) {
-					switch {
-					case n.HasValue:
+					switch n.Kind {
+					case KindNext:
 						sink.Next(proj(n.Value))
-					case n.HasError:
+					case KindError:
 						sink.Error(n.Error)
-					default:
+					case KindComplete:
 						sink.Complete()
 					}
 				})
@@ -40,12 +40,12 @@ func MapTo[T, R any](v R) Operator[T, R] {
 		func(source Observable[T]) Observable[R] {
 			return func(ctx context.Context, sink Observer[R]) {
 				source.Subscribe(ctx, func(n Notification[T]) {
-					switch {
-					case n.HasValue:
+					switch n.Kind {
+					case KindNext:
 						sink.Next(v)
-					case n.HasError:
+					case KindError:
 						sink.Error(n.Error)
-					default:
+					case KindComplete:
 						sink.Complete()
 					}
 				})

@@ -50,16 +50,16 @@ func (obs skipUntilObservable[T, U]) Subscribe(ctx context.Context, sink Observe
 
 			cancelWorker()
 
-			switch {
-			case n.HasValue:
+			switch n.Kind {
+			case KindNext:
 				x.Context.Store(source)
 
-			case n.HasError:
+			case KindError:
 				if x.Context.CompareAndSwap(worker, sentinel) {
 					sink.Error(n.Error)
 				}
 
-			default:
+			case KindComplete:
 				break
 			}
 
@@ -91,13 +91,13 @@ func (obs skipUntilObservable[T, U]) Subscribe(ctx context.Context, sink Observe
 	}
 
 	obs.Source.Subscribe(source, func(n Notification[T]) {
-		switch {
-		case n.HasValue:
+		switch n.Kind {
+		case KindNext:
 			if x.Context.Load() == source {
 				sink(n)
 			}
 
-		default:
+		case KindError, KindComplete:
 			finish(n)
 		}
 	})

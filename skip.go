@@ -32,7 +32,7 @@ func (obs skipObservable[T]) Subscribe(ctx context.Context, sink Observer[T]) {
 	count := obs.Count
 
 	obs.Source.Subscribe(ctx, func(n Notification[T]) {
-		if taking || !n.HasValue {
+		if taking || n.Kind != KindNext {
 			sink(n)
 			return
 		}

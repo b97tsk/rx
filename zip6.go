@@ -92,8 +92,8 @@ func zipSink6[T1, T2, T3, T4, T5, T6, R, X any](
 ) bool {
 	const FullBits = 63
 
-	switch {
-	case n.HasValue:
+	switch n.Kind {
+	case KindNext:
 		q.Push(n.Value)
 
 		if s.VBits |= bit; s.VBits == FullBits {
@@ -114,11 +114,11 @@ func zipSink6[T1, T2, T3, T4, T5, T6, R, X any](
 			}
 		}
 
-	case n.HasError:
+	case KindError:
 		sink.Error(n.Error)
 		return true
 
-	default:
+	case KindComplete:
 		s.CBits |= bit
 
 		if q.Len() == 0 {

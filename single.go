@@ -25,9 +25,12 @@ func single[T any](source Observable[T]) Observable[T] {
 		var noop bool
 
 		source.Subscribe(ctx, func(n Notification[T]) {
-			switch {
-			case noop:
-			case n.HasValue:
+			if noop {
+				return
+			}
+
+			switch n.Kind {
+			case KindNext:
 				if !first.HasValue {
 					first.Value = n.Value
 					first.HasValue = true
@@ -39,10 +42,10 @@ func single[T any](source Observable[T]) Observable[T] {
 
 				sink.Error(ErrNotSingle)
 
-			case n.HasError:
+			case KindError:
 				sink(n)
 
-			default:
+			case KindComplete:
 				if first.HasValue {
 					sink.Next(first.Value)
 					sink.Complete()

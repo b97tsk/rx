@@ -21,12 +21,12 @@ func flat[_ Observable[T], T any](f func(some ...Observable[T]) Observable[T]) O
 				var s []Observable[T]
 
 				source.Subscribe(ctx, func(n Notification[Observable[T]]) {
-					switch {
-					case n.HasValue:
+					switch n.Kind {
+					case KindNext:
 						s = append(s, n.Value)
-					case n.HasError:
+					case KindError:
 						sink.Error(n.Error)
-					default:
+					case KindComplete:
 						f(s...).Subscribe(ctx, sink)
 					}
 				})

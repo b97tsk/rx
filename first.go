@@ -22,18 +22,21 @@ func first[T any](source Observable[T]) Observable[T] {
 				return
 			}
 
-			noop = true
+			switch n.Kind {
+			case KindNext, KindError, KindComplete:
+				noop = true
 
-			cancel()
+				cancel()
 
-			switch {
-			case n.HasValue:
-				sink(n)
-				sink.Complete()
-			case n.HasError:
-				sink(n)
-			default:
-				sink.Error(ErrEmpty)
+				switch n.Kind {
+				case KindNext:
+					sink(n)
+					sink.Complete()
+				case KindError:
+					sink(n)
+				case KindComplete:
+					sink.Error(ErrEmpty)
+				}
 			}
 		})
 	}
@@ -54,19 +57,22 @@ func FirstOrElse[T any](def T) Operator[T, T] {
 						return
 					}
 
-					noop = true
+					switch n.Kind {
+					case KindNext, KindError, KindComplete:
+						noop = true
 
-					cancel()
+						cancel()
 
-					switch {
-					case n.HasValue:
-						sink(n)
-						sink.Complete()
-					case n.HasError:
-						sink(n)
-					default:
-						sink.Next(def)
-						sink(n)
+						switch n.Kind {
+						case KindNext:
+							sink(n)
+							sink.Complete()
+						case KindError:
+							sink(n)
+						case KindComplete:
+							sink.Next(def)
+							sink(n)
+						}
 					}
 				})
 			}

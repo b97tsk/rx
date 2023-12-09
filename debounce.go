@@ -83,8 +83,8 @@ func (obs debounceObservable[T, U]) Subscribe(ctx context.Context, sink Observer
 
 			cancelWorker()
 
-			switch {
-			case n.HasValue:
+			switch n.Kind {
+			case KindNext:
 				if x.Latest.HasValue.Load() {
 					x.Latest.Lock()
 					value := x.Latest.Value
@@ -93,12 +93,12 @@ func (obs debounceObservable[T, U]) Subscribe(ctx context.Context, sink Observer
 					sink.Next(value)
 				}
 
-			case n.HasError:
+			case KindError:
 				if x.Context.CompareAndSwap(worker, sentinel) {
 					sink.Error(n.Error)
 				}
 
-			default:
+			case KindComplete:
 				break
 			}
 
@@ -107,8 +107,8 @@ func (obs debounceObservable[T, U]) Subscribe(ctx context.Context, sink Observer
 	}
 
 	obs.Source.Subscribe(source, func(n Notification[T]) {
-		switch {
-		case n.HasValue:
+		switch n.Kind {
+		case KindNext:
 			x.Latest.Lock()
 			x.Latest.Value = n.Value
 			x.Latest.HasValue.Store(true)
@@ -126,14 +126,14 @@ func (obs debounceObservable[T, U]) Subscribe(ctx context.Context, sink Observer
 
 			startWorker(n.Value)
 
-		default:
+		case KindError, KindComplete:
 			ctx := x.Context.Swap(source)
 
 			cancelSource()
 			x.Worker.Wait()
 
 			if x.Context.Swap(sentinel) != sentinel && ctx != sentinel {
-				if !n.HasError && x.Latest.HasValue.Load() {
+				if n.Kind == KindComplete && x.Latest.HasValue.Load() {
 					sink.Next(x.Latest.Value)
 				}
 

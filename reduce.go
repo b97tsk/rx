@@ -22,12 +22,12 @@ func reduce[T, R any](init R, accumulator func(v1 R, v2 T) R) Operator[T, R] {
 				res := init
 
 				source.Subscribe(ctx, func(n Notification[T]) {
-					switch {
-					case n.HasValue:
+					switch n.Kind {
+					case KindNext:
 						res = accumulator(res, n.Value)
-					case n.HasError:
+					case KindError:
 						sink.Error(n.Error)
-					default:
+					case KindComplete:
 						sink.Next(res)
 						sink.Complete()
 					}

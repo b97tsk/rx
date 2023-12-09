@@ -25,7 +25,7 @@ func (sink Observer[T]) Emit(n Notification[T]) {
 
 // ElementsOnly passes n to sink if n represents a value.
 func (sink Observer[T]) ElementsOnly(n Notification[T]) {
-	if n.HasValue {
+	if n.Kind == KindNext {
 		sink(n)
 	}
 }
@@ -35,7 +35,8 @@ func (sink Observer[T]) ElementsOnly(n Notification[T]) {
 // just before passing it to sink.
 func (sink Observer[T]) OnLastNotification(f func()) Observer[T] {
 	return func(n Notification[T]) {
-		if !n.HasValue {
+		switch n.Kind {
+		case KindError, KindComplete:
 			f()
 		}
 
@@ -51,13 +52,15 @@ func (sink Observer[T]) Serialized() Observer[T] {
 
 	return func(n Notification[T]) {
 		if sink, ok := <-c; ok {
-			switch {
-			case n.HasValue:
+			switch n.Kind {
+			case KindNext:
 				sink(n)
 				c <- sink
-			default:
+			case KindError, KindComplete:
 				close(c)
 				sink(n)
+			default: // Unknown kind.
+				c <- sink
 			}
 		}
 	}

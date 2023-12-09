@@ -77,7 +77,8 @@ func (obs congestObservable[T]) Subscribe(ctx context.Context, sink Observer[T])
 			case out <- outv:
 				q.Pop()
 
-				if !outv.HasValue {
+				switch outv.Kind {
+				case KindError, KindComplete:
 					close(out)
 					close(noop)
 

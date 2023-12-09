@@ -42,7 +42,7 @@ func onNext[T any](f func(v T)) Operator[T, T] {
 		func(source Observable[T]) Observable[T] {
 			return func(ctx context.Context, sink Observer[T]) {
 				source.Subscribe(ctx, func(n Notification[T]) {
-					if n.HasValue {
+					if n.Kind == KindNext {
 						f(n.Value)
 					}
 
@@ -68,7 +68,7 @@ func onComplete[T any](f func()) Operator[T, T] {
 		func(source Observable[T]) Observable[T] {
 			return func(ctx context.Context, sink Observer[T]) {
 				source.Subscribe(ctx, func(n Notification[T]) {
-					if !n.HasValue && !n.HasError {
+					if n.Kind == KindComplete {
 						f()
 					}
 
@@ -94,7 +94,7 @@ func onError[T any](f func(err error)) Operator[T, T] {
 		func(source Observable[T]) Observable[T] {
 			return func(ctx context.Context, sink Observer[T]) {
 				source.Subscribe(ctx, func(n Notification[T]) {
-					if n.HasError {
+					if n.Kind == KindError {
 						f(n.Error)
 					}
 
@@ -120,7 +120,8 @@ func onLastNotification[T any](f func()) Operator[T, T] {
 		func(source Observable[T]) Observable[T] {
 			return func(ctx context.Context, sink Observer[T]) {
 				source.Subscribe(ctx, func(n Notification[T]) {
-					if !n.HasValue {
+					switch n.Kind {
+					case KindError, KindComplete:
 						f()
 					}
 

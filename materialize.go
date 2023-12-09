@@ -15,7 +15,8 @@ func materialize[T any](source Observable[T]) Observable[Notification[T]] {
 		source.Subscribe(ctx, func(n Notification[T]) {
 			sink.Next(n)
 
-			if !n.HasValue {
+			switch n.Kind {
+			case KindError, KindComplete:
 				sink.Complete()
 			}
 		})

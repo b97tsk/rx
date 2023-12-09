@@ -20,19 +20,22 @@ func isEmpty[T any](source Observable[T]) Observable[bool] {
 				return
 			}
 
-			noop = true
+			switch n.Kind {
+			case KindNext, KindError, KindComplete:
+				noop = true
 
-			cancel()
+				cancel()
 
-			switch {
-			case n.HasValue:
-				sink.Next(false)
-				sink.Complete()
-			case n.HasError:
-				sink.Error(n.Error)
-			default:
-				sink.Next(true)
-				sink.Complete()
+				switch n.Kind {
+				case KindNext:
+					sink.Next(false)
+					sink.Complete()
+				case KindError:
+					sink.Error(n.Error)
+				case KindComplete:
+					sink.Next(true)
+					sink.Complete()
+				}
 			}
 		})
 	}

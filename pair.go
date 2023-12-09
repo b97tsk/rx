@@ -54,12 +54,12 @@ func LeftOf[_ Pair[K, V], K, V any]() Operator[Pair[K, V], K] {
 		func(source Observable[Pair[K, V]]) Observable[K] {
 			return func(ctx context.Context, sink Observer[K]) {
 				source.Subscribe(ctx, func(n Notification[Pair[K, V]]) {
-					switch {
-					case n.HasValue:
+					switch n.Kind {
+					case KindNext:
 						sink.Next(n.Value.Left())
-					case n.HasError:
+					case KindError:
 						sink.Error(n.Error)
-					default:
+					case KindComplete:
 						sink.Complete()
 					}
 				})
@@ -80,12 +80,12 @@ func RightOf[_ Pair[K, V], K, V any]() Operator[Pair[K, V], V] {
 		func(source Observable[Pair[K, V]]) Observable[V] {
 			return func(ctx context.Context, sink Observer[V]) {
 				source.Subscribe(ctx, func(n Notification[Pair[K, V]]) {
-					switch {
-					case n.HasValue:
+					switch n.Kind {
+					case KindNext:
 						sink.Next(n.Value.Right())
-					case n.HasError:
+					case KindError:
 						sink.Error(n.Error)
-					default:
+					case KindComplete:
 						sink.Complete()
 					}
 				})
@@ -104,13 +104,13 @@ func WithIndex[V any, K constraints.Integer](init K) Operator[V, Pair[K, V]] {
 				index := init
 
 				source.Subscribe(ctx, func(n Notification[V]) {
-					switch {
-					case n.HasValue:
+					switch n.Kind {
+					case KindNext:
 						sink.Next(NewPair(index, n.Value))
 						index++
-					case n.HasError:
+					case KindError:
 						sink.Error(n.Error)
-					default:
+					case KindComplete:
 						sink.Complete()
 					}
 				})

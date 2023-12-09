@@ -111,19 +111,19 @@ func withLatestFromSink7[T1, T2, T3, T4, T5, T6, T7, R, X any](
 ) bool {
 	const FullBits = 127
 
-	switch {
-	case n.HasValue:
+	switch n.Kind {
+	case KindNext:
 		*v = n.Value
 
 		if s.VBits |= bit; s.VBits == FullBits && bit == 1 {
 			sink.Next(proj(s.V1, s.V2, s.V3, s.V4, s.V5, s.V6, s.V7))
 		}
 
-	case n.HasError:
+	case KindError:
 		sink.Error(n.Error)
 		return true
 
-	default:
+	case KindComplete:
 		if bit == 1 {
 			sink.Complete()
 			return true

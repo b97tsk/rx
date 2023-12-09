@@ -52,8 +52,8 @@ func (obs sampleObservable[T, U]) Subscribe(ctx context.Context, sink Observer[T
 		x.Worker.Add(1)
 
 		obs.Notifier.Subscribe(worker, func(n Notification[U]) {
-			switch {
-			case n.HasValue:
+			switch n.Kind {
+			case KindNext:
 				if x.Latest.HasValue.Load() {
 					x.Latest.Lock()
 					value := x.Latest.Value
@@ -64,12 +64,12 @@ func (obs sampleObservable[T, U]) Subscribe(ctx context.Context, sink Observer[T
 
 				return
 
-			case n.HasError:
+			case KindError:
 				if x.Context.CompareAndSwap(worker, sentinel) {
 					sink.Error(n.Error)
 				}
 
-			default:
+			case KindComplete:
 				break
 			}
 
@@ -97,14 +97,14 @@ func (obs sampleObservable[T, U]) Subscribe(ctx context.Context, sink Observer[T
 	}
 
 	obs.Source.Subscribe(source, func(n Notification[T]) {
-		switch {
-		case n.HasValue:
+		switch n.Kind {
+		case KindNext:
 			x.Latest.Lock()
 			x.Latest.Value = n.Value
 			x.Latest.HasValue.Store(true)
 			x.Latest.Unlock()
 
-		default:
+		case KindError, KindComplete:
 			finish(n)
 		}
 	})

@@ -38,7 +38,7 @@ func (obs takeObservable[T]) Subscribe(ctx context.Context, sink Observer[T]) {
 
 		sink(n)
 
-		if n.HasValue {
+		if n.Kind == KindNext {
 			count--
 
 			if count == 0 {

@@ -45,9 +45,12 @@ func (obs containsObservable[T]) Subscribe(ctx context.Context, sink Observer[bo
 	var noop bool
 
 	obs.Source.Subscribe(ctx, func(n Notification[T]) {
-		switch {
-		case noop:
-		case n.HasValue:
+		if noop {
+			return
+		}
+
+		switch n.Kind {
+		case KindNext:
 			if obs.Condition(n.Value) {
 				noop = true
 
@@ -55,10 +58,10 @@ func (obs containsObservable[T]) Subscribe(ctx context.Context, sink Observer[bo
 				sink.Complete()
 			}
 
-		case n.HasError:
+		case KindError:
 			sink.Error(n.Error)
 
-		default:
+		case KindComplete:
 			sink.Next(false)
 			sink.Complete()
 		}
@@ -78,9 +81,12 @@ func (obs containsElementObservable[T]) Subscribe(ctx context.Context, sink Obse
 	var noop bool
 
 	obs.Source.Subscribe(ctx, func(n Notification[T]) {
-		switch {
-		case noop:
-		case n.HasValue:
+		if noop {
+			return
+		}
+
+		switch n.Kind {
+		case KindNext:
 			if n.Value == obs.Element {
 				noop = true
 
@@ -88,10 +94,10 @@ func (obs containsElementObservable[T]) Subscribe(ctx context.Context, sink Obse
 				sink.Complete()
 			}
 
-		case n.HasError:
+		case KindError:
 			sink.Error(n.Error)
 
-		default:
+		case KindComplete:
 			sink.Next(false)
 			sink.Complete()
 		}

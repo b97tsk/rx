@@ -43,7 +43,8 @@ func MulticastReplay[T any](opts *ReplayConfig) Subject[T] {
 		Observer: func(n Notification[T]) {
 			m.emit(n)
 
-			if !n.HasValue {
+			switch n.Kind {
+			case KindError, KindComplete:
 				runtime.SetFinalizer(&m, nil)
 			}
 		},
@@ -118,11 +119,13 @@ func (m *multicastReplay[T]) trimBuffer(b *queue.Queue[Pair[time.Time, T]]) {
 func (m *multicastReplay[T]) emit(n Notification[T]) {
 	m.mu.Lock()
 
-	switch {
-	case m.err != nil:
+	if m.last.Kind != 0 {
 		m.mu.Unlock()
+		return
+	}
 
-	case n.HasValue:
+	switch n.Kind {
+	case KindNext:
 		obs := m.obs.Clone()
 		defer obs.Release()
 
@@ -142,13 +145,13 @@ func (m *multicastReplay[T]) emit(n Notification[T]) {
 			observer.Emit(n)
 		}
 
-	default:
+	case KindError, KindComplete:
 		var obs multiObserver[T]
 		obs, m.obs = m.obs, obs
 
-		m.err = errComplete
-		if n.HasError {
-			m.err = errOrErrNil(n.Error)
+		m.last = n
+
+		if n.Kind == KindError {
 			m.b.q.Init()
 		}
 
@@ -157,14 +160,17 @@ func (m *multicastReplay[T]) emit(n Notification[T]) {
 		for _, observer := range obs.Observers {
 			observer.Emit(n)
 		}
+
+	default: // Unknown kind.
+		m.mu.Unlock()
 	}
 }
 
 func (m *multicastReplay[T]) subscribe(ctx context.Context, sink Observer[T]) {
 	m.mu.Lock()
 
-	err := m.err
-	if err == nil {
+	last := m.last
+	if last.Kind == 0 {
 		var cancel context.CancelFunc
 
 		ctx, cancel = context.WithCancel(ctx)
@@ -211,12 +217,7 @@ func (m *multicastReplay[T]) subscribe(ctx context.Context, sink Observer[T]) {
 		sink.Next(b.At(i).Value)
 	}
 
-	if err != nil {
-		if err == errComplete {
-			sink.Complete()
-			return
-		}
-
-		sink.Error(cleanErrNil(err))
+	if last.Kind != 0 {
+		sink(last)
 	}
 }

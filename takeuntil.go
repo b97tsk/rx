@@ -54,21 +54,25 @@ func (obs takeUntilObservable[T, U]) Subscribe(ctx context.Context, sink Observe
 
 			cancelWorker()
 
-			if (n.HasValue || n.HasError) && x.Context.CompareAndSwap(worker, sentinel) {
-				x.Worker.Done()
+			switch n.Kind {
+			case KindNext, KindError:
+				if x.Context.CompareAndSwap(worker, sentinel) {
+					x.Worker.Done()
 
-				cancelSource()
-				x.Source.Lock()
-				x.Source.Wait()
-				x.Source.Unlock()
+					cancelSource()
+					x.Source.Lock()
+					x.Source.Wait()
+					x.Source.Unlock()
 
-				if n.HasValue {
-					sink.Complete()
-				} else {
-					sink.Error(n.Error)
+					switch n.Kind {
+					case KindNext:
+						sink.Complete()
+					case KindError:
+						sink.Error(n.Error)
+					}
+
+					return
 				}
-
-				return
 			}
 
 			x.Worker.Done()
@@ -100,10 +104,10 @@ func (obs takeUntilObservable[T, U]) Subscribe(ctx context.Context, sink Observe
 	}
 
 	obs.Source.Subscribe(source, func(n Notification[T]) {
-		switch {
-		case n.HasValue:
+		switch n.Kind {
+		case KindNext:
 			sink(n)
-		default:
+		case KindError, KindComplete:
 			finish(n)
 		}
 	})

@@ -63,14 +63,16 @@ func (obs timeoutObservable[T]) Subscribe(ctx context.Context, sink Observer[T])
 		for {
 			select {
 			case n := <-c:
-				if !n.HasValue {
+				switch n.Kind {
+				case KindError, KindComplete:
 					cancelSource()
 					close(noop)
 				}
 
 				sink(n)
 
-				if !n.HasValue {
+				switch n.Kind {
+				case KindError, KindComplete:
 					timerpool.Put(tm)
 					return
 				}

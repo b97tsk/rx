@@ -15,12 +15,12 @@ func toSlice[T any](source Observable[T]) Observable[[]T] {
 		var s []T
 
 		source.Subscribe(ctx, func(n Notification[T]) {
-			switch {
-			case n.HasValue:
+			switch n.Kind {
+			case KindNext:
 				s = append(s, n.Value)
-			case n.HasError:
+			case KindError:
 				sink.Error(n.Error)
-			default:
+			case KindComplete:
 				sink.Next(s)
 				sink.Complete()
 			}

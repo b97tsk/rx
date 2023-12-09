@@ -33,7 +33,7 @@ func (obs skipWhileObservable[T]) Subscribe(ctx context.Context, sink Observer[T
 
 	obs.Source.Subscribe(ctx, func(n Notification[T]) {
 		switch {
-		case taking || !n.HasValue:
+		case taking || n.Kind != KindNext:
 			sink(n)
 		case !obs.Condition(n.Value):
 			taking = true

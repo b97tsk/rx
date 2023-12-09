@@ -27,12 +27,12 @@ func Example() {
 		),
 		rx.Do(
 			func(n rx.Notification[int]) {
-				switch {
-				case n.HasValue:
+				switch n.Kind {
+				case rx.KindNext:
 					fmt.Println(n.Value)
-				case n.HasError:
+				case rx.KindError:
 					fmt.Println(n.Error)
-				default:
+				case rx.KindComplete:
 					fmt.Println("Complete")
 				}
 			},

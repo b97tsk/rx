@@ -21,11 +21,11 @@ func catch[T any](selector func(err error) Observable[T]) Operator[T, T] {
 		func(source Observable[T]) Observable[T] {
 			return func(ctx context.Context, sink Observer[T]) {
 				source.Subscribe(ctx, func(n Notification[T]) {
-					switch {
-					case n.HasValue:
+					switch n.Kind {
+					case KindNext:
 						sink(n)
 
-					case n.HasError:
+					case KindError:
 						select {
 						default:
 						case <-ctx.Done():
@@ -36,7 +36,7 @@ func catch[T any](selector func(err error) Observable[T]) Operator[T, T] {
 						obs := selector(n.Error)
 						obs.Subscribe(ctx, sink)
 
-					default:
+					case KindComplete:
 						sink(n)
 					}
 				})
@@ -54,11 +54,11 @@ func OnErrorResumeWith[T any](obs Observable[T]) Operator[T, T] {
 		func(source Observable[T]) Observable[T] {
 			return func(ctx context.Context, sink Observer[T]) {
 				source.Subscribe(ctx, func(n Notification[T]) {
-					switch {
-					case n.HasValue:
+					switch n.Kind {
+					case KindNext:
 						sink(n)
 
-					case n.HasError:
+					case KindError:
 						select {
 						default:
 						case <-ctx.Done():
@@ -68,7 +68,7 @@ func OnErrorResumeWith[T any](obs Observable[T]) Operator[T, T] {
 
 						obs.Subscribe(ctx, sink)
 
-					default:
+					case KindComplete:
 						sink(n)
 					}
 				})
@@ -88,11 +88,11 @@ func OnErrorComplete[T any]() Operator[T, T] {
 func onErrorComplete[T any](source Observable[T]) Observable[T] {
 	return func(ctx context.Context, sink Observer[T]) {
 		source.Subscribe(ctx, func(n Notification[T]) {
-			switch {
-			case n.HasValue:
+			switch n.Kind {
+			case KindNext:
 				sink(n)
 
-			case n.HasError:
+			case KindError:
 				select {
 				default:
 				case <-ctx.Done():
@@ -102,7 +102,7 @@ func onErrorComplete[T any](source Observable[T]) Observable[T] {
 
 				sink.Complete()
 
-			default:
+			case KindComplete:
 				sink(n)
 			}
 		})

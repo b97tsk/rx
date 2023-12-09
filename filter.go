@@ -19,12 +19,12 @@ func filter[T any](cond func(v T) bool) Operator[T, T] {
 		func(source Observable[T]) Observable[T] {
 			return func(ctx context.Context, sink Observer[T]) {
 				source.Subscribe(ctx, func(n Notification[T]) {
-					switch {
-					case n.HasValue:
+					switch n.Kind {
+					case KindNext:
 						if cond(n.Value) {
 							sink(n)
 						}
-					default:
+					case KindError, KindComplete:
 						sink(n)
 					}
 				})
@@ -48,12 +48,12 @@ func filterOut[T any](cond func(v T) bool) Operator[T, T] {
 		func(source Observable[T]) Observable[T] {
 			return func(ctx context.Context, sink Observer[T]) {
 				source.Subscribe(ctx, func(n Notification[T]) {
-					switch {
-					case n.HasValue:
+					switch n.Kind {
+					case KindNext:
 						if !cond(n.Value) {
 							sink(n)
 						}
-					default:
+					case KindError, KindComplete:
 						sink(n)
 					}
 				})
@@ -78,14 +78,14 @@ func filterMap[T, R any](cond func(v T) (R, bool)) Operator[T, R] {
 		func(source Observable[T]) Observable[R] {
 			return func(ctx context.Context, sink Observer[R]) {
 				source.Subscribe(ctx, func(n Notification[T]) {
-					switch {
-					case n.HasValue:
+					switch n.Kind {
+					case KindNext:
 						if v, ok := cond(n.Value); ok {
 							sink.Next(v)
 						}
-					case n.HasError:
+					case KindError:
 						sink.Error(n.Error)
-					default:
+					case KindComplete:
 						sink.Complete()
 					}
 				})

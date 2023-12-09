@@ -83,8 +83,8 @@ func (obs auditObservable[T, U]) Subscribe(ctx context.Context, sink Observer[T]
 
 			cancelWorker()
 
-			switch {
-			case n.HasValue:
+			switch n.Kind {
+			case KindNext:
 				x.Latest.Lock()
 				value := x.Latest.Value
 				x.Latest.Unlock()
@@ -95,12 +95,12 @@ func (obs auditObservable[T, U]) Subscribe(ctx context.Context, sink Observer[T]
 					sink.Complete()
 				}
 
-			case n.HasError:
+			case KindError:
 				if x.Context.CompareAndSwap(worker, sentinel) {
 					sink.Error(n.Error)
 				}
 
-			default:
+			case KindComplete:
 				if x.Context.CompareAndSwap(worker, source) && x.Complete.Load() && x.Context.CompareAndSwap(source, sentinel) {
 					sink.Complete()
 				}
@@ -111,8 +111,8 @@ func (obs auditObservable[T, U]) Subscribe(ctx context.Context, sink Observer[T]
 	}
 
 	obs.Source.Subscribe(source, func(n Notification[T]) {
-		switch {
-		case n.HasValue:
+		switch n.Kind {
+		case KindNext:
 			x.Latest.Lock()
 			x.Latest.Value = n.Value
 			x.Latest.Unlock()
@@ -121,7 +121,7 @@ func (obs auditObservable[T, U]) Subscribe(ctx context.Context, sink Observer[T]
 				startWorker(n.Value)
 			}
 
-		case n.HasError:
+		case KindError:
 			ctx := x.Context.Swap(source)
 
 			cancelSource()
@@ -131,7 +131,7 @@ func (obs auditObservable[T, U]) Subscribe(ctx context.Context, sink Observer[T]
 				sink(n)
 			}
 
-		default:
+		case KindComplete:
 			x.Complete.Store(true)
 
 			if x.Context.CompareAndSwap(source, sentinel) {

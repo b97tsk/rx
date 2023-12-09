@@ -28,7 +28,7 @@ func TestAdditionalCoverage(t *testing.T) {
 	_ = rx.NewObservable[any](nil).BlockingSubscribe(
 		context.Background(),
 		func(n rx.Notification[any]) {
-			if !n.HasError || n.Error != rx.ErrNil {
+			if n.Kind != rx.KindError || n.Error != rx.ErrNil {
 				t.Fail()
 			}
 		},
