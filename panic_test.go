@@ -20,6 +20,8 @@ func TestPanic(t *testing.T) {
 
 	shouldPanic(t, func() { _ = rx.Catch[any](nil) }, "Catch with selector == nil")
 
+	shouldPanic(t, func() { _ = rx.Channelize[any](nil) }, "Channelize with join == nil")
+
 	shouldPanic(t, func() { _ = rx.CombineLatest2[any, any, any](nil, nil, nil) }, "CombineLatest2 with proj == nil")
 	shouldPanic(t, func() {
 		_ = rx.CombineLatest3[any, any, any, any](nil, nil, nil, nil)
@@ -50,6 +52,11 @@ func TestPanic(t *testing.T) {
 	shouldPanic(t, func() { _ = rx.CompactKey(proj, nil) }, "CompactKey with eq == nil")
 
 	shouldPanic(t, func() { _ = rx.ConcatMap[any, any](nil) }, "ConcatMap with proj == nil")
+
+	shouldPanic(t, func() { _ = rx.CongestBlock[any](0) }, "CongestBlock with capacity == 0")
+	shouldPanic(t, func() { _ = rx.CongestDropLatest[any](0) }, "CongestDropLatest with capacity == 0")
+	shouldPanic(t, func() { _ = rx.CongestDropOldest[any](0) }, "CongestDropOldest with capacity == 0")
+	shouldPanic(t, func() { _ = rx.CongestError[any](0) }, "CongestError with capacity == 0")
 
 	shouldPanic(t, func() { _ = rx.Connect[any, any](nil) }, "Connect with selector == nil")
 	shouldPanic(t, func() {

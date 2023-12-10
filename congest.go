@@ -1,92 +1,252 @@
 package rx
 
-import (
-	"context"
+import "github.com/b97tsk/rx/internal/queue"
 
-	"github.com/b97tsk/rx/internal/queue"
-)
-
-// Congest mirrors the source Observable, buffering emissions if the source
-// emits too fast, and blocking the source if the buffer is full.
-//
-// Congest has no effect if bufferSize < 1.
-func Congest[T any](bufferSize int) Operator[T, T] {
-	if bufferSize < 1 {
-		return NewOperator(identity[Observable[T]])
+// CongestBlock mirrors the source Observable, buffering emissions
+// if the source emits too fast, and blocking the source if the buffer is
+// full.
+func CongestBlock[T any](capacity int) Operator[T, T] {
+	if capacity < 1 {
+		panic("capacity < 1")
 	}
 
-	return congest[T](bufferSize)
+	return congestBlock[T](capacity)
 }
 
-func congest[T any](bufferSize int) Operator[T, T] {
-	return NewOperator(
-		func(source Observable[T]) Observable[T] {
-			return congestObservable[T]{source, bufferSize}.Subscribe
+func congestBlock[T any](capacity int) Operator[T, T] {
+	return Channelize(
+		func(upstream <-chan Notification[T], downstream chan<- Notification[T]) {
+			var buf queue.Queue[Notification[T]]
+
+			var complete bool
+
+			for {
+				var (
+					in   <-chan Notification[T]
+					out  chan<- Notification[T]
+					outv Notification[T]
+				)
+
+				length := buf.Len()
+
+				if length < capacity {
+					in = upstream
+				}
+
+				if length > 0 {
+					out, outv = downstream, buf.Front()
+				}
+
+				select {
+				case n := <-in:
+					switch n.Kind {
+					case KindNext:
+						buf.Push(n)
+					case KindError:
+						downstream <- n
+						return
+					case KindComplete:
+						complete = true
+
+						if buf.Len() == 0 {
+							downstream <- n
+							return
+						}
+					}
+				case out <- outv:
+					buf.Pop()
+
+					if complete && buf.Len() == 0 {
+						downstream <- Complete[T]()
+						return
+					}
+				}
+			}
 		},
 	)
 }
 
-type congestObservable[T any] struct {
-	Source     Observable[T]
-	BufferSize int
+// CongestDropLatest mirrors the source Observable, buffering emissions
+// if the source emits too fast, and dropping emissions if the buffer is
+// full.
+func CongestDropLatest[T any](capacity int) Operator[T, T] {
+	if capacity < 1 {
+		panic("capacity < 1")
+	}
+
+	return congestDropLatest[T](capacity)
 }
 
-func (obs congestObservable[T]) Subscribe(ctx context.Context, sink Observer[T]) {
-	ctx, cancel := context.WithCancel(ctx)
+func congestDropLatest[T any](capacity int) Operator[T, T] {
+	return Channelize(
+		func(upstream <-chan Notification[T], downstream chan<- Notification[T]) {
+			var buf queue.Queue[Notification[T]]
 
-	sink = sink.OnLastNotification(cancel)
+			var complete bool
 
-	cout := make(chan Notification[T])
+			for {
+				var (
+					in   = upstream
+					out  chan<- Notification[T]
+					outv Notification[T]
+				)
 
-	wg := WaitGroupFromContext(ctx)
+				if buf.Len() != 0 {
+					out, outv = downstream, buf.Front()
+				}
 
-	wg.Go(func() {
-		for n := range cout {
-			sink(n)
-		}
-	})
+				select {
+				case n := <-in:
+					switch n.Kind {
+					case KindNext:
+						if buf.Len() < capacity {
+							buf.Push(n)
+						}
+					case KindError:
+						downstream <- n
+						return
+					case KindComplete:
+						complete = true
 
-	bufferSize := obs.BufferSize
+						if buf.Len() == 0 {
+							downstream <- n
+							return
+						}
+					}
+				case out <- outv:
+					buf.Pop()
 
-	cin := make(chan Notification[T])
-	noop := make(chan struct{})
-
-	wg.Go(func() {
-		var q queue.Queue[Notification[T]]
-
-		for {
-			var (
-				in   <-chan Notification[T]
-				out  chan<- Notification[T]
-				outv Notification[T]
-			)
-
-			length := q.Len()
-
-			if length < bufferSize {
-				in = cin
-			}
-
-			if length > 0 {
-				out, outv = cout, q.Front()
-			}
-
-			select {
-			case n := <-in:
-				q.Push(n)
-			case out <- outv:
-				q.Pop()
-
-				switch outv.Kind {
-				case KindError, KindComplete:
-					close(out)
-					close(noop)
-
-					return
+					if complete && buf.Len() == 0 {
+						downstream <- Complete[T]()
+						return
+					}
 				}
 			}
-		}
-	})
+		},
+	)
+}
 
-	obs.Source.Subscribe(ctx, chanObserver(cin, noop))
+// CongestDropOldest mirrors the source Observable, buffering emissions
+// if the source emits too fast, and dropping oldest emissions from
+// the buffer if it is full.
+func CongestDropOldest[T any](capacity int) Operator[T, T] {
+	if capacity < 1 {
+		panic("capacity < 1")
+	}
+
+	return congestDropOldest[T](capacity)
+}
+
+func congestDropOldest[T any](capacity int) Operator[T, T] {
+	return Channelize(
+		func(upstream <-chan Notification[T], downstream chan<- Notification[T]) {
+			var buf queue.Queue[Notification[T]]
+
+			var complete bool
+
+			for {
+				var (
+					in   = upstream
+					out  chan<- Notification[T]
+					outv Notification[T]
+				)
+
+				if buf.Len() != 0 {
+					out, outv = downstream, buf.Front()
+				}
+
+				select {
+				case n := <-in:
+					switch n.Kind {
+					case KindNext:
+						if buf.Len() == capacity {
+							buf.Pop()
+						}
+
+						buf.Push(n)
+					case KindError:
+						downstream <- n
+						return
+					case KindComplete:
+						complete = true
+
+						if buf.Len() == 0 {
+							downstream <- n
+							return
+						}
+					}
+				case out <- outv:
+					buf.Pop()
+
+					if complete && buf.Len() == 0 {
+						downstream <- Complete[T]()
+						return
+					}
+				}
+			}
+		},
+	)
+}
+
+// CongestError mirrors the source Observable, buffering emissions
+// if the source emits too fast, and terminating the stream with an error
+// notification of ErrBufferOverflow if the buffer is full.
+func CongestError[T any](capacity int) Operator[T, T] {
+	if capacity < 1 {
+		panic("capacity < 1")
+	}
+
+	return congestError[T](capacity)
+}
+
+func congestError[T any](capacity int) Operator[T, T] {
+	return Channelize(
+		func(upstream <-chan Notification[T], downstream chan<- Notification[T]) {
+			var buf queue.Queue[Notification[T]]
+
+			var complete bool
+
+			for {
+				var (
+					in   = upstream
+					out  chan<- Notification[T]
+					outv Notification[T]
+				)
+
+				if buf.Len() != 0 {
+					out, outv = downstream, buf.Front()
+				}
+
+				select {
+				case n := <-in:
+					switch n.Kind {
+					case KindNext:
+						if buf.Len() == capacity {
+							downstream <- Error[T](ErrBufferOverflow)
+							return
+						}
+
+						buf.Push(n)
+					case KindError:
+						downstream <- n
+						return
+					case KindComplete:
+						complete = true
+
+						if buf.Len() == 0 {
+							downstream <- n
+							return
+						}
+					}
+				case out <- outv:
+					buf.Pop()
+
+					if complete && buf.Len() == 0 {
+						downstream <- Complete[T]()
+						return
+					}
+				}
+			}
+		},
+	)
 }
