@@ -2,7 +2,6 @@ package rx
 
 import (
 	"context"
-	"sync"
 	"sync/atomic"
 )
 
@@ -28,16 +27,12 @@ func (obs skipUntilObservable[T, U]) Subscribe(ctx context.Context, sink Observe
 
 	var x struct {
 		Context atomic.Value
-		Worker  struct {
-			sync.WaitGroup
-		}
 	}
 
 	{
 		worker, cancelWorker := context.WithCancel(source)
-		x.Context.Store(worker)
 
-		x.Worker.Add(1)
+		x.Context.Store(worker)
 
 		var noop bool
 
@@ -52,7 +47,7 @@ func (obs skipUntilObservable[T, U]) Subscribe(ctx context.Context, sink Observe
 
 			switch n.Kind {
 			case KindNext:
-				x.Context.Store(source)
+				x.Context.CompareAndSwap(worker, source)
 
 			case KindError:
 				if x.Context.CompareAndSwap(worker, sentinel) {
@@ -62,18 +57,15 @@ func (obs skipUntilObservable[T, U]) Subscribe(ctx context.Context, sink Observe
 			case KindComplete:
 				break
 			}
-
-			x.Worker.Done()
 		})
 	}
 
 	finish := func(n Notification[T]) {
-		ctx := x.Context.Swap(source)
+		old := x.Context.Swap(sentinel)
 
 		cancelSource()
-		x.Worker.Wait()
 
-		if x.Context.Swap(sentinel) != sentinel && ctx != sentinel {
+		if old != sentinel {
 			sink(n)
 		}
 	}

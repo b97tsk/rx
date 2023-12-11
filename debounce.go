@@ -66,6 +66,7 @@ func (obs debounceObservable[T, U]) Subscribe(ctx context.Context, sink Observer
 
 	startWorker := func(v T) {
 		worker, cancelWorker := context.WithCancel(source)
+
 		x.Context.Store(worker)
 
 		x.Worker.Add(1)
@@ -127,12 +128,12 @@ func (obs debounceObservable[T, U]) Subscribe(ctx context.Context, sink Observer
 			startWorker(n.Value)
 
 		case KindError, KindComplete:
-			ctx := x.Context.Swap(source)
+			old := x.Context.Swap(sentinel)
 
 			cancelSource()
 			x.Worker.Wait()
 
-			if x.Context.Swap(sentinel) != sentinel && ctx != sentinel {
+			if old != sentinel {
 				if n.Kind == KindComplete && x.Latest.HasValue.Load() {
 					sink.Next(x.Latest.Value)
 				}

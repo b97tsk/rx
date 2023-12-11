@@ -129,7 +129,11 @@ func (obs concatMapObservable[T, R]) Subscribe(ctx context.Context, sink Observe
 		x.Queue.Unlock()
 
 		worker, cancelWorker := context.WithCancel(source)
-		x.Context.Store(worker)
+
+		if !x.Context.CompareAndSwap(source, worker) { // This fails if x.Context was swapped to sentinel.
+			cancelWorker()
+			return
+		}
 
 		x.Worker.Add(1)
 
@@ -161,9 +165,9 @@ func (obs concatMapObservable[T, R]) Subscribe(ctx context.Context, sink Observe
 					}
 
 				case KindComplete:
-					if x.Queue.Len() == 0 {
-						swapped := x.Context.CompareAndSwap(worker, source)
+					swapped := x.Context.CompareAndSwap(worker, source)
 
+					if x.Queue.Len() == 0 {
 						x.Queue.Unlock()
 
 						if swapped && x.Complete.Load() && x.Context.CompareAndSwap(source, sentinel) {
@@ -173,7 +177,9 @@ func (obs concatMapObservable[T, R]) Subscribe(ctx context.Context, sink Observe
 						break
 					}
 
-					startWorker()
+					if swapped {
+						startWorker()
+					}
 				}
 
 				cancelWorker()
@@ -200,12 +206,12 @@ func (obs concatMapObservable[T, R]) Subscribe(ctx context.Context, sink Observe
 			x.Queue.Unlock()
 
 		case KindError:
-			ctx := x.Context.Swap(source)
+			old := x.Context.Swap(sentinel)
 
 			cancelSource()
 			x.Worker.Wait()
 
-			if x.Context.Swap(sentinel) != sentinel && ctx != sentinel {
+			if old != sentinel {
 				sink.Error(n.Error)
 			}
 

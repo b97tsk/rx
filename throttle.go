@@ -104,6 +104,7 @@ func (obs throttleObservable[T, U]) Subscribe(ctx context.Context, sink Observer
 
 	doThrottle = func(v T) {
 		worker, cancelWorker := context.WithCancel(source)
+
 		x.Context.Store(worker)
 
 		x.Worker.Add(1)
@@ -170,12 +171,12 @@ func (obs throttleObservable[T, U]) Subscribe(ctx context.Context, sink Observer
 			}
 
 		case KindError:
-			ctx := x.Context.Swap(source)
+			old := x.Context.Swap(sentinel)
 
 			cancelSource()
 			x.Worker.Wait()
 
-			if x.Context.Swap(sentinel) != sentinel && ctx != sentinel {
+			if old != sentinel {
 				sink(n)
 			}
 

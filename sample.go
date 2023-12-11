@@ -47,6 +47,7 @@ func (obs sampleObservable[T, U]) Subscribe(ctx context.Context, sink Observer[T
 
 	{
 		worker, cancelWorker := context.WithCancel(source)
+
 		x.Context.Store(worker)
 
 		x.Worker.Add(1)
@@ -79,12 +80,12 @@ func (obs sampleObservable[T, U]) Subscribe(ctx context.Context, sink Observer[T
 	}
 
 	finish := func(n Notification[T]) {
-		ctx := x.Context.Swap(source)
+		old := x.Context.Swap(sentinel)
 
 		cancelSource()
 		x.Worker.Wait()
 
-		if x.Context.Swap(sentinel) != sentinel && ctx != sentinel {
+		if old != sentinel {
 			sink(n)
 		}
 	}

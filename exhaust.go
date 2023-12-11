@@ -61,6 +61,7 @@ func (obs exhaustMapObservable[T, R]) Subscribe(ctx context.Context, sink Observ
 
 	startWorker := func(v T) {
 		worker, cancelWorker := context.WithCancel(source)
+
 		x.Context.Store(worker)
 
 		x.Worker.Add(1)
@@ -96,12 +97,12 @@ func (obs exhaustMapObservable[T, R]) Subscribe(ctx context.Context, sink Observ
 			}
 
 		case KindError:
-			ctx := x.Context.Swap(source)
+			old := x.Context.Swap(sentinel)
 
 			cancelSource()
 			x.Worker.Wait()
 
-			if x.Context.Swap(sentinel) != sentinel && ctx != sentinel {
+			if old != sentinel {
 				sink.Error(n.Error)
 			}
 

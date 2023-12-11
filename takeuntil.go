@@ -32,16 +32,12 @@ func (obs takeUntilObservable[T, U]) Subscribe(ctx context.Context, sink Observe
 			sync.Mutex
 			sync.WaitGroup
 		}
-		Worker struct {
-			sync.WaitGroup
-		}
 	}
 
 	{
 		worker, cancelWorker := context.WithCancel(source)
-		x.Context.Store(worker)
 
-		x.Worker.Add(1)
+		x.Context.Store(worker)
 
 		var noop bool
 
@@ -57,9 +53,8 @@ func (obs takeUntilObservable[T, U]) Subscribe(ctx context.Context, sink Observe
 			switch n.Kind {
 			case KindNext, KindError:
 				if x.Context.CompareAndSwap(worker, sentinel) {
-					x.Worker.Done()
-
 					cancelSource()
+
 					x.Source.Lock()
 					x.Source.Wait()
 					x.Source.Unlock()
@@ -74,8 +69,6 @@ func (obs takeUntilObservable[T, U]) Subscribe(ctx context.Context, sink Observe
 					return
 				}
 			}
-
-			x.Worker.Done()
 		})
 	}
 
@@ -84,12 +77,11 @@ func (obs takeUntilObservable[T, U]) Subscribe(ctx context.Context, sink Observe
 	x.Source.Unlock()
 
 	finish := func(n Notification[T]) {
-		ctx := x.Context.Swap(source)
+		old := x.Context.Swap(sentinel)
 
 		cancelSource()
-		x.Worker.Wait()
 
-		if x.Context.Swap(sentinel) != sentinel && ctx != sentinel {
+		if old != sentinel {
 			sink(n)
 		}
 
