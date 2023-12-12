@@ -17,9 +17,9 @@ type observables[T any] []Observable[T]
 
 func identity[T any](v T) T { return v }
 
-// resistReentry returns a function that calls f in a non-recursive way
+// resistReentrance returns a function that calls f in a non-recursive way
 // when the function returned is called recursively.
-func resistReentry(f func()) func() {
+func resistReentrance(f func()) func() {
 	var n atomic.Uint32
 
 	return func() {
@@ -37,7 +37,7 @@ func resistReentry(f func()) func() {
 	}
 }
 
-func chanObserver[T any](c chan<- Notification[T], noop <-chan struct{}) Observer[T] {
+func channelObserver[T any](c chan<- Notification[T], noop <-chan struct{}) Observer[T] {
 	return func(n Notification[T]) {
 		select {
 		case c <- n:

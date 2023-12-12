@@ -41,7 +41,7 @@ func (obs retryObservable[T]) Subscribe(ctx context.Context, sink Observer[T]) {
 
 	done := ctx.Done()
 
-	subscribeToSource := resistReentry(func() {
+	subscribeToSource := resistReentrance(func() {
 		select {
 		default:
 		case <-done:

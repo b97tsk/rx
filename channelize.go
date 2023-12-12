@@ -40,7 +40,7 @@ func channelize[T any](join func(upstream <-chan Notification[T], downstream cha
 					}
 				})
 
-				source.Subscribe(ctx, chanObserver(upstream, noop))
+				source.Subscribe(ctx, channelObserver(upstream, noop))
 			}
 		},
 	)

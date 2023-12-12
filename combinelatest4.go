@@ -50,10 +50,10 @@ func CombineLatest4[T1, T2, T3, T4, R any](
 			}
 		})
 
-		wg.Go(func() { obs1.Subscribe(ctx, chanObserver(chan1, noop)) })
-		wg.Go(func() { obs2.Subscribe(ctx, chanObserver(chan2, noop)) })
-		wg.Go(func() { obs3.Subscribe(ctx, chanObserver(chan3, noop)) })
-		wg.Go(func() { obs4.Subscribe(ctx, chanObserver(chan4, noop)) })
+		wg.Go(func() { obs1.Subscribe(ctx, channelObserver(chan1, noop)) })
+		wg.Go(func() { obs2.Subscribe(ctx, channelObserver(chan2, noop)) })
+		wg.Go(func() { obs3.Subscribe(ctx, channelObserver(chan3, noop)) })
+		wg.Go(func() { obs4.Subscribe(ctx, channelObserver(chan4, noop)) })
 	}
 }
 

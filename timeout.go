@@ -97,5 +97,5 @@ func (obs timeoutObservable[T]) Subscribe(ctx context.Context, sink Observer[T])
 		}
 	})
 
-	obs.Source.Subscribe(source, chanObserver(c, noop))
+	obs.Source.Subscribe(source, channelObserver(c, noop))
 }

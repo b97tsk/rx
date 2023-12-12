@@ -34,7 +34,7 @@ func (some observables[T]) Concat(ctx context.Context, sink Observer[T]) {
 
 	done := ctx.Done()
 
-	subscribeToNext := resistReentry(func() {
+	subscribeToNext := resistReentrance(func() {
 		select {
 		default:
 		case <-done:
@@ -123,7 +123,7 @@ func (obs concatMapObservable[T, R]) Subscribe(ctx context.Context, sink Observe
 
 	var startWorker func()
 
-	startWorker = resistReentry(func() {
+	startWorker = resistReentrance(func() {
 		v := x.Queue.Pop()
 
 		x.Queue.Unlock()

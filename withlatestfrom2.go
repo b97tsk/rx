@@ -59,9 +59,9 @@ func withLatestFrom3[T1, T2, T3, R any](
 			}
 		})
 
-		wg.Go(func() { obs1.Subscribe(ctx, chanObserver(chan1, noop)) })
-		wg.Go(func() { obs2.Subscribe(ctx, chanObserver(chan2, noop)) })
-		wg.Go(func() { obs3.Subscribe(ctx, chanObserver(chan3, noop)) })
+		wg.Go(func() { obs1.Subscribe(ctx, channelObserver(chan1, noop)) })
+		wg.Go(func() { obs2.Subscribe(ctx, channelObserver(chan2, noop)) })
+		wg.Go(func() { obs3.Subscribe(ctx, channelObserver(chan3, noop)) })
 	}
 }
 
