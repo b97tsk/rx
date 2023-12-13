@@ -96,7 +96,7 @@ func (m *multicastReplay[T]) trimBuffer(b *queue.Queue[Pair[time.Time, T]]) {
 
 		now := time.Now()
 
-		for b.Len() > 0 {
+		for b.Len() != 0 {
 			if b.Front().Key.After(now) {
 				break
 			}
