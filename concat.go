@@ -67,14 +67,14 @@ func (some observables[T]) Concat(ctx context.Context, sink Observer[T]) {
 
 // ConcatAll flattens a higher-order Observable into a first-order Observable
 // by concatenating the inner Observables in order.
-func ConcatAll[_ Observable[T], T any]() Operator[Observable[T], T] {
+func ConcatAll[_ Observable[T], T any]() ConcatMapOperator[Observable[T], T] {
 	return concatMap(identity[Observable[T]])
 }
 
 // ConcatMap converts the source Observable into a higher-order Observable,
 // by projecting each source value to an Observable, then flattens it into
 // a first-order Observable using ConcatAll.
-func ConcatMap[T, R any](proj func(v T) Observable[R]) Operator[T, R] {
+func ConcatMap[T, R any](proj func(v T) Observable[R]) ConcatMapOperator[T, R] {
 	if proj == nil {
 		panic("proj == nil")
 	}
@@ -85,26 +85,90 @@ func ConcatMap[T, R any](proj func(v T) Observable[R]) Operator[T, R] {
 // ConcatMapTo converts the source Observable into a higher-order Observable,
 // by projecting each source value to the same Observable, then flattens it
 // into a first-order Observable using ConcatAll.
-func ConcatMapTo[T, R any](inner Observable[R]) Operator[T, R] {
+func ConcatMapTo[T, R any](inner Observable[R]) ConcatMapOperator[T, R] {
 	return concatMap(func(T) Observable[R] { return inner })
 }
 
-func concatMap[T, R any](proj func(v T) Observable[R]) Operator[T, R] {
-	return NewOperator(
-		func(source Observable[T]) Observable[R] {
-			return concatMapObservable[T, R]{source, proj}.Subscribe
+func concatMap[T, R any](proj func(v T) Observable[R]) ConcatMapOperator[T, R] {
+	return ConcatMapOperator[T, R]{
+		opts: concatMapConfig[T, R]{
+			Project:      proj,
+			UseBuffering: false,
 		},
-	)
+	}
+}
+
+type concatMapConfig[T, R any] struct {
+	Project      func(T) Observable[R]
+	UseBuffering bool
+}
+
+// ConcatMapOperator is an [Operator] type for [ConcatMap].
+type ConcatMapOperator[T, R any] struct {
+	opts concatMapConfig[T, R]
+}
+
+// WithBuffering turns on source buffering.
+// By default, this Operator blocks at every source value until it's flattened.
+// With source buffering on, this Operator buffers every source value, which
+// might consume a lot of memory over time if the source has lots of values
+// emitting faster than concatenating.
+func (op ConcatMapOperator[T, R]) WithBuffering() ConcatMapOperator[T, R] {
+	op.opts.UseBuffering = true
+	return op
+}
+
+// Apply implements the Operator interface.
+func (op ConcatMapOperator[T, R]) Apply(source Observable[T]) Observable[R] {
+	return concatMapObservable[T, R]{source, op.opts}.Subscribe
 }
 
 type concatMapObservable[T, R any] struct {
-	Source  Observable[T]
-	Project func(T) Observable[R]
+	Source Observable[T]
+	concatMapConfig[T, R]
 }
 
 func (obs concatMapObservable[T, R]) Subscribe(ctx context.Context, sink Observer[R]) {
-	source, cancelSource := context.WithCancel(ctx)
+	if obs.UseBuffering {
+		obs.subscribeWithBuffering(ctx, sink)
+		return
+	}
 
+	obs.subscribe(ctx, sink)
+}
+
+func (obs concatMapObservable[T, R]) subscribe(ctx context.Context, sink Observer[R]) {
+	source, cancelSource := context.WithCancel(ctx)
+	sink = sink.OnLastNotification(cancelSource)
+
+	var noop bool
+
+	observer := func(n Notification[R]) {
+		switch n.Kind {
+		case KindNext, KindError:
+			sink(n)
+		}
+	}
+
+	obs.Source.Subscribe(source, func(n Notification[T]) {
+		if noop {
+			return
+		}
+
+		switch n.Kind {
+		case KindNext:
+			err := obs.Project(n.Value).BlockingSubscribe(ctx, observer)
+			noop = err != nil
+		case KindError:
+			sink.Error(n.Error)
+		case KindComplete:
+			sink.Complete()
+		}
+	})
+}
+
+func (obs concatMapObservable[T, R]) subscribeWithBuffering(ctx context.Context, sink Observer[R]) {
+	source, cancelSource := context.WithCancel(ctx)
 	sink = sink.OnLastNotification(cancelSource)
 
 	var x struct {
@@ -166,19 +230,15 @@ func (obs concatMapObservable[T, R]) Subscribe(ctx context.Context, sink Observe
 
 				case KindComplete:
 					swapped := x.Context.CompareAndSwap(worker, source)
-
-					if x.Queue.Len() == 0 {
-						x.Queue.Unlock()
-
-						if swapped && x.Complete.Load() && x.Context.CompareAndSwap(source, sentinel) {
-							sink.Complete()
-						}
-
+					if swapped && x.Queue.Len() != 0 {
+						startWorker()
 						break
 					}
 
-					if swapped {
-						startWorker()
+					x.Queue.Unlock()
+
+					if swapped && x.Complete.Load() && x.Context.CompareAndSwap(source, sentinel) {
+						sink.Complete()
 					}
 				}
 

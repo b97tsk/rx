@@ -50,7 +50,7 @@ func TestConcat(t *testing.T) {
 	)
 }
 
-func TestConcat2(t *testing.T) {
+func TestConcatMap(t *testing.T) {
 	t.Parallel()
 
 	NewTestSuite[string](t).Case(
@@ -85,6 +85,55 @@ func TestConcat2(t *testing.T) {
 			rx.ConcatAll[rx.Observable[string]](),
 		),
 		ErrTest,
+	).Case(
+		rx.Pipe1(
+			rx.NewObservable(
+				func(_ context.Context, sink rx.Observer[rx.Observable[string]]) {
+					sink.Next(rx.Throw[string](ErrTest))
+					sink.Complete()
+				},
+			),
+			rx.ConcatAll[rx.Observable[string]](),
+		),
+		ErrTest,
+	)
+}
+
+func TestConcatMapWithBuffering(t *testing.T) {
+	t.Parallel()
+
+	NewTestSuite[string](t).Case(
+		rx.Pipe1(
+			rx.Just(
+				rx.Pipe1(rx.Just("A", "B"), AddLatencyToValues[string](3, 5)),
+				rx.Pipe1(rx.Just("C", "D"), AddLatencyToValues[string](2, 4)),
+				rx.Pipe1(rx.Just("E", "F"), AddLatencyToValues[string](1, 3)),
+			),
+			rx.ConcatAll[rx.Observable[string]]().WithBuffering(),
+		),
+		"A", "B", "C", "D", "E", "F", ErrComplete,
+	).Case(
+		rx.Pipe1(
+			rx.Timer(Step(1)),
+			rx.ConcatMap(
+				func(time.Time) rx.Observable[string] {
+					return rx.Just("A")
+				},
+			).WithBuffering(),
+		),
+		"A", ErrComplete,
+	).Case(
+		rx.Pipe1(
+			rx.Timer(Step(1)),
+			rx.ConcatMapTo[time.Time](rx.Just("A")).WithBuffering(),
+		),
+		"A", ErrComplete,
+	).Case(
+		rx.Pipe1(
+			rx.Throw[rx.Observable[string]](ErrTest),
+			rx.ConcatAll[rx.Observable[string]]().WithBuffering(),
+		),
+		ErrTest,
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), Step(1))
@@ -101,7 +150,7 @@ func TestConcat2(t *testing.T) {
 					panic("should not happen")
 				},
 			),
-			rx.ConcatAll[rx.Observable[string]](),
+			rx.ConcatAll[rx.Observable[string]]().WithBuffering(),
 		),
 		context.DeadlineExceeded,
 	)

@@ -27,7 +27,7 @@ func TestGroupBy(t *testing.T) {
 					),
 				)
 			},
-		),
+		).WithBuffering(),
 	)
 
 	NewTestSuite[string](t).Case(
