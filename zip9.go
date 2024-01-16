@@ -1,13 +1,12 @@
 package rx
 
-import (
-	"context"
-
-	"github.com/b97tsk/rx/internal/queue"
-)
+import "context"
 
 // Zip9 combines multiple Observables to create an Observable that emits
 // projection of values of each of its input Observables.
+//
+// Zip9 pulls values from each input Observable one by one, it only buffers
+// one value for each input Observable.
 func Zip9[T1, T2, T3, T4, T5, T6, T7, T8, T9, R any](
 	obs1 Observable[T1],
 	obs2 Observable[T2],
@@ -35,44 +34,15 @@ func Zip9[T1, T2, T3, T4, T5, T6, T7, T8, T9, R any](
 			close(noop)
 		})
 
-		chan1 := make(chan Notification[T1])
-		chan2 := make(chan Notification[T2])
-		chan3 := make(chan Notification[T3])
-		chan4 := make(chan Notification[T4])
-		chan5 := make(chan Notification[T5])
-		chan6 := make(chan Notification[T6])
-		chan7 := make(chan Notification[T7])
-		chan8 := make(chan Notification[T8])
-		chan9 := make(chan Notification[T9])
-
-		wg.Go(func() {
-			var s zipState9[T1, T2, T3, T4, T5, T6, T7, T8, T9]
-
-			done := false
-
-			for !done {
-				select {
-				case n := <-chan1:
-					done = zipSink9(n, sink, proj, &s, &s.Q1, 1)
-				case n := <-chan2:
-					done = zipSink9(n, sink, proj, &s, &s.Q2, 2)
-				case n := <-chan3:
-					done = zipSink9(n, sink, proj, &s, &s.Q3, 4)
-				case n := <-chan4:
-					done = zipSink9(n, sink, proj, &s, &s.Q4, 8)
-				case n := <-chan5:
-					done = zipSink9(n, sink, proj, &s, &s.Q5, 16)
-				case n := <-chan6:
-					done = zipSink9(n, sink, proj, &s, &s.Q6, 32)
-				case n := <-chan7:
-					done = zipSink9(n, sink, proj, &s, &s.Q7, 64)
-				case n := <-chan8:
-					done = zipSink9(n, sink, proj, &s, &s.Q8, 128)
-				case n := <-chan9:
-					done = zipSink9(n, sink, proj, &s, &s.Q9, 256)
-				}
-			}
-		})
+		chan1 := make(chan Notification[T1], 1)
+		chan2 := make(chan Notification[T2], 1)
+		chan3 := make(chan Notification[T3], 1)
+		chan4 := make(chan Notification[T4], 1)
+		chan5 := make(chan Notification[T5], 1)
+		chan6 := make(chan Notification[T6], 1)
+		chan7 := make(chan Notification[T7], 1)
+		chan8 := make(chan Notification[T8], 1)
+		chan9 := make(chan Notification[T9], 1)
 
 		wg.Go(func() { obs1.Subscribe(ctx, channelObserver(chan1, noop)) })
 		wg.Go(func() { obs2.Subscribe(ctx, channelObserver(chan2, noop)) })
@@ -83,89 +53,128 @@ func Zip9[T1, T2, T3, T4, T5, T6, T7, T8, T9, R any](
 		wg.Go(func() { obs7.Subscribe(ctx, channelObserver(chan7, noop)) })
 		wg.Go(func() { obs8.Subscribe(ctx, channelObserver(chan8, noop)) })
 		wg.Go(func() { obs9.Subscribe(ctx, channelObserver(chan9, noop)) })
-	}
-}
 
-type zipState9[T1, T2, T3, T4, T5, T6, T7, T8, T9 any] struct {
-	VBits, CBits uint16
-
-	Q1 queue.Queue[T1]
-	Q2 queue.Queue[T2]
-	Q3 queue.Queue[T3]
-	Q4 queue.Queue[T4]
-	Q5 queue.Queue[T5]
-	Q6 queue.Queue[T6]
-	Q7 queue.Queue[T7]
-	Q8 queue.Queue[T8]
-	Q9 queue.Queue[T9]
-}
-
-func zipSink9[T1, T2, T3, T4, T5, T6, T7, T8, T9, R, X any](
-	n Notification[X],
-	sink Observer[R],
-	proj func(T1, T2, T3, T4, T5, T6, T7, T8, T9) R,
-	s *zipState9[T1, T2, T3, T4, T5, T6, T7, T8, T9],
-	q *queue.Queue[X],
-	bit uint16,
-) bool {
-	const FullBits = 511
-
-	switch n.Kind {
-	case KindNext:
-		q.Push(n.Value)
-
-		if s.VBits |= bit; s.VBits == FullBits {
-			var complete bool
-
-			sink.Next(proj(
-				zipPop9(s, &s.Q1, 1, &complete),
-				zipPop9(s, &s.Q2, 2, &complete),
-				zipPop9(s, &s.Q3, 4, &complete),
-				zipPop9(s, &s.Q4, 8, &complete),
-				zipPop9(s, &s.Q5, 16, &complete),
-				zipPop9(s, &s.Q6, 32, &complete),
-				zipPop9(s, &s.Q7, 64, &complete),
-				zipPop9(s, &s.Q8, 128, &complete),
-				zipPop9(s, &s.Q9, 256, &complete),
-			))
-
-			if complete {
-				sink.Complete()
-				return true
+		wg.Go(func() {
+			for {
+			Again1:
+				n1 := <-chan1
+				switch n1.Kind {
+				case KindNext:
+				case KindError:
+					sink.Error(n1.Error)
+					return
+				case KindComplete:
+					sink.Complete()
+					return
+				default:
+					goto Again1
+				}
+			Again2:
+				n2 := <-chan2
+				switch n2.Kind {
+				case KindNext:
+				case KindError:
+					sink.Error(n2.Error)
+					return
+				case KindComplete:
+					sink.Complete()
+					return
+				default:
+					goto Again2
+				}
+			Again3:
+				n3 := <-chan3
+				switch n3.Kind {
+				case KindNext:
+				case KindError:
+					sink.Error(n3.Error)
+					return
+				case KindComplete:
+					sink.Complete()
+					return
+				default:
+					goto Again3
+				}
+			Again4:
+				n4 := <-chan4
+				switch n4.Kind {
+				case KindNext:
+				case KindError:
+					sink.Error(n4.Error)
+					return
+				case KindComplete:
+					sink.Complete()
+					return
+				default:
+					goto Again4
+				}
+			Again5:
+				n5 := <-chan5
+				switch n5.Kind {
+				case KindNext:
+				case KindError:
+					sink.Error(n5.Error)
+					return
+				case KindComplete:
+					sink.Complete()
+					return
+				default:
+					goto Again5
+				}
+			Again6:
+				n6 := <-chan6
+				switch n6.Kind {
+				case KindNext:
+				case KindError:
+					sink.Error(n6.Error)
+					return
+				case KindComplete:
+					sink.Complete()
+					return
+				default:
+					goto Again6
+				}
+			Again7:
+				n7 := <-chan7
+				switch n7.Kind {
+				case KindNext:
+				case KindError:
+					sink.Error(n7.Error)
+					return
+				case KindComplete:
+					sink.Complete()
+					return
+				default:
+					goto Again7
+				}
+			Again8:
+				n8 := <-chan8
+				switch n8.Kind {
+				case KindNext:
+				case KindError:
+					sink.Error(n8.Error)
+					return
+				case KindComplete:
+					sink.Complete()
+					return
+				default:
+					goto Again8
+				}
+			Again9:
+				n9 := <-chan9
+				switch n9.Kind {
+				case KindNext:
+				case KindError:
+					sink.Error(n9.Error)
+					return
+				case KindComplete:
+					sink.Complete()
+					return
+				default:
+					goto Again9
+				}
+				sink.Next(proj(n1.Value, n2.Value, n3.Value, n4.Value, n5.Value, n6.Value, n7.Value, n8.Value, n9.Value))
 			}
-		}
-
-	case KindError:
-		sink.Error(n.Error)
-		return true
-
-	case KindComplete:
-		s.CBits |= bit
-
-		if q.Len() == 0 {
-			sink.Complete()
-			return true
-		}
+		})
 	}
-
-	return false
-}
-
-func zipPop9[T1, T2, T3, T4, T5, T6, T7, T8, T9, X any](
-	s *zipState9[T1, T2, T3, T4, T5, T6, T7, T8, T9],
-	q *queue.Queue[X],
-	bit uint16,
-	complete *bool,
-) X {
-	v := q.Pop()
-
-	if q.Len() == 0 {
-		s.VBits &^= bit
-
-		if s.CBits&bit != 0 {
-			*complete = true
-		}
-	}
-
-	return v
 }

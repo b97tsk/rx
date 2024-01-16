@@ -1,6 +1,7 @@
 package rx_test
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -11,87 +12,69 @@ import (
 func TestZip5(t *testing.T) {
 	t.Parallel()
 
-	toString := func(v1, v2, v3, v4 string, v5 int) string {
+	testZip5(t, rx.ConcatWith(
+		func(_ context.Context, sink rx.Observer[string]) {
+			sink(rx.Notification[string]{}) // For coverage.
+			sink.Complete()
+		},
+	), ErrComplete)
+	testZip5(t, rx.ConcatWith(rx.Throw[string](ErrTest)), ErrTest)
+}
+
+func testZip5(t *testing.T, op rx.Operator[string, string], err error) {
+	toString := func(v1, v2, v3, v4, v5 string) string {
 		return fmt.Sprintf("[%v %v %v %v %v]", v1, v2, v3, v4, v5)
 	}
 
 	NewTestSuite[string](t).Case(
 		rx.Zip5(
-			rx.Just("A", "B"),
-			rx.Just("B", "C"),
-			rx.Just("C", "D"),
-			rx.Just("D", "E"),
-			rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
+			rx.Pipe1(rx.Just("A", "B", "C"), op),
+			rx.Just("B", "C", "D", "E"),
+			rx.Just("C", "D", "E", "F"),
+			rx.Just("D", "E", "F", "G"),
+			rx.Just("E", "F", "G", "H"),
 			toString,
 		),
-		"[A B C D 1]", "[B C D E 2]", ErrComplete,
+		"[A B C D E]", "[B C D E F]", "[C D E F G]", err,
 	).Case(
 		rx.Zip5(
-			rx.Just("A", "B", "C"),
-			rx.Just("B", "C", "D"),
-			rx.Just("C", "D", "E"),
-			rx.Just("D", "E", "F"),
-			rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
+			rx.Just("A", "B", "C", "D"),
+			rx.Pipe1(rx.Just("B", "C", "D"), op),
+			rx.Just("C", "D", "E", "F"),
+			rx.Just("D", "E", "F", "G"),
+			rx.Just("E", "F", "G", "H"),
 			toString,
 		),
-		"[A B C D 1]", "[B C D E 2]", "[C D E F 3]", ErrComplete,
+		"[A B C D E]", "[B C D E F]", "[C D E F G]", err,
+	).Case(
+		rx.Zip5(
+			rx.Just("A", "B", "C", "D"),
+			rx.Just("B", "C", "D", "E"),
+			rx.Pipe1(rx.Just("C", "D", "E"), op),
+			rx.Just("D", "E", "F", "G"),
+			rx.Just("E", "F", "G", "H"),
+			toString,
+		),
+		"[A B C D E]", "[B C D E F]", "[C D E F G]", err,
+	).Case(
+		rx.Zip5(
+			rx.Just("A", "B", "C", "D"),
+			rx.Just("B", "C", "D", "E"),
+			rx.Just("C", "D", "E", "F"),
+			rx.Pipe1(rx.Just("D", "E", "F"), op),
+			rx.Just("E", "F", "G", "H"),
+			toString,
+		),
+		"[A B C D E]", "[B C D E F]", "[C D E F G]", err,
 	).Case(
 		rx.Zip5(
 			rx.Just("A", "B", "C", "D"),
 			rx.Just("B", "C", "D", "E"),
 			rx.Just("C", "D", "E", "F"),
 			rx.Just("D", "E", "F", "G"),
-			rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
+			rx.Pipe1(rx.Just("E", "F", "G"), op),
 			toString,
 		),
-		"[A B C D 1]", "[B C D E 2]", "[C D E F 3]", ErrComplete,
-	).Case(
-		rx.Zip5(
-			rx.Just("A", "B"),
-			rx.Just("B", "C"),
-			rx.Just("C", "D"),
-			rx.Just("D", "E"),
-			rx.Pipe1(
-				rx.Concat(
-					rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
-					rx.Throw[int](ErrTest),
-				),
-				DelaySubscription[int](1),
-			),
-			toString,
-		),
-		"[A B C D 1]", "[B C D E 2]", ErrComplete,
-	).Case(
-		rx.Zip5(
-			rx.Just("A", "B", "C"),
-			rx.Just("B", "C", "D"),
-			rx.Just("C", "D", "E"),
-			rx.Just("D", "E", "F"),
-			rx.Pipe1(
-				rx.Concat(
-					rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
-					rx.Throw[int](ErrTest),
-				),
-				DelaySubscription[int](1),
-			),
-			toString,
-		),
-		"[A B C D 1]", "[B C D E 2]", "[C D E F 3]", ErrComplete,
-	).Case(
-		rx.Zip5(
-			rx.Just("A", "B", "C", "D"),
-			rx.Just("B", "C", "D", "E"),
-			rx.Just("C", "D", "E", "F"),
-			rx.Just("D", "E", "F", "G"),
-			rx.Pipe1(
-				rx.Concat(
-					rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
-					rx.Throw[int](ErrTest),
-				),
-				DelaySubscription[int](1),
-			),
-			toString,
-		),
-		"[A B C D 1]", "[B C D E 2]", "[C D E F 3]", ErrTest,
+		"[A B C D E]", "[B C D E F]", "[C D E F G]", err,
 	)
 }

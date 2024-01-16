@@ -1,13 +1,12 @@
 package rx
 
-import (
-	"context"
-
-	"github.com/b97tsk/rx/internal/queue"
-)
+import "context"
 
 // Zip2 combines multiple Observables to create an Observable that emits
 // projection of values of each of its input Observables.
+//
+// Zip2 pulls values from each input Observable one by one, it only buffers
+// one value for each input Observable.
 func Zip2[T1, T2, R any](
 	obs1 Observable[T1],
 	obs2 Observable[T2],
@@ -28,95 +27,42 @@ func Zip2[T1, T2, R any](
 			close(noop)
 		})
 
-		chan1 := make(chan Notification[T1])
-		chan2 := make(chan Notification[T2])
-
-		wg.Go(func() {
-			var s zipState2[T1, T2]
-
-			done := false
-
-			for !done {
-				select {
-				case n := <-chan1:
-					done = zipSink2(n, sink, proj, &s, &s.Q1, 1)
-				case n := <-chan2:
-					done = zipSink2(n, sink, proj, &s, &s.Q2, 2)
-				}
-			}
-		})
+		chan1 := make(chan Notification[T1], 1)
+		chan2 := make(chan Notification[T2], 1)
 
 		wg.Go(func() { obs1.Subscribe(ctx, channelObserver(chan1, noop)) })
 		wg.Go(func() { obs2.Subscribe(ctx, channelObserver(chan2, noop)) })
-	}
-}
 
-type zipState2[T1, T2 any] struct {
-	VBits, CBits uint8
-
-	Q1 queue.Queue[T1]
-	Q2 queue.Queue[T2]
-}
-
-func zipSink2[T1, T2, R, X any](
-	n Notification[X],
-	sink Observer[R],
-	proj func(T1, T2) R,
-	s *zipState2[T1, T2],
-	q *queue.Queue[X],
-	bit uint8,
-) bool {
-	const FullBits = 3
-
-	switch n.Kind {
-	case KindNext:
-		q.Push(n.Value)
-
-		if s.VBits |= bit; s.VBits == FullBits {
-			var complete bool
-
-			sink.Next(proj(
-				zipPop2(s, &s.Q1, 1, &complete),
-				zipPop2(s, &s.Q2, 2, &complete),
-			))
-
-			if complete {
-				sink.Complete()
-				return true
+		wg.Go(func() {
+			for {
+			Again1:
+				n1 := <-chan1
+				switch n1.Kind {
+				case KindNext:
+				case KindError:
+					sink.Error(n1.Error)
+					return
+				case KindComplete:
+					sink.Complete()
+					return
+				default:
+					goto Again1
+				}
+			Again2:
+				n2 := <-chan2
+				switch n2.Kind {
+				case KindNext:
+				case KindError:
+					sink.Error(n2.Error)
+					return
+				case KindComplete:
+					sink.Complete()
+					return
+				default:
+					goto Again2
+				}
+				sink.Next(proj(n1.Value, n2.Value))
 			}
-		}
-
-	case KindError:
-		sink.Error(n.Error)
-		return true
-
-	case KindComplete:
-		s.CBits |= bit
-
-		if q.Len() == 0 {
-			sink.Complete()
-			return true
-		}
+		})
 	}
-
-	return false
-}
-
-func zipPop2[T1, T2, X any](
-	s *zipState2[T1, T2],
-	q *queue.Queue[X],
-	bit uint8,
-	complete *bool,
-) X {
-	v := q.Pop()
-
-	if q.Len() == 0 {
-		s.VBits &^= bit
-
-		if s.CBits&bit != 0 {
-			*complete = true
-		}
-	}
-
-	return v
 }

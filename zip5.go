@@ -1,13 +1,12 @@
 package rx
 
-import (
-	"context"
-
-	"github.com/b97tsk/rx/internal/queue"
-)
+import "context"
 
 // Zip5 combines multiple Observables to create an Observable that emits
 // projection of values of each of its input Observables.
+//
+// Zip5 pulls values from each input Observable one by one, it only buffers
+// one value for each input Observable.
 func Zip5[T1, T2, T3, T4, T5, R any](
 	obs1 Observable[T1],
 	obs2 Observable[T2],
@@ -31,113 +30,87 @@ func Zip5[T1, T2, T3, T4, T5, R any](
 			close(noop)
 		})
 
-		chan1 := make(chan Notification[T1])
-		chan2 := make(chan Notification[T2])
-		chan3 := make(chan Notification[T3])
-		chan4 := make(chan Notification[T4])
-		chan5 := make(chan Notification[T5])
-
-		wg.Go(func() {
-			var s zipState5[T1, T2, T3, T4, T5]
-
-			done := false
-
-			for !done {
-				select {
-				case n := <-chan1:
-					done = zipSink5(n, sink, proj, &s, &s.Q1, 1)
-				case n := <-chan2:
-					done = zipSink5(n, sink, proj, &s, &s.Q2, 2)
-				case n := <-chan3:
-					done = zipSink5(n, sink, proj, &s, &s.Q3, 4)
-				case n := <-chan4:
-					done = zipSink5(n, sink, proj, &s, &s.Q4, 8)
-				case n := <-chan5:
-					done = zipSink5(n, sink, proj, &s, &s.Q5, 16)
-				}
-			}
-		})
+		chan1 := make(chan Notification[T1], 1)
+		chan2 := make(chan Notification[T2], 1)
+		chan3 := make(chan Notification[T3], 1)
+		chan4 := make(chan Notification[T4], 1)
+		chan5 := make(chan Notification[T5], 1)
 
 		wg.Go(func() { obs1.Subscribe(ctx, channelObserver(chan1, noop)) })
 		wg.Go(func() { obs2.Subscribe(ctx, channelObserver(chan2, noop)) })
 		wg.Go(func() { obs3.Subscribe(ctx, channelObserver(chan3, noop)) })
 		wg.Go(func() { obs4.Subscribe(ctx, channelObserver(chan4, noop)) })
 		wg.Go(func() { obs5.Subscribe(ctx, channelObserver(chan5, noop)) })
-	}
-}
 
-type zipState5[T1, T2, T3, T4, T5 any] struct {
-	VBits, CBits uint8
-
-	Q1 queue.Queue[T1]
-	Q2 queue.Queue[T2]
-	Q3 queue.Queue[T3]
-	Q4 queue.Queue[T4]
-	Q5 queue.Queue[T5]
-}
-
-func zipSink5[T1, T2, T3, T4, T5, R, X any](
-	n Notification[X],
-	sink Observer[R],
-	proj func(T1, T2, T3, T4, T5) R,
-	s *zipState5[T1, T2, T3, T4, T5],
-	q *queue.Queue[X],
-	bit uint8,
-) bool {
-	const FullBits = 31
-
-	switch n.Kind {
-	case KindNext:
-		q.Push(n.Value)
-
-		if s.VBits |= bit; s.VBits == FullBits {
-			var complete bool
-
-			sink.Next(proj(
-				zipPop5(s, &s.Q1, 1, &complete),
-				zipPop5(s, &s.Q2, 2, &complete),
-				zipPop5(s, &s.Q3, 4, &complete),
-				zipPop5(s, &s.Q4, 8, &complete),
-				zipPop5(s, &s.Q5, 16, &complete),
-			))
-
-			if complete {
-				sink.Complete()
-				return true
+		wg.Go(func() {
+			for {
+			Again1:
+				n1 := <-chan1
+				switch n1.Kind {
+				case KindNext:
+				case KindError:
+					sink.Error(n1.Error)
+					return
+				case KindComplete:
+					sink.Complete()
+					return
+				default:
+					goto Again1
+				}
+			Again2:
+				n2 := <-chan2
+				switch n2.Kind {
+				case KindNext:
+				case KindError:
+					sink.Error(n2.Error)
+					return
+				case KindComplete:
+					sink.Complete()
+					return
+				default:
+					goto Again2
+				}
+			Again3:
+				n3 := <-chan3
+				switch n3.Kind {
+				case KindNext:
+				case KindError:
+					sink.Error(n3.Error)
+					return
+				case KindComplete:
+					sink.Complete()
+					return
+				default:
+					goto Again3
+				}
+			Again4:
+				n4 := <-chan4
+				switch n4.Kind {
+				case KindNext:
+				case KindError:
+					sink.Error(n4.Error)
+					return
+				case KindComplete:
+					sink.Complete()
+					return
+				default:
+					goto Again4
+				}
+			Again5:
+				n5 := <-chan5
+				switch n5.Kind {
+				case KindNext:
+				case KindError:
+					sink.Error(n5.Error)
+					return
+				case KindComplete:
+					sink.Complete()
+					return
+				default:
+					goto Again5
+				}
+				sink.Next(proj(n1.Value, n2.Value, n3.Value, n4.Value, n5.Value))
 			}
-		}
-
-	case KindError:
-		sink.Error(n.Error)
-		return true
-
-	case KindComplete:
-		s.CBits |= bit
-
-		if q.Len() == 0 {
-			sink.Complete()
-			return true
-		}
+		})
 	}
-
-	return false
-}
-
-func zipPop5[T1, T2, T3, T4, T5, X any](
-	s *zipState5[T1, T2, T3, T4, T5],
-	q *queue.Queue[X],
-	bit uint8,
-	complete *bool,
-) X {
-	v := q.Pop()
-
-	if q.Len() == 0 {
-		s.VBits &^= bit
-
-		if s.CBits&bit != 0 {
-			*complete = true
-		}
-	}
-
-	return v
 }

@@ -1,6 +1,7 @@
 package rx_test
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -11,69 +12,33 @@ import (
 func TestZip2(t *testing.T) {
 	t.Parallel()
 
-	toString := func(v1 string, v2 int) string {
+	testZip2(t, rx.ConcatWith(
+		func(_ context.Context, sink rx.Observer[string]) {
+			sink(rx.Notification[string]{}) // For coverage.
+			sink.Complete()
+		},
+	), ErrComplete)
+	testZip2(t, rx.ConcatWith(rx.Throw[string](ErrTest)), ErrTest)
+}
+
+func testZip2(t *testing.T, op rx.Operator[string, string], err error) {
+	toString := func(v1, v2 string) string {
 		return fmt.Sprintf("[%v %v]", v1, v2)
 	}
 
 	NewTestSuite[string](t).Case(
 		rx.Zip2(
-			rx.Just("A", "B"),
-			rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
+			rx.Pipe1(rx.Just("A", "B", "C"), op),
+			rx.Just("B", "C", "D", "E"),
 			toString,
 		),
-		"[A 1]", "[B 2]", ErrComplete,
-	).Case(
-		rx.Zip2(
-			rx.Just("A", "B", "C"),
-			rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
-			toString,
-		),
-		"[A 1]", "[B 2]", "[C 3]", ErrComplete,
+		"[A B]", "[B C]", "[C D]", err,
 	).Case(
 		rx.Zip2(
 			rx.Just("A", "B", "C", "D"),
-			rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
+			rx.Pipe1(rx.Just("B", "C", "D"), op),
 			toString,
 		),
-		"[A 1]", "[B 2]", "[C 3]", ErrComplete,
-	).Case(
-		rx.Zip2(
-			rx.Just("A", "B"),
-			rx.Pipe1(
-				rx.Concat(
-					rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
-					rx.Throw[int](ErrTest),
-				),
-				DelaySubscription[int](1),
-			),
-			toString,
-		),
-		"[A 1]", "[B 2]", ErrComplete,
-	).Case(
-		rx.Zip2(
-			rx.Just("A", "B", "C"),
-			rx.Pipe1(
-				rx.Concat(
-					rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
-					rx.Throw[int](ErrTest),
-				),
-				DelaySubscription[int](1),
-			),
-			toString,
-		),
-		"[A 1]", "[B 2]", "[C 3]", ErrComplete,
-	).Case(
-		rx.Zip2(
-			rx.Just("A", "B", "C", "D"),
-			rx.Pipe1(
-				rx.Concat(
-					rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
-					rx.Throw[int](ErrTest),
-				),
-				DelaySubscription[int](1),
-			),
-			toString,
-		),
-		"[A 1]", "[B 2]", "[C 3]", ErrTest,
+		"[A B]", "[B C]", "[C D]", err,
 	)
 }
