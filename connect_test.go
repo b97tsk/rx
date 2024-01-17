@@ -18,7 +18,7 @@ func TestConnect(t *testing.T) {
 			rx.Connect(
 				func(source rx.Observable[int]) rx.Observable[string] {
 					return rx.Pipe2(
-						rx.Zip2(
+						rx.ZipWithBuffering2(
 							rx.Pipe1(source, rx.Take[int](4)),
 							rx.Pipe2(source, rx.Skip[int](4), rx.Take[int](4)),
 							func(v1, v2 int) int { return v1 * v2 },

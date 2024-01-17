@@ -154,6 +154,29 @@ func TestPanic(t *testing.T) {
 	shouldPanic(t, func() {
 		_ = rx.Zip9[any, any, any, any, any, any, any, any, any, any](nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	}, "Zip9 with proj == nil")
+
+	shouldPanic(t, func() { _ = rx.ZipWithBuffering2[any, any, any](nil, nil, nil) }, "ZipWithBuffering2 with proj == nil")
+	shouldPanic(t, func() {
+		_ = rx.ZipWithBuffering3[any, any, any, any](nil, nil, nil, nil)
+	}, "ZipWithBuffering3 with proj == nil")
+	shouldPanic(t, func() {
+		_ = rx.ZipWithBuffering4[any, any, any, any, any](nil, nil, nil, nil, nil)
+	}, "ZipWithBuffering4 with proj == nil")
+	shouldPanic(t, func() {
+		_ = rx.ZipWithBuffering5[any, any, any, any, any, any](nil, nil, nil, nil, nil, nil)
+	}, "ZipWithBuffering5 with proj == nil")
+	shouldPanic(t, func() {
+		_ = rx.ZipWithBuffering6[any, any, any, any, any, any, any](nil, nil, nil, nil, nil, nil, nil)
+	}, "ZipWithBuffering6 with proj == nil")
+	shouldPanic(t, func() {
+		_ = rx.ZipWithBuffering7[any, any, any, any, any, any, any, any](nil, nil, nil, nil, nil, nil, nil, nil)
+	}, "ZipWithBuffering7 with proj == nil")
+	shouldPanic(t, func() {
+		_ = rx.ZipWithBuffering8[any, any, any, any, any, any, any, any, any](nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	}, "ZipWithBuffering8 with proj == nil")
+	shouldPanic(t, func() {
+		_ = rx.ZipWithBuffering9[any, any, any, any, any, any, any, any, any, any](nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	}, "ZipWithBuffering9 with proj == nil")
 }
 
 func shouldPanic(t *testing.T, f func(), name string) {
