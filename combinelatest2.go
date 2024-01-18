@@ -48,7 +48,7 @@ func CombineLatest2[T1, T2, R any](
 }
 
 type combineLatestState2[T1, T2 any] struct {
-	VBits, CBits uint8
+	NBits, CBits uint8
 
 	V1 T1
 	V2 T2
@@ -68,7 +68,7 @@ func combineLatestSink2[T1, T2, R, X any](
 	case KindNext:
 		*v = n.Value
 
-		if s.VBits |= bit; s.VBits == FullBits {
+		if s.NBits |= bit; s.NBits == FullBits {
 			sink.Next(proj(s.V1, s.V2))
 		}
 

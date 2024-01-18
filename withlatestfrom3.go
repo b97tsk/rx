@@ -72,7 +72,7 @@ func withLatestFrom4[T1, T2, T3, T4, R any](
 }
 
 type withLatestFromState4[T1, T2, T3, T4 any] struct {
-	VBits uint8
+	NBits uint8
 
 	V1 T1
 	V2 T2
@@ -94,7 +94,7 @@ func withLatestFromSink4[T1, T2, T3, T4, R, X any](
 	case KindNext:
 		*v = n.Value
 
-		if s.VBits |= bit; s.VBits == FullBits && bit == 1 {
+		if s.NBits |= bit; s.NBits == FullBits && bit == 1 {
 			sink.Next(proj(s.V1, s.V2, s.V3, s.V4))
 		}
 

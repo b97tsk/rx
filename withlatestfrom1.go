@@ -60,7 +60,7 @@ func withLatestFrom2[T1, T2, R any](
 }
 
 type withLatestFromState2[T1, T2 any] struct {
-	VBits uint8
+	NBits uint8
 
 	V1 T1
 	V2 T2
@@ -80,7 +80,7 @@ func withLatestFromSink2[T1, T2, R, X any](
 	case KindNext:
 		*v = n.Value
 
-		if s.VBits |= bit; s.VBits == FullBits && bit == 1 {
+		if s.NBits |= bit; s.NBits == FullBits && bit == 1 {
 			sink.Next(proj(s.V1, s.V2))
 		}
 

@@ -91,7 +91,7 @@ func ZipWithBuffering9[T1, T2, T3, T4, T5, T6, T7, T8, T9, R any](
 }
 
 type zipState9[T1, T2, T3, T4, T5, T6, T7, T8, T9 any] struct {
-	VBits, CBits uint16
+	NBits, CBits uint16
 
 	Q1 queue.Queue[T1]
 	Q2 queue.Queue[T2]
@@ -118,7 +118,7 @@ func zipSink9[T1, T2, T3, T4, T5, T6, T7, T8, T9, R, X any](
 	case KindNext:
 		q.Push(n.Value)
 
-		if s.VBits |= bit; s.VBits == FullBits {
+		if s.NBits |= bit; s.NBits == FullBits {
 			var complete bool
 
 			sink.Next(proj(
@@ -164,7 +164,7 @@ func zipPop9[T1, T2, T3, T4, T5, T6, T7, T8, T9, X any](
 	v := q.Pop()
 
 	if q.Len() == 0 {
-		s.VBits &^= bit
+		s.NBits &^= bit
 
 		if s.CBits&bit != 0 {
 			*complete = true

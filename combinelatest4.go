@@ -58,7 +58,7 @@ func CombineLatest4[T1, T2, T3, T4, R any](
 }
 
 type combineLatestState4[T1, T2, T3, T4 any] struct {
-	VBits, CBits uint8
+	NBits, CBits uint8
 
 	V1 T1
 	V2 T2
@@ -80,7 +80,7 @@ func combineLatestSink4[T1, T2, T3, T4, R, X any](
 	case KindNext:
 		*v = n.Value
 
-		if s.VBits |= bit; s.VBits == FullBits {
+		if s.NBits |= bit; s.NBits == FullBits {
 			sink.Next(proj(s.V1, s.V2, s.V3, s.V4))
 		}
 
