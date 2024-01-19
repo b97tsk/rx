@@ -37,6 +37,10 @@ func ZipWithBuffering3[T1, T2, T3, R any](
 		chan2 := make(chan Notification[T2])
 		chan3 := make(chan Notification[T3])
 
+		wg.Go(func() { obs1.Subscribe(ctx, channelObserver(chan1, noop)) })
+		wg.Go(func() { obs2.Subscribe(ctx, channelObserver(chan2, noop)) })
+		wg.Go(func() { obs3.Subscribe(ctx, channelObserver(chan3, noop)) })
+
 		wg.Go(func() {
 			var s zipState3[T1, T2, T3]
 
@@ -53,10 +57,6 @@ func ZipWithBuffering3[T1, T2, T3, R any](
 				}
 			}
 		})
-
-		wg.Go(func() { obs1.Subscribe(ctx, channelObserver(chan1, noop)) })
-		wg.Go(func() { obs2.Subscribe(ctx, channelObserver(chan2, noop)) })
-		wg.Go(func() { obs3.Subscribe(ctx, channelObserver(chan3, noop)) })
 	}
 }
 

@@ -45,6 +45,14 @@ func ZipWithBuffering7[T1, T2, T3, T4, T5, T6, T7, R any](
 		chan6 := make(chan Notification[T6])
 		chan7 := make(chan Notification[T7])
 
+		wg.Go(func() { obs1.Subscribe(ctx, channelObserver(chan1, noop)) })
+		wg.Go(func() { obs2.Subscribe(ctx, channelObserver(chan2, noop)) })
+		wg.Go(func() { obs3.Subscribe(ctx, channelObserver(chan3, noop)) })
+		wg.Go(func() { obs4.Subscribe(ctx, channelObserver(chan4, noop)) })
+		wg.Go(func() { obs5.Subscribe(ctx, channelObserver(chan5, noop)) })
+		wg.Go(func() { obs6.Subscribe(ctx, channelObserver(chan6, noop)) })
+		wg.Go(func() { obs7.Subscribe(ctx, channelObserver(chan7, noop)) })
+
 		wg.Go(func() {
 			var s zipState7[T1, T2, T3, T4, T5, T6, T7]
 
@@ -69,14 +77,6 @@ func ZipWithBuffering7[T1, T2, T3, T4, T5, T6, T7, R any](
 				}
 			}
 		})
-
-		wg.Go(func() { obs1.Subscribe(ctx, channelObserver(chan1, noop)) })
-		wg.Go(func() { obs2.Subscribe(ctx, channelObserver(chan2, noop)) })
-		wg.Go(func() { obs3.Subscribe(ctx, channelObserver(chan3, noop)) })
-		wg.Go(func() { obs4.Subscribe(ctx, channelObserver(chan4, noop)) })
-		wg.Go(func() { obs5.Subscribe(ctx, channelObserver(chan5, noop)) })
-		wg.Go(func() { obs6.Subscribe(ctx, channelObserver(chan6, noop)) })
-		wg.Go(func() { obs7.Subscribe(ctx, channelObserver(chan7, noop)) })
 	}
 }
 
