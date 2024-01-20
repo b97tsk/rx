@@ -45,22 +45,22 @@ func CombineLatest6[T1, T2, T3, T4, T5, T6, R any](
 		wg.Go(func() {
 			var s combineLatestState6[T1, T2, T3, T4, T5, T6]
 
-			done := false
+			cont := true
 
-			for !done {
+			for cont {
 				select {
 				case n := <-chan1:
-					done = combineLatestSink6(n, sink, proj, &s, &s.V1, 1)
+					cont = combineLatestSink6(n, sink, proj, &s, &s.V1, 1)
 				case n := <-chan2:
-					done = combineLatestSink6(n, sink, proj, &s, &s.V2, 2)
+					cont = combineLatestSink6(n, sink, proj, &s, &s.V2, 2)
 				case n := <-chan3:
-					done = combineLatestSink6(n, sink, proj, &s, &s.V3, 4)
+					cont = combineLatestSink6(n, sink, proj, &s, &s.V3, 4)
 				case n := <-chan4:
-					done = combineLatestSink6(n, sink, proj, &s, &s.V4, 8)
+					cont = combineLatestSink6(n, sink, proj, &s, &s.V4, 8)
 				case n := <-chan5:
-					done = combineLatestSink6(n, sink, proj, &s, &s.V5, 16)
+					cont = combineLatestSink6(n, sink, proj, &s, &s.V5, 16)
 				case n := <-chan6:
-					done = combineLatestSink6(n, sink, proj, &s, &s.V6, 32)
+					cont = combineLatestSink6(n, sink, proj, &s, &s.V6, 32)
 				}
 			}
 		})
@@ -98,14 +98,14 @@ func combineLatestSink6[T1, T2, T3, T4, T5, T6, R, X any](
 
 	case KindError:
 		sink.Error(n.Error)
-		return true
+		return false
 
 	case KindComplete:
 		if s.CBits |= bit; s.CBits == FullBits {
 			sink.Complete()
-			return true
+			return false
 		}
 	}
 
-	return false
+	return true
 }

@@ -50,20 +50,20 @@ func ZipWithBuffering5[T1, T2, T3, T4, T5, R any](
 		wg.Go(func() {
 			var s zipState5[T1, T2, T3, T4, T5]
 
-			done := false
+			cont := true
 
-			for !done {
+			for cont {
 				select {
 				case n := <-chan1:
-					done = zipSink5(n, sink, proj, &s, &s.Q1, 1)
+					cont = zipSink5(n, sink, proj, &s, &s.Q1, 1)
 				case n := <-chan2:
-					done = zipSink5(n, sink, proj, &s, &s.Q2, 2)
+					cont = zipSink5(n, sink, proj, &s, &s.Q2, 2)
 				case n := <-chan3:
-					done = zipSink5(n, sink, proj, &s, &s.Q3, 4)
+					cont = zipSink5(n, sink, proj, &s, &s.Q3, 4)
 				case n := <-chan4:
-					done = zipSink5(n, sink, proj, &s, &s.Q4, 8)
+					cont = zipSink5(n, sink, proj, &s, &s.Q4, 8)
 				case n := <-chan5:
-					done = zipSink5(n, sink, proj, &s, &s.Q5, 16)
+					cont = zipSink5(n, sink, proj, &s, &s.Q5, 16)
 				}
 			}
 		})
@@ -107,24 +107,24 @@ func zipSink5[T1, T2, T3, T4, T5, R, X any](
 
 			if complete {
 				sink.Complete()
-				return true
+				return false
 			}
 		}
 
 	case KindError:
 		sink.Error(n.Error)
-		return true
+		return false
 
 	case KindComplete:
 		s.CBits |= bit
 
 		if q.Len() == 0 {
 			sink.Complete()
-			return true
+			return false
 		}
 	}
 
-	return false
+	return true
 }
 
 func zipPop5[T1, T2, T3, T4, T5, X any](

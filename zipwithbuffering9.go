@@ -62,28 +62,28 @@ func ZipWithBuffering9[T1, T2, T3, T4, T5, T6, T7, T8, T9, R any](
 		wg.Go(func() {
 			var s zipState9[T1, T2, T3, T4, T5, T6, T7, T8, T9]
 
-			done := false
+			cont := true
 
-			for !done {
+			for cont {
 				select {
 				case n := <-chan1:
-					done = zipSink9(n, sink, proj, &s, &s.Q1, 1)
+					cont = zipSink9(n, sink, proj, &s, &s.Q1, 1)
 				case n := <-chan2:
-					done = zipSink9(n, sink, proj, &s, &s.Q2, 2)
+					cont = zipSink9(n, sink, proj, &s, &s.Q2, 2)
 				case n := <-chan3:
-					done = zipSink9(n, sink, proj, &s, &s.Q3, 4)
+					cont = zipSink9(n, sink, proj, &s, &s.Q3, 4)
 				case n := <-chan4:
-					done = zipSink9(n, sink, proj, &s, &s.Q4, 8)
+					cont = zipSink9(n, sink, proj, &s, &s.Q4, 8)
 				case n := <-chan5:
-					done = zipSink9(n, sink, proj, &s, &s.Q5, 16)
+					cont = zipSink9(n, sink, proj, &s, &s.Q5, 16)
 				case n := <-chan6:
-					done = zipSink9(n, sink, proj, &s, &s.Q6, 32)
+					cont = zipSink9(n, sink, proj, &s, &s.Q6, 32)
 				case n := <-chan7:
-					done = zipSink9(n, sink, proj, &s, &s.Q7, 64)
+					cont = zipSink9(n, sink, proj, &s, &s.Q7, 64)
 				case n := <-chan8:
-					done = zipSink9(n, sink, proj, &s, &s.Q8, 128)
+					cont = zipSink9(n, sink, proj, &s, &s.Q8, 128)
 				case n := <-chan9:
-					done = zipSink9(n, sink, proj, &s, &s.Q9, 256)
+					cont = zipSink9(n, sink, proj, &s, &s.Q9, 256)
 				}
 			}
 		})
@@ -135,24 +135,24 @@ func zipSink9[T1, T2, T3, T4, T5, T6, T7, T8, T9, R, X any](
 
 			if complete {
 				sink.Complete()
-				return true
+				return false
 			}
 		}
 
 	case KindError:
 		sink.Error(n.Error)
-		return true
+		return false
 
 	case KindComplete:
 		s.CBits |= bit
 
 		if q.Len() == 0 {
 			sink.Complete()
-			return true
+			return false
 		}
 	}
 
-	return false
+	return true
 }
 
 func zipPop9[T1, T2, T3, T4, T5, T6, T7, T8, T9, X any](

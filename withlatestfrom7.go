@@ -69,26 +69,26 @@ func withLatestFrom8[T1, T2, T3, T4, T5, T6, T7, T8, R any](
 		wg.Go(func() {
 			var s withLatestFromState8[T1, T2, T3, T4, T5, T6, T7, T8]
 
-			done := false
+			cont := true
 
-			for !done {
+			for cont {
 				select {
 				case n := <-chan1:
-					done = withLatestFromSink8(n, sink, proj, &s, &s.V1, 1)
+					cont = withLatestFromSink8(n, sink, proj, &s, &s.V1, 1)
 				case n := <-chan2:
-					done = withLatestFromSink8(n, sink, proj, &s, &s.V2, 2)
+					cont = withLatestFromSink8(n, sink, proj, &s, &s.V2, 2)
 				case n := <-chan3:
-					done = withLatestFromSink8(n, sink, proj, &s, &s.V3, 4)
+					cont = withLatestFromSink8(n, sink, proj, &s, &s.V3, 4)
 				case n := <-chan4:
-					done = withLatestFromSink8(n, sink, proj, &s, &s.V4, 8)
+					cont = withLatestFromSink8(n, sink, proj, &s, &s.V4, 8)
 				case n := <-chan5:
-					done = withLatestFromSink8(n, sink, proj, &s, &s.V5, 16)
+					cont = withLatestFromSink8(n, sink, proj, &s, &s.V5, 16)
 				case n := <-chan6:
-					done = withLatestFromSink8(n, sink, proj, &s, &s.V6, 32)
+					cont = withLatestFromSink8(n, sink, proj, &s, &s.V6, 32)
 				case n := <-chan7:
-					done = withLatestFromSink8(n, sink, proj, &s, &s.V7, 64)
+					cont = withLatestFromSink8(n, sink, proj, &s, &s.V7, 64)
 				case n := <-chan8:
-					done = withLatestFromSink8(n, sink, proj, &s, &s.V8, 128)
+					cont = withLatestFromSink8(n, sink, proj, &s, &s.V8, 128)
 				}
 			}
 		})
@@ -128,14 +128,14 @@ func withLatestFromSink8[T1, T2, T3, T4, T5, T6, T7, T8, R, X any](
 
 	case KindError:
 		sink.Error(n.Error)
-		return true
+		return false
 
 	case KindComplete:
 		if bit == 1 {
 			sink.Complete()
-			return true
+			return false
 		}
 	}
 
-	return false
+	return true
 }

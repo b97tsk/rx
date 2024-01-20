@@ -57,20 +57,20 @@ func withLatestFrom5[T1, T2, T3, T4, T5, R any](
 		wg.Go(func() {
 			var s withLatestFromState5[T1, T2, T3, T4, T5]
 
-			done := false
+			cont := true
 
-			for !done {
+			for cont {
 				select {
 				case n := <-chan1:
-					done = withLatestFromSink5(n, sink, proj, &s, &s.V1, 1)
+					cont = withLatestFromSink5(n, sink, proj, &s, &s.V1, 1)
 				case n := <-chan2:
-					done = withLatestFromSink5(n, sink, proj, &s, &s.V2, 2)
+					cont = withLatestFromSink5(n, sink, proj, &s, &s.V2, 2)
 				case n := <-chan3:
-					done = withLatestFromSink5(n, sink, proj, &s, &s.V3, 4)
+					cont = withLatestFromSink5(n, sink, proj, &s, &s.V3, 4)
 				case n := <-chan4:
-					done = withLatestFromSink5(n, sink, proj, &s, &s.V4, 8)
+					cont = withLatestFromSink5(n, sink, proj, &s, &s.V4, 8)
 				case n := <-chan5:
-					done = withLatestFromSink5(n, sink, proj, &s, &s.V5, 16)
+					cont = withLatestFromSink5(n, sink, proj, &s, &s.V5, 16)
 				}
 			}
 		})
@@ -107,14 +107,14 @@ func withLatestFromSink5[T1, T2, T3, T4, T5, R, X any](
 
 	case KindError:
 		sink.Error(n.Error)
-		return true
+		return false
 
 	case KindComplete:
 		if bit == 1 {
 			sink.Complete()
-			return true
+			return false
 		}
 	}
 
-	return false
+	return true
 }

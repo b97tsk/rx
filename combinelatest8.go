@@ -51,26 +51,26 @@ func CombineLatest8[T1, T2, T3, T4, T5, T6, T7, T8, R any](
 		wg.Go(func() {
 			var s combineLatestState8[T1, T2, T3, T4, T5, T6, T7, T8]
 
-			done := false
+			cont := true
 
-			for !done {
+			for cont {
 				select {
 				case n := <-chan1:
-					done = combineLatestSink8(n, sink, proj, &s, &s.V1, 1)
+					cont = combineLatestSink8(n, sink, proj, &s, &s.V1, 1)
 				case n := <-chan2:
-					done = combineLatestSink8(n, sink, proj, &s, &s.V2, 2)
+					cont = combineLatestSink8(n, sink, proj, &s, &s.V2, 2)
 				case n := <-chan3:
-					done = combineLatestSink8(n, sink, proj, &s, &s.V3, 4)
+					cont = combineLatestSink8(n, sink, proj, &s, &s.V3, 4)
 				case n := <-chan4:
-					done = combineLatestSink8(n, sink, proj, &s, &s.V4, 8)
+					cont = combineLatestSink8(n, sink, proj, &s, &s.V4, 8)
 				case n := <-chan5:
-					done = combineLatestSink8(n, sink, proj, &s, &s.V5, 16)
+					cont = combineLatestSink8(n, sink, proj, &s, &s.V5, 16)
 				case n := <-chan6:
-					done = combineLatestSink8(n, sink, proj, &s, &s.V6, 32)
+					cont = combineLatestSink8(n, sink, proj, &s, &s.V6, 32)
 				case n := <-chan7:
-					done = combineLatestSink8(n, sink, proj, &s, &s.V7, 64)
+					cont = combineLatestSink8(n, sink, proj, &s, &s.V7, 64)
 				case n := <-chan8:
-					done = combineLatestSink8(n, sink, proj, &s, &s.V8, 128)
+					cont = combineLatestSink8(n, sink, proj, &s, &s.V8, 128)
 				}
 			}
 		})
@@ -110,14 +110,14 @@ func combineLatestSink8[T1, T2, T3, T4, T5, T6, T7, T8, R, X any](
 
 	case KindError:
 		sink.Error(n.Error)
-		return true
+		return false
 
 	case KindComplete:
 		if s.CBits |= bit; s.CBits == FullBits {
 			sink.Complete()
-			return true
+			return false
 		}
 	}
 
-	return false
+	return true
 }

@@ -41,14 +41,14 @@ func ZipWithBuffering2[T1, T2, R any](
 		wg.Go(func() {
 			var s zipState2[T1, T2]
 
-			done := false
+			cont := true
 
-			for !done {
+			for cont {
 				select {
 				case n := <-chan1:
-					done = zipSink2(n, sink, proj, &s, &s.Q1, 1)
+					cont = zipSink2(n, sink, proj, &s, &s.Q1, 1)
 				case n := <-chan2:
-					done = zipSink2(n, sink, proj, &s, &s.Q2, 2)
+					cont = zipSink2(n, sink, proj, &s, &s.Q2, 2)
 				}
 			}
 		})
@@ -86,24 +86,24 @@ func zipSink2[T1, T2, R, X any](
 
 			if complete {
 				sink.Complete()
-				return true
+				return false
 			}
 		}
 
 	case KindError:
 		sink.Error(n.Error)
-		return true
+		return false
 
 	case KindComplete:
 		s.CBits |= bit
 
 		if q.Len() == 0 {
 			sink.Complete()
-			return true
+			return false
 		}
 	}
 
-	return false
+	return true
 }
 
 func zipPop2[T1, T2, X any](
