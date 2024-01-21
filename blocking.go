@@ -50,12 +50,6 @@ func (obs Observable[T]) BlockingFirst(ctx context.Context) (v T, err error) {
 
 	wg.Wait()
 
-	select {
-	default:
-	case <-ctx.Done():
-		return v, ctx.Err()
-	}
-
 	switch res.Kind {
 	case KindNext:
 		return res.Value, nil
@@ -128,12 +122,6 @@ func (obs Observable[T]) BlockingLast(ctx context.Context) (v T, err error) {
 	})
 
 	wg.Wait()
-
-	select {
-	default:
-	case <-ctx.Done():
-		return v, ctx.Err()
-	}
 
 	switch res.Kind {
 	case KindNext:
@@ -224,12 +212,6 @@ func (obs Observable[T]) BlockingSingle(ctx context.Context) (v T, err error) {
 	})
 
 	wg.Wait()
-
-	select {
-	default:
-	case <-ctx.Done():
-		return v, ctx.Err()
-	}
 
 	switch res.Kind {
 	case KindNext:
