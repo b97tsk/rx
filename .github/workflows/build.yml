@@ -20,7 +20,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v4
         with:
-          go-version: '1.21'
+          go-version: '1.22'
       - name: Run tests
         run: go test -race -coverprofile=profile.cov -coverpkg=./... ./...
       - name: Send coverage

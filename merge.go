@@ -44,8 +44,6 @@ func (some observables[T]) Merge(ctx context.Context, sink Observer[T]) {
 	}
 
 	for _, obs := range some {
-		obs := obs
-
 		wg.Go(func() { obs.Subscribe(ctx, observer) })
 	}
 }

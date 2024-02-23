@@ -37,8 +37,6 @@ func (some observables[T]) Race(ctx context.Context, sink Observer[T]) {
 	wg := WaitGroupFromContext(ctx)
 
 	for index, obs := range some {
-		index, obs := index, obs
-
 		wg.Go(func() {
 			var won, lost bool
 
