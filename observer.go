@@ -1,5 +1,7 @@
 package rx
 
+import "sync"
+
 // An Observer is a consumer of notifications delivered by an [Observable].
 type Observer[T any] func(n Notification[T])
 
@@ -47,20 +49,59 @@ func (sink Observer[T]) OnLastNotification(f func()) Observer[T] {
 // Serialized creates an Observer that passes incoming emissions to sink
 // in a mutually exclusive way.
 func (sink Observer[T]) Serialized() Observer[T] {
-	c := make(chan Observer[T], 1)
-	c <- sink
+	var x struct {
+		sync.Mutex
+		Done     bool
+		Emitting bool
+		Queue    []Notification[T]
+	}
 
 	return func(n Notification[T]) {
-		if sink, ok := <-c; ok {
-			switch n.Kind {
-			case KindNext:
+		x.Lock()
+
+		if x.Done {
+			x.Unlock()
+			return
+		}
+
+		switch n.Kind {
+		case KindError, KindComplete:
+			x.Done = true
+		}
+
+		if x.Emitting {
+			x.Queue = append(x.Queue, n)
+			x.Unlock()
+			return
+		}
+
+		x.Emitting = true
+
+		x.Unlock()
+
+		sink(n)
+
+		switch n.Kind {
+		case KindError, KindComplete:
+			return
+		}
+
+		for {
+			x.Lock()
+
+			if x.Queue == nil {
+				x.Emitting = false
+				x.Unlock()
+				return
+			}
+
+			q := x.Queue
+			x.Queue = nil
+
+			x.Unlock()
+
+			for _, n := range q {
 				sink(n)
-				c <- sink
-			case KindError, KindComplete:
-				close(c)
-				sink(n)
-			default: // Unknown kind.
-				c <- sink
 			}
 		}
 	}
