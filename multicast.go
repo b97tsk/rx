@@ -16,20 +16,17 @@ import (
 // If you can guarantee that every subscription to a Subject is canceled
 // sooner or later, then you are fine.
 //
-// Internally, a runtime finalizer is set to call Error(ErrFinalized), but
-// it is not guaranteed to work.
+// Internally, a runtime finalizer is set to call Error(ErrFinalized), which
+// may run any time after Subject's Observer part gets garbage-collected.
 func Multicast[T any]() Subject[T] {
 	m := new(multicast[T])
 
 	runtime.SetFinalizer(&m, multicastFinalizer[T])
 
 	return Subject[T]{
-		Observable: func(ctx context.Context, sink Observer[T]) {
-			m.subscribe(ctx, sink)
-		},
+		Observable: m.subscribe, // Only Observer field holds &m, this doesn't.
 		Observer: func(n Notification[T]) {
 			m.emit(n)
-
 			switch n.Kind {
 			case KindError, KindComplete:
 				runtime.SetFinalizer(&m, nil)

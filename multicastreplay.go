@@ -25,8 +25,8 @@ type ReplayConfig struct {
 // If you can guarantee that every subscription to a Subject is canceled
 // sooner or later, then you are fine.
 //
-// Internally, a runtime finalizer is set to call Error(ErrFinalized), but
-// it is not guaranteed to work.
+// Internally, a runtime finalizer is set to call Error(ErrFinalized), which
+// may run any time after Subject's Observer part gets garbage-collected.
 func MulticastReplay[T any](opts *ReplayConfig) Subject[T] {
 	m := new(multicastReplay[T])
 
@@ -37,12 +37,9 @@ func MulticastReplay[T any](opts *ReplayConfig) Subject[T] {
 	runtime.SetFinalizer(&m, multicastReplayFinalizer[T])
 
 	return Subject[T]{
-		Observable: func(ctx context.Context, sink Observer[T]) {
-			m.subscribe(ctx, sink)
-		},
+		Observable: m.subscribe, // Only Observer field holds &m, this doesn't.
 		Observer: func(n Notification[T]) {
 			m.emit(n)
-
 			switch n.Kind {
 			case KindError, KindComplete:
 				runtime.SetFinalizer(&m, nil)
