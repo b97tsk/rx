@@ -1,7 +1,6 @@
 package rx
 
 import (
-	"context"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -35,9 +34,7 @@ func Throttle[T, U any](durationSelector func(v T) Observable[U]) ThrottleOperat
 // for the next duration time.
 func ThrottleTime[T any](d time.Duration) ThrottleOperator[T, time.Time] {
 	obsTimer := Timer(d)
-
 	durationSelector := func(T) Observable[time.Time] { return obsTimer }
-
 	return ThrottleOperator[T, time.Time]{
 		opts: throttleConfig[T, time.Time]{
 			DurationSelector: durationSelector,
@@ -80,10 +77,9 @@ type throttleObservable[T, U any] struct {
 	throttleConfig[T, U]
 }
 
-func (obs throttleObservable[T, U]) Subscribe(ctx context.Context, sink Observer[T]) {
-	source, cancelSource := context.WithCancel(ctx)
-
-	sink = sink.OnLastNotification(cancelSource)
+func (obs throttleObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
+	c, cancel := c.WithCancel()
+	sink = sink.OnLastNotification(cancel)
 
 	var x struct {
 		Context  atomic.Value
@@ -98,27 +94,25 @@ func (obs throttleObservable[T, U]) Subscribe(ctx context.Context, sink Observer
 		}
 	}
 
-	x.Context.Store(source)
+	x.Context.Store(c.Context)
 
 	var doThrottle func(T)
 
 	doThrottle = func(v T) {
-		worker, cancelWorker := context.WithCancel(source)
+		w, cancelw := c.WithCancel()
 
-		x.Context.Store(worker)
-
+		x.Context.Store(w.Context)
 		x.Worker.Add(1)
 
 		var noop bool
 
-		obs.DurationSelector(v).Subscribe(worker, func(n Notification[U]) {
+		obs.DurationSelector(v).Subscribe(w, func(n Notification[U]) {
 			if noop {
 				return
 			}
 
 			noop = true
-
-			cancelWorker()
+			cancelw()
 
 			switch n.Kind {
 			case KindNext:
@@ -134,17 +128,17 @@ func (obs throttleObservable[T, U]) Subscribe(ctx context.Context, sink Observer
 					}
 				}
 
-				if x.Context.CompareAndSwap(worker, source) && x.Complete.Load() && x.Context.CompareAndSwap(source, sentinel) {
+				if x.Context.CompareAndSwap(w.Context, c.Context) && x.Complete.Load() && x.Context.CompareAndSwap(c.Context, sentinel) {
 					sink.Complete()
 				}
 
 			case KindError:
-				if x.Context.CompareAndSwap(worker, sentinel) {
+				if x.Context.CompareAndSwap(w.Context, sentinel) {
 					sink.Error(n.Error)
 				}
 
 			case KindComplete:
-				if x.Context.CompareAndSwap(worker, source) && x.Complete.Load() && x.Context.CompareAndSwap(source, sentinel) {
+				if x.Context.CompareAndSwap(w.Context, c.Context) && x.Complete.Load() && x.Context.CompareAndSwap(c.Context, sentinel) {
 					sink.Complete()
 				}
 			}
@@ -153,7 +147,7 @@ func (obs throttleObservable[T, U]) Subscribe(ctx context.Context, sink Observer
 		})
 	}
 
-	obs.Source.Subscribe(source, func(n Notification[T]) {
+	obs.Source.Subscribe(c, func(n Notification[T]) {
 		switch n.Kind {
 		case KindNext:
 			x.Trailing.Lock()
@@ -161,7 +155,7 @@ func (obs throttleObservable[T, U]) Subscribe(ctx context.Context, sink Observer
 			x.Trailing.HasValue.Store(true)
 			x.Trailing.Unlock()
 
-			if x.Context.Load() == source {
+			if x.Context.Load() == c.Context {
 				if obs.Leading {
 					x.Trailing.HasValue.Store(false)
 					sink(n)
@@ -173,7 +167,7 @@ func (obs throttleObservable[T, U]) Subscribe(ctx context.Context, sink Observer
 		case KindError:
 			old := x.Context.Swap(sentinel)
 
-			cancelSource()
+			cancel()
 			x.Worker.Wait()
 
 			if old != sentinel {
@@ -183,7 +177,7 @@ func (obs throttleObservable[T, U]) Subscribe(ctx context.Context, sink Observer
 		case KindComplete:
 			x.Complete.Store(true)
 
-			if x.Context.CompareAndSwap(source, sentinel) {
+			if x.Context.CompareAndSwap(c.Context, sentinel) {
 				sink(n)
 			}
 		}

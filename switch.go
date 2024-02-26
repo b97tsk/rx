@@ -1,7 +1,6 @@
 package rx
 
 import (
-	"context"
 	"sync"
 	"sync/atomic"
 )
@@ -43,32 +42,29 @@ type switchMapObservable[T, R any] struct {
 	Project func(T) Observable[R]
 }
 
-func (obs switchMapObservable[T, R]) Subscribe(ctx context.Context, sink Observer[R]) {
-	source, cancelSource := context.WithCancel(ctx)
-
-	sink = sink.OnLastNotification(cancelSource)
+func (obs switchMapObservable[T, R]) Subscribe(c Context, sink Observer[R]) {
+	c, cancel := c.WithCancel()
+	sink = sink.OnLastNotification(cancel)
 
 	var x struct {
 		Context  atomic.Value
 		Complete atomic.Bool
 		Worker   struct {
 			sync.WaitGroup
-			Cancel context.CancelFunc
+			Cancel CancelFunc
 		}
 	}
 
-	x.Context.Store(source)
+	x.Context.Store(c.Context)
 
 	startWorker := func(v T) {
-		worker, cancelWorker := context.WithCancel(source)
+		w, cancelw := c.WithCancel()
 
-		x.Context.Store(worker)
-
+		x.Context.Store(w.Context)
 		x.Worker.Add(1)
+		x.Worker.Cancel = cancelw
 
-		x.Worker.Cancel = cancelWorker
-
-		obs.Project(v).Subscribe(worker, func(n Notification[R]) {
+		obs.Project(v).Subscribe(w, func(n Notification[R]) {
 			switch n.Kind {
 			case KindNext:
 				sink(n)
@@ -76,25 +72,25 @@ func (obs switchMapObservable[T, R]) Subscribe(ctx context.Context, sink Observe
 			case KindError, KindComplete:
 				switch n.Kind {
 				case KindError:
-					if x.Context.CompareAndSwap(worker, sentinel) {
+					if x.Context.CompareAndSwap(w.Context, sentinel) {
 						sink(n)
 					}
 				case KindComplete:
-					if x.Context.CompareAndSwap(worker, source) && x.Complete.Load() && x.Context.CompareAndSwap(source, sentinel) {
+					if x.Context.CompareAndSwap(w.Context, c.Context) && x.Complete.Load() && x.Context.CompareAndSwap(c.Context, sentinel) {
 						sink(n)
 					}
 				}
 
-				cancelWorker()
+				cancelw()
 				x.Worker.Done()
 			}
 		})
 	}
 
-	obs.Source.Subscribe(source, func(n Notification[T]) {
+	obs.Source.Subscribe(c, func(n Notification[T]) {
 		switch n.Kind {
 		case KindNext:
-			if x.Context.Swap(source) == sentinel {
+			if x.Context.Swap(c.Context) == sentinel {
 				x.Context.Store(sentinel)
 				return
 			}
@@ -109,7 +105,7 @@ func (obs switchMapObservable[T, R]) Subscribe(ctx context.Context, sink Observe
 		case KindError:
 			old := x.Context.Swap(sentinel)
 
-			cancelSource()
+			cancel()
 			x.Worker.Wait()
 
 			if old != sentinel {
@@ -119,7 +115,7 @@ func (obs switchMapObservable[T, R]) Subscribe(ctx context.Context, sink Observe
 		case KindComplete:
 			x.Complete.Store(true)
 
-			if x.Context.CompareAndSwap(source, sentinel) {
+			if x.Context.CompareAndSwap(c.Context, sentinel) {
 				sink.Complete()
 			}
 		}

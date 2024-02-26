@@ -1,7 +1,6 @@
 package rx_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -17,7 +16,7 @@ func TestMultiObserver(t *testing.T) {
 	rx.Pipe1(
 		rx.Just("A", "B", "C"),
 		AddLatencyToValues[string](1, 1),
-	).Subscribe(context.Background(), m.Observer.ElementsOnly)
+	).Subscribe(rx.NewBackgroundContext(), m.Observer.ElementsOnly)
 
 	NewTestSuite[string](t).Case(
 		rx.Pipe1(
@@ -29,7 +28,7 @@ func TestMultiObserver(t *testing.T) {
 
 	time.Sleep(Step(5))
 
-	ctx, cancel := context.WithTimeout(context.Background(), Step(1))
+	ctx, cancel := rx.NewBackgroundContext().WithTimeout(Step(1))
 	defer cancel()
 
 	rx.Pipe1(
@@ -47,10 +46,10 @@ func TestMultiObserver(t *testing.T) {
 		m.Observable,
 		rx.OnNext(
 			func(string) {
-				m.Observable.Subscribe(context.Background(), rx.Noop[string])
+				m.Observable.Subscribe(rx.NewBackgroundContext(), rx.Noop[string])
 			},
 		),
-	).Subscribe(context.Background(), rx.Noop[string])
+	).Subscribe(rx.NewBackgroundContext(), rx.Noop[string])
 
 	m.Observer.Next("E")
 	m.Observer.Complete()

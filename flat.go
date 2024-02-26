@@ -1,9 +1,5 @@
 package rx
 
-import (
-	"context"
-)
-
 // Flat flattens a higher-order Observable into a first-order Observable,
 // by applying a flat function to the inner Observables.
 func Flat[_ Observable[T], T any](f func(some ...Observable[T]) Observable[T]) Operator[Observable[T], T] {
@@ -17,17 +13,17 @@ func Flat[_ Observable[T], T any](f func(some ...Observable[T]) Observable[T]) O
 func flat[_ Observable[T], T any](f func(some ...Observable[T]) Observable[T]) Operator[Observable[T], T] {
 	return NewOperator(
 		func(source Observable[Observable[T]]) Observable[T] {
-			return func(ctx context.Context, sink Observer[T]) {
+			return func(c Context, sink Observer[T]) {
 				var s []Observable[T]
 
-				source.Subscribe(ctx, func(n Notification[Observable[T]]) {
+				source.Subscribe(c, func(n Notification[Observable[T]]) {
 					switch n.Kind {
 					case KindNext:
 						s = append(s, n.Value)
 					case KindError:
 						sink.Error(n.Error)
 					case KindComplete:
-						f(s...).Subscribe(ctx, sink)
+						f(s...).Subscribe(c, sink)
 					}
 				})
 			}

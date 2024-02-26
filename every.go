@@ -1,9 +1,5 @@
 package rx
 
-import (
-	"context"
-)
-
 // Every emits a boolean to indicate whether every value of the source
 // Observable satisfies a given condition.
 func Every[T any](cond func(v T) bool) Operator[T, bool] {
@@ -27,14 +23,13 @@ type everyObservable[T any] struct {
 	Condition func(T) bool
 }
 
-func (obs everyObservable[T]) Subscribe(ctx context.Context, sink Observer[bool]) {
-	ctx, cancel := context.WithCancel(ctx)
-
+func (obs everyObservable[T]) Subscribe(c Context, sink Observer[bool]) {
+	c, cancel := c.WithCancel()
 	sink = sink.OnLastNotification(cancel)
 
 	var noop bool
 
-	obs.Source.Subscribe(ctx, func(n Notification[T]) {
+	obs.Source.Subscribe(c, func(n Notification[T]) {
 		if noop {
 			return
 		}
@@ -43,14 +38,11 @@ func (obs everyObservable[T]) Subscribe(ctx context.Context, sink Observer[bool]
 		case KindNext:
 			if !obs.Condition(n.Value) {
 				noop = true
-
 				sink.Next(false)
 				sink.Complete()
 			}
-
 		case KindError:
 			sink.Error(n.Error)
-
 		case KindComplete:
 			sink.Next(true)
 			sink.Complete()

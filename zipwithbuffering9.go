@@ -1,10 +1,6 @@
 package rx
 
-import (
-	"context"
-
-	"github.com/b97tsk/rx/internal/queue"
-)
+import "github.com/b97tsk/rx/internal/queue"
 
 // ZipWithBuffering9 combines multiple Observables to create an Observable that
 // emits projection of values of each of its input Observables.
@@ -28,12 +24,9 @@ func ZipWithBuffering9[T1, T2, T3, T4, T5, T6, T7, T8, T9, R any](
 		panic("proj == nil")
 	}
 
-	return func(ctx context.Context, sink Observer[R]) {
-		wg := WaitGroupFromContext(ctx)
-		ctx, cancel := context.WithCancel(ctx)
-
+	return func(c Context, sink Observer[R]) {
+		c, cancel := c.WithCancel()
 		noop := make(chan struct{})
-
 		sink = sink.OnLastNotification(func() {
 			cancel()
 			close(noop)
@@ -49,17 +42,17 @@ func ZipWithBuffering9[T1, T2, T3, T4, T5, T6, T7, T8, T9, R any](
 		chan8 := make(chan Notification[T8])
 		chan9 := make(chan Notification[T9])
 
-		wg.Go(func() { obs1.Subscribe(ctx, channelObserver(chan1, noop)) })
-		wg.Go(func() { obs2.Subscribe(ctx, channelObserver(chan2, noop)) })
-		wg.Go(func() { obs3.Subscribe(ctx, channelObserver(chan3, noop)) })
-		wg.Go(func() { obs4.Subscribe(ctx, channelObserver(chan4, noop)) })
-		wg.Go(func() { obs5.Subscribe(ctx, channelObserver(chan5, noop)) })
-		wg.Go(func() { obs6.Subscribe(ctx, channelObserver(chan6, noop)) })
-		wg.Go(func() { obs7.Subscribe(ctx, channelObserver(chan7, noop)) })
-		wg.Go(func() { obs8.Subscribe(ctx, channelObserver(chan8, noop)) })
-		wg.Go(func() { obs9.Subscribe(ctx, channelObserver(chan9, noop)) })
+		c.Go(func() { obs1.Subscribe(c, channelObserver(chan1, noop)) })
+		c.Go(func() { obs2.Subscribe(c, channelObserver(chan2, noop)) })
+		c.Go(func() { obs3.Subscribe(c, channelObserver(chan3, noop)) })
+		c.Go(func() { obs4.Subscribe(c, channelObserver(chan4, noop)) })
+		c.Go(func() { obs5.Subscribe(c, channelObserver(chan5, noop)) })
+		c.Go(func() { obs6.Subscribe(c, channelObserver(chan6, noop)) })
+		c.Go(func() { obs7.Subscribe(c, channelObserver(chan7, noop)) })
+		c.Go(func() { obs8.Subscribe(c, channelObserver(chan8, noop)) })
+		c.Go(func() { obs9.Subscribe(c, channelObserver(chan9, noop)) })
 
-		wg.Go(func() {
+		c.Go(func() {
 			var s zipState9[T1, T2, T3, T4, T5, T6, T7, T8, T9]
 
 			cont := true

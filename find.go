@@ -1,9 +1,5 @@
 package rx
 
-import (
-	"context"
-)
-
 // Find emits only the first value emitted by the source Observable that
 // meets some condition.
 func Find[T any](cond func(v T) bool) Operator[T, T] {
@@ -27,14 +23,13 @@ type findObservable[T any] struct {
 	Condition func(T) bool
 }
 
-func (obs findObservable[T]) Subscribe(ctx context.Context, sink Observer[T]) {
-	ctx, cancel := context.WithCancel(ctx)
-
+func (obs findObservable[T]) Subscribe(c Context, sink Observer[T]) {
+	c, cancel := c.WithCancel()
 	sink = sink.OnLastNotification(cancel)
 
 	var noop bool
 
-	obs.Source.Subscribe(ctx, func(n Notification[T]) {
+	obs.Source.Subscribe(c, func(n Notification[T]) {
 		if noop {
 			return
 		}
@@ -43,7 +38,6 @@ func (obs findObservable[T]) Subscribe(ctx context.Context, sink Observer[T]) {
 		case KindNext:
 			if obs.Condition(n.Value) {
 				noop = true
-
 				sink(n)
 				sink.Complete()
 			}

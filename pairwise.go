@@ -1,9 +1,5 @@
 package rx
 
-import (
-	"context"
-)
-
 // Pairwise groups pairs of consecutive emissions together and emits them
 // as Pairs.
 func Pairwise[T any]() Operator[T, Pair[T, T]] {
@@ -11,13 +7,13 @@ func Pairwise[T any]() Operator[T, Pair[T, T]] {
 }
 
 func pairwise[T any](source Observable[T]) Observable[Pair[T, T]] {
-	return func(ctx context.Context, sink Observer[Pair[T, T]]) {
+	return func(c Context, sink Observer[Pair[T, T]]) {
 		var p struct {
 			Value    T
 			HasValue bool
 		}
 
-		source.Subscribe(ctx, func(n Notification[T]) {
+		source.Subscribe(c, func(n Notification[T]) {
 			switch n.Kind {
 			case KindNext:
 				if p.HasValue {

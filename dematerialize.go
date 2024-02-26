@@ -1,9 +1,5 @@
 package rx
 
-import (
-	"context"
-)
-
 // Dematerialize converts an Observable of Notification values into
 // the emissions that they represent. It's the opposite of [Materialize].
 func Dematerialize[_ Notification[T], T any]() Operator[Notification[T], T] {
@@ -11,14 +7,13 @@ func Dematerialize[_ Notification[T], T any]() Operator[Notification[T], T] {
 }
 
 func dematerialize[_ Notification[T], T any](source Observable[Notification[T]]) Observable[T] {
-	return func(ctx context.Context, sink Observer[T]) {
-		ctx, cancel := context.WithCancel(ctx)
-
+	return func(c Context, sink Observer[T]) {
+		c, cancel := c.WithCancel()
 		sink = sink.OnLastNotification(cancel)
 
 		var noop bool
 
-		source.Subscribe(ctx, func(n Notification[Notification[T]]) {
+		source.Subscribe(c, func(n Notification[Notification[T]]) {
 			if noop {
 				return
 			}

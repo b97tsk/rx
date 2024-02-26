@@ -1,7 +1,6 @@
 package rx
 
 import (
-	"context"
 	"time"
 
 	"github.com/b97tsk/rx/internal/timerpool"
@@ -51,21 +50,21 @@ type timeoutObservable[T any] struct {
 	timeoutConfig[T]
 }
 
-func (obs timeoutObservable[T]) Subscribe(ctx context.Context, sink Observer[T]) {
-	source, cancelSource := context.WithCancel(ctx)
+func (obs timeoutObservable[T]) Subscribe(parent Context, sink Observer[T]) {
+	c, cancel := parent.WithCancel()
 
-	c := make(chan Notification[T])
+	q := make(chan Notification[T])
 	noop := make(chan struct{})
 
-	WaitGroupFromContext(ctx).Go(func() {
+	c.Go(func() {
 		tm := timerpool.Get(obs.First)
 
 		for {
 			select {
-			case n := <-c:
+			case n := <-q:
 				switch n.Kind {
 				case KindError, KindComplete:
-					cancelSource()
+					cancel()
 					close(noop)
 				}
 
@@ -82,11 +81,11 @@ func (obs timeoutObservable[T]) Subscribe(ctx context.Context, sink Observer[T])
 			case <-tm.C:
 				timerpool.PutExpired(tm)
 
-				cancelSource()
+				cancel()
 				close(noop)
 
 				if obs.With != nil {
-					obs.With.Subscribe(ctx, sink)
+					obs.With.Subscribe(parent, sink)
 					return
 				}
 
@@ -97,5 +96,5 @@ func (obs timeoutObservable[T]) Subscribe(ctx context.Context, sink Observer[T])
 		}
 	})
 
-	obs.Source.Subscribe(source, channelObserver(c, noop))
+	obs.Source.Subscribe(c, channelObserver(q, noop))
 }

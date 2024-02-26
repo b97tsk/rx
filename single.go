@@ -1,9 +1,5 @@
 package rx
 
-import (
-	"context"
-)
-
 // Single emits the single value emitted by the source Observable.
 // If the source emits more than one value or no values, it emits
 // an error notification of ErrNotSingle or ErrEmpty respectively.
@@ -12,9 +8,8 @@ func Single[T any]() Operator[T, T] {
 }
 
 func single[T any](source Observable[T]) Observable[T] {
-	return func(ctx context.Context, sink Observer[T]) {
-		ctx, cancel := context.WithCancel(ctx)
-
+	return func(c Context, sink Observer[T]) {
+		c, cancel := c.WithCancel()
 		sink = sink.OnLastNotification(cancel)
 
 		var first struct {
@@ -24,7 +19,7 @@ func single[T any](source Observable[T]) Observable[T] {
 
 		var noop bool
 
-		source.Subscribe(ctx, func(n Notification[T]) {
+		source.Subscribe(c, func(n Notification[T]) {
 			if noop {
 				return
 			}
@@ -34,12 +29,10 @@ func single[T any](source Observable[T]) Observable[T] {
 				if !first.HasValue {
 					first.Value = n.Value
 					first.HasValue = true
-
 					return
 				}
 
 				noop = true
-
 				sink.Error(ErrNotSingle)
 
 			case KindError:

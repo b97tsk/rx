@@ -1,7 +1,6 @@
 package rx
 
 import (
-	"context"
 	"sync"
 	"sync/atomic"
 )
@@ -21,10 +20,9 @@ type takeUntilObservable[T, U any] struct {
 	Notifier Observable[U]
 }
 
-func (obs takeUntilObservable[T, U]) Subscribe(ctx context.Context, sink Observer[T]) {
-	source, cancelSource := context.WithCancel(ctx)
-
-	sink = sink.OnLastNotification(cancelSource)
+func (obs takeUntilObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
+	c, cancel := c.WithCancel()
+	sink = sink.OnLastNotification(cancel)
 
 	var x struct {
 		Context atomic.Value
@@ -35,25 +33,24 @@ func (obs takeUntilObservable[T, U]) Subscribe(ctx context.Context, sink Observe
 	}
 
 	{
-		worker, cancelWorker := context.WithCancel(source)
+		w, cancelw := c.WithCancel()
 
-		x.Context.Store(worker)
+		x.Context.Store(w.Context)
 
 		var noop bool
 
-		obs.Notifier.Subscribe(worker, func(n Notification[U]) {
+		obs.Notifier.Subscribe(w, func(n Notification[U]) {
 			if noop {
 				return
 			}
 
 			noop = true
-
-			cancelWorker()
+			cancelw()
 
 			switch n.Kind {
 			case KindNext, KindError:
-				if x.Context.CompareAndSwap(worker, sentinel) {
-					cancelSource()
+				if x.Context.CompareAndSwap(w.Context, sentinel) {
+					cancel()
 
 					x.Source.Lock()
 					x.Source.Wait()
@@ -79,7 +76,7 @@ func (obs takeUntilObservable[T, U]) Subscribe(ctx context.Context, sink Observe
 	finish := func(n Notification[T]) {
 		old := x.Context.Swap(sentinel)
 
-		cancelSource()
+		cancel()
 
 		if old != sentinel {
 			sink(n)
@@ -90,12 +87,12 @@ func (obs takeUntilObservable[T, U]) Subscribe(ctx context.Context, sink Observe
 
 	select {
 	default:
-	case <-source.Done():
-		finish(Error[T](source.Err()))
+	case <-c.Done():
+		finish(Error[T](c.Err()))
 		return
 	}
 
-	obs.Source.Subscribe(source, func(n Notification[T]) {
+	obs.Source.Subscribe(c, func(n Notification[T]) {
 		switch n.Kind {
 		case KindNext:
 			sink(n)

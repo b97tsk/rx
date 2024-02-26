@@ -1,7 +1,6 @@
 package rxtest
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"testing"
@@ -73,20 +72,20 @@ func ToString[T any]() rx.Operator[T, string] {
 }
 
 type TestSuite[T any] struct {
-	tb  testing.TB
-	ctx context.Context
+	tb testing.TB
+	c  rx.Context
 }
 
 func NewTestSuite[T any](tb testing.TB) *TestSuite[T] {
-	return &TestSuite[T]{tb, context.Background()}
+	return &TestSuite[T]{tb, rx.NewBackgroundContext()}
 }
 
-func (s *TestSuite[T]) WithContext(ctx context.Context) *TestSuite[T] {
-	return &TestSuite[T]{s.tb, ctx}
+func (s *TestSuite[T]) WithContext(c rx.Context) *TestSuite[T] {
+	return &TestSuite[T]{s.tb, c}
 }
 
 func (s *TestSuite[T]) Case(obs rx.Observable[T], output ...any) *TestSuite[T] {
-	_ = obs.BlockingSubscribe(s.ctx, func(n rx.Notification[T]) {
+	_ = obs.BlockingSubscribe(s.c, func(n rx.Notification[T]) {
 		if len(output) == 0 {
 			s.tb.Fail()
 

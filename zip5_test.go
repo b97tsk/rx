@@ -1,7 +1,6 @@
 package rx_test
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -13,7 +12,7 @@ func TestZip5(t *testing.T) {
 	t.Parallel()
 
 	testZip5(t, rx.ConcatWith(
-		func(_ context.Context, sink rx.Observer[string]) {
+		func(_ rx.Context, sink rx.Observer[string]) {
 			sink(rx.Notification[string]{}) // For coverage.
 			sink.Complete()
 		},

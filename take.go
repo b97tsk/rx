@@ -1,9 +1,5 @@
 package rx
 
-import (
-	"context"
-)
-
 // Take emits only the first count values emitted by the source Observable.
 func Take[T any](count int) Operator[T, T] {
 	return NewOperator(
@@ -22,16 +18,15 @@ type takeObservable[T any] struct {
 	Count  int
 }
 
-func (obs takeObservable[T]) Subscribe(ctx context.Context, sink Observer[T]) {
-	ctx, cancel := context.WithCancel(ctx)
-
+func (obs takeObservable[T]) Subscribe(c Context, sink Observer[T]) {
+	c, cancel := c.WithCancel()
 	sink = sink.OnLastNotification(cancel)
 
 	var noop bool
 
 	count := obs.Count
 
-	obs.Source.Subscribe(ctx, func(n Notification[T]) {
+	obs.Source.Subscribe(c, func(n Notification[T]) {
 		if noop {
 			return
 		}
@@ -43,7 +38,6 @@ func (obs takeObservable[T]) Subscribe(ctx context.Context, sink Observer[T]) {
 
 			if count == 0 {
 				noop = true
-
 				sink.Complete()
 			}
 		}

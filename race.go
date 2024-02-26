@@ -1,9 +1,6 @@
 package rx
 
-import (
-	"context"
-	"sync/atomic"
-)
+import "sync/atomic"
 
 // Race creates an Observable that mirrors the first Observable to emit
 // a value, from given input Observables.
@@ -25,19 +22,17 @@ func RaceWith[T any](some ...Observable[T]) Operator[T, T] {
 	)
 }
 
-func (some observables[T]) Race(ctx context.Context, sink Observer[T]) {
-	subs := make([]Pair[context.Context, context.CancelFunc], len(some))
+func (some observables[T]) Race(c Context, sink Observer[T]) {
+	subs := make([]Pair[Context, CancelFunc], len(some))
 
 	for i := range subs {
-		subs[i] = NewPair(context.WithCancel(ctx))
+		subs[i] = NewPair(c.WithCancel())
 	}
 
 	var race atomic.Uint32
 
-	wg := WaitGroupFromContext(ctx)
-
 	for index, obs := range some {
-		wg.Go(func() {
+		c.Go(func() {
 			var won, lost bool
 
 			obs.Subscribe(subs[index].Left(), func(n Notification[T]) {

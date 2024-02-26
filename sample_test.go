@@ -70,14 +70,14 @@ func TestSample(t *testing.T) {
 		"B", "D", ErrComplete,
 	)
 
-	ctx, cancel := context.WithTimeout(context.Background(), Step(1))
+	ctx, cancel := rx.NewBackgroundContext().WithTimeout(Step(1))
 	defer cancel()
 
 	NewTestSuite[string](t).WithContext(ctx).Case(
 		rx.Pipe1(
 			rx.Empty[string](),
 			rx.Sample[string](
-				func(_ context.Context, sink rx.Observer[string]) {
+				func(_ rx.Context, sink rx.Observer[string]) {
 					time.Sleep(Step(2))
 					sink.Complete()
 				},

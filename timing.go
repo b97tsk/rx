@@ -1,7 +1,6 @@
 package rx
 
 import (
-	"context"
 	"time"
 
 	"github.com/b97tsk/rx/internal/timerpool"
@@ -14,18 +13,18 @@ func Ticker(d time.Duration) Observable[time.Time] {
 		panic("d <= 0")
 	}
 
-	return func(ctx context.Context, sink Observer[time.Time]) {
+	return func(c Context, sink Observer[time.Time]) {
 		tk := time.NewTicker(d)
 
-		WaitGroupFromContext(ctx).Go(func() {
+		c.Go(func() {
 			defer tk.Stop()
 
-			done := ctx.Done()
+			done := c.Done()
 
 			for {
 				select {
 				case <-done:
-					sink.Error(ctx.Err())
+					sink.Error(c.Err())
 					return
 				case t := <-tk.C:
 					sink.Next(t)
@@ -38,14 +37,14 @@ func Ticker(d time.Duration) Observable[time.Time] {
 // Timer creates an Observable that emits a [time.Time] value
 // after a particular time span has passed, and then completes.
 func Timer(d time.Duration) Observable[time.Time] {
-	return func(ctx context.Context, sink Observer[time.Time]) {
+	return func(c Context, sink Observer[time.Time]) {
 		tm := timerpool.Get(d)
 
-		WaitGroupFromContext(ctx).Go(func() {
+		c.Go(func() {
 			select {
-			case <-ctx.Done():
+			case <-c.Done():
 				timerpool.Put(tm)
-				sink.Error(ctx.Err())
+				sink.Error(c.Err())
 			case t := <-tm.C:
 				timerpool.PutExpired(tm)
 				sink.Next(t)

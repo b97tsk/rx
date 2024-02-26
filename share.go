@@ -53,11 +53,11 @@ type shareObservable[T any] struct {
 	connector  func() Subject[T]
 	subject    Subject[T]
 	connection context.Context
-	disconnect context.CancelFunc
+	disconnect CancelFunc
 	shareCount int
 }
 
-func (obs *shareObservable[T]) Subscribe(ctx context.Context, sink Observer[T]) {
+func (obs *shareObservable[T]) Subscribe(c Context, sink Observer[T]) {
 	obs.mu.Lock()
 
 	var unlocked bool
@@ -72,15 +72,14 @@ func (obs *shareObservable[T]) Subscribe(ctx context.Context, sink Observer[T]) 
 		obs.subject = obs.connector()
 	}
 
-	ctx, cancel := context.WithCancel(ctx)
-
+	c, cancel := c.WithCancel()
 	sink = sink.OnLastNotification(cancel)
 
-	obs.subject.Subscribe(ctx, sink)
+	obs.subject.Subscribe(c, sink)
 
 	select {
 	default:
-	case <-ctx.Done():
+	case <-c.Done():
 		return
 	}
 
@@ -89,24 +88,23 @@ func (obs *shareObservable[T]) Subscribe(ctx context.Context, sink Observer[T]) 
 	obs.shareCount++
 
 	if connection == nil {
-		ctx, cancel := context.WithCancel(context.Background())
+		w, cancelw := NewBackgroundContext().WithCancel()
 
-		connection = ctx
-		obs.connection = ctx
-		obs.disconnect = cancel
+		connection = w.Context
+		obs.connection = w.Context
+		obs.disconnect = cancelw
 
 		sink := obs.subject.Observer
 
 		obs.mu.Unlock()
-
 		unlocked = true
 
-		obs.source.Subscribe(ctx, func(n Notification[T]) {
+		obs.source.Subscribe(w, func(n Notification[T]) {
 			switch n.Kind {
 			case KindNext:
 				sink(n)
 			case KindError, KindComplete:
-				cancel()
+				cancelw()
 
 				obs.mu.Lock()
 
@@ -124,16 +122,7 @@ func (obs *shareObservable[T]) Subscribe(ctx context.Context, sink Observer[T]) 
 		})
 	}
 
-	wg := WaitGroupFromContext(ctx)
-	if wg != nil {
-		wg.Add(1)
-	}
-
-	context.AfterFunc(ctx, func() {
-		if wg != nil {
-			defer wg.Done()
-		}
-
+	c.AfterFunc(func() {
 		obs.mu.Lock()
 
 		if connection == obs.connection {

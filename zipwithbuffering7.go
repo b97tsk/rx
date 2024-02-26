@@ -1,10 +1,6 @@
 package rx
 
-import (
-	"context"
-
-	"github.com/b97tsk/rx/internal/queue"
-)
+import "github.com/b97tsk/rx/internal/queue"
 
 // ZipWithBuffering7 combines multiple Observables to create an Observable that
 // emits projection of values of each of its input Observables.
@@ -26,12 +22,9 @@ func ZipWithBuffering7[T1, T2, T3, T4, T5, T6, T7, R any](
 		panic("proj == nil")
 	}
 
-	return func(ctx context.Context, sink Observer[R]) {
-		wg := WaitGroupFromContext(ctx)
-		ctx, cancel := context.WithCancel(ctx)
-
+	return func(c Context, sink Observer[R]) {
+		c, cancel := c.WithCancel()
 		noop := make(chan struct{})
-
 		sink = sink.OnLastNotification(func() {
 			cancel()
 			close(noop)
@@ -45,15 +38,15 @@ func ZipWithBuffering7[T1, T2, T3, T4, T5, T6, T7, R any](
 		chan6 := make(chan Notification[T6])
 		chan7 := make(chan Notification[T7])
 
-		wg.Go(func() { obs1.Subscribe(ctx, channelObserver(chan1, noop)) })
-		wg.Go(func() { obs2.Subscribe(ctx, channelObserver(chan2, noop)) })
-		wg.Go(func() { obs3.Subscribe(ctx, channelObserver(chan3, noop)) })
-		wg.Go(func() { obs4.Subscribe(ctx, channelObserver(chan4, noop)) })
-		wg.Go(func() { obs5.Subscribe(ctx, channelObserver(chan5, noop)) })
-		wg.Go(func() { obs6.Subscribe(ctx, channelObserver(chan6, noop)) })
-		wg.Go(func() { obs7.Subscribe(ctx, channelObserver(chan7, noop)) })
+		c.Go(func() { obs1.Subscribe(c, channelObserver(chan1, noop)) })
+		c.Go(func() { obs2.Subscribe(c, channelObserver(chan2, noop)) })
+		c.Go(func() { obs3.Subscribe(c, channelObserver(chan3, noop)) })
+		c.Go(func() { obs4.Subscribe(c, channelObserver(chan4, noop)) })
+		c.Go(func() { obs5.Subscribe(c, channelObserver(chan5, noop)) })
+		c.Go(func() { obs6.Subscribe(c, channelObserver(chan6, noop)) })
+		c.Go(func() { obs7.Subscribe(c, channelObserver(chan7, noop)) })
 
-		wg.Go(func() {
+		c.Go(func() {
 			var s zipState7[T1, T2, T3, T4, T5, T6, T7]
 
 			cont := true

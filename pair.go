@@ -1,10 +1,6 @@
 package rx
 
-import (
-	"context"
-
-	"golang.org/x/exp/constraints"
-)
+import "golang.org/x/exp/constraints"
 
 // A Pair is a struct of two elements.
 type Pair[K, V any] struct {
@@ -24,14 +20,14 @@ func NewPair[K, V any](k K, v V) Pair[K, V] { return Pair[K, V]{k, v} }
 // FromMap creates an Observable that emits Pairs from a map, one after
 // the other, and then completes. The order of those Pairs is not specified.
 func FromMap[M ~map[K]V, K comparable, V any](m M) Observable[Pair[K, V]] {
-	return func(ctx context.Context, sink Observer[Pair[K, V]]) {
-		done := ctx.Done()
+	return func(c Context, sink Observer[Pair[K, V]]) {
+		done := c.Done()
 
 		for k, v := range m {
 			select {
 			default:
 			case <-done:
-				sink.Error(ctx.Err())
+				sink.Error(c.Err())
 				return
 			}
 
@@ -52,8 +48,8 @@ func KeyOf[_ Pair[K, V], K, V any]() Operator[Pair[K, V], K] {
 func LeftOf[_ Pair[K, V], K, V any]() Operator[Pair[K, V], K] {
 	return NewOperator(
 		func(source Observable[Pair[K, V]]) Observable[K] {
-			return func(ctx context.Context, sink Observer[K]) {
-				source.Subscribe(ctx, func(n Notification[Pair[K, V]]) {
+			return func(c Context, sink Observer[K]) {
+				source.Subscribe(c, func(n Notification[Pair[K, V]]) {
 					switch n.Kind {
 					case KindNext:
 						sink.Next(n.Value.Left())
@@ -78,8 +74,8 @@ func ValueOf[_ Pair[K, V], K, V any]() Operator[Pair[K, V], V] {
 func RightOf[_ Pair[K, V], K, V any]() Operator[Pair[K, V], V] {
 	return NewOperator(
 		func(source Observable[Pair[K, V]]) Observable[V] {
-			return func(ctx context.Context, sink Observer[V]) {
-				source.Subscribe(ctx, func(n Notification[Pair[K, V]]) {
+			return func(c Context, sink Observer[V]) {
+				source.Subscribe(c, func(n Notification[Pair[K, V]]) {
 					switch n.Kind {
 					case KindNext:
 						sink.Next(n.Value.Right())
@@ -100,10 +96,10 @@ func RightOf[_ Pair[K, V], K, V any]() Operator[Pair[K, V], V] {
 func WithIndex[V any, K constraints.Integer](init K) Operator[V, Pair[K, V]] {
 	return NewOperator(
 		func(source Observable[V]) Observable[Pair[K, V]] {
-			return func(ctx context.Context, sink Observer[Pair[K, V]]) {
+			return func(c Context, sink Observer[Pair[K, V]]) {
 				index := init
 
-				source.Subscribe(ctx, func(n Notification[V]) {
+				source.Subscribe(c, func(n Notification[V]) {
 					switch n.Kind {
 					case KindNext:
 						sink.Next(NewPair(index, n.Value))

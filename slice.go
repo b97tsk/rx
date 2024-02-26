@@ -1,20 +1,16 @@
 package rx
 
-import (
-	"context"
-)
-
 // FromSlice creates an Observable that emits values from a slice, one after
 // the other, and then completes.
 func FromSlice[S ~[]T, T any](s S) Observable[T] {
-	return func(ctx context.Context, sink Observer[T]) {
-		done := ctx.Done()
+	return func(c Context, sink Observer[T]) {
+		done := c.Done()
 
 		for _, v := range s {
 			select {
 			default:
 			case <-done:
-				sink.Error(ctx.Err())
+				sink.Error(c.Err())
 				return
 			}
 

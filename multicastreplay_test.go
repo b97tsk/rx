@@ -1,7 +1,6 @@
 package rx_test
 
 import (
-	"context"
 	"runtime"
 	"testing"
 	"time"
@@ -19,10 +18,10 @@ func TestMulticastReplay(t *testing.T) {
 		m := rx.MulticastReplay[string](&rx.ReplayConfig{BufferSize: 3})
 
 		subscribeThenComplete := rx.NewObservable(
-			func(ctx context.Context, sink rx.Observer[string]) {
-				ctx, cancel := context.WithCancel(ctx)
+			func(c rx.Context, sink rx.Observer[string]) {
+				c, cancel := c.WithCancel()
 				sink = sink.Serialized()
-				m.Subscribe(ctx, sink)
+				m.Subscribe(c, sink)
 				sink.Complete()
 				cancel()
 			},
@@ -40,7 +39,7 @@ func TestMulticastReplay(t *testing.T) {
 
 		NewTestSuite[string](t).Case(subscribeThenComplete, "A", "B", "C", ErrComplete)
 
-		ctx, cancel := context.WithTimeout(context.Background(), Step(2))
+		ctx, cancel := rx.NewBackgroundContext().WithTimeout(Step(2))
 		defer cancel()
 
 		go rx.Pipe1(
@@ -71,10 +70,10 @@ func TestMulticastReplay(t *testing.T) {
 		m := rx.MulticastReplay[string](&rx.ReplayConfig{WindowTime: Step(5)})
 
 		subscribeThenComplete := rx.NewObservable(
-			func(ctx context.Context, sink rx.Observer[string]) {
-				ctx, cancel := context.WithCancel(ctx)
+			func(c rx.Context, sink rx.Observer[string]) {
+				c, cancel := c.WithCancel()
 				sink = sink.Serialized()
-				m.Subscribe(ctx, sink)
+				m.Subscribe(c, sink)
 				sink.Complete()
 				cancel()
 			},
@@ -157,7 +156,7 @@ func TestMulticastReplay(t *testing.T) {
 		c := make(chan struct{})
 
 		m := rx.MulticastReplay[string](nil)
-		m.Subscribe(context.Background(), func(n rx.Notification[string]) {
+		m.Subscribe(rx.NewBackgroundContext(), func(n rx.Notification[string]) {
 			if n.Error != rx.ErrFinalized {
 				panic("want rx.ErrFinalized, but got something else")
 			}

@@ -1,21 +1,17 @@
 package rx
 
-import (
-	"context"
-)
-
 // CompactComparable emits all values emitted by the source Observable that
 // are distinct from the previous.
 func CompactComparable[T comparable]() Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(ctx context.Context, sink Observer[T]) {
+			return func(c Context, sink Observer[T]) {
 				var last struct {
 					Value    T
 					HasValue bool
 				}
 
-				source.Subscribe(ctx, func(n Notification[T]) {
+				source.Subscribe(c, func(n Notification[T]) {
 					if n.Kind == KindNext {
 						if last.HasValue && last.Value == n.Value {
 							return
@@ -45,13 +41,13 @@ func Compact[T any](eq func(v1, v2 T) bool) Operator[T, T] {
 func compact[T any](eq func(v1, v2 T) bool) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(ctx context.Context, sink Observer[T]) {
+			return func(c Context, sink Observer[T]) {
 				var last struct {
 					Value    T
 					HasValue bool
 				}
 
-				source.Subscribe(ctx, func(n Notification[T]) {
+				source.Subscribe(c, func(n Notification[T]) {
 					if n.Kind == KindNext {
 						if last.HasValue && eq(last.Value, n.Value) {
 							return
@@ -81,13 +77,13 @@ func CompactComparableKey[T any, K comparable](proj func(v T) K) Operator[T, T] 
 func compactComparableKey[T any, K comparable](proj func(v T) K) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(ctx context.Context, sink Observer[T]) {
+			return func(c Context, sink Observer[T]) {
 				var last struct {
 					Value    K
 					HasValue bool
 				}
 
-				source.Subscribe(ctx, func(n Notification[T]) {
+				source.Subscribe(c, func(n Notification[T]) {
 					if n.Kind == KindNext {
 						keyValue := proj(n.Value)
 
@@ -122,13 +118,13 @@ func CompactKey[T, K any](proj func(v T) K, eq func(v1, v2 K) bool) Operator[T, 
 func compactKey[T, K any](proj func(v T) K, eq func(v1, v2 K) bool) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(ctx context.Context, sink Observer[T]) {
+			return func(c Context, sink Observer[T]) {
 				var last struct {
 					Value    K
 					HasValue bool
 				}
 
-				source.Subscribe(ctx, func(n Notification[T]) {
+				source.Subscribe(c, func(n Notification[T]) {
 					if n.Kind == KindNext {
 						keyValue := proj(n.Value)
 

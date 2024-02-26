@@ -1,9 +1,5 @@
 package rx
 
-import (
-	"context"
-)
-
 // Catch handles errors on the source Observable by mirroring a new Observable
 // returned by selector.
 //
@@ -19,8 +15,8 @@ func Catch[T any](selector func(err error) Observable[T]) Operator[T, T] {
 func catch[T any](selector func(err error) Observable[T]) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(ctx context.Context, sink Observer[T]) {
-				source.Subscribe(ctx, func(n Notification[T]) {
+			return func(c Context, sink Observer[T]) {
+				source.Subscribe(c, func(n Notification[T]) {
 					switch n.Kind {
 					case KindNext:
 						sink(n)
@@ -28,13 +24,13 @@ func catch[T any](selector func(err error) Observable[T]) Operator[T, T] {
 					case KindError:
 						select {
 						default:
-						case <-ctx.Done():
-							sink.Error(ctx.Err())
+						case <-c.Done():
+							sink.Error(c.Err())
 							return
 						}
 
 						obs := selector(n.Error)
-						obs.Subscribe(ctx, sink)
+						obs.Subscribe(c, sink)
 
 					case KindComplete:
 						sink(n)
@@ -46,14 +42,14 @@ func catch[T any](selector func(err error) Observable[T]) Operator[T, T] {
 }
 
 // OnErrorResumeWith mirrors the source or specified Observable if the source
-// emits a notification of error.
+// emits an error notification.
 //
 // OnErrorResumeWith does not resume after context cancellation.
 func OnErrorResumeWith[T any](obs Observable[T]) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(ctx context.Context, sink Observer[T]) {
-				source.Subscribe(ctx, func(n Notification[T]) {
+			return func(c Context, sink Observer[T]) {
+				source.Subscribe(c, func(n Notification[T]) {
 					switch n.Kind {
 					case KindNext:
 						sink(n)
@@ -61,12 +57,12 @@ func OnErrorResumeWith[T any](obs Observable[T]) Operator[T, T] {
 					case KindError:
 						select {
 						default:
-						case <-ctx.Done():
-							sink.Error(ctx.Err())
+						case <-c.Done():
+							sink.Error(c.Err())
 							return
 						}
 
-						obs.Subscribe(ctx, sink)
+						obs.Subscribe(c, sink)
 
 					case KindComplete:
 						sink(n)
@@ -78,7 +74,7 @@ func OnErrorResumeWith[T any](obs Observable[T]) Operator[T, T] {
 }
 
 // OnErrorComplete mirrors the source Observable, or completes if the source
-// emits a notification of error.
+// emits an error notification.
 //
 // OnErrorComplete does not complete after context cancellation.
 func OnErrorComplete[T any]() Operator[T, T] {
@@ -86,8 +82,8 @@ func OnErrorComplete[T any]() Operator[T, T] {
 }
 
 func onErrorComplete[T any](source Observable[T]) Observable[T] {
-	return func(ctx context.Context, sink Observer[T]) {
-		source.Subscribe(ctx, func(n Notification[T]) {
+	return func(c Context, sink Observer[T]) {
+		source.Subscribe(c, func(n Notification[T]) {
 			switch n.Kind {
 			case KindNext:
 				sink(n)
@@ -95,8 +91,8 @@ func onErrorComplete[T any](source Observable[T]) Observable[T] {
 			case KindError:
 				select {
 				default:
-				case <-ctx.Done():
-					sink.Error(ctx.Err())
+				case <-c.Done():
+					sink.Error(c.Err())
 					return
 				}
 

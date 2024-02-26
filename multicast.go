@@ -1,7 +1,6 @@
 package rx
 
 import (
-	"context"
 	"runtime"
 	"sync"
 )
@@ -81,34 +80,24 @@ func (m *multicast[T]) emit(n Notification[T]) {
 	}
 }
 
-func (m *multicast[T]) subscribe(ctx context.Context, sink Observer[T]) {
+func (m *multicast[T]) subscribe(c Context, sink Observer[T]) {
 	m.mu.Lock()
 
 	last := m.last
 	if last.Kind == 0 {
-		var cancel context.CancelFunc
+		var cancel CancelFunc
 
-		ctx, cancel = context.WithCancel(ctx)
+		c, cancel = c.WithCancel()
 		sink = sink.OnLastNotification(cancel).Serialized()
 
 		observer := sink
 		m.obs.Add(&observer)
 
-		wg := WaitGroupFromContext(ctx)
-		if wg != nil {
-			wg.Add(1)
-		}
-
-		context.AfterFunc(ctx, func() {
-			if wg != nil {
-				defer wg.Done()
-			}
-
+		c.AfterFunc(func() {
 			m.mu.Lock()
 			m.obs.Delete(&observer)
 			m.mu.Unlock()
-
-			observer.Error(ctx.Err())
+			observer.Error(c.Err())
 		})
 	}
 

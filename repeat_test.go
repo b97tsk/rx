@@ -68,7 +68,7 @@ func TestRepeat(t *testing.T) {
 		"A", "B", "C", ErrTest,
 	)
 
-	ctx, cancel := context.WithTimeout(context.Background(), Step(1))
+	ctx, cancel := rx.NewBackgroundContext().WithTimeout(Step(1))
 	defer cancel()
 
 	NewTestSuite[string](t).WithContext(ctx).Case(

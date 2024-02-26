@@ -1,9 +1,5 @@
 package rx
 
-import (
-	"context"
-)
-
 // Connect multicasts the source Observable within a function where multiple
 // subscriptions can share the same source.
 func Connect[T, R any](selector func(source Observable[T]) Observable[R]) ConnectOperator[T, R] {
@@ -50,10 +46,10 @@ type connectObservable[T, R any] struct {
 	connectConfig[T, R]
 }
 
-func (obs connectObservable[T, R]) Subscribe(ctx context.Context, sink Observer[R]) {
-	ctx, cancel := context.WithCancel(ctx)
+func (obs connectObservable[T, R]) Subscribe(c Context, sink Observer[R]) {
+	c, cancel := c.WithCancel()
 	sink = sink.OnLastNotification(cancel)
 	subject := obs.Connector()
-	obs.Selector(subject.Observable).Subscribe(ctx, sink)
-	obs.Source.Subscribe(ctx, subject.Observer)
+	obs.Selector(subject.Observable).Subscribe(c, sink)
+	obs.Source.Subscribe(c, subject.Observer)
 }

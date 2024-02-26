@@ -1,7 +1,6 @@
 package rx
 
 import (
-	"context"
 	"sync"
 	"sync/atomic"
 
@@ -28,9 +27,8 @@ func MergeWith[T any](some ...Observable[T]) Operator[T, T] {
 	)
 }
 
-func (some observables[T]) Merge(ctx context.Context, sink Observer[T]) {
-	wg := WaitGroupFromContext(ctx)
-	ctx, cancel := context.WithCancel(ctx)
+func (some observables[T]) Merge(c Context, sink Observer[T]) {
+	c, cancel := c.WithCancel()
 	sink = sink.OnLastNotification(cancel).Serialized()
 
 	var workers atomic.Uint32
@@ -44,7 +42,7 @@ func (some observables[T]) Merge(ctx context.Context, sink Observer[T]) {
 	}
 
 	for _, obs := range some {
-		wg.Go(func() { obs.Subscribe(ctx, observer) })
+		c.Go(func() { obs.Subscribe(c, observer) })
 	}
 }
 
@@ -126,18 +124,17 @@ type mergeMapObservable[T, R any] struct {
 	mergeMapConfig[T, R]
 }
 
-func (obs mergeMapObservable[T, R]) Subscribe(ctx context.Context, sink Observer[R]) {
+func (obs mergeMapObservable[T, R]) Subscribe(c Context, sink Observer[R]) {
 	if obs.UseBuffering {
-		obs.subscribeWithBuffering(ctx, sink)
+		obs.subscribeWithBuffering(c, sink)
 		return
 	}
 
-	obs.subscribe(ctx, sink)
+	obs.subscribe(c, sink)
 }
 
-func (obs mergeMapObservable[T, R]) subscribe(ctx context.Context, sink Observer[R]) {
-	wg := WaitGroupFromContext(ctx)
-	ctx, cancel := context.WithCancel(ctx)
+func (obs mergeMapObservable[T, R]) subscribe(c Context, sink Observer[R]) {
+	c, cancel := c.WithCancel()
 	sink = sink.OnLastNotification(cancel).Serialized()
 
 	var x struct {
@@ -152,7 +149,7 @@ func (obs mergeMapObservable[T, R]) subscribe(ctx context.Context, sink Observer
 
 	var noop bool
 
-	obs.Source.Subscribe(ctx, func(n Notification[T]) {
+	obs.Source.Subscribe(c, func(n Notification[T]) {
 		if noop {
 			return
 		}
@@ -176,8 +173,8 @@ func (obs mergeMapObservable[T, R]) subscribe(ctx context.Context, sink Observer
 
 			obs1 := obs.Project(n.Value)
 
-			wg.Go(func() {
-				obs1.Subscribe(ctx, func(n Notification[R]) {
+			c.Go(func() {
+				obs1.Subscribe(c, func(n Notification[R]) {
 					switch n.Kind {
 					case KindNext:
 						sink(n)
@@ -223,9 +220,8 @@ func (obs mergeMapObservable[T, R]) subscribe(ctx context.Context, sink Observer
 	})
 }
 
-func (obs mergeMapObservable[T, R]) subscribeWithBuffering(ctx context.Context, sink Observer[R]) {
-	wg := WaitGroupFromContext(ctx)
-	ctx, cancel := context.WithCancel(ctx)
+func (obs mergeMapObservable[T, R]) subscribeWithBuffering(c Context, sink Observer[R]) {
+	c, cancel := c.WithCancel()
 	sink = sink.OnLastNotification(cancel).Serialized()
 
 	var x struct {
@@ -243,8 +239,8 @@ func (obs mergeMapObservable[T, R]) subscribeWithBuffering(ctx context.Context, 
 
 		x.Unlock()
 
-		wg.Go(func() {
-			obs1.Subscribe(ctx, func(n Notification[R]) {
+		c.Go(func() {
+			obs1.Subscribe(c, func(n Notification[R]) {
 				switch n.Kind {
 				case KindNext:
 					sink(n)
@@ -280,7 +276,7 @@ func (obs mergeMapObservable[T, R]) subscribeWithBuffering(ctx context.Context, 
 
 	var noop bool
 
-	obs.Source.Subscribe(ctx, func(n Notification[T]) {
+	obs.Source.Subscribe(c, func(n Notification[T]) {
 		if noop {
 			return
 		}

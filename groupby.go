@@ -1,9 +1,5 @@
 package rx
 
-import (
-	"context"
-)
-
 // GroupBy groups the values emitted by the source Observable according to
 // a specified criterion, and emits these grouped values as Pairs, one Pair
 // per group.
@@ -38,22 +34,19 @@ type groupByObservable[T any, K comparable] struct {
 	GroupFactory func() Subject[T]
 }
 
-func (obs groupByObservable[T, K]) Subscribe(ctx context.Context, sink Observer[Pair[K, Observable[T]]]) {
+func (obs groupByObservable[T, K]) Subscribe(c Context, sink Observer[Pair[K, Observable[T]]]) {
 	groups := make(map[K]Observer[T])
 
-	obs.Source.Subscribe(ctx, func(n Notification[T]) {
+	obs.Source.Subscribe(c, func(n Notification[T]) {
 		switch n.Kind {
 		case KindNext:
 			key := obs.KeySelector(n.Value)
-
 			group, exists := groups[key]
 
 			if !exists {
 				g := obs.GroupFactory()
-
 				group = g.Observer
 				groups[key] = group
-
 				sink.Next(NewPair(key, g.Observable))
 			}
 

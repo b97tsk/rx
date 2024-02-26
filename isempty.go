@@ -1,21 +1,17 @@
 package rx
 
-import (
-	"context"
-)
-
 // IsEmpty emits a boolean to indicate whether the source emits no values.
 func IsEmpty[T any]() Operator[T, bool] {
 	return NewOperator(isEmpty[T])
 }
 
 func isEmpty[T any](source Observable[T]) Observable[bool] {
-	return func(ctx context.Context, sink Observer[bool]) {
-		ctx, cancel := context.WithCancel(ctx)
+	return func(c Context, sink Observer[bool]) {
+		c, cancel := c.WithCancel()
 
 		var noop bool
 
-		source.Subscribe(ctx, func(n Notification[T]) {
+		source.Subscribe(c, func(n Notification[T]) {
 			if noop {
 				return
 			}
@@ -23,7 +19,6 @@ func isEmpty[T any](source Observable[T]) Observable[bool] {
 			switch n.Kind {
 			case KindNext, KindError, KindComplete:
 				noop = true
-
 				cancel()
 
 				switch n.Kind {

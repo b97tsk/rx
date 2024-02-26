@@ -1,7 +1,6 @@
 package rx_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -47,7 +46,7 @@ func TestDebounce(t *testing.T) {
 		"C", ErrComplete,
 	).Case(
 		rx.Pipe1(
-			func(_ context.Context, sink rx.Observer[string]) {
+			func(_ rx.Context, sink rx.Observer[string]) {
 				sink.Next("A")
 				time.Sleep(Step(1))
 				sink.Next("B")

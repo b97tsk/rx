@@ -1,9 +1,5 @@
 package rx
 
-import (
-	"context"
-)
-
 // SkipLast skips the last count values emitted by the source Observable.
 func SkipLast[T any](count int) Operator[T, T] {
 	if count <= 0 {
@@ -26,13 +22,13 @@ type skipLastObservable[T any] struct {
 	Count  int
 }
 
-func (obs skipLastObservable[T]) Subscribe(ctx context.Context, sink Observer[T]) {
+func (obs skipLastObservable[T]) Subscribe(c Context, sink Observer[T]) {
 	buffer := make([]T, obs.Count)
 	bufferSize := obs.Count
 
 	var index, count int
 
-	obs.Source.Subscribe(ctx, func(n Notification[T]) {
+	obs.Source.Subscribe(c, func(n Notification[T]) {
 		switch n.Kind {
 		case KindNext:
 			if count < bufferSize {

@@ -1,7 +1,6 @@
 package rx_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/b97tsk/rx"
@@ -54,7 +53,7 @@ func doTest(
 	do := op(func() { n++ })
 
 	obs := rx.NewObservable(
-		func(_ context.Context, sink rx.Observer[int]) {
+		func(_ rx.Context, sink rx.Observer[int]) {
 			sink.Next(n)
 			sink.Complete()
 		},

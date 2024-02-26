@@ -1,9 +1,5 @@
 package rx
 
-import (
-	"context"
-)
-
 // RepeatForever repeats the stream of values emitted by the source Observable
 // forever.
 //
@@ -43,20 +39,20 @@ type repeatObservable[T any] struct {
 	Count  int
 }
 
-func (obs repeatObservable[T]) Subscribe(ctx context.Context, sink Observer[T]) {
+func (obs repeatObservable[T]) Subscribe(c Context, sink Observer[T]) {
 	var observer Observer[T]
 
-	done := ctx.Done()
+	done := c.Done()
 
 	subscribeToSource := resistReentrance(func() {
 		select {
 		default:
 		case <-done:
-			sink.Error(ctx.Err())
+			sink.Error(c.Err())
 			return
 		}
 
-		obs.Source.Subscribe(ctx, observer)
+		obs.Source.Subscribe(c, observer)
 	})
 
 	count := obs.Count

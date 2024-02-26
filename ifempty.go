@@ -1,31 +1,27 @@
 package rx
 
-import (
-	"context"
-)
-
 // JustIfEmpty mirrors the source Observable, or emits given values
 // if the source completes without emitting any value.
 func JustIfEmpty[T any](s ...T) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(ctx context.Context, sink Observer[T]) {
+			return func(c Context, sink Observer[T]) {
 				haveValue := false
 
-				source.Subscribe(ctx, func(n Notification[T]) {
+				source.Subscribe(c, func(n Notification[T]) {
 					switch n.Kind {
 					case KindNext:
 						haveValue = true
 					case KindError:
 					case KindComplete:
 						if !haveValue {
-							done := ctx.Done()
+							done := c.Done()
 
 							for _, v := range s {
 								select {
 								default:
 								case <-done:
-									sink.Error(ctx.Err())
+									sink.Error(c.Err())
 									return
 								}
 
@@ -46,10 +42,10 @@ func JustIfEmpty[T any](s ...T) Operator[T, T] {
 func ThrowIfEmpty[T any]() Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(ctx context.Context, sink Observer[T]) {
+			return func(c Context, sink Observer[T]) {
 				haveValue := false
 
-				source.Subscribe(ctx, func(n Notification[T]) {
+				source.Subscribe(c, func(n Notification[T]) {
 					switch n.Kind {
 					case KindNext:
 						haveValue = true
@@ -73,17 +69,17 @@ func ThrowIfEmpty[T any]() Operator[T, T] {
 func SwitchIfEmpty[T any](obs Observable[T]) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(ctx context.Context, sink Observer[T]) {
+			return func(c Context, sink Observer[T]) {
 				haveValue := false
 
-				source.Subscribe(ctx, func(n Notification[T]) {
+				source.Subscribe(c, func(n Notification[T]) {
 					switch n.Kind {
 					case KindNext:
 						haveValue = true
 					case KindError:
 					case KindComplete:
 						if !haveValue {
-							obs.Subscribe(ctx, sink)
+							obs.Subscribe(c, sink)
 							return
 						}
 					}

@@ -1,9 +1,5 @@
 package rx
 
-import (
-	"context"
-)
-
 // SkipWhile skips all values emitted by the source Observable as long as
 // a given condition holds true, but emits all further source values as
 // soon as the condition becomes false.
@@ -28,16 +24,15 @@ type skipWhileObservable[T any] struct {
 	Condition func(T) bool
 }
 
-func (obs skipWhileObservable[T]) Subscribe(ctx context.Context, sink Observer[T]) {
+func (obs skipWhileObservable[T]) Subscribe(c Context, sink Observer[T]) {
 	var taking bool
 
-	obs.Source.Subscribe(ctx, func(n Notification[T]) {
+	obs.Source.Subscribe(c, func(n Notification[T]) {
 		switch {
 		case taking || n.Kind != KindNext:
 			sink(n)
 		case !obs.Condition(n.Value):
 			taking = true
-
 			sink(n)
 		}
 	})

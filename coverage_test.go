@@ -1,7 +1,6 @@
 package rx_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/b97tsk/rx"
@@ -9,9 +8,6 @@ import (
 
 func TestAdditionalCoverage(t *testing.T) {
 	t.Parallel()
-
-	observer := rx.NewObserver(rx.Noop[int])
-	observer.Emit(rx.Next(0))
 
 	obs := rx.Empty[int]()
 	op := rx.SkipAll[int]()
@@ -25,12 +21,12 @@ func TestAdditionalCoverage(t *testing.T) {
 	_ = rx.Compose8(op, op, op, op, op, op, op, op).Apply(obs)
 	_ = rx.Compose9(op, op, op, op, op, op, op, op, op).Apply(obs)
 
-	_ = rx.NewObservable[any](nil).BlockingSubscribe(
-		context.Background(),
-		func(n rx.Notification[any]) {
-			if n.Kind != rx.KindError || n.Error != rx.ErrNil {
-				t.Fail()
-			}
-		},
-	)
+	_ = rx.NewObservable[any](nil).BlockingSubscribe(rx.NewBackgroundContext(), func(n rx.Notification[any]) {
+		if n.Kind != rx.KindError || n.Error != rx.ErrNil {
+			t.Fail()
+		}
+	})
+
+	observer := rx.NewObserver(rx.Noop[int])
+	observer.Emit(rx.Next(0))
 }

@@ -1,11 +1,7 @@
 package rx
 
-import (
-	"context"
-)
-
 // RetryForever mirrors the source Observable, and resubscribes to the source
-// whenever the source emits a notification of error.
+// whenever the source emits an error notification.
 //
 // RetryForever does not retry after context cancellation.
 func RetryForever[T any]() Operator[T, T] {
@@ -13,7 +9,7 @@ func RetryForever[T any]() Operator[T, T] {
 }
 
 // Retry mirrors the source Observable, and resubscribes to the source
-// when the source emits a notification of error, for a maximum of count
+// when the source emits an error notification, for a maximum of count
 // resubscriptions.
 //
 // Retry(0) is a no-op.
@@ -36,20 +32,20 @@ type retryObservable[T any] struct {
 	Count  int
 }
 
-func (obs retryObservable[T]) Subscribe(ctx context.Context, sink Observer[T]) {
+func (obs retryObservable[T]) Subscribe(c Context, sink Observer[T]) {
 	var observer Observer[T]
 
-	done := ctx.Done()
+	done := c.Done()
 
 	subscribeToSource := resistReentrance(func() {
 		select {
 		default:
 		case <-done:
-			sink.Error(ctx.Err())
+			sink.Error(c.Err())
 			return
 		}
 
-		obs.Source.Subscribe(ctx, observer)
+		obs.Source.Subscribe(c, observer)
 	})
 
 	count := obs.Count

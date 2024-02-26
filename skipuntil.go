@@ -1,9 +1,6 @@
 package rx
 
-import (
-	"context"
-	"sync/atomic"
-)
+import "sync/atomic"
 
 // SkipUntil skips values emitted by the source Observable
 // until a second Observable emits an value.
@@ -20,37 +17,35 @@ type skipUntilObservable[T, U any] struct {
 	Notifier Observable[U]
 }
 
-func (obs skipUntilObservable[T, U]) Subscribe(ctx context.Context, sink Observer[T]) {
-	source, cancelSource := context.WithCancel(ctx)
-
-	sink = sink.OnLastNotification(cancelSource)
+func (obs skipUntilObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
+	c, cancel := c.WithCancel()
+	sink = sink.OnLastNotification(cancel)
 
 	var x struct {
 		Context atomic.Value
 	}
 
 	{
-		worker, cancelWorker := context.WithCancel(source)
+		w, cancelw := c.WithCancel()
 
-		x.Context.Store(worker)
+		x.Context.Store(w.Context)
 
 		var noop bool
 
-		obs.Notifier.Subscribe(worker, func(n Notification[U]) {
+		obs.Notifier.Subscribe(w, func(n Notification[U]) {
 			if noop {
 				return
 			}
 
 			noop = true
-
-			cancelWorker()
+			cancelw()
 
 			switch n.Kind {
 			case KindNext:
-				x.Context.CompareAndSwap(worker, source)
+				x.Context.CompareAndSwap(w.Context, c.Context)
 
 			case KindError:
-				if x.Context.CompareAndSwap(worker, sentinel) {
+				if x.Context.CompareAndSwap(w.Context, sentinel) {
 					sink.Error(n.Error)
 				}
 
@@ -63,7 +58,7 @@ func (obs skipUntilObservable[T, U]) Subscribe(ctx context.Context, sink Observe
 	finish := func(n Notification[T]) {
 		old := x.Context.Swap(sentinel)
 
-		cancelSource()
+		cancel()
 
 		if old != sentinel {
 			sink(n)
@@ -72,20 +67,20 @@ func (obs skipUntilObservable[T, U]) Subscribe(ctx context.Context, sink Observe
 
 	select {
 	default:
-	case <-source.Done():
-		finish(Error[T](source.Err()))
+	case <-c.Done():
+		finish(Error[T](c.Err()))
 		return
 	}
 
-	if x.Context.Load() == source {
-		obs.Source.Subscribe(source, sink)
+	if x.Context.Load() == c.Context {
+		obs.Source.Subscribe(c, sink)
 		return
 	}
 
-	obs.Source.Subscribe(source, func(n Notification[T]) {
+	obs.Source.Subscribe(c, func(n Notification[T]) {
 		switch n.Kind {
 		case KindNext:
-			if x.Context.Load() == source {
+			if x.Context.Load() == c.Context {
 				sink(n)
 			}
 

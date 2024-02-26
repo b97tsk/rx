@@ -1,7 +1,6 @@
 package rx_test
 
 import (
-	"context"
 	"fmt"
 	"runtime"
 	"testing"
@@ -30,7 +29,7 @@ func TestMulticast(t *testing.T) {
 		rx.Pipe1(
 			rx.Just(3, 4, 5),
 			AddLatencyToValues[int](1, 1),
-		).Subscribe(context.Background(), m.Observer)
+		).Subscribe(rx.NewBackgroundContext(), m.Observer)
 
 		NewTestSuite[string](t).Case(
 			rx.Zip2(
@@ -59,7 +58,7 @@ func TestMulticast(t *testing.T) {
 				rx.Throw[int](ErrTest),
 			),
 			AddLatencyToNotifications[int](1, 1),
-		).Subscribe(context.Background(), m.Observer)
+		).Subscribe(rx.NewBackgroundContext(), m.Observer)
 
 		NewTestSuite[string](t).Case(
 			rx.Zip2(
@@ -121,7 +120,7 @@ func TestMulticast(t *testing.T) {
 		c := make(chan struct{})
 
 		m := rx.Multicast[int]()
-		m.Subscribe(context.Background(), func(n rx.Notification[int]) {
+		m.Subscribe(rx.NewBackgroundContext(), func(n rx.Notification[int]) {
 			if n.Error != rx.ErrFinalized {
 				panic("want rx.ErrFinalized, but got something else")
 			}

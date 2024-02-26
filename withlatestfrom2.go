@@ -1,7 +1,5 @@
 package rx
 
-import "context"
-
 // WithLatestFrom2 combines the source with 2 other Observables to create
 // an Observable that emits projection of latest values of each Observable,
 // only when the source emits.
@@ -27,12 +25,9 @@ func withLatestFrom3[T1, T2, T3, R any](
 	obs3 Observable[T3],
 	proj func(v1 T1, v2 T2, v3 T3) R,
 ) Observable[R] {
-	return func(ctx context.Context, sink Observer[R]) {
-		wg := WaitGroupFromContext(ctx)
-		ctx, cancel := context.WithCancel(ctx)
-
+	return func(c Context, sink Observer[R]) {
+		c, cancel := c.WithCancel()
 		noop := make(chan struct{})
-
 		sink = sink.OnLastNotification(func() {
 			cancel()
 			close(noop)
@@ -42,11 +37,11 @@ func withLatestFrom3[T1, T2, T3, R any](
 		chan2 := make(chan Notification[T2])
 		chan3 := make(chan Notification[T3])
 
-		wg.Go(func() { obs1.Subscribe(ctx, channelObserver(chan1, noop)) })
-		wg.Go(func() { obs2.Subscribe(ctx, channelObserver(chan2, noop)) })
-		wg.Go(func() { obs3.Subscribe(ctx, channelObserver(chan3, noop)) })
+		c.Go(func() { obs1.Subscribe(c, channelObserver(chan1, noop)) })
+		c.Go(func() { obs2.Subscribe(c, channelObserver(chan2, noop)) })
+		c.Go(func() { obs3.Subscribe(c, channelObserver(chan3, noop)) })
 
-		wg.Go(func() {
+		c.Go(func() {
 			var s withLatestFromState3[T1, T2, T3]
 
 			cont := true

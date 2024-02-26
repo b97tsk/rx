@@ -1,9 +1,5 @@
 package rx
 
-import (
-	"context"
-)
-
 // Do mirrors the source Observable, passing emissions to tap before
 // each emission.
 func Do[T any](tap Observer[T]) Operator[T, T] {
@@ -17,8 +13,8 @@ func Do[T any](tap Observer[T]) Operator[T, T] {
 func do[T any](tap Observer[T]) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(ctx context.Context, sink Observer[T]) {
-				source.Subscribe(ctx, func(n Notification[T]) {
+			return func(c Context, sink Observer[T]) {
+				source.Subscribe(c, func(n Notification[T]) {
 					tap(n)
 					sink(n)
 				})
@@ -40,8 +36,8 @@ func OnNext[T any](f func(v T)) Operator[T, T] {
 func onNext[T any](f func(v T)) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(ctx context.Context, sink Observer[T]) {
-				source.Subscribe(ctx, func(n Notification[T]) {
+			return func(c Context, sink Observer[T]) {
+				source.Subscribe(c, func(n Notification[T]) {
 					if n.Kind == KindNext {
 						f(n.Value)
 					}
@@ -66,8 +62,8 @@ func OnComplete[T any](f func()) Operator[T, T] {
 func onComplete[T any](f func()) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(ctx context.Context, sink Observer[T]) {
-				source.Subscribe(ctx, func(n Notification[T]) {
+			return func(c Context, sink Observer[T]) {
+				source.Subscribe(c, func(n Notification[T]) {
 					if n.Kind == KindComplete {
 						f()
 					}
@@ -80,7 +76,7 @@ func onComplete[T any](f func()) Operator[T, T] {
 }
 
 // OnError mirrors the source Observable, and calls f when the source emits
-// a notification of error.
+// an error notification.
 func OnError[T any](f func(err error)) Operator[T, T] {
 	if f == nil {
 		panic("f == nil")
@@ -92,8 +88,8 @@ func OnError[T any](f func(err error)) Operator[T, T] {
 func onError[T any](f func(err error)) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(ctx context.Context, sink Observer[T]) {
-				source.Subscribe(ctx, func(n Notification[T]) {
+			return func(c Context, sink Observer[T]) {
+				source.Subscribe(c, func(n Notification[T]) {
 					if n.Kind == KindError {
 						f(n.Error)
 					}
@@ -106,7 +102,7 @@ func onError[T any](f func(err error)) Operator[T, T] {
 }
 
 // OnLastNotification mirrors the source Observable, and calls f when
-// the source completes or emits a notification of error.
+// the source completes or emits an error notification.
 func OnLastNotification[T any](f func()) Operator[T, T] {
 	if f == nil {
 		panic("f == nil")
@@ -118,8 +114,8 @@ func OnLastNotification[T any](f func()) Operator[T, T] {
 func onLastNotification[T any](f func()) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(ctx context.Context, sink Observer[T]) {
-				source.Subscribe(ctx, func(n Notification[T]) {
+			return func(c Context, sink Observer[T]) {
+				source.Subscribe(c, func(n Notification[T]) {
 					switch n.Kind {
 					case KindError, KindComplete:
 						f()

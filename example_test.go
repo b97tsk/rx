@@ -3,6 +3,7 @@ package rx_test
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/b97tsk/rx"
@@ -40,8 +41,8 @@ func Example() {
 	)
 
 	// To Subscribe to an Observable, you call its Subscribe method, which takes
-	// a context.Context and an Observer as arguments.
-	obs.Subscribe(context.TODO(), rx.Noop[int])
+	// a Context and an Observer as arguments.
+	obs.Subscribe(rx.NewContext(context.TODO()), rx.Noop[int])
 
 	// Since this example has no other goroutines involved, it must have already done.
 	// You can also use BlockingSubscribe method instead. It blocks until done.
@@ -56,7 +57,7 @@ func Example() {
 }
 
 func Example_blocking() {
-	ctx, cancel := context.WithTimeout(context.TODO(), 700*time.Millisecond)
+	ctx, cancel := rx.NewContext(context.TODO()).WithTimeout(700 * time.Millisecond)
 	defer cancel()
 
 	obs := rx.Pipe4(
@@ -83,11 +84,11 @@ func Example_blocking() {
 }
 
 func Example_waitGroup() {
-	var wg rx.WaitGroup
+	var wg sync.WaitGroup
 
-	ctx := rx.WithWaitGroup(context.TODO(), &wg)
+	ctx := rx.NewContext(context.TODO()).WithWaitGroup(&wg)
 
-	wg.Go(func() {
+	ctx.Go(func() {
 		for n := 1; n < 4; n++ {
 			rx.Pipe2(
 				rx.Timer(50*time.Millisecond*time.Duration(n)),

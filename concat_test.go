@@ -33,16 +33,16 @@ func TestConcat(t *testing.T) {
 		"A", "B", "C", "D", "E", "F", ErrComplete,
 	)
 
-	ctx, cancel := context.WithTimeout(context.Background(), Step(1))
+	ctx, cancel := rx.NewBackgroundContext().WithTimeout(Step(1))
 	defer cancel()
 
 	NewTestSuite[int](t).WithContext(ctx).Case(
 		rx.Concat(
-			func(_ context.Context, sink rx.Observer[int]) {
+			func(_ rx.Context, sink rx.Observer[int]) {
 				time.Sleep(Step(2))
 				sink.Complete()
 			},
-			func(context.Context, rx.Observer[int]) {
+			func(rx.Context, rx.Observer[int]) {
 				panic("should not happen")
 			},
 		),
@@ -88,7 +88,7 @@ func TestConcatMap(t *testing.T) {
 	).Case(
 		rx.Pipe1(
 			rx.NewObservable(
-				func(_ context.Context, sink rx.Observer[rx.Observable[string]]) {
+				func(_ rx.Context, sink rx.Observer[rx.Observable[string]]) {
 					sink.Next(rx.Throw[string](ErrTest))
 					sink.Complete()
 				},
@@ -136,17 +136,17 @@ func TestConcatMapWithBuffering(t *testing.T) {
 		ErrTest,
 	)
 
-	ctx, cancel := context.WithTimeout(context.Background(), Step(1))
+	ctx, cancel := rx.NewBackgroundContext().WithTimeout(Step(1))
 	defer cancel()
 
 	NewTestSuite[string](t).WithContext(ctx).Case(
 		rx.Pipe1(
 			rx.Just[rx.Observable[string]](
-				func(_ context.Context, sink rx.Observer[string]) {
+				func(_ rx.Context, sink rx.Observer[string]) {
 					time.Sleep(Step(2))
 					sink.Complete()
 				},
-				func(context.Context, rx.Observer[string]) {
+				func(rx.Context, rx.Observer[string]) {
 					panic("should not happen")
 				},
 			),

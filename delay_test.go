@@ -44,7 +44,7 @@ func TestDelay(t *testing.T) {
 	)
 
 	{
-		ctx, cancel := context.WithTimeout(context.Background(), Step(1))
+		ctx, cancel := rx.NewBackgroundContext().WithTimeout(Step(1))
 		defer cancel()
 
 		NewTestSuite[string](t).WithContext(ctx).Case(
@@ -57,7 +57,7 @@ func TestDelay(t *testing.T) {
 	}
 
 	{
-		ctx, cancel := context.WithTimeout(context.Background(), Step(2))
+		ctx, cancel := rx.NewBackgroundContext().WithTimeout(Step(2))
 		defer cancel()
 
 		NewTestSuite[string](t).WithContext(ctx).Case(

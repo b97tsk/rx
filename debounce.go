@@ -1,7 +1,6 @@
 package rx
 
 import (
-	"context"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -25,9 +24,7 @@ func Debounce[T, U any](durationSelector func(v T) Observable[U]) Operator[T, T]
 // a particular time span has passed without another source emission.
 func DebounceTime[T any](d time.Duration) Operator[T, T] {
 	obsTimer := Timer(d)
-
 	durationSelector := func(T) Observable[time.Time] { return obsTimer }
-
 	return debounce(durationSelector)
 }
 
@@ -44,10 +41,9 @@ type debounceObservable[T, U any] struct {
 	DurationSelector func(T) Observable[U]
 }
 
-func (obs debounceObservable[T, U]) Subscribe(ctx context.Context, sink Observer[T]) {
-	source, cancelSource := context.WithCancel(ctx)
-
-	sink = sink.OnLastNotification(cancelSource)
+func (obs debounceObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
+	c, cancel := c.WithCancel()
+	sink = sink.OnLastNotification(cancel)
 
 	var x struct {
 		Context atomic.Value
@@ -58,31 +54,28 @@ func (obs debounceObservable[T, U]) Subscribe(ctx context.Context, sink Observer
 		}
 		Worker struct {
 			sync.WaitGroup
-			Cancel context.CancelFunc
+			Cancel CancelFunc
 		}
 	}
 
-	x.Context.Store(source)
+	x.Context.Store(c.Context)
 
 	startWorker := func(v T) {
-		worker, cancelWorker := context.WithCancel(source)
+		w, cancelw := c.WithCancel()
 
-		x.Context.Store(worker)
-
+		x.Context.Store(w.Context)
 		x.Worker.Add(1)
-
-		x.Worker.Cancel = cancelWorker
+		x.Worker.Cancel = cancelw
 
 		var noop bool
 
-		obs.DurationSelector(v).Subscribe(worker, func(n Notification[U]) {
+		obs.DurationSelector(v).Subscribe(w, func(n Notification[U]) {
 			if noop {
 				return
 			}
 
 			noop = true
-
-			cancelWorker()
+			cancelw()
 
 			switch n.Kind {
 			case KindNext:
@@ -95,7 +88,7 @@ func (obs debounceObservable[T, U]) Subscribe(ctx context.Context, sink Observer
 				}
 
 			case KindError:
-				if x.Context.CompareAndSwap(worker, sentinel) {
+				if x.Context.CompareAndSwap(w.Context, sentinel) {
 					sink.Error(n.Error)
 				}
 
@@ -107,7 +100,7 @@ func (obs debounceObservable[T, U]) Subscribe(ctx context.Context, sink Observer
 		})
 	}
 
-	obs.Source.Subscribe(source, func(n Notification[T]) {
+	obs.Source.Subscribe(c, func(n Notification[T]) {
 		switch n.Kind {
 		case KindNext:
 			x.Latest.Lock()
@@ -115,7 +108,7 @@ func (obs debounceObservable[T, U]) Subscribe(ctx context.Context, sink Observer
 			x.Latest.HasValue.Store(true)
 			x.Latest.Unlock()
 
-			if x.Context.Swap(source) == sentinel {
+			if x.Context.Swap(c.Context) == sentinel {
 				x.Context.Store(sentinel)
 				return
 			}
@@ -130,7 +123,7 @@ func (obs debounceObservable[T, U]) Subscribe(ctx context.Context, sink Observer
 		case KindError, KindComplete:
 			old := x.Context.Swap(sentinel)
 
-			cancelSource()
+			cancel()
 			x.Worker.Wait()
 
 			if old != sentinel {

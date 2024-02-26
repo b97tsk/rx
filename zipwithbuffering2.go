@@ -1,10 +1,6 @@
 package rx
 
-import (
-	"context"
-
-	"github.com/b97tsk/rx/internal/queue"
-)
+import "github.com/b97tsk/rx/internal/queue"
 
 // ZipWithBuffering2 combines multiple Observables to create an Observable that
 // emits projection of values of each of its input Observables.
@@ -21,12 +17,9 @@ func ZipWithBuffering2[T1, T2, R any](
 		panic("proj == nil")
 	}
 
-	return func(ctx context.Context, sink Observer[R]) {
-		wg := WaitGroupFromContext(ctx)
-		ctx, cancel := context.WithCancel(ctx)
-
+	return func(c Context, sink Observer[R]) {
+		c, cancel := c.WithCancel()
 		noop := make(chan struct{})
-
 		sink = sink.OnLastNotification(func() {
 			cancel()
 			close(noop)
@@ -35,10 +28,10 @@ func ZipWithBuffering2[T1, T2, R any](
 		chan1 := make(chan Notification[T1])
 		chan2 := make(chan Notification[T2])
 
-		wg.Go(func() { obs1.Subscribe(ctx, channelObserver(chan1, noop)) })
-		wg.Go(func() { obs2.Subscribe(ctx, channelObserver(chan2, noop)) })
+		c.Go(func() { obs1.Subscribe(c, channelObserver(chan1, noop)) })
+		c.Go(func() { obs2.Subscribe(c, channelObserver(chan2, noop)) })
 
-		wg.Go(func() {
+		c.Go(func() {
 			var s zipState2[T1, T2]
 
 			cont := true

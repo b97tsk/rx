@@ -1,9 +1,5 @@
 package rx
 
-import (
-	"context"
-)
-
 // First emits only the first value emitted by the source Observable.
 // If the source turns out to be empty, it emits an error notification
 // of ErrEmpty.
@@ -12,12 +8,12 @@ func First[T any]() Operator[T, T] {
 }
 
 func first[T any](source Observable[T]) Observable[T] {
-	return func(ctx context.Context, sink Observer[T]) {
-		ctx, cancel := context.WithCancel(ctx)
+	return func(c Context, sink Observer[T]) {
+		c, cancel := c.WithCancel()
 
 		var noop bool
 
-		source.Subscribe(ctx, func(n Notification[T]) {
+		source.Subscribe(c, func(n Notification[T]) {
 			if noop {
 				return
 			}
@@ -25,7 +21,6 @@ func first[T any](source Observable[T]) Observable[T] {
 			switch n.Kind {
 			case KindNext, KindError, KindComplete:
 				noop = true
-
 				cancel()
 
 				switch n.Kind {
@@ -47,12 +42,12 @@ func first[T any](source Observable[T]) Observable[T] {
 func FirstOrElse[T any](def T) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(ctx context.Context, sink Observer[T]) {
-				ctx, cancel := context.WithCancel(ctx)
+			return func(c Context, sink Observer[T]) {
+				c, cancel := c.WithCancel()
 
 				var noop bool
 
-				source.Subscribe(ctx, func(n Notification[T]) {
+				source.Subscribe(c, func(n Notification[T]) {
 					if noop {
 						return
 					}
@@ -60,7 +55,6 @@ func FirstOrElse[T any](def T) Operator[T, T] {
 					switch n.Kind {
 					case KindNext, KindError, KindComplete:
 						noop = true
-
 						cancel()
 
 						switch n.Kind {

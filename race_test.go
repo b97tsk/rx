@@ -1,7 +1,6 @@
 package rx_test
 
 import (
-	"context"
 	"math/rand"
 	"testing"
 	"time"
@@ -17,8 +16,8 @@ func TestRace(t *testing.T) {
 
 	detachContext := rx.NewOperator(
 		func(source rx.Observable[time.Duration]) rx.Observable[time.Duration] {
-			return func(_ context.Context, sink rx.Observer[time.Duration]) {
-				source.Subscribe(context.Background(), sink)
+			return func(_ rx.Context, sink rx.Observer[time.Duration]) {
+				source.Subscribe(rx.NewBackgroundContext(), sink)
 			}
 		},
 	)

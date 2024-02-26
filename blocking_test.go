@@ -23,7 +23,7 @@ func TestBlockingFirst(t *testing.T) {
 		{rx.Never[string](), "", context.DeadlineExceeded},
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), Step(1))
+	ctx, cancel := rx.NewBackgroundContext().WithTimeout(Step(1))
 	defer cancel()
 
 	for _, tc := range testCases {
@@ -48,7 +48,7 @@ func TestBlockingFirstOrElse(t *testing.T) {
 		{rx.Never[string](), "C"},
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), Step(1))
+	ctx, cancel := rx.NewBackgroundContext().WithTimeout(Step(1))
 	defer cancel()
 
 	for _, tc := range testCases {
@@ -74,7 +74,7 @@ func TestBlockingLast(t *testing.T) {
 		{rx.Never[string](), "", context.DeadlineExceeded},
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), Step(1))
+	ctx, cancel := rx.NewBackgroundContext().WithTimeout(Step(1))
 	defer cancel()
 
 	for _, tc := range testCases {
@@ -99,7 +99,7 @@ func TestBlockingLastOrElse(t *testing.T) {
 		{rx.Never[string](), "C"},
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), Step(1))
+	ctx, cancel := rx.NewBackgroundContext().WithTimeout(Step(1))
 	defer cancel()
 
 	for _, tc := range testCases {
@@ -125,7 +125,7 @@ func TestBlockingSingle(t *testing.T) {
 		{rx.Never[string](), "", context.DeadlineExceeded},
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), Step(1))
+	ctx, cancel := rx.NewBackgroundContext().WithTimeout(Step(1))
 	defer cancel()
 
 	for _, tc := range testCases {
@@ -150,7 +150,7 @@ func TestBlockingSubscribe(t *testing.T) {
 		{rx.Never[string](), context.DeadlineExceeded},
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), Step(1))
+	ctx, cancel := rx.NewBackgroundContext().WithTimeout(Step(1))
 	defer cancel()
 
 	for _, tc := range testCases {

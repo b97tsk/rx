@@ -1,9 +1,5 @@
 package rx
 
-import (
-	"context"
-)
-
 // Filter filters values emitted by the source Observable by only emitting
 // those that satisfy a given condition.
 func Filter[T any](cond func(v T) bool) Operator[T, T] {
@@ -17,8 +13,8 @@ func Filter[T any](cond func(v T) bool) Operator[T, T] {
 func filter[T any](cond func(v T) bool) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(ctx context.Context, sink Observer[T]) {
-				source.Subscribe(ctx, func(n Notification[T]) {
+			return func(c Context, sink Observer[T]) {
+				source.Subscribe(c, func(n Notification[T]) {
 					switch n.Kind {
 					case KindNext:
 						if cond(n.Value) {
@@ -46,8 +42,8 @@ func FilterOut[T any](cond func(v T) bool) Operator[T, T] {
 func filterOut[T any](cond func(v T) bool) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(ctx context.Context, sink Observer[T]) {
-				source.Subscribe(ctx, func(n Notification[T]) {
+			return func(c Context, sink Observer[T]) {
+				source.Subscribe(c, func(n Notification[T]) {
 					switch n.Kind {
 					case KindNext:
 						if !cond(n.Value) {
@@ -76,8 +72,8 @@ func FilterMap[T, R any](cond func(v T) (R, bool)) Operator[T, R] {
 func filterMap[T, R any](cond func(v T) (R, bool)) Operator[T, R] {
 	return NewOperator(
 		func(source Observable[T]) Observable[R] {
-			return func(ctx context.Context, sink Observer[R]) {
-				source.Subscribe(ctx, func(n Notification[T]) {
+			return func(c Context, sink Observer[R]) {
+				source.Subscribe(c, func(n Notification[T]) {
 					switch n.Kind {
 					case KindNext:
 						if v, ok := cond(n.Value); ok {

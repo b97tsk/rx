@@ -1,7 +1,6 @@
 package rx
 
 import (
-	"context"
 	"sync"
 	"sync/atomic"
 
@@ -29,16 +28,16 @@ func ConcatWith[T any](some ...Observable[T]) Operator[T, T] {
 	)
 }
 
-func (some observables[T]) Concat(ctx context.Context, sink Observer[T]) {
+func (some observables[T]) Concat(c Context, sink Observer[T]) {
 	var observer Observer[T]
 
-	done := ctx.Done()
+	done := c.Done()
 
 	subscribeToNext := resistReentrance(func() {
 		select {
 		default:
 		case <-done:
-			sink.Error(ctx.Err())
+			sink.Error(c.Err())
 			return
 		}
 
@@ -50,7 +49,7 @@ func (some observables[T]) Concat(ctx context.Context, sink Observer[T]) {
 		obs := some[0]
 		some = some[1:]
 
-		obs.Subscribe(ctx, observer)
+		obs.Subscribe(c, observer)
 	})
 
 	observer = func(n Notification[T]) {
@@ -128,18 +127,18 @@ type concatMapObservable[T, R any] struct {
 	concatMapConfig[T, R]
 }
 
-func (obs concatMapObservable[T, R]) Subscribe(ctx context.Context, sink Observer[R]) {
+func (obs concatMapObservable[T, R]) Subscribe(c Context, sink Observer[R]) {
 	if obs.UseBuffering {
-		obs.subscribeWithBuffering(ctx, sink)
+		obs.subscribeWithBuffering(c, sink)
 		return
 	}
 
-	obs.subscribe(ctx, sink)
+	obs.subscribe(c, sink)
 }
 
-func (obs concatMapObservable[T, R]) subscribe(ctx context.Context, sink Observer[R]) {
-	source, cancelSource := context.WithCancel(ctx)
-	sink = sink.OnLastNotification(cancelSource)
+func (obs concatMapObservable[T, R]) subscribe(c Context, sink Observer[R]) {
+	c, cancel := c.WithCancel()
+	sink = sink.OnLastNotification(cancel)
 
 	var noop bool
 
@@ -150,14 +149,14 @@ func (obs concatMapObservable[T, R]) subscribe(ctx context.Context, sink Observe
 		}
 	}
 
-	obs.Source.Subscribe(source, func(n Notification[T]) {
+	obs.Source.Subscribe(c, func(n Notification[T]) {
 		if noop {
 			return
 		}
 
 		switch n.Kind {
 		case KindNext:
-			err := obs.Project(n.Value).BlockingSubscribe(ctx, observer)
+			err := obs.Project(n.Value).BlockingSubscribe(c, observer)
 			noop = err != nil
 		case KindError:
 			sink.Error(n.Error)
@@ -167,9 +166,9 @@ func (obs concatMapObservable[T, R]) subscribe(ctx context.Context, sink Observe
 	})
 }
 
-func (obs concatMapObservable[T, R]) subscribeWithBuffering(ctx context.Context, sink Observer[R]) {
-	source, cancelSource := context.WithCancel(ctx)
-	sink = sink.OnLastNotification(cancelSource)
+func (obs concatMapObservable[T, R]) subscribeWithBuffering(c Context, sink Observer[R]) {
+	c, cancel := c.WithCancel()
+	sink = sink.OnLastNotification(cancel)
 
 	var x struct {
 		Context  atomic.Value
@@ -183,7 +182,7 @@ func (obs concatMapObservable[T, R]) subscribeWithBuffering(ctx context.Context,
 		}
 	}
 
-	x.Context.Store(source)
+	x.Context.Store(c.Context)
 
 	var startWorker func()
 
@@ -192,16 +191,16 @@ func (obs concatMapObservable[T, R]) subscribeWithBuffering(ctx context.Context,
 
 		x.Queue.Unlock()
 
-		worker, cancelWorker := context.WithCancel(source)
+		w, cancelw := c.WithCancel()
 
-		if !x.Context.CompareAndSwap(source, worker) { // This fails if x.Context was swapped to sentinel.
-			cancelWorker()
+		if !x.Context.CompareAndSwap(c.Context, w.Context) { // This fails if x.Context was swapped to sentinel.
+			cancelw()
 			return
 		}
 
 		x.Worker.Add(1)
 
-		obs.Project(v).Subscribe(worker, func(n Notification[R]) {
+		obs.Project(v).Subscribe(w, func(n Notification[R]) {
 			switch n.Kind {
 			case KindNext:
 				sink(n)
@@ -212,14 +211,14 @@ func (obs concatMapObservable[T, R]) subscribeWithBuffering(ctx context.Context,
 				if n.Kind == KindComplete {
 					select {
 					default:
-					case <-worker.Done():
-						n = Error[R](worker.Err())
+					case <-w.Done():
+						n = Error[R](w.Err())
 					}
 				}
 
 				switch n.Kind {
 				case KindError:
-					swapped := x.Context.CompareAndSwap(worker, sentinel)
+					swapped := x.Context.CompareAndSwap(w.Context, sentinel)
 
 					x.Queue.Init()
 					x.Queue.Unlock()
@@ -229,7 +228,7 @@ func (obs concatMapObservable[T, R]) subscribeWithBuffering(ctx context.Context,
 					}
 
 				case KindComplete:
-					swapped := x.Context.CompareAndSwap(worker, source)
+					swapped := x.Context.CompareAndSwap(w.Context, c.Context)
 					if swapped && x.Queue.Len() != 0 {
 						startWorker()
 						break
@@ -237,18 +236,18 @@ func (obs concatMapObservable[T, R]) subscribeWithBuffering(ctx context.Context,
 
 					x.Queue.Unlock()
 
-					if swapped && x.Complete.Load() && x.Context.CompareAndSwap(source, sentinel) {
+					if swapped && x.Complete.Load() && x.Context.CompareAndSwap(c.Context, sentinel) {
 						sink.Complete()
 					}
 				}
 
-				cancelWorker()
+				cancelw()
 				x.Worker.Done()
 			}
 		})
 	})
 
-	obs.Source.Subscribe(source, func(n Notification[T]) {
+	obs.Source.Subscribe(c, func(n Notification[T]) {
 		switch n.Kind {
 		case KindNext:
 			x.Queue.Lock()
@@ -258,7 +257,7 @@ func (obs concatMapObservable[T, R]) subscribeWithBuffering(ctx context.Context,
 				x.Queue.Push(n.Value)
 			}
 
-			if ctx == source {
+			if ctx == c.Context {
 				startWorker()
 				return
 			}
@@ -268,7 +267,7 @@ func (obs concatMapObservable[T, R]) subscribeWithBuffering(ctx context.Context,
 		case KindError:
 			old := x.Context.Swap(sentinel)
 
-			cancelSource()
+			cancel()
 			x.Worker.Wait()
 
 			if old != sentinel {
@@ -280,7 +279,7 @@ func (obs concatMapObservable[T, R]) subscribeWithBuffering(ctx context.Context,
 		case KindComplete:
 			x.Complete.Store(true)
 
-			if x.Context.CompareAndSwap(source, sentinel) {
+			if x.Context.CompareAndSwap(c.Context, sentinel) {
 				sink.Complete()
 			}
 		}

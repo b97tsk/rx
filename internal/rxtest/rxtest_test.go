@@ -1,7 +1,6 @@
 package rxtest_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/b97tsk/rx"
@@ -11,7 +10,7 @@ import (
 func TestSuccess(t *testing.T) {
 	t.Parallel()
 
-	NewTestSuite[string](t).WithContext(context.Background()).Case(
+	NewTestSuite[string](t).WithContext(rx.NewBackgroundContext()).Case(
 		rx.Pipe4(
 			rx.Just(42),
 			AddLatencyToValues[int](0, 1),

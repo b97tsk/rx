@@ -1,7 +1,6 @@
 package rx_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -106,7 +105,7 @@ func TestShare5(t *testing.T) {
 
 	NewTestSuite[int](t).Case(
 		rx.Pipe1(
-			func(context.Context, rx.Observer[int]) {
+			func(rx.Context, rx.Observer[int]) {
 				panic("should not happen")
 			},
 			rx.Share[int]().WithConnector(

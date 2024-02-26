@@ -1,10 +1,6 @@
 package rx
 
-import (
-	"context"
-
-	"github.com/b97tsk/rx/internal/queue"
-)
+import "github.com/b97tsk/rx/internal/queue"
 
 // TakeLast emits only the last count values emitted by the source Observable.
 func TakeLast[T any](count int) Operator[T, T] {
@@ -24,10 +20,10 @@ type takeLastObservable[T any] struct {
 	Count  int
 }
 
-func (obs takeLastObservable[T]) Subscribe(ctx context.Context, sink Observer[T]) {
+func (obs takeLastObservable[T]) Subscribe(c Context, sink Observer[T]) {
 	var q queue.Queue[T]
 
-	obs.Source.Subscribe(ctx, func(n Notification[T]) {
+	obs.Source.Subscribe(c, func(n Notification[T]) {
 		switch n.Kind {
 		case KindNext:
 			if q.Len() == obs.Count {
@@ -40,13 +36,13 @@ func (obs takeLastObservable[T]) Subscribe(ctx context.Context, sink Observer[T]
 			sink(n)
 
 		case KindComplete:
-			done := ctx.Done()
+			done := c.Done()
 
 			for i, j := 0, q.Len(); i < j; i++ {
 				select {
 				default:
 				case <-done:
-					sink.Error(ctx.Err())
+					sink.Error(c.Err())
 					return
 				}
 

@@ -74,7 +74,7 @@ func TestTakeLast(t *testing.T) {
 		ErrTest,
 	)
 
-	ctx, cancel := context.WithTimeout(context.Background(), Step(1))
+	ctx, cancel := rx.NewBackgroundContext().WithTimeout(Step(1))
 	defer cancel()
 
 	NewTestSuite[int](t).WithContext(ctx).Case(

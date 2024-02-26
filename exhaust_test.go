@@ -1,7 +1,6 @@
 package rx_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -66,7 +65,7 @@ func TestExhaust(t *testing.T) {
 		"A", ErrComplete,
 	).Case(
 		rx.Pipe1(
-			func(_ context.Context, sink rx.Observer[rx.Observable[string]]) {
+			func(_ rx.Context, sink rx.Observer[rx.Observable[string]]) {
 				sink.Next(rx.Pipe1(rx.Just("A", "B", "C", "D"), AddLatencyToValues[string](0, 2)))
 				time.Sleep(Step(5))
 				sink.Error(ErrTest)

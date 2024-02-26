@@ -1,7 +1,5 @@
 package rx
 
-import "context"
-
 // CombineLatest3 combines multiple Observables to create an Observable that
 // emits projection of latest values of each of its input Observables.
 func CombineLatest3[T1, T2, T3, R any](
@@ -14,12 +12,9 @@ func CombineLatest3[T1, T2, T3, R any](
 		panic("proj == nil")
 	}
 
-	return func(ctx context.Context, sink Observer[R]) {
-		wg := WaitGroupFromContext(ctx)
-		ctx, cancel := context.WithCancel(ctx)
-
+	return func(c Context, sink Observer[R]) {
+		c, cancel := c.WithCancel()
 		noop := make(chan struct{})
-
 		sink = sink.OnLastNotification(func() {
 			cancel()
 			close(noop)
@@ -29,11 +24,11 @@ func CombineLatest3[T1, T2, T3, R any](
 		chan2 := make(chan Notification[T2])
 		chan3 := make(chan Notification[T3])
 
-		wg.Go(func() { obs1.Subscribe(ctx, channelObserver(chan1, noop)) })
-		wg.Go(func() { obs2.Subscribe(ctx, channelObserver(chan2, noop)) })
-		wg.Go(func() { obs3.Subscribe(ctx, channelObserver(chan3, noop)) })
+		c.Go(func() { obs1.Subscribe(c, channelObserver(chan1, noop)) })
+		c.Go(func() { obs2.Subscribe(c, channelObserver(chan2, noop)) })
+		c.Go(func() { obs3.Subscribe(c, channelObserver(chan3, noop)) })
 
-		wg.Go(func() {
+		c.Go(func() {
 			var s combineLatestState3[T1, T2, T3]
 
 			cont := true

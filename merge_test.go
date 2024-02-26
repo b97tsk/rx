@@ -1,7 +1,6 @@
 package rx_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -79,7 +78,7 @@ func TestMergeMap(t *testing.T) {
 		ErrTest,
 	).Case(
 		rx.Pipe1(
-			func(_ context.Context, sink rx.Observer[rx.Observable[string]]) {
+			func(_ rx.Context, sink rx.Observer[rx.Observable[string]]) {
 				sink.Next(rx.Just("A", "B"))
 				time.Sleep(Step(1))
 				sink.Next(rx.Throw[string](ErrTest))
@@ -140,7 +139,7 @@ func TestMergeMapWithBuffering(t *testing.T) {
 		ErrTest,
 	).Case(
 		rx.Pipe1(
-			func(_ context.Context, sink rx.Observer[rx.Observable[string]]) {
+			func(_ rx.Context, sink rx.Observer[rx.Observable[string]]) {
 				sink.Next(rx.Just("A", "B"))
 				time.Sleep(Step(1))
 				sink.Next(rx.Throw[string](ErrTest))

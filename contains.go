@@ -1,9 +1,5 @@
 package rx
 
-import (
-	"context"
-)
-
 // Contains emits a boolean to indicate whether any value of the source
 // Observable satisfies a given condition.
 func Contains[T any](cond func(v T) bool) Operator[T, bool] {
@@ -37,14 +33,13 @@ type containsObservable[T any] struct {
 	Condition func(T) bool
 }
 
-func (obs containsObservable[T]) Subscribe(ctx context.Context, sink Observer[bool]) {
-	ctx, cancel := context.WithCancel(ctx)
-
+func (obs containsObservable[T]) Subscribe(c Context, sink Observer[bool]) {
+	c, cancel := c.WithCancel()
 	sink = sink.OnLastNotification(cancel)
 
 	var noop bool
 
-	obs.Source.Subscribe(ctx, func(n Notification[T]) {
+	obs.Source.Subscribe(c, func(n Notification[T]) {
 		if noop {
 			return
 		}
@@ -53,14 +48,11 @@ func (obs containsObservable[T]) Subscribe(ctx context.Context, sink Observer[bo
 		case KindNext:
 			if obs.Condition(n.Value) {
 				noop = true
-
 				sink.Next(true)
 				sink.Complete()
 			}
-
 		case KindError:
 			sink.Error(n.Error)
-
 		case KindComplete:
 			sink.Next(false)
 			sink.Complete()
@@ -73,14 +65,13 @@ type containsElementObservable[T comparable] struct {
 	Element T
 }
 
-func (obs containsElementObservable[T]) Subscribe(ctx context.Context, sink Observer[bool]) {
-	ctx, cancel := context.WithCancel(ctx)
-
+func (obs containsElementObservable[T]) Subscribe(c Context, sink Observer[bool]) {
+	c, cancel := c.WithCancel()
 	sink = sink.OnLastNotification(cancel)
 
 	var noop bool
 
-	obs.Source.Subscribe(ctx, func(n Notification[T]) {
+	obs.Source.Subscribe(c, func(n Notification[T]) {
 		if noop {
 			return
 		}
@@ -89,14 +80,11 @@ func (obs containsElementObservable[T]) Subscribe(ctx context.Context, sink Obse
 		case KindNext:
 			if n.Value == obs.Element {
 				noop = true
-
 				sink.Next(true)
 				sink.Complete()
 			}
-
 		case KindError:
 			sink.Error(n.Error)
-
 		case KindComplete:
 			sink.Next(false)
 			sink.Complete()

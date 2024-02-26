@@ -1,9 +1,5 @@
 package rx
 
-import (
-	"context"
-)
-
 // ToSlice collects all the values emitted by the source Observable,
 // and then emits them as a slice when the source completes.
 func ToSlice[T any]() Operator[T, []T] {
@@ -11,10 +7,10 @@ func ToSlice[T any]() Operator[T, []T] {
 }
 
 func toSlice[T any](source Observable[T]) Observable[[]T] {
-	return func(ctx context.Context, sink Observer[[]T]) {
+	return func(c Context, sink Observer[[]T]) {
 		var s []T
 
-		source.Subscribe(ctx, func(n Notification[T]) {
+		source.Subscribe(c, func(n Notification[T]) {
 			switch n.Kind {
 			case KindNext:
 				s = append(s, n.Value)

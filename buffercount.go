@@ -1,9 +1,5 @@
 package rx
 
-import (
-	"context"
-)
-
 // BufferCount buffers a number of values from the source Observable as
 // a slice, and emits that slice when its size reaches given BufferSize;
 // then, BufferCount starts a new buffer by dropping a number of most dated
@@ -55,11 +51,11 @@ type bufferCountObservable[T any] struct {
 	bufferCountConfig
 }
 
-func (obs bufferCountObservable[T]) Subscribe(ctx context.Context, sink Observer[[]T]) {
+func (obs bufferCountObservable[T]) Subscribe(c Context, sink Observer[[]T]) {
 	s := make([]T, 0, obs.BufferSize)
 	skip := 0
 
-	obs.Source.Subscribe(ctx, func(n Notification[T]) {
+	obs.Source.Subscribe(c, func(n Notification[T]) {
 		switch n.Kind {
 		case KindNext:
 			if skip > 0 {
