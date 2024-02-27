@@ -1,28 +1,17 @@
 package rx
 
-import "sync"
-
 // BlockingFirst subscribes to obs, returning the first emitted value.
 // If obs emits no values, it returns the zero value of T and ErrEmpty;
 // if obs emits an error notification, it returns the zero value of T and
 // the error.
 //
-// obs must honor the cancellation of c; otherwise, BlockingFirst might
-// continue to block even after c has been canceled.
-//
-// Like any other Blocking methods, this method sets c.WaitGroup to
-// a new [sync.WaitGroup] and calls its Wait method after subscribing to obs.
-// This method returns only when the WaitGroup counter is zero.
-func (obs Observable[T]) BlockingFirst(c Context) (v T, err error) {
+// The cancellation of parent will cause BlockingFirst to immediately return
+// the zero value of T and parent.Err().
+func (obs Observable[T]) BlockingFirst(parent Context) (v T, err error) {
 	res := Error[T](ErrEmpty)
-
-	var wg sync.WaitGroup
-
-	c, cancel := c.WithWaitGroup(&wg).WithCancel()
+	c, cancel := parent.WithCancel()
 
 	var noop bool
-
-	wg.Add(1)
 
 	obs.Subscribe(c, func(n Notification[T]) {
 		if noop {
@@ -39,11 +28,16 @@ func (obs Observable[T]) BlockingFirst(c Context) (v T, err error) {
 			}
 
 			cancel()
-			wg.Done()
 		}
 	})
 
-	wg.Wait()
+	<-c.Done()
+
+	select {
+	default:
+	case <-parent.Done():
+		return v, parent.Err()
+	}
 
 	switch res.Kind {
 	case KindNext:
@@ -58,14 +52,10 @@ func (obs Observable[T]) BlockingFirst(c Context) (v T, err error) {
 // BlockingFirstOrElse subscribes to obs, returning the first emitted value or
 // def if obs emits no values or an error notification.
 //
-// obs must honor the cancellation of c; otherwise, BlockingFirstOrElse might
-// continue to block even after c has been canceled.
-//
-// Like any other Blocking methods, this method sets c.WaitGroup to
-// a new [sync.WaitGroup] and calls its Wait method after subscribing to obs.
-// This method returns only when the WaitGroup counter is zero.
-func (obs Observable[T]) BlockingFirstOrElse(c Context, def T) T {
-	v, err := obs.BlockingFirst(c)
+// The cancellation of parent will cause BlockingFirstOrElse to immediately
+// return def.
+func (obs Observable[T]) BlockingFirstOrElse(parent Context, def T) T {
+	v, err := obs.BlockingFirst(parent)
 	if err != nil {
 		return def
 	}
@@ -78,20 +68,11 @@ func (obs Observable[T]) BlockingFirstOrElse(c Context, def T) T {
 // if obs emits an error notification, it returns the zero value of T and
 // the error.
 //
-// obs must honor the cancellation of c; otherwise, BlockingLast might
-// continue to block even after c has been canceled.
-//
-// Like any other Blocking methods, this method sets c.WaitGroup to
-// a new [sync.WaitGroup] and calls its Wait method after subscribing to obs.
-// This method returns only when the WaitGroup counter is zero.
-func (obs Observable[T]) BlockingLast(c Context) (v T, err error) {
+// The cancellation of parent will cause BlockingLast to immediately return
+// the zero value of T and parent.Err().
+func (obs Observable[T]) BlockingLast(parent Context) (v T, err error) {
 	res := Error[T](ErrEmpty)
-
-	var wg sync.WaitGroup
-
-	c, cancel := c.WithWaitGroup(&wg).WithCancel()
-
-	wg.Add(1)
+	c, cancel := parent.WithCancel()
 
 	obs.Subscribe(c, func(n Notification[T]) {
 		switch n.Kind {
@@ -102,11 +83,16 @@ func (obs Observable[T]) BlockingLast(c Context) (v T, err error) {
 		switch n.Kind {
 		case KindError, KindComplete:
 			cancel()
-			wg.Done()
 		}
 	})
 
-	wg.Wait()
+	<-c.Done()
+
+	select {
+	default:
+	case <-parent.Done():
+		return v, parent.Err()
+	}
 
 	switch res.Kind {
 	case KindNext:
@@ -121,14 +107,10 @@ func (obs Observable[T]) BlockingLast(c Context) (v T, err error) {
 // BlockingLastOrElse subscribes to obs, returning the last emitted value or
 // def if obs emits no values or an error notification.
 //
-// obs must honor the cancellation of c; otherwise, BlockingLastOrElse might
-// continue to block even after c has been canceled.
-//
-// Like any other Blocking methods, this method sets c.WaitGroup to
-// a new [sync.WaitGroup] and calls its Wait method after subscribing to obs.
-// This method returns only when the WaitGroup counter is zero.
-func (obs Observable[T]) BlockingLastOrElse(c Context, def T) T {
-	v, err := obs.BlockingLast(c)
+// The cancellation of parent will cause BlockingLastOrElse to immediately
+// return def.
+func (obs Observable[T]) BlockingLastOrElse(parent Context, def T) T {
+	v, err := obs.BlockingLast(parent)
 	if err != nil {
 		return def
 	}
@@ -141,22 +123,13 @@ func (obs Observable[T]) BlockingLastOrElse(c Context, def T) T {
 // T and ErrNotSingle or ErrEmpty respectively; if obs emits a notification of
 // error, it returns the zero value of T and the error.
 //
-// obs must honor the cancellation of c; otherwise, BlockingSingle might
-// continue to block even after c has been canceled.
-//
-// Like any other Blocking methods, this method sets c.WaitGroup to
-// a new [sync.WaitGroup] and calls its Wait method after subscribing to obs.
-// This method returns only when the WaitGroup counter is zero.
-func (obs Observable[T]) BlockingSingle(c Context) (v T, err error) {
+// The cancellation of parent will cause BlockingSingle to immediately return
+// the zero value of T and parent.Err().
+func (obs Observable[T]) BlockingSingle(parent Context) (v T, err error) {
 	res := Error[T](ErrEmpty)
-
-	var wg sync.WaitGroup
-
-	c, cancel := c.WithWaitGroup(&wg).WithCancel()
+	c, cancel := parent.WithCancel()
 
 	var noop bool
-
-	wg.Add(1)
 
 	obs.Subscribe(c, func(n Notification[T]) {
 		if noop {
@@ -167,7 +140,6 @@ func (obs Observable[T]) BlockingSingle(c Context) (v T, err error) {
 			res = Error[T](ErrNotSingle)
 			noop = true
 			cancel()
-			wg.Done()
 			return
 		}
 
@@ -179,11 +151,16 @@ func (obs Observable[T]) BlockingSingle(c Context) (v T, err error) {
 		switch n.Kind {
 		case KindError, KindComplete:
 			cancel()
-			wg.Done()
 		}
 	})
 
-	wg.Wait()
+	<-c.Done()
+
+	select {
+	default:
+	case <-parent.Done():
+		return v, parent.Err()
+	}
 
 	switch res.Kind {
 	case KindNext:
@@ -199,31 +176,29 @@ func (obs Observable[T]) BlockingSingle(c Context) (v T, err error) {
 // If obs completes without an error, BlockingSubscribe returns nil;
 // otherwise, it returns the emitted error.
 //
-// obs must honor the cancellation of c; otherwise, BlockingSubscribe might
-// continue to block even after c has been canceled.
-//
-// Like any other Blocking methods, this method sets c.WaitGroup to
-// a new [sync.WaitGroup] and calls its Wait method after subscribing to obs.
-// This method returns only when the WaitGroup counter is zero.
-func (obs Observable[T]) BlockingSubscribe(c Context, sink Observer[T]) error {
+// The cancellation of parent will cause BlockingSubscribe to immediately
+// return parent.Err().
+func (obs Observable[T]) BlockingSubscribe(parent Context, sink Observer[T]) error {
 	var res Notification[T]
 
-	var wg sync.WaitGroup
-
-	c = c.WithWaitGroup(&wg)
-
-	wg.Add(1)
+	c, cancel := parent.WithCancel()
 
 	obs.Subscribe(c, func(n Notification[T]) {
 		res = n
 		sink(n)
 		switch n.Kind {
 		case KindError, KindComplete:
-			wg.Done()
+			cancel()
 		}
 	})
 
-	wg.Wait()
+	<-c.Done()
+
+	select {
+	default:
+	case <-parent.Done():
+		return parent.Err()
+	}
 
 	switch res.Kind {
 	case KindError:

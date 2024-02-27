@@ -3,6 +3,7 @@ package rxtest
 import (
 	"errors"
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -61,7 +62,7 @@ func DelaySubscription[T any](n int) rx.Operator[T, T] {
 
 func tos(v any) string {
 	if _, ok := v.(error); ok {
-		return fmt.Sprintf("<%v>", v)
+		return fmt.Sprintf("(%v)", v)
 	}
 
 	return fmt.Sprint(v)
@@ -85,17 +86,17 @@ func (s *TestSuite[T]) WithContext(c rx.Context) *TestSuite[T] {
 }
 
 func (s *TestSuite[T]) Case(obs rx.Observable[T], output ...any) *TestSuite[T] {
-	_ = obs.BlockingSubscribe(s.c, func(n rx.Notification[T]) {
-		if len(output) == 0 {
-			s.tb.Fail()
+	var wg sync.WaitGroup
 
+	_ = obs.BlockingSubscribe(s.c.WithWaitGroup(&wg), func(n rx.Notification[T]) {
+		if len(output) == 0 {
 			switch n.Kind {
 			case rx.KindNext:
-				s.tb.Logf("want <nothing>, but got %v", tos(n.Value))
+				s.tb.Errorf("want (nothing), but got %v", tos(n.Value))
 			case rx.KindError:
-				s.tb.Logf("want <nothing>, but got %v", tos(n.Error))
+				s.tb.Errorf("want (nothing), but got %v", tos(n.Error))
 			case rx.KindComplete:
-				s.tb.Logf("want <nothing>, but got %v", tos(ErrComplete))
+				s.tb.Errorf("want (nothing), but got %v", tos(ErrComplete))
 			}
 
 			return
@@ -106,35 +107,48 @@ func (s *TestSuite[T]) Case(obs rx.Observable[T], output ...any) *TestSuite[T] {
 
 		switch n.Kind {
 		case rx.KindNext:
-			if wanted != any(n.Value) {
-				s.tb.Fail()
-				s.tb.Logf("want %v, but got %v", tos(wanted), tos(n.Value))
-			} else {
+			if wanted == any(n.Value) {
 				s.tb.Logf("want %v", tos(wanted))
+			} else {
+				s.tb.Errorf("want %v, but got %v", tos(wanted), tos(n.Value))
 			}
 		case rx.KindError:
-			if wanted != n.Error {
-				s.tb.Fail()
-				s.tb.Logf("want %v, but got %v", tos(wanted), tos(n.Error))
-			} else {
+			if wanted == n.Error {
 				s.tb.Logf("want %v", tos(wanted))
+			} else {
+				s.tb.Errorf("want %v, but got %v", tos(wanted), tos(n.Error))
 			}
 		case rx.KindComplete:
-			if wanted != ErrComplete {
-				s.tb.Fail()
-				s.tb.Logf("want %v, but got %v", tos(wanted), tos(ErrComplete))
-			} else {
+			if wanted == ErrComplete {
 				s.tb.Logf("want %v", tos(ErrComplete))
+			} else {
+				s.tb.Errorf("want %v, but got %v", tos(wanted), tos(ErrComplete))
 			}
 		}
 	})
 
-	if len(output) > 0 {
-		s.tb.Fail()
+	c := make(chan struct{})
 
+	go func() {
+		wg.Wait()
+		close(c)
+	}()
+
+	tm := time.NewTimer(5 * time.Second)
+
+	select {
+	case <-c:
+		tm.Stop()
+	case <-tm.C:
+		s.tb.Error("timeout waiting for WaitGroup")
+		return s
+	}
+
+	if len(output) != 0 {
 		for _, wanted := range output {
-			s.tb.Logf("want %v, but got <nothing>", tos(wanted))
+			s.tb.Logf("want %v, but got (nothing)", tos(wanted))
 		}
+		s.tb.Fail()
 	}
 
 	return s

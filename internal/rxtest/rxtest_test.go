@@ -2,6 +2,7 @@ package rxtest_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/b97tsk/rx"
 	. "github.com/b97tsk/rx/internal/rxtest"
@@ -33,6 +34,10 @@ func TestFailure(t *testing.T) {
 	failtest(t, rx.Throw[string](ErrTest))
 	failtest(t, rx.Just(ErrTest), ErrComplete, ErrTest)
 	failtest(t, rx.Throw[string](ErrTest), ErrComplete, ErrTest)
+	failtest(t, func(c rx.Context, sink rx.Observer[string]) {
+		c.Go(func() { time.Sleep(8 * time.Second) })
+		sink.Complete()
+	}, ErrComplete)
 }
 
 func failtest[T any](tb testing.TB, obs rx.Observable[T], output ...any) {
@@ -50,6 +55,16 @@ func failtest[T any](tb testing.TB, obs rx.Observable[T], output ...any) {
 type failsafe struct {
 	testing.TB
 	failed bool
+}
+
+func (fs *failsafe) Error(args ...any) {
+	fs.failed = true
+	fs.Log(args...)
+}
+
+func (fs *failsafe) Errorf(format string, args ...any) {
+	fs.failed = true
+	fs.Logf(format, args...)
 }
 
 func (fs *failsafe) Fail() {
