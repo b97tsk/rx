@@ -7,10 +7,6 @@ func StartWith[T any](s ...T) Operator[T, T] {
 		return NewOperator(identity[Observable[T]])
 	}
 
-	return startWith(s...)
-}
-
-func startWith[T any](s ...T) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return Concat(FromSlice(s), source)

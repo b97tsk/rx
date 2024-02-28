@@ -16,10 +16,6 @@ func Zip8[T1, T2, T3, T4, T5, T6, T7, T8, R any](
 	obs8 Observable[T8],
 	proj func(v1 T1, v2 T2, v3 T3, v4 T4, v5 T5, v6 T6, v7 T7, v8 T8) R,
 ) Observable[R] {
-	if proj == nil {
-		panic("proj == nil")
-	}
-
 	return func(c Context, sink Observer[R]) {
 		c, cancel := c.WithCancel()
 		noop := make(chan struct{})
@@ -47,6 +43,7 @@ func Zip8[T1, T2, T3, T4, T5, T6, T7, T8, R any](
 		c.Go(func() { obs8.Subscribe(c, channelObserver(chan8, noop)) })
 
 		c.Go(func() {
+			oops := func() { sink.Error(ErrOops) }
 			for {
 			Again1:
 				n1 := <-chan1
@@ -152,7 +149,8 @@ func Zip8[T1, T2, T3, T4, T5, T6, T7, T8, R any](
 				default:
 					goto Again8
 				}
-				sink.Next(proj(n1.Value, n2.Value, n3.Value, n4.Value, n5.Value, n6.Value, n7.Value, n8.Value))
+				v := Try81(proj, n1.Value, n2.Value, n3.Value, n4.Value, n5.Value, n6.Value, n7.Value, n8.Value, oops)
+				Try1(sink, Next(v), oops)
 			}
 		})
 	}

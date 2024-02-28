@@ -24,16 +24,21 @@ func TestSuccess(t *testing.T) {
 	).Case(
 		rx.Throw[string](ErrTest),
 		ErrTest,
+	).Case(
+		rx.Oops[string](ErrTest),
+		rx.ErrOops, ErrTest,
 	)
 }
 
 func TestFailure(t *testing.T) {
 	t.Parallel()
 
-	failtest(t, rx.Just(ErrTest))
+	failtest(t, rx.Just(42))
+	failtest(t, rx.Just(42), ErrTest, ErrTest, ErrTest)
 	failtest(t, rx.Throw[string](ErrTest))
-	failtest(t, rx.Just(ErrTest), ErrComplete, ErrTest)
-	failtest(t, rx.Throw[string](ErrTest), ErrComplete, ErrTest)
+	failtest(t, rx.Throw[string](ErrTest), ErrComplete, ErrComplete)
+	failtest(t, rx.Oops[string](ErrTest))
+	failtest(t, rx.Oops[string](ErrTest), ErrComplete, ErrComplete, ErrComplete)
 	failtest(t, func(c rx.Context, sink rx.Observer[string]) {
 		c.Go(func() { time.Sleep(8 * time.Second) })
 		sink.Complete()

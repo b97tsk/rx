@@ -52,5 +52,27 @@ func TestBufferCount(t *testing.T) {
 			ToString[[]string](),
 		),
 		ErrTest,
+	).Case(
+		rx.Pipe2(
+			rx.Empty[string](),
+			rx.BufferCount[string](0),
+			ToString[[]string](),
+		),
+		rx.ErrOops, "BufferCount: BufferSize <= 0",
+	).Case(
+		rx.Pipe2(
+			rx.Empty[string](),
+			rx.BufferCount[string](2).WithStartBufferEvery(0),
+			ToString[[]string](),
+		),
+		rx.ErrOops, "BufferCount: StartBufferEvery <= 0",
+	).Case(
+		rx.Pipe3(
+			rx.Just("A"),
+			rx.BufferCount[string](2),
+			rx.OnNext(func([]string) { panic(ErrTest) }),
+			ToString[[]string](),
+		),
+		rx.ErrOops, ErrTest,
 	)
 }

@@ -9,10 +9,6 @@ func WithLatestFrom3[T0, T1, T2, T3, R any](
 	obs3 Observable[T3],
 	proj func(v0 T0, v1 T1, v2 T2, v3 T3) R,
 ) Operator[T0, R] {
-	if proj == nil {
-		panic("proj == nil")
-	}
-
 	return NewOperator(
 		func(source Observable[T0]) Observable[R] {
 			return withLatestFrom4(source, obs1, obs2, obs3, proj)
@@ -53,13 +49,13 @@ func withLatestFrom4[T1, T2, T3, T4, R any](
 			for cont {
 				select {
 				case n := <-chan1:
-					cont = withLatestFromSink4(n, sink, proj, &s, &s.V1, 1)
+					cont = withLatestFromTry4(sink, n, proj, &s, &s.V1, 1)
 				case n := <-chan2:
-					cont = withLatestFromSink4(n, sink, proj, &s, &s.V2, 2)
+					cont = withLatestFromTry4(sink, n, proj, &s, &s.V2, 2)
 				case n := <-chan3:
-					cont = withLatestFromSink4(n, sink, proj, &s, &s.V3, 4)
+					cont = withLatestFromTry4(sink, n, proj, &s, &s.V3, 4)
 				case n := <-chan4:
-					cont = withLatestFromSink4(n, sink, proj, &s, &s.V4, 8)
+					cont = withLatestFromTry4(sink, n, proj, &s, &s.V4, 8)
 				}
 			}
 		})
@@ -75,9 +71,9 @@ type withLatestFromState4[T1, T2, T3, T4 any] struct {
 	V4 T4
 }
 
-func withLatestFromSink4[T1, T2, T3, T4, R, X any](
-	n Notification[X],
+func withLatestFromTry4[T1, T2, T3, T4, R, X any](
 	sink Observer[R],
+	n Notification[X],
 	proj func(T1, T2, T3, T4) R,
 	s *withLatestFromState4[T1, T2, T3, T4],
 	v *X,
@@ -90,7 +86,9 @@ func withLatestFromSink4[T1, T2, T3, T4, R, X any](
 		*v = n.Value
 
 		if s.NBits |= bit; s.NBits == FullBits && bit == 1 {
-			sink.Next(proj(s.V1, s.V2, s.V3, s.V4))
+			oops := func() { sink.Error(ErrOops) }
+			v := Try41(proj, s.V1, s.V2, s.V3, s.V4, oops)
+			Try1(sink, Next(v), oops)
 		}
 
 	case KindError:

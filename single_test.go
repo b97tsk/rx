@@ -34,5 +34,12 @@ func TestSingle(t *testing.T) {
 			rx.Single[string](),
 		),
 		ErrTest,
+	).Case(
+		rx.Pipe2(
+			rx.Just("A"),
+			rx.Single[string](),
+			rx.OnNext(func(string) { panic(ErrTest) }),
+		),
+		rx.ErrOops, ErrTest,
 	)
 }

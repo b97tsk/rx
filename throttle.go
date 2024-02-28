@@ -6,26 +6,6 @@ import (
 	"time"
 )
 
-// Throttle emits a value from the source Observable, then ignores
-// subsequent source values for a duration determined by another Observable,
-// then repeats this process until the source completes.
-//
-// It's like [ThrottleTime], but the silencing duration is determined
-// by a second Observable.
-func Throttle[T, U any](durationSelector func(v T) Observable[U]) ThrottleOperator[T, U] {
-	if durationSelector == nil {
-		panic("durationSelector == nil")
-	}
-
-	return ThrottleOperator[T, U]{
-		opts: throttleConfig[T, U]{
-			DurationSelector: durationSelector,
-			Leading:          true,
-			Trailing:         false,
-		},
-	}
-}
-
 // ThrottleTime emits a value from the source Observable, then ignores
 // subsequent source values for a duration, then repeats this process until
 // the source completes.
@@ -35,8 +15,18 @@ func Throttle[T, U any](durationSelector func(v T) Observable[U]) ThrottleOperat
 func ThrottleTime[T any](d time.Duration) ThrottleOperator[T, time.Time] {
 	obsTimer := Timer(d)
 	durationSelector := func(T) Observable[time.Time] { return obsTimer }
-	return ThrottleOperator[T, time.Time]{
-		opts: throttleConfig[T, time.Time]{
+	return Throttle(durationSelector)
+}
+
+// Throttle emits a value from the source Observable, then ignores
+// subsequent source values for a duration determined by another Observable,
+// then repeats this process until the source completes.
+//
+// It's like [ThrottleTime], but the silencing duration is determined
+// by a second Observable.
+func Throttle[T, U any](durationSelector func(v T) Observable[U]) ThrottleOperator[T, U] {
+	return ThrottleOperator[T, U]{
+		opts: throttleConfig[T, U]{
 			DurationSelector: durationSelector,
 			Leading:          true,
 			Trailing:         false,
@@ -99,6 +89,7 @@ func (obs throttleObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
 	var doThrottle func(T)
 
 	doThrottle = func(v T) {
+		obs1 := obs.DurationSelector(v)
 		w, cancelw := c.WithCancel()
 
 		x.Context.Store(w.Context)
@@ -106,10 +97,12 @@ func (obs throttleObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
 
 		var noop bool
 
-		obs.DurationSelector(v).Subscribe(w, func(n Notification[U]) {
+		obs1.Subscribe(w, func(n Notification[U]) {
 			if noop {
 				return
 			}
+
+			defer x.Worker.Done()
 
 			noop = true
 			cancelw()
@@ -121,10 +114,17 @@ func (obs throttleObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
 					value := x.Trailing.Value
 					x.Trailing.HasValue.Store(false)
 					x.Trailing.Unlock()
-					sink.Next(value)
+
+					oops := func() {
+						if x.Context.Swap(sentinel) != sentinel {
+							sink.Error(ErrOops)
+						}
+					}
+
+					Try1(sink, Next(value), oops)
 
 					if !x.Complete.Load() {
-						doThrottle(value)
+						Try1(doThrottle, value, oops)
 					}
 				}
 
@@ -133,7 +133,7 @@ func (obs throttleObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
 				}
 
 			case KindError:
-				if x.Context.CompareAndSwap(w.Context, sentinel) {
+				if x.Context.Swap(sentinel) != sentinel {
 					sink.Error(n.Error)
 				}
 
@@ -142,8 +142,6 @@ func (obs throttleObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
 					sink.Complete()
 				}
 			}
-
-			x.Worker.Done()
 		})
 	}
 

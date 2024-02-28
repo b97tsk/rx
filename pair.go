@@ -31,7 +31,7 @@ func FromMap[M ~map[K]V, K comparable, V any](m M) Observable[Pair[K, V]] {
 				return
 			}
 
-			sink.Next(NewPair(k, v))
+			Try1(sink, Next(NewPair(k, v)), func() { sink.Error(ErrOops) })
 		}
 
 		sink.Complete()

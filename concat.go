@@ -67,28 +67,20 @@ func (some observables[T]) Concat(c Context, sink Observer[T]) {
 // ConcatAll flattens a higher-order Observable into a first-order Observable
 // by concatenating the inner Observables in order.
 func ConcatAll[_ Observable[T], T any]() ConcatMapOperator[Observable[T], T] {
-	return concatMap(identity[Observable[T]])
-}
-
-// ConcatMap converts the source Observable into a higher-order Observable,
-// by projecting each source value to an Observable, then flattens it into
-// a first-order Observable using ConcatAll.
-func ConcatMap[T, R any](proj func(v T) Observable[R]) ConcatMapOperator[T, R] {
-	if proj == nil {
-		panic("proj == nil")
-	}
-
-	return concatMap(proj)
+	return ConcatMap(identity[Observable[T]])
 }
 
 // ConcatMapTo converts the source Observable into a higher-order Observable,
 // by projecting each source value to the same Observable, then flattens it
 // into a first-order Observable using ConcatAll.
 func ConcatMapTo[T, R any](inner Observable[R]) ConcatMapOperator[T, R] {
-	return concatMap(func(T) Observable[R] { return inner })
+	return ConcatMap(func(T) Observable[R] { return inner })
 }
 
-func concatMap[T, R any](proj func(v T) Observable[R]) ConcatMapOperator[T, R] {
+// ConcatMap converts the source Observable into a higher-order Observable,
+// by projecting each source value to an Observable, then flattens it into
+// a first-order Observable using ConcatAll.
+func ConcatMap[T, R any](proj func(v T) Observable[R]) ConcatMapOperator[T, R] {
 	return ConcatMapOperator[T, R]{
 		opts: concatMapConfig[T, R]{
 			Project:      proj,
@@ -129,25 +121,14 @@ type concatMapObservable[T, R any] struct {
 
 func (obs concatMapObservable[T, R]) Subscribe(c Context, sink Observer[R]) {
 	if obs.UseBuffering {
-		obs.subscribeWithBuffering(c, sink)
+		obs.SubscribeWithBuffering(c, sink)
 		return
 	}
 
-	obs.subscribe(c, sink)
-}
-
-func (obs concatMapObservable[T, R]) subscribe(c Context, sink Observer[R]) {
 	c, cancel := c.WithCancel()
 	sink = sink.OnLastNotification(cancel)
 
 	var noop bool
-
-	observer := func(n Notification[R]) {
-		switch n.Kind {
-		case KindNext, KindError:
-			sink(n)
-		}
-	}
 
 	obs.Source.Subscribe(c, func(n Notification[T]) {
 		if noop {
@@ -156,8 +137,10 @@ func (obs concatMapObservable[T, R]) subscribe(c Context, sink Observer[R]) {
 
 		switch n.Kind {
 		case KindNext:
-			err := obs.Project(n.Value).BlockingSubscribe(c, observer)
-			noop = err != nil
+			if err := obs.Project(n.Value).BlockingSubscribe(c, sink.ElementsOnly); err != nil {
+				noop = true
+				sink.Error(err)
+			}
 		case KindError:
 			sink.Error(n.Error)
 		case KindComplete:
@@ -166,7 +149,7 @@ func (obs concatMapObservable[T, R]) subscribe(c Context, sink Observer[R]) {
 	})
 }
 
-func (obs concatMapObservable[T, R]) subscribeWithBuffering(c Context, sink Observer[R]) {
+func (obs concatMapObservable[T, R]) SubscribeWithBuffering(c Context, sink Observer[R]) {
 	c, cancel := c.WithCancel()
 	sink = sink.OnLastNotification(cancel)
 
@@ -191,6 +174,7 @@ func (obs concatMapObservable[T, R]) subscribeWithBuffering(c Context, sink Obse
 
 		x.Queue.Unlock()
 
+		obs1 := obs.Project(v)
 		w, cancelw := c.WithCancel()
 
 		if !x.Context.CompareAndSwap(c.Context, w.Context) { // This fails if x.Context was swapped to sentinel.
@@ -200,12 +184,14 @@ func (obs concatMapObservable[T, R]) subscribeWithBuffering(c Context, sink Obse
 
 		x.Worker.Add(1)
 
-		obs.Project(v).Subscribe(w, func(n Notification[R]) {
+		obs1.Subscribe(w, func(n Notification[R]) {
 			switch n.Kind {
 			case KindNext:
 				sink(n)
 
 			case KindError, KindComplete:
+				defer x.Worker.Done()
+
 				x.Queue.Lock()
 
 				if n.Kind == KindComplete {
@@ -216,14 +202,16 @@ func (obs concatMapObservable[T, R]) subscribeWithBuffering(c Context, sink Obse
 					}
 				}
 
+				cancelw()
+
 				switch n.Kind {
 				case KindError:
-					swapped := x.Context.CompareAndSwap(w.Context, sentinel)
+					old := x.Context.Swap(sentinel)
 
 					x.Queue.Init()
 					x.Queue.Unlock()
 
-					if swapped {
+					if old != sentinel {
 						sink(n)
 					}
 
@@ -231,7 +219,7 @@ func (obs concatMapObservable[T, R]) subscribeWithBuffering(c Context, sink Obse
 					swapped := x.Context.CompareAndSwap(w.Context, c.Context)
 					if swapped && x.Queue.Len() != 0 {
 						startWorker()
-						break
+						return
 					}
 
 					x.Queue.Unlock()
@@ -240,9 +228,6 @@ func (obs concatMapObservable[T, R]) subscribeWithBuffering(c Context, sink Obse
 						sink.Complete()
 					}
 				}
-
-				cancelw()
-				x.Worker.Done()
 			}
 		})
 	})
@@ -269,12 +254,11 @@ func (obs concatMapObservable[T, R]) subscribeWithBuffering(c Context, sink Obse
 
 			cancel()
 			x.Worker.Wait()
+			x.Queue.Init()
 
 			if old != sentinel {
 				sink.Error(n.Error)
 			}
-
-			x.Queue.Init()
 
 		case KindComplete:
 			x.Complete.Store(true)

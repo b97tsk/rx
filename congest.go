@@ -6,16 +6,12 @@ import "github.com/b97tsk/rx/internal/queue"
 // if the source emits too fast, and blocking the source if the buffer is
 // full.
 func CongestBlock[T any](capacity int) Operator[T, T] {
-	if capacity < 1 {
-		panic("capacity < 1")
-	}
-
-	return congestBlock[T](capacity)
-}
-
-func congestBlock[T any](capacity int) Operator[T, T] {
 	return Channelize(
 		func(upstream <-chan Notification[T], downstream chan<- Notification[T]) {
+			if capacity < 1 {
+				panic("CongestBlock: capacity < 1")
+			}
+
 			var buf queue.Queue[Notification[T]]
 
 			var complete bool
@@ -70,16 +66,12 @@ func congestBlock[T any](capacity int) Operator[T, T] {
 // if the source emits too fast, and dropping emissions if the buffer is
 // full.
 func CongestDropLatest[T any](capacity int) Operator[T, T] {
-	if capacity < 1 {
-		panic("capacity < 1")
-	}
-
-	return congestDropLatest[T](capacity)
-}
-
-func congestDropLatest[T any](capacity int) Operator[T, T] {
 	return Channelize(
 		func(upstream <-chan Notification[T], downstream chan<- Notification[T]) {
+			if capacity < 1 {
+				panic("CongestDropLatest: capacity < 1")
+			}
+
 			var buf queue.Queue[Notification[T]]
 
 			var complete bool
@@ -130,16 +122,12 @@ func congestDropLatest[T any](capacity int) Operator[T, T] {
 // if the source emits too fast, and dropping oldest emissions from
 // the buffer if it is full.
 func CongestDropOldest[T any](capacity int) Operator[T, T] {
-	if capacity < 1 {
-		panic("capacity < 1")
-	}
-
-	return congestDropOldest[T](capacity)
-}
-
-func congestDropOldest[T any](capacity int) Operator[T, T] {
 	return Channelize(
 		func(upstream <-chan Notification[T], downstream chan<- Notification[T]) {
+			if capacity < 1 {
+				panic("CongestDropOldest: capacity < 1")
+			}
+
 			var buf queue.Queue[Notification[T]]
 
 			var complete bool
@@ -192,16 +180,12 @@ func congestDropOldest[T any](capacity int) Operator[T, T] {
 // if the source emits too fast, and terminating the stream with an error
 // notification of ErrBufferOverflow if the buffer is full.
 func CongestError[T any](capacity int) Operator[T, T] {
-	if capacity < 1 {
-		panic("capacity < 1")
-	}
-
-	return congestError[T](capacity)
-}
-
-func congestError[T any](capacity int) Operator[T, T] {
 	return Channelize(
 		func(upstream <-chan Notification[T], downstream chan<- Notification[T]) {
+			if capacity < 1 {
+				panic("CongestError: capacity < 1")
+			}
+
 			var buf queue.Queue[Notification[T]]
 
 			var complete bool

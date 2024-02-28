@@ -8,28 +8,20 @@ import (
 // SwitchAll flattens a higher-order Observable into a first-order Observable
 // by subscribing to only the most recently emitted of those inner Observables.
 func SwitchAll[_ Observable[T], T any]() Operator[Observable[T], T] {
-	return switchMap(identity[Observable[T]])
-}
-
-// SwitchMap converts the source Observable into a higher-order Observable,
-// by projecting each source value to an Observable, then flattens it into
-// a first-order Observable using SwitchAll.
-func SwitchMap[T, R any](proj func(v T) Observable[R]) Operator[T, R] {
-	if proj == nil {
-		panic("proj == nil")
-	}
-
-	return switchMap(proj)
+	return SwitchMap(identity[Observable[T]])
 }
 
 // SwitchMapTo converts the source Observable into a higher-order Observable,
 // by projecting each source value to the same Observable, then flattens it
 // into a first-order Observable using SwitchAll.
 func SwitchMapTo[T, R any](inner Observable[R]) Operator[T, R] {
-	return switchMap(func(T) Observable[R] { return inner })
+	return SwitchMap(func(T) Observable[R] { return inner })
 }
 
-func switchMap[T, R any](proj func(v T) Observable[R]) Operator[T, R] {
+// SwitchMap converts the source Observable into a higher-order Observable,
+// by projecting each source value to an Observable, then flattens it into
+// a first-order Observable using SwitchAll.
+func SwitchMap[T, R any](proj func(v T) Observable[R]) Operator[T, R] {
 	return NewOperator(
 		func(source Observable[T]) Observable[R] {
 			return switchMapObservable[T, R]{source, proj}.Subscribe
@@ -58,18 +50,23 @@ func (obs switchMapObservable[T, R]) Subscribe(c Context, sink Observer[R]) {
 	x.Context.Store(c.Context)
 
 	startWorker := func(v T) {
+		obs1 := obs.Project(v)
 		w, cancelw := c.WithCancel()
 
 		x.Context.Store(w.Context)
 		x.Worker.Add(1)
 		x.Worker.Cancel = cancelw
 
-		obs.Project(v).Subscribe(w, func(n Notification[R]) {
+		obs1.Subscribe(w, func(n Notification[R]) {
 			switch n.Kind {
 			case KindNext:
 				sink(n)
 
 			case KindError, KindComplete:
+				defer x.Worker.Done()
+
+				cancelw()
+
 				switch n.Kind {
 				case KindError:
 					if x.Context.CompareAndSwap(w.Context, sentinel) {
@@ -80,9 +77,6 @@ func (obs switchMapObservable[T, R]) Subscribe(c Context, sink Observer[R]) {
 						sink(n)
 					}
 				}
-
-				cancelw()
-				x.Worker.Done()
 			}
 		})
 	}

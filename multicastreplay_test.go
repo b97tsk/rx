@@ -112,6 +112,29 @@ func TestMulticastReplay(t *testing.T) {
 		NewTestSuite[string](t).Case(subscribeThenComplete, ErrComplete)
 	})
 
+	t.Run("ReplayAll", func(t *testing.T) {
+		t.Parallel()
+
+		m := rx.MulticastReplay[string](nil)
+
+		for _, v := range []string{"A", "B", "C"} {
+			m.Next(v)
+		}
+
+		m.Complete()
+
+		NewTestSuite[string](t).Case(
+			m.Observable,
+			"A", "B", "C", ErrComplete,
+		).Case(
+			rx.Pipe1(
+				m.Observable,
+				rx.OnNext(func(string) { panic(ErrTest) }),
+			),
+			rx.ErrOops, ErrTest,
+		)
+	})
+
 	t.Run("AfterComplete", func(t *testing.T) {
 		t.Parallel()
 

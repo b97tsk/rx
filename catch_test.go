@@ -30,6 +30,12 @@ func TestCatch(t *testing.T) {
 			rx.Catch(f),
 		),
 		"A", "B", "C", "D", "E", ErrComplete,
+	).Case(
+		rx.Pipe1(
+			rx.Throw[string](ErrTest),
+			rx.Catch[string](func(error) rx.Observable[string] { panic(ErrTest) }),
+		),
+		rx.ErrOops, ErrTest,
 	)
 
 	ctx, cancel := rx.NewBackgroundContext().WithTimeout(Step(1))

@@ -12,10 +12,6 @@ func Zip4[T1, T2, T3, T4, R any](
 	obs4 Observable[T4],
 	proj func(v1 T1, v2 T2, v3 T3, v4 T4) R,
 ) Observable[R] {
-	if proj == nil {
-		panic("proj == nil")
-	}
-
 	return func(c Context, sink Observer[R]) {
 		c, cancel := c.WithCancel()
 		noop := make(chan struct{})
@@ -35,6 +31,7 @@ func Zip4[T1, T2, T3, T4, R any](
 		c.Go(func() { obs4.Subscribe(c, channelObserver(chan4, noop)) })
 
 		c.Go(func() {
+			oops := func() { sink.Error(ErrOops) }
 			for {
 			Again1:
 				n1 := <-chan1
@@ -88,7 +85,8 @@ func Zip4[T1, T2, T3, T4, R any](
 				default:
 					goto Again4
 				}
-				sink.Next(proj(n1.Value, n2.Value, n3.Value, n4.Value))
+				v := Try41(proj, n1.Value, n2.Value, n3.Value, n4.Value, oops)
+				Try1(sink, Next(v), oops)
 			}
 		})
 	}

@@ -14,7 +14,7 @@ func FromSlice[S ~[]T, T any](s S) Observable[T] {
 				return
 			}
 
-			sink.Next(v)
+			Try1(sink, Next(v), func() { sink.Error(ErrOops) })
 		}
 
 		sink.Complete()

@@ -59,9 +59,7 @@ func (m *multicast[T]) emit(n Notification[T]) {
 
 		m.mu.Unlock()
 
-		for _, observer := range obs.Observers {
-			observer.Emit(n)
-		}
+		obs.Emit(n)
 
 	case KindError, KindComplete:
 		var obs multiObserver[T]
@@ -71,9 +69,7 @@ func (m *multicast[T]) emit(n Notification[T]) {
 
 		m.mu.Unlock()
 
-		for _, observer := range obs.Observers {
-			observer.Emit(n)
-		}
+		obs.Emit(n)
 
 	default: // Unknown kind.
 		m.mu.Unlock()

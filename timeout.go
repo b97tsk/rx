@@ -63,16 +63,17 @@ func (obs timeoutObservable[T]) Subscribe(parent Context, sink Observer[T]) {
 			select {
 			case n := <-q:
 				switch n.Kind {
-				case KindError, KindComplete:
-					cancel()
-					close(noop)
-				}
-
-				sink(n)
-
-				switch n.Kind {
+				case KindNext:
+					Try1(sink, n, func() {
+						cancel()
+						close(noop)
+						sink.Error(ErrOops)
+					})
 				case KindError, KindComplete:
 					timerpool.Put(tm)
+					cancel()
+					close(noop)
+					sink(n)
 					return
 				}
 

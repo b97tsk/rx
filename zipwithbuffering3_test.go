@@ -11,7 +11,7 @@ import (
 func TestZipWithBuffering3(t *testing.T) {
 	t.Parallel()
 
-	toString := func(v1, v2 string, v3 int) string {
+	proj := func(v1, v2 string, v3 int) string {
 		return fmt.Sprintf("[%v %v %v]", v1, v2, v3)
 	}
 
@@ -20,7 +20,7 @@ func TestZipWithBuffering3(t *testing.T) {
 			rx.Just("A", "B"),
 			rx.Just("B", "C"),
 			rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
-			toString,
+			proj,
 		),
 		"[A B 1]", "[B C 2]", ErrComplete,
 	).Case(
@@ -28,7 +28,7 @@ func TestZipWithBuffering3(t *testing.T) {
 			rx.Just("A", "B", "C"),
 			rx.Just("B", "C", "D"),
 			rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
-			toString,
+			proj,
 		),
 		"[A B 1]", "[B C 2]", "[C D 3]", ErrComplete,
 	).Case(
@@ -36,7 +36,7 @@ func TestZipWithBuffering3(t *testing.T) {
 			rx.Just("A", "B", "C", "D"),
 			rx.Just("B", "C", "D", "E"),
 			rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
-			toString,
+			proj,
 		),
 		"[A B 1]", "[B C 2]", "[C D 3]", ErrComplete,
 	).Case(
@@ -50,7 +50,7 @@ func TestZipWithBuffering3(t *testing.T) {
 				),
 				DelaySubscription[int](1),
 			),
-			toString,
+			proj,
 		),
 		"[A B 1]", "[B C 2]", ErrComplete,
 	).Case(
@@ -64,7 +64,7 @@ func TestZipWithBuffering3(t *testing.T) {
 				),
 				DelaySubscription[int](1),
 			),
-			toString,
+			proj,
 		),
 		"[A B 1]", "[B C 2]", "[C D 3]", ErrComplete,
 	).Case(
@@ -78,8 +78,19 @@ func TestZipWithBuffering3(t *testing.T) {
 				),
 				DelaySubscription[int](1),
 			),
-			toString,
+			proj,
 		),
 		"[A B 1]", "[B C 2]", "[C D 3]", ErrTest,
+	).Case(
+		rx.Pipe1(
+			rx.ZipWithBuffering3(
+				rx.Just("A", "B", "C", "D"),
+				rx.Just("B", "C", "D", "E"),
+				rx.Range(1, 5),
+				proj,
+			),
+			rx.OnNext(func(string) { panic(ErrTest) }),
+		),
+		rx.ErrOops, ErrTest,
 	)
 }

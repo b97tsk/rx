@@ -29,14 +29,6 @@ func DistinctComparable[T comparable]() Operator[T, T] {
 // Distinct emits all values emitted by the source Observable whose projections
 // are distinct from each other.
 func Distinct[T any, K comparable](proj func(v T) K) Operator[T, T] {
-	if proj == nil {
-		panic("proj == nil")
-	}
-
-	return distinct(proj)
-}
-
-func distinct[T any, K comparable](proj func(v T) K) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return func(c Context, sink Observer[T]) {

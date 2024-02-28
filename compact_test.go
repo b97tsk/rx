@@ -7,7 +7,7 @@ import (
 	. "github.com/b97tsk/rx/internal/rxtest"
 )
 
-func TestCompact(t *testing.T) {
+func TestCompactComparable(t *testing.T) {
 	t.Parallel()
 
 	NewTestSuite[int](t).Case(
@@ -16,7 +16,13 @@ func TestCompact(t *testing.T) {
 			rx.CompactComparable[int](),
 		),
 		1, 2, 1, 3, 1, ErrComplete,
-	).Case(
+	)
+}
+
+func TestCompact(t *testing.T) {
+	t.Parallel()
+
+	NewTestSuite[int](t).Case(
 		rx.Pipe1(
 			rx.Just(1, 2, 2, 1, 3, 3, 1),
 			rx.Compact(
@@ -24,7 +30,13 @@ func TestCompact(t *testing.T) {
 			),
 		),
 		1, 2, 1, ErrComplete,
-	).Case(
+	)
+}
+
+func TestCompactComparableKey(t *testing.T) {
+	t.Parallel()
+
+	NewTestSuite[int](t).Case(
 		rx.Pipe1(
 			rx.Just(1, 2, 2, 1, 3, 3, 1),
 			rx.CompactComparableKey(
@@ -32,7 +44,13 @@ func TestCompact(t *testing.T) {
 			),
 		),
 		1, 2, 1, ErrComplete,
-	).Case(
+	)
+}
+
+func TestCompactKey(t *testing.T) {
+	t.Parallel()
+
+	NewTestSuite[int](t).Case(
 		rx.Pipe1(
 			rx.Just(1, 2, 2, 1, 3, 3, 1),
 			rx.CompactKey(

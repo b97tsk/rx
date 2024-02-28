@@ -7,10 +7,6 @@ func CombineLatest2[T1, T2, R any](
 	obs2 Observable[T2],
 	proj func(v1 T1, v2 T2) R,
 ) Observable[R] {
-	if proj == nil {
-		panic("proj == nil")
-	}
-
 	return func(c Context, sink Observer[R]) {
 		c, cancel := c.WithCancel()
 		noop := make(chan struct{})
@@ -33,9 +29,9 @@ func CombineLatest2[T1, T2, R any](
 			for cont {
 				select {
 				case n := <-chan1:
-					cont = combineLatestSink2(n, sink, proj, &s, &s.V1, 1)
+					cont = combineLatestTry2(sink, n, proj, &s, &s.V1, 1)
 				case n := <-chan2:
-					cont = combineLatestSink2(n, sink, proj, &s, &s.V2, 2)
+					cont = combineLatestTry2(sink, n, proj, &s, &s.V2, 2)
 				}
 			}
 		})
@@ -49,9 +45,9 @@ type combineLatestState2[T1, T2 any] struct {
 	V2 T2
 }
 
-func combineLatestSink2[T1, T2, R, X any](
-	n Notification[X],
+func combineLatestTry2[T1, T2, R, X any](
 	sink Observer[R],
+	n Notification[X],
 	proj func(T1, T2) R,
 	s *combineLatestState2[T1, T2],
 	v *X,
@@ -64,7 +60,9 @@ func combineLatestSink2[T1, T2, R, X any](
 		*v = n.Value
 
 		if s.NBits |= bit; s.NBits == FullBits {
-			sink.Next(proj(s.V1, s.V2))
+			oops := func() { sink.Error(ErrOops) }
+			v := Try21(proj, s.V1, s.V2, oops)
+			Try1(sink, Next(v), oops)
 		}
 
 	case KindError:

@@ -38,6 +38,13 @@ func TestJustIfEmpty(t *testing.T) {
 			rx.JustIfEmpty(4, 5, 6),
 		),
 		1, 2, 3, ErrTest,
+	).Case(
+		rx.Pipe2(
+			rx.Empty[int](),
+			rx.JustIfEmpty(1, 2, 3),
+			rx.OnNext(func(int) { panic(ErrTest) }),
+		),
+		rx.ErrOops, ErrTest,
 	)
 }
 

@@ -16,10 +16,6 @@ func ZipWithBuffering5[T1, T2, T3, T4, T5, R any](
 	obs5 Observable[T5],
 	proj func(v1 T1, v2 T2, v3 T3, v4 T4, v5 T5) R,
 ) Observable[R] {
-	if proj == nil {
-		panic("proj == nil")
-	}
-
 	return func(c Context, sink Observer[R]) {
 		c, cancel := c.WithCancel()
 		noop := make(chan struct{})
@@ -48,15 +44,15 @@ func ZipWithBuffering5[T1, T2, T3, T4, T5, R any](
 			for cont {
 				select {
 				case n := <-chan1:
-					cont = zipSink5(n, sink, proj, &s, &s.Q1, 1)
+					cont = zipTry5(sink, n, proj, &s, &s.Q1, 1)
 				case n := <-chan2:
-					cont = zipSink5(n, sink, proj, &s, &s.Q2, 2)
+					cont = zipTry5(sink, n, proj, &s, &s.Q2, 2)
 				case n := <-chan3:
-					cont = zipSink5(n, sink, proj, &s, &s.Q3, 4)
+					cont = zipTry5(sink, n, proj, &s, &s.Q3, 4)
 				case n := <-chan4:
-					cont = zipSink5(n, sink, proj, &s, &s.Q4, 8)
+					cont = zipTry5(sink, n, proj, &s, &s.Q4, 8)
 				case n := <-chan5:
-					cont = zipSink5(n, sink, proj, &s, &s.Q5, 16)
+					cont = zipTry5(sink, n, proj, &s, &s.Q5, 16)
 				}
 			}
 		})
@@ -73,9 +69,9 @@ type zipState5[T1, T2, T3, T4, T5 any] struct {
 	Q5 queue.Queue[T5]
 }
 
-func zipSink5[T1, T2, T3, T4, T5, R, X any](
-	n Notification[X],
+func zipTry5[T1, T2, T3, T4, T5, R, X any](
 	sink Observer[R],
+	n Notification[X],
 	proj func(T1, T2, T3, T4, T5) R,
 	s *zipState5[T1, T2, T3, T4, T5],
 	q *queue.Queue[X],
@@ -90,13 +86,17 @@ func zipSink5[T1, T2, T3, T4, T5, R, X any](
 		if s.NBits |= bit; s.NBits == FullBits {
 			var complete bool
 
-			sink.Next(proj(
+			oops := func() { sink.Error(ErrOops) }
+			v := Try51(
+				proj,
 				zipPop5(s, &s.Q1, 1, &complete),
 				zipPop5(s, &s.Q2, 2, &complete),
 				zipPop5(s, &s.Q3, 4, &complete),
 				zipPop5(s, &s.Q4, 8, &complete),
 				zipPop5(s, &s.Q5, 16, &complete),
-			))
+				oops,
+			)
+			Try1(sink, Next(v), oops)
 
 			if complete {
 				sink.Complete()

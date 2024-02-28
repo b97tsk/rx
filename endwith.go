@@ -7,10 +7,6 @@ func EndWith[T any](s ...T) Operator[T, T] {
 		return NewOperator(identity[Observable[T]])
 	}
 
-	return endWith(s...)
-}
-
-func endWith[T any](s ...T) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return Concat(source, FromSlice(s))

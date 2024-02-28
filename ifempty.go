@@ -25,7 +25,7 @@ func JustIfEmpty[T any](s ...T) Operator[T, T] {
 									return
 								}
 
-								sink.Next(v)
+								Try1(sink, Next(v), func() { sink.Error(ErrOops) })
 							}
 						}
 					}

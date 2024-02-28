@@ -28,12 +28,7 @@ type ShareOperator[T any] struct {
 
 // WithConnector sets Connector option to a given value.
 func (op ShareOperator[T]) WithConnector(connector func() Subject[T]) ShareOperator[T] {
-	if connector == nil {
-		panic("connector == nil")
-	}
-
 	op.opts.Connector = connector
-
 	return op
 }
 
@@ -69,7 +64,7 @@ func (obs *shareObservable[T]) Subscribe(c Context, sink Observer[T]) {
 	}()
 
 	if obs.subject.Observable == nil {
-		obs.subject = obs.connector()
+		obs.subject = Try01(obs.connector, func() { sink.Error(ErrOops) })
 	}
 
 	c, cancel := c.WithCancel()

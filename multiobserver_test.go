@@ -12,11 +12,12 @@ func TestMultiObserver(t *testing.T) {
 	t.Parallel()
 
 	m := rx.Multicast[string]()
+	defer m.Complete()
 
 	rx.Pipe1(
 		rx.Just("A", "B", "C"),
 		AddLatencyToValues[string](1, 1),
-	).Subscribe(rx.NewBackgroundContext(), m.Observer.ElementsOnly)
+	).Subscribe(rx.NewBackgroundContext(), m.ElementsOnly)
 
 	NewTestSuite[string](t).Case(
 		rx.Pipe1(
@@ -40,7 +41,7 @@ func TestMultiObserver(t *testing.T) {
 		),
 	).Subscribe(ctx, rx.Noop[string])
 
-	m.Observer.Next("D")
+	m.Next("D")
 
 	rx.Pipe1(
 		m.Observable,
@@ -51,8 +52,19 @@ func TestMultiObserver(t *testing.T) {
 		),
 	).Subscribe(rx.NewBackgroundContext(), rx.Noop[string])
 
-	m.Observer.Next("E")
-	m.Observer.Complete()
+	m.Next("E")
 
-	time.Sleep(Step(5))
+	for range 3 {
+		m.Observable.Subscribe(rx.NewBackgroundContext(), func(n rx.Notification[string]) {
+			panic(ErrTest)
+		})
+	}
+
+	defer func() {
+		if v := recover(); v != ErrTest {
+			panic(v)
+		}
+	}()
+
+	m.Next("F")
 }

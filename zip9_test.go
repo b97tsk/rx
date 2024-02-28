@@ -21,7 +21,7 @@ func TestZip9(t *testing.T) {
 }
 
 func testZip9(t *testing.T, op rx.Operator[string, string], err error) {
-	toString := func(v1, v2, v3, v4, v5, v6, v7, v8, v9 string) string {
+	proj := func(v1, v2, v3, v4, v5, v6, v7, v8, v9 string) string {
 		return fmt.Sprintf("[%v %v %v %v %v %v %v %v %v]", v1, v2, v3, v4, v5, v6, v7, v8, v9)
 	}
 
@@ -36,7 +36,7 @@ func testZip9(t *testing.T, op rx.Operator[string, string], err error) {
 			rx.Just("G", "H", "I", "J"),
 			rx.Just("H", "I", "J", "K"),
 			rx.Just("I", "J", "K", "L"),
-			toString,
+			proj,
 		),
 		"[A B C D E F G H I]", "[B C D E F G H I J]", "[C D E F G H I J K]", err,
 	).Case(
@@ -50,7 +50,7 @@ func testZip9(t *testing.T, op rx.Operator[string, string], err error) {
 			rx.Just("G", "H", "I", "J"),
 			rx.Just("H", "I", "J", "K"),
 			rx.Just("I", "J", "K", "L"),
-			toString,
+			proj,
 		),
 		"[A B C D E F G H I]", "[B C D E F G H I J]", "[C D E F G H I J K]", err,
 	).Case(
@@ -64,7 +64,7 @@ func testZip9(t *testing.T, op rx.Operator[string, string], err error) {
 			rx.Just("G", "H", "I", "J"),
 			rx.Just("H", "I", "J", "K"),
 			rx.Just("I", "J", "K", "L"),
-			toString,
+			proj,
 		),
 		"[A B C D E F G H I]", "[B C D E F G H I J]", "[C D E F G H I J K]", err,
 	).Case(
@@ -78,7 +78,7 @@ func testZip9(t *testing.T, op rx.Operator[string, string], err error) {
 			rx.Just("G", "H", "I", "J"),
 			rx.Just("H", "I", "J", "K"),
 			rx.Just("I", "J", "K", "L"),
-			toString,
+			proj,
 		),
 		"[A B C D E F G H I]", "[B C D E F G H I J]", "[C D E F G H I J K]", err,
 	).Case(
@@ -92,7 +92,7 @@ func testZip9(t *testing.T, op rx.Operator[string, string], err error) {
 			rx.Just("G", "H", "I", "J"),
 			rx.Just("H", "I", "J", "K"),
 			rx.Just("I", "J", "K", "L"),
-			toString,
+			proj,
 		),
 		"[A B C D E F G H I]", "[B C D E F G H I J]", "[C D E F G H I J K]", err,
 	).Case(
@@ -106,7 +106,7 @@ func testZip9(t *testing.T, op rx.Operator[string, string], err error) {
 			rx.Just("G", "H", "I", "J"),
 			rx.Just("H", "I", "J", "K"),
 			rx.Just("I", "J", "K", "L"),
-			toString,
+			proj,
 		),
 		"[A B C D E F G H I]", "[B C D E F G H I J]", "[C D E F G H I J K]", err,
 	).Case(
@@ -120,7 +120,7 @@ func testZip9(t *testing.T, op rx.Operator[string, string], err error) {
 			rx.Pipe1(rx.Just("G", "H", "I"), op),
 			rx.Just("H", "I", "J", "K"),
 			rx.Just("I", "J", "K", "L"),
-			toString,
+			proj,
 		),
 		"[A B C D E F G H I]", "[B C D E F G H I J]", "[C D E F G H I J K]", err,
 	).Case(
@@ -134,7 +134,7 @@ func testZip9(t *testing.T, op rx.Operator[string, string], err error) {
 			rx.Just("G", "H", "I", "J"),
 			rx.Pipe1(rx.Just("H", "I", "J"), op),
 			rx.Just("I", "J", "K", "L"),
-			toString,
+			proj,
 		),
 		"[A B C D E F G H I]", "[B C D E F G H I J]", "[C D E F G H I J K]", err,
 	).Case(
@@ -148,8 +148,25 @@ func testZip9(t *testing.T, op rx.Operator[string, string], err error) {
 			rx.Just("G", "H", "I", "J"),
 			rx.Just("H", "I", "J", "K"),
 			rx.Pipe1(rx.Just("I", "J", "K"), op),
-			toString,
+			proj,
 		),
 		"[A B C D E F G H I]", "[B C D E F G H I J]", "[C D E F G H I J K]", err,
+	).Case(
+		rx.Pipe1(
+			rx.Zip9(
+				rx.Just("A", "B", "C", "D"),
+				rx.Just("B", "C", "D", "E"),
+				rx.Just("C", "D", "E", "F"),
+				rx.Just("D", "E", "F", "G"),
+				rx.Just("E", "F", "G", "H"),
+				rx.Just("F", "G", "H", "I"),
+				rx.Just("G", "H", "I", "J"),
+				rx.Just("H", "I", "J", "K"),
+				rx.Just("I", "J", "K", "L"),
+				proj,
+			),
+			rx.OnNext(func(string) { panic(ErrTest) }),
+		),
+		rx.ErrOops, ErrTest,
 	)
 }

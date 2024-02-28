@@ -85,4 +85,19 @@ func TestSample(t *testing.T) {
 		),
 		context.DeadlineExceeded,
 	)
+
+	t.Run("Oops", func(t *testing.T) {
+		defer func() {
+			NewTestSuite[string](t).Case(rx.Oops[string](recover()), rx.ErrOops, ErrTest)
+		}()
+		rx.Pipe1(
+			rx.Empty[string](),
+			rx.Sample[string](
+				func(_ rx.Context, sink rx.Observer[int]) {
+					defer sink.Complete()
+					panic(ErrTest)
+				},
+			),
+		).Subscribe(rx.NewBackgroundContext(), rx.Noop[string])
+	})
 }

@@ -7,20 +7,6 @@ func GroupBy[T any, K comparable](
 	keySelector func(v T) K,
 	groupFactory func() Subject[T],
 ) Operator[T, Pair[K, Observable[T]]] {
-	switch {
-	case keySelector == nil:
-		panic("keySelector == nil")
-	case groupFactory == nil:
-		panic("groupFactory == nil")
-	}
-
-	return groupBy(keySelector, groupFactory)
-}
-
-func groupBy[T any, K comparable](
-	keySelector func(v T) K,
-	groupFactory func() Subject[T],
-) Operator[T, Pair[K, Observable[T]]] {
 	return NewOperator(
 		func(source Observable[T]) Observable[Pair[K, Observable[T]]] {
 			return groupByObservable[T, K]{source, keySelector, groupFactory}.Subscribe
@@ -53,9 +39,7 @@ func (obs groupByObservable[T, K]) Subscribe(c Context, sink Observer[Pair[K, Ob
 			group.Emit(n)
 
 		case KindError, KindComplete:
-			for _, group := range groups {
-				group.Emit(n)
-			}
+			Try2(emitLastNotificationToGroups, groups, n, func() { sink.Error(ErrOops) })
 
 			switch n.Kind {
 			case KindError:
@@ -65,4 +49,17 @@ func (obs groupByObservable[T, K]) Subscribe(c Context, sink Observer[Pair[K, Ob
 			}
 		}
 	})
+}
+
+func emitLastNotificationToGroups[T any, K comparable](groups map[K]Observer[T], n Notification[T]) {
+	defer func() {
+		if len(groups) != 0 {
+			emitLastNotificationToGroups(groups, n)
+		}
+	}()
+
+	for k, group := range groups {
+		delete(groups, k)
+		group.Emit(n)
+	}
 }

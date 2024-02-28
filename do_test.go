@@ -13,34 +13,31 @@ func TestDo(t *testing.T) {
 	doTest(t, func(f func()) rx.Operator[int, int] {
 		return rx.Do(func(rx.Notification[int]) { f() })
 	}, 1, 3, 6, 9)
-}
-
-func TestOnNext(t *testing.T) {
-	t.Parallel()
-
 	doTest(t, func(f func()) rx.Operator[int, int] {
 		return rx.OnNext(func(int) { f() })
 	}, 0, 1, 3, 5)
-}
-
-func TestOnComplete(t *testing.T) {
-	t.Parallel()
-
 	doTest(t, rx.OnComplete[int], 1, 2, 3, 3)
-}
-
-func TestOnError(t *testing.T) {
-	t.Parallel()
-
 	doTest(t, func(f func()) rx.Operator[int, int] {
 		return rx.OnError[int](func(error) { f() })
 	}, 0, 0, 0, 1)
-}
-
-func TestOnLastNotification(t *testing.T) {
-	t.Parallel()
-
 	doTest(t, rx.OnLastNotification[int], 1, 2, 3, 4)
+
+	NewTestSuite[string](t).Case(
+		rx.Pipe1(rx.Just("A"), rx.Do(func(n rx.Notification[string]) { panic(ErrTest) })),
+		rx.ErrOops, ErrTest,
+	).Case(
+		rx.Pipe1(rx.Just("A"), rx.OnNext(func(string) { panic(ErrTest) })),
+		rx.ErrOops, ErrTest,
+	).Case(
+		rx.Pipe1(rx.Empty[string](), rx.OnComplete[string](func() { panic(ErrTest) })),
+		rx.ErrOops, ErrTest,
+	).Case(
+		rx.Pipe1(rx.Throw[string](ErrTest), rx.OnError[string](func(err error) { panic(err) })),
+		rx.ErrOops, ErrTest,
+	).Case(
+		rx.Pipe1(rx.Throw[string](ErrTest), rx.OnLastNotification[string](func() { panic(ErrTest) })),
+		rx.ErrOops, ErrTest,
+	)
 }
 
 func doTest(

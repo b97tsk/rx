@@ -13,10 +13,6 @@ func CombineLatest8[T1, T2, T3, T4, T5, T6, T7, T8, R any](
 	obs8 Observable[T8],
 	proj func(v1 T1, v2 T2, v3 T3, v4 T4, v5 T5, v6 T6, v7 T7, v8 T8) R,
 ) Observable[R] {
-	if proj == nil {
-		panic("proj == nil")
-	}
-
 	return func(c Context, sink Observer[R]) {
 		c, cancel := c.WithCancel()
 		noop := make(chan struct{})
@@ -51,21 +47,21 @@ func CombineLatest8[T1, T2, T3, T4, T5, T6, T7, T8, R any](
 			for cont {
 				select {
 				case n := <-chan1:
-					cont = combineLatestSink8(n, sink, proj, &s, &s.V1, 1)
+					cont = combineLatestTry8(sink, n, proj, &s, &s.V1, 1)
 				case n := <-chan2:
-					cont = combineLatestSink8(n, sink, proj, &s, &s.V2, 2)
+					cont = combineLatestTry8(sink, n, proj, &s, &s.V2, 2)
 				case n := <-chan3:
-					cont = combineLatestSink8(n, sink, proj, &s, &s.V3, 4)
+					cont = combineLatestTry8(sink, n, proj, &s, &s.V3, 4)
 				case n := <-chan4:
-					cont = combineLatestSink8(n, sink, proj, &s, &s.V4, 8)
+					cont = combineLatestTry8(sink, n, proj, &s, &s.V4, 8)
 				case n := <-chan5:
-					cont = combineLatestSink8(n, sink, proj, &s, &s.V5, 16)
+					cont = combineLatestTry8(sink, n, proj, &s, &s.V5, 16)
 				case n := <-chan6:
-					cont = combineLatestSink8(n, sink, proj, &s, &s.V6, 32)
+					cont = combineLatestTry8(sink, n, proj, &s, &s.V6, 32)
 				case n := <-chan7:
-					cont = combineLatestSink8(n, sink, proj, &s, &s.V7, 64)
+					cont = combineLatestTry8(sink, n, proj, &s, &s.V7, 64)
 				case n := <-chan8:
-					cont = combineLatestSink8(n, sink, proj, &s, &s.V8, 128)
+					cont = combineLatestTry8(sink, n, proj, &s, &s.V8, 128)
 				}
 			}
 		})
@@ -85,9 +81,9 @@ type combineLatestState8[T1, T2, T3, T4, T5, T6, T7, T8 any] struct {
 	V8 T8
 }
 
-func combineLatestSink8[T1, T2, T3, T4, T5, T6, T7, T8, R, X any](
-	n Notification[X],
+func combineLatestTry8[T1, T2, T3, T4, T5, T6, T7, T8, R, X any](
 	sink Observer[R],
+	n Notification[X],
 	proj func(T1, T2, T3, T4, T5, T6, T7, T8) R,
 	s *combineLatestState8[T1, T2, T3, T4, T5, T6, T7, T8],
 	v *X,
@@ -100,7 +96,9 @@ func combineLatestSink8[T1, T2, T3, T4, T5, T6, T7, T8, R, X any](
 		*v = n.Value
 
 		if s.NBits |= bit; s.NBits == FullBits {
-			sink.Next(proj(s.V1, s.V2, s.V3, s.V4, s.V5, s.V6, s.V7, s.V8))
+			oops := func() { sink.Error(ErrOops) }
+			v := Try81(proj, s.V1, s.V2, s.V3, s.V4, s.V5, s.V6, s.V7, s.V8, oops)
+			Try1(sink, Next(v), oops)
 		}
 
 	case KindError:

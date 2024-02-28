@@ -10,7 +10,7 @@ import (
 // every specified interval of time.
 func Ticker(d time.Duration) Observable[time.Time] {
 	if d <= 0 {
-		panic("d <= 0")
+		return Oops[time.Time]("Ticker: d <= 0")
 	}
 
 	return func(c Context, sink Observer[time.Time]) {
@@ -27,7 +27,7 @@ func Ticker(d time.Duration) Observable[time.Time] {
 					sink.Error(c.Err())
 					return
 				case t := <-tk.C:
-					sink.Next(t)
+					Try1(sink, Next(t), func() { sink.Error(ErrOops) })
 				}
 			}
 		})
@@ -47,7 +47,7 @@ func Timer(d time.Duration) Observable[time.Time] {
 				sink.Error(c.Err())
 			case t := <-tm.C:
 				timerpool.PutExpired(tm)
-				sink.Next(t)
+				Try1(sink, Next(t), func() { sink.Error(ErrOops) })
 				sink.Complete()
 			}
 		})

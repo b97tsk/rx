@@ -19,10 +19,6 @@ func ZipWithBuffering8[T1, T2, T3, T4, T5, T6, T7, T8, R any](
 	obs8 Observable[T8],
 	proj func(v1 T1, v2 T2, v3 T3, v4 T4, v5 T5, v6 T6, v7 T7, v8 T8) R,
 ) Observable[R] {
-	if proj == nil {
-		panic("proj == nil")
-	}
-
 	return func(c Context, sink Observer[R]) {
 		c, cancel := c.WithCancel()
 		noop := make(chan struct{})
@@ -57,21 +53,21 @@ func ZipWithBuffering8[T1, T2, T3, T4, T5, T6, T7, T8, R any](
 			for cont {
 				select {
 				case n := <-chan1:
-					cont = zipSink8(n, sink, proj, &s, &s.Q1, 1)
+					cont = zipTry8(sink, n, proj, &s, &s.Q1, 1)
 				case n := <-chan2:
-					cont = zipSink8(n, sink, proj, &s, &s.Q2, 2)
+					cont = zipTry8(sink, n, proj, &s, &s.Q2, 2)
 				case n := <-chan3:
-					cont = zipSink8(n, sink, proj, &s, &s.Q3, 4)
+					cont = zipTry8(sink, n, proj, &s, &s.Q3, 4)
 				case n := <-chan4:
-					cont = zipSink8(n, sink, proj, &s, &s.Q4, 8)
+					cont = zipTry8(sink, n, proj, &s, &s.Q4, 8)
 				case n := <-chan5:
-					cont = zipSink8(n, sink, proj, &s, &s.Q5, 16)
+					cont = zipTry8(sink, n, proj, &s, &s.Q5, 16)
 				case n := <-chan6:
-					cont = zipSink8(n, sink, proj, &s, &s.Q6, 32)
+					cont = zipTry8(sink, n, proj, &s, &s.Q6, 32)
 				case n := <-chan7:
-					cont = zipSink8(n, sink, proj, &s, &s.Q7, 64)
+					cont = zipTry8(sink, n, proj, &s, &s.Q7, 64)
 				case n := <-chan8:
-					cont = zipSink8(n, sink, proj, &s, &s.Q8, 128)
+					cont = zipTry8(sink, n, proj, &s, &s.Q8, 128)
 				}
 			}
 		})
@@ -91,9 +87,9 @@ type zipState8[T1, T2, T3, T4, T5, T6, T7, T8 any] struct {
 	Q8 queue.Queue[T8]
 }
 
-func zipSink8[T1, T2, T3, T4, T5, T6, T7, T8, R, X any](
-	n Notification[X],
+func zipTry8[T1, T2, T3, T4, T5, T6, T7, T8, R, X any](
 	sink Observer[R],
+	n Notification[X],
 	proj func(T1, T2, T3, T4, T5, T6, T7, T8) R,
 	s *zipState8[T1, T2, T3, T4, T5, T6, T7, T8],
 	q *queue.Queue[X],
@@ -108,7 +104,9 @@ func zipSink8[T1, T2, T3, T4, T5, T6, T7, T8, R, X any](
 		if s.NBits |= bit; s.NBits == FullBits {
 			var complete bool
 
-			sink.Next(proj(
+			oops := func() { sink.Error(ErrOops) }
+			v := Try81(
+				proj,
 				zipPop8(s, &s.Q1, 1, &complete),
 				zipPop8(s, &s.Q2, 2, &complete),
 				zipPop8(s, &s.Q3, 4, &complete),
@@ -117,7 +115,9 @@ func zipSink8[T1, T2, T3, T4, T5, T6, T7, T8, R, X any](
 				zipPop8(s, &s.Q6, 32, &complete),
 				zipPop8(s, &s.Q7, 64, &complete),
 				zipPop8(s, &s.Q8, 128, &complete),
-			))
+				oops,
+			)
+			Try1(sink, Next(v), oops)
 
 			if complete {
 				sink.Complete()

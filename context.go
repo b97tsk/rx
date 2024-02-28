@@ -12,10 +12,12 @@ import (
 // After the first call, subsequent calls to a CancelFunc do nothing.
 type CancelFunc = context.CancelFunc
 
-// A Context carries a [context.Context], an optional [sync.WaitGroup].
+// A Context carries a [context.Context], an optional [sync.WaitGroup], and
+// an optional panic handler.
 type Context struct {
-	Context   context.Context
-	WaitGroup *sync.WaitGroup
+	Context      context.Context
+	WaitGroup    *sync.WaitGroup
+	PanicHandler func(v any)
 }
 
 // NewBackgroundContext returns NewContext(context.Background()).
@@ -95,6 +97,12 @@ func (c Context) WithWaitGroup(wg *sync.WaitGroup) Context {
 	return c
 }
 
+// WithPanicHandler returns a copy of c with PanicHandler field set to f.
+func (c Context) WithPanicHandler(f func(v any)) Context {
+	c.PanicHandler = f
+	return c
+}
+
 // Go calls f in a goroutine.
 //
 // Internally, f is wrapped with [Context.PreAsyncCall] before being run by
@@ -109,6 +117,9 @@ func (c Context) Go(f func()) {
 // If c.WaitGroup is not nil, the function returned decreases c.WaitGroup's
 // counter when f returns.
 //
+// If f panics and c.PanicHandler is not nil, the function returned calls
+// c.PanicHandler with a value returned by the built-in recover function.
+//
 // PreAsyncCall is usually called before starting an asynchronous operation,
 // the caller then calls the function returned in that asynchronous operation.
 // The function passed to PreAsyncCall is what the caller would do in that
@@ -118,9 +129,16 @@ func (c Context) PreAsyncCall(f func()) func() {
 		c.WaitGroup.Add(1)
 	}
 	return func() {
-		if c.WaitGroup != nil {
-			defer c.WaitGroup.Done()
-		}
+		defer func() {
+			if c.WaitGroup != nil {
+				c.WaitGroup.Done()
+			}
+			if c.PanicHandler != nil {
+				if v := recover(); v != nil {
+					c.PanicHandler(v)
+				}
+			}
+		}()
 		f()
 	}
 }

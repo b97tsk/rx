@@ -7,10 +7,6 @@ func WithLatestFrom1[T0, T1, R any](
 	obs1 Observable[T1],
 	proj func(v0 T0, v1 T1) R,
 ) Operator[T0, R] {
-	if proj == nil {
-		panic("proj == nil")
-	}
-
 	return NewOperator(
 		func(source Observable[T0]) Observable[R] {
 			return withLatestFrom2(source, obs1, proj)
@@ -45,9 +41,9 @@ func withLatestFrom2[T1, T2, R any](
 			for cont {
 				select {
 				case n := <-chan1:
-					cont = withLatestFromSink2(n, sink, proj, &s, &s.V1, 1)
+					cont = withLatestFromTry2(sink, n, proj, &s, &s.V1, 1)
 				case n := <-chan2:
-					cont = withLatestFromSink2(n, sink, proj, &s, &s.V2, 2)
+					cont = withLatestFromTry2(sink, n, proj, &s, &s.V2, 2)
 				}
 			}
 		})
@@ -61,9 +57,9 @@ type withLatestFromState2[T1, T2 any] struct {
 	V2 T2
 }
 
-func withLatestFromSink2[T1, T2, R, X any](
-	n Notification[X],
+func withLatestFromTry2[T1, T2, R, X any](
 	sink Observer[R],
+	n Notification[X],
 	proj func(T1, T2) R,
 	s *withLatestFromState2[T1, T2],
 	v *X,
@@ -76,7 +72,9 @@ func withLatestFromSink2[T1, T2, R, X any](
 		*v = n.Value
 
 		if s.NBits |= bit; s.NBits == FullBits && bit == 1 {
-			sink.Next(proj(s.V1, s.V2))
+			oops := func() { sink.Error(ErrOops) }
+			v := Try21(proj, s.V1, s.V2, oops)
+			Try1(sink, Next(v), oops)
 		}
 
 	case KindError:

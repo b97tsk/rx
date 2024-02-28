@@ -6,20 +6,6 @@ import (
 	"time"
 )
 
-// Audit ignores source values for a duration determined by another Observable,
-// then emits the most recent value from the source Observable, then repeats
-// this process.
-//
-// It's like [AuditTime], but the silencing duration is determined by a second
-// Observable.
-func Audit[T, U any](durationSelector func(v T) Observable[U]) Operator[T, T] {
-	if durationSelector == nil {
-		panic("durationSelector == nil")
-	}
-
-	return audit(durationSelector)
-}
-
 // AuditTime ignores source values for a duration, then emits the most recent
 // value from the source Observable, then repeats this process.
 //
@@ -28,10 +14,16 @@ func Audit[T, U any](durationSelector func(v T) Observable[U]) Operator[T, T] {
 func AuditTime[T any](d time.Duration) Operator[T, T] {
 	obsTimer := Timer(d)
 	durationSelector := func(T) Observable[time.Time] { return obsTimer }
-	return audit(durationSelector)
+	return Audit(durationSelector)
 }
 
-func audit[T, U any](durationSelector func(v T) Observable[U]) Operator[T, T] {
+// Audit ignores source values for a duration determined by another Observable,
+// then emits the most recent value from the source Observable, then repeats
+// this process.
+//
+// It's like [AuditTime], but the silencing duration is determined by a second
+// Observable.
+func Audit[T, U any](durationSelector func(v T) Observable[U]) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return auditObservable[T, U]{source, durationSelector}.Subscribe
@@ -63,6 +55,7 @@ func (obs auditObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
 	x.Context.Store(c.Context)
 
 	startWorker := func(v T) {
+		obs1 := obs.DurationSelector(v)
 		w, cancelw := c.WithCancel()
 
 		x.Context.Store(w.Context)
@@ -70,10 +63,12 @@ func (obs auditObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
 
 		var noop bool
 
-		obs.DurationSelector(v).Subscribe(w, func(n Notification[U]) {
+		obs1.Subscribe(w, func(n Notification[U]) {
 			if noop {
 				return
 			}
+
+			defer x.Worker.Done()
 
 			noop = true
 			cancelw()
@@ -84,14 +79,18 @@ func (obs auditObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
 				value := x.Latest.Value
 				x.Latest.Unlock()
 
-				sink.Next(value)
+				Try1(sink, Next(value), func() {
+					if x.Context.Swap(sentinel) != sentinel {
+						sink.Error(ErrOops)
+					}
+				})
 
 				if x.Context.CompareAndSwap(w.Context, c.Context) && x.Complete.Load() && x.Context.CompareAndSwap(c.Context, sentinel) {
 					sink.Complete()
 				}
 
 			case KindError:
-				if x.Context.CompareAndSwap(w.Context, sentinel) {
+				if x.Context.Swap(sentinel) != sentinel {
 					sink.Error(n.Error)
 				}
 
@@ -100,8 +99,6 @@ func (obs auditObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
 					sink.Complete()
 				}
 			}
-
-			x.Worker.Done()
 		})
 	}
 

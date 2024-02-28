@@ -60,12 +60,12 @@ func (obs delayObservable[T]) Subscribe(c Context, sink Observer[T]) {
 					select {
 					default:
 					case <-done:
-						swapped := x.Context.CompareAndSwap(w.Context, sentinel)
+						old := x.Context.Swap(sentinel)
 
 						x.Queue.Init()
 						x.Queue.Unlock()
 
-						if swapped {
+						if old != sentinel {
 							sink.Error(w.Err())
 						}
 
@@ -100,23 +100,23 @@ func (obs delayObservable[T]) Subscribe(c Context, sink Observer[T]) {
 				}
 
 			case KindError:
+				defer x.Worker.Done()
+
+				cancelw()
+
 				x.Queue.Lock()
-
-				swapped := x.Context.CompareAndSwap(w.Context, sentinel)
-
+				old := x.Context.Swap(sentinel)
 				x.Queue.Init()
 				x.Queue.Unlock()
 
-				if swapped {
+				if old != sentinel {
 					sink.Error(n.Error)
 				}
 
 			case KindComplete:
-				break
+				cancelw()
+				x.Worker.Done()
 			}
-
-			cancelw()
-			x.Worker.Done()
 		})
 	}
 
@@ -141,12 +141,11 @@ func (obs delayObservable[T]) Subscribe(c Context, sink Observer[T]) {
 
 			cancel()
 			x.Worker.Wait()
+			x.Queue.Init()
 
 			if old != sentinel {
 				sink(n)
 			}
-
-			x.Queue.Init()
 
 		case KindComplete:
 			x.Complete.Store(true)

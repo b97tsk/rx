@@ -72,6 +72,13 @@ func TestTakeLast(t *testing.T) {
 			rx.TakeLast[int](3),
 		),
 		ErrTest,
+	).Case(
+		rx.Pipe2(
+			rx.Range(1, 10),
+			rx.TakeLast[int](3),
+			rx.OnNext(func(int) { panic(ErrTest) }),
+		),
+		rx.ErrOops, ErrTest,
 	)
 
 	ctx, cancel := rx.NewBackgroundContext().WithTimeout(Step(1))

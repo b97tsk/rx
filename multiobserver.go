@@ -64,7 +64,27 @@ func (m *multiObserver[T]) Delete(observer *Observer[T]) {
 				m.Observers = observers[:n-1]
 			}
 
-			break
+			return
 		}
+	}
+}
+
+func (m *multiObserver[T]) Emit(n Notification[T]) {
+	emitNotificationToObservers(m.Observers, n)
+}
+
+func emitNotificationToObservers[T any](observers []*Observer[T], n Notification[T]) {
+	var i int
+
+	defer func() {
+		if i < len(observers)-1 {
+			emitNotificationToObservers(observers[i+1:], n)
+		}
+	}()
+
+	var sink *Observer[T]
+
+	for i, sink = range observers {
+		sink.Emit(n)
 	}
 }

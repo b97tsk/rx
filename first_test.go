@@ -100,5 +100,12 @@ func TestFirstOrElse(t *testing.T) {
 			rx.FirstOrElse(404),
 		),
 		1, ErrComplete,
+	).Case(
+		rx.Pipe2(
+			rx.Empty[int](),
+			rx.FirstOrElse(404),
+			rx.OnNext(func(int) { panic(ErrTest) }),
+		),
+		rx.ErrOops, ErrTest,
 	)
 }

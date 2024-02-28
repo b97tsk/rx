@@ -7,14 +7,6 @@ package rx
 //
 // Channelize closes downstream channel after join returns.
 func Channelize[T any](join func(upstream <-chan Notification[T], downstream chan<- Notification[T])) Operator[T, T] {
-	if join == nil {
-		panic("join == nil")
-	}
-
-	return channelize[T](join)
-}
-
-func channelize[T any](join func(upstream <-chan Notification[T], downstream chan<- Notification[T])) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return func(c Context, sink Observer[T]) {
@@ -26,14 +18,26 @@ func channelize[T any](join func(upstream <-chan Notification[T], downstream cha
 				noop := make(chan struct{})
 
 				c.Go(func() {
-					join(upstream, downstream)
-					close(downstream)
-					close(noop)
+					defer func() {
+						close(downstream)
+						close(noop)
+					}()
+					Try2(join, upstream, downstream, func() { downstream <- Error[T](ErrOops) })
 				})
 
 				c.Go(func() {
 					for n := range downstream {
-						sink(n)
+						switch n.Kind {
+						case KindNext:
+							Try1(sink, n, func() {
+								c.Go(func() { drain(downstream) })
+								sink.Error(ErrOops)
+							})
+						case KindError, KindComplete:
+							defer drain(downstream)
+							sink(n)
+							return
+						}
 					}
 				})
 
@@ -41,4 +45,9 @@ func channelize[T any](join func(upstream <-chan Notification[T], downstream cha
 			}
 		},
 	)
+}
+
+func drain[T any](c <-chan T) {
+	for range c {
+	}
 }

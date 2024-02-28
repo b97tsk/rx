@@ -10,10 +10,6 @@ func Zip2[T1, T2, R any](
 	obs2 Observable[T2],
 	proj func(v1 T1, v2 T2) R,
 ) Observable[R] {
-	if proj == nil {
-		panic("proj == nil")
-	}
-
 	return func(c Context, sink Observer[R]) {
 		c, cancel := c.WithCancel()
 		noop := make(chan struct{})
@@ -29,6 +25,7 @@ func Zip2[T1, T2, R any](
 		c.Go(func() { obs2.Subscribe(c, channelObserver(chan2, noop)) })
 
 		c.Go(func() {
+			oops := func() { sink.Error(ErrOops) }
 			for {
 			Again1:
 				n1 := <-chan1
@@ -56,7 +53,8 @@ func Zip2[T1, T2, R any](
 				default:
 					goto Again2
 				}
-				sink.Next(proj(n1.Value, n2.Value))
+				v := Try21(proj, n1.Value, n2.Value, oops)
+				Try1(sink, Next(v), oops)
 			}
 		})
 	}

@@ -38,5 +38,13 @@ func TestToSlice(t *testing.T) {
 			ToString[[]string](),
 		),
 		ErrTest,
+	).Case(
+		rx.Pipe3(
+			rx.Just("A", "B", "C"),
+			rx.ToSlice[string](),
+			rx.OnNext(func([]string) { panic(ErrTest) }),
+			ToString[[]string](),
+		),
+		rx.ErrOops, ErrTest,
 	)
 }

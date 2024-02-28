@@ -11,7 +11,7 @@ import (
 func TestWithLatestFrom2(t *testing.T) {
 	t.Parallel()
 
-	toString := func(v0, v1, v2 string) string {
+	proj := func(v0, v1, v2 string) string {
 		return fmt.Sprintf("[%v %v %v]", v0, v1, v2)
 	}
 
@@ -21,7 +21,7 @@ func TestWithLatestFrom2(t *testing.T) {
 			rx.WithLatestFrom2(
 				rx.Pipe1(rx.Just("B1", "B2", "B3"), AddLatencyToValues[string](2, 3)),
 				rx.Pipe1(rx.Just("C1", "C2", "C3"), AddLatencyToValues[string](3, 3)),
-				toString,
+				proj,
 			),
 		),
 		"[A2 B1 C1]",
@@ -33,9 +33,20 @@ func TestWithLatestFrom2(t *testing.T) {
 			rx.WithLatestFrom2(
 				rx.Throw[string](ErrTest),
 				rx.Throw[string](ErrTest),
-				toString,
+				proj,
 			),
 		),
 		ErrTest,
+	).Case(
+		rx.Pipe2(
+			rx.Pipe1(rx.Just("A1", "A2", "A3"), AddLatencyToValues[string](1, 3)),
+			rx.WithLatestFrom2(
+				rx.Pipe1(rx.Just("B1", "B2", "B3"), AddLatencyToValues[string](2, 3)),
+				rx.Pipe1(rx.Just("C1", "C2", "C3"), AddLatencyToValues[string](3, 3)),
+				proj,
+			),
+			rx.OnNext(func(string) { panic(ErrTest) }),
+		),
+		rx.ErrOops, ErrTest,
 	)
 }

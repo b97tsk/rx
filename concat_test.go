@@ -42,9 +42,7 @@ func TestConcat(t *testing.T) {
 				time.Sleep(Step(2))
 				sink.Complete()
 			},
-			func(rx.Context, rx.Observer[int]) {
-				panic("should not happen")
-			},
+			rx.Oops[int]("should not happen"),
 		),
 		context.DeadlineExceeded,
 	)
@@ -96,6 +94,12 @@ func TestConcatMap(t *testing.T) {
 			rx.ConcatAll[rx.Observable[string]](),
 		),
 		ErrTest,
+	).Case(
+		rx.Pipe1(
+			rx.Timer(Step(1)),
+			rx.ConcatMap(func(time.Time) rx.Observable[string] { panic(ErrTest) }),
+		),
+		rx.ErrOops, ErrTest,
 	)
 }
 
@@ -134,6 +138,12 @@ func TestConcatMapWithBuffering(t *testing.T) {
 			rx.ConcatAll[rx.Observable[string]]().WithBuffering(),
 		),
 		ErrTest,
+	).Case(
+		rx.Pipe1(
+			rx.Timer(Step(1)),
+			rx.ConcatMap(func(time.Time) rx.Observable[string] { panic(ErrTest) }).WithBuffering(),
+		),
+		rx.ErrOops, ErrTest,
 	)
 
 	ctx, cancel := rx.NewBackgroundContext().WithTimeout(Step(1))
@@ -146,9 +156,7 @@ func TestConcatMapWithBuffering(t *testing.T) {
 					time.Sleep(Step(2))
 					sink.Complete()
 				},
-				func(rx.Context, rx.Observer[string]) {
-					panic("should not happen")
-				},
+				rx.Oops[string]("should not happen"),
 			),
 			rx.ConcatAll[rx.Observable[string]]().WithBuffering(),
 		),

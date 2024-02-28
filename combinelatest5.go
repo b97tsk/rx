@@ -10,10 +10,6 @@ func CombineLatest5[T1, T2, T3, T4, T5, R any](
 	obs5 Observable[T5],
 	proj func(v1 T1, v2 T2, v3 T3, v4 T4, v5 T5) R,
 ) Observable[R] {
-	if proj == nil {
-		panic("proj == nil")
-	}
-
 	return func(c Context, sink Observer[R]) {
 		c, cancel := c.WithCancel()
 		noop := make(chan struct{})
@@ -42,15 +38,15 @@ func CombineLatest5[T1, T2, T3, T4, T5, R any](
 			for cont {
 				select {
 				case n := <-chan1:
-					cont = combineLatestSink5(n, sink, proj, &s, &s.V1, 1)
+					cont = combineLatestTry5(sink, n, proj, &s, &s.V1, 1)
 				case n := <-chan2:
-					cont = combineLatestSink5(n, sink, proj, &s, &s.V2, 2)
+					cont = combineLatestTry5(sink, n, proj, &s, &s.V2, 2)
 				case n := <-chan3:
-					cont = combineLatestSink5(n, sink, proj, &s, &s.V3, 4)
+					cont = combineLatestTry5(sink, n, proj, &s, &s.V3, 4)
 				case n := <-chan4:
-					cont = combineLatestSink5(n, sink, proj, &s, &s.V4, 8)
+					cont = combineLatestTry5(sink, n, proj, &s, &s.V4, 8)
 				case n := <-chan5:
-					cont = combineLatestSink5(n, sink, proj, &s, &s.V5, 16)
+					cont = combineLatestTry5(sink, n, proj, &s, &s.V5, 16)
 				}
 			}
 		})
@@ -67,9 +63,9 @@ type combineLatestState5[T1, T2, T3, T4, T5 any] struct {
 	V5 T5
 }
 
-func combineLatestSink5[T1, T2, T3, T4, T5, R, X any](
-	n Notification[X],
+func combineLatestTry5[T1, T2, T3, T4, T5, R, X any](
 	sink Observer[R],
+	n Notification[X],
 	proj func(T1, T2, T3, T4, T5) R,
 	s *combineLatestState5[T1, T2, T3, T4, T5],
 	v *X,
@@ -82,7 +78,9 @@ func combineLatestSink5[T1, T2, T3, T4, T5, R, X any](
 		*v = n.Value
 
 		if s.NBits |= bit; s.NBits == FullBits {
-			sink.Next(proj(s.V1, s.V2, s.V3, s.V4, s.V5))
+			oops := func() { sink.Error(ErrOops) }
+			v := Try51(proj, s.V1, s.V2, s.V3, s.V4, s.V5, oops)
+			Try1(sink, Next(v), oops)
 		}
 
 	case KindError:

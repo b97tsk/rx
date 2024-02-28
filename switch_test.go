@@ -85,5 +85,11 @@ func TestSwitch(t *testing.T) {
 			rx.SwitchAll[rx.Observable[string]](),
 		),
 		"A", "B", "C", ErrTest,
+	).Case(
+		rx.Pipe1(
+			rx.Timer(Step(1)),
+			rx.SwitchMap(func(time.Time) rx.Observable[string] { panic(ErrTest) }),
+		),
+		rx.ErrOops, ErrTest,
 	)
 }

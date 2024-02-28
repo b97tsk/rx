@@ -9,11 +9,13 @@ type Operator[T, R any] interface {
 
 // NewOperator creates an Operator from f.
 func NewOperator[T, R any](f func(source Observable[T]) Observable[R]) Operator[T, R] {
-	return operatorFunc[T, R](f)
+	return operator[T, R]{f}
 }
 
-type operatorFunc[T, R any] func(source Observable[T]) Observable[R]
+type operator[T, R any] struct {
+	f func(source Observable[T]) Observable[R]
+}
 
-func (f operatorFunc[T, R]) Apply(source Observable[T]) Observable[R] {
-	return f(source)
+func (op operator[T, R]) Apply(source Observable[T]) Observable[R] {
+	return op.f(source)
 }

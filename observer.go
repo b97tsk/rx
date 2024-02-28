@@ -38,11 +38,12 @@ func (sink Observer[T]) ElementsOnly(n Notification[T]) {
 func (sink Observer[T]) OnLastNotification(f func()) Observer[T] {
 	return func(n Notification[T]) {
 		switch n.Kind {
+		case KindNext:
+			sink(n)
 		case KindError, KindComplete:
-			f()
+			Try0(f, func() { sink.Error(ErrOops) })
+			sink(n)
 		}
-
-		sink(n)
 	}
 }
 
@@ -79,10 +80,20 @@ func (sink Observer[T]) Serialized() Observer[T] {
 
 		x.Unlock()
 
-		sink(n)
+		oops := func() {
+			x.Lock()
+			x.Done = true
+			x.Emitting = false
+			x.Queue = nil
+			x.Unlock()
+			sink.Error(ErrOops)
+		}
 
 		switch n.Kind {
+		case KindNext:
+			Try1(sink, n, oops)
 		case KindError, KindComplete:
+			sink(n)
 			return
 		}
 
@@ -101,7 +112,12 @@ func (sink Observer[T]) Serialized() Observer[T] {
 			x.Unlock()
 
 			for _, n := range q {
-				sink(n)
+				switch n.Kind {
+				case KindNext:
+					Try1(sink, n, oops)
+				case KindError, KindComplete:
+					sink(n)
+				}
 			}
 		}
 	}

@@ -11,7 +11,7 @@ import (
 func TestCombineLatest4(t *testing.T) {
 	t.Parallel()
 
-	toString := func(v1, v2, v3, v4 string) string {
+	proj := func(v1, v2, v3, v4 string) string {
 		return fmt.Sprintf("[%v %v %v %v]", v1, v2, v3, v4)
 	}
 
@@ -21,7 +21,7 @@ func TestCombineLatest4(t *testing.T) {
 			rx.Pipe1(rx.Just("B1", "B2"), AddLatencyToValues[string](2, 4)),
 			rx.Pipe1(rx.Just("C1", "C2"), AddLatencyToValues[string](3, 4)),
 			rx.Pipe1(rx.Just("D1", "D2"), AddLatencyToValues[string](4, 4)),
-			toString,
+			proj,
 		),
 		"[A1 B1 C1 D1]",
 		"[A2 B1 C1 D1]",
@@ -35,8 +35,20 @@ func TestCombineLatest4(t *testing.T) {
 			rx.Throw[string](ErrTest),
 			rx.Throw[string](ErrTest),
 			rx.Throw[string](ErrTest),
-			toString,
+			proj,
 		),
 		ErrTest,
+	).Case(
+		rx.Pipe1(
+			rx.CombineLatest4(
+				rx.Pipe1(rx.Just("A1", "A2"), AddLatencyToValues[string](1, 4)),
+				rx.Pipe1(rx.Just("B1", "B2"), AddLatencyToValues[string](2, 4)),
+				rx.Pipe1(rx.Just("C1", "C2"), AddLatencyToValues[string](3, 4)),
+				rx.Pipe1(rx.Just("D1", "D2"), AddLatencyToValues[string](4, 4)),
+				proj,
+			),
+			rx.OnNext(func(string) { panic(ErrTest) }),
+		),
+		rx.ErrOops, ErrTest,
 	)
 }

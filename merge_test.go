@@ -91,6 +91,18 @@ func TestMergeMap(t *testing.T) {
 			rx.MergeAll[rx.Observable[string]](),
 		),
 		"A", "B", ErrTest,
+	).Case(
+		rx.Pipe1(
+			rx.Empty[rx.Observable[string]](),
+			rx.MergeAll[rx.Observable[string]]().WithConcurrency(0),
+		),
+		rx.ErrOops, "MergeMap: Concurrency == 0",
+	).Case(
+		rx.Pipe1(
+			rx.Timer(Step(1)),
+			rx.MergeMap(func(time.Time) rx.Observable[string] { panic(ErrTest) }),
+		),
+		rx.ErrOops, ErrTest,
 	)
 }
 
@@ -152,5 +164,11 @@ func TestMergeMapWithBuffering(t *testing.T) {
 			rx.MergeAll[rx.Observable[string]]().WithBuffering(),
 		),
 		"A", "B", ErrTest,
+	).Case(
+		rx.Pipe1(
+			rx.Timer(Step(1)),
+			rx.MergeMap(func(time.Time) rx.Observable[string] { panic(ErrTest) }).WithBuffering(),
+		),
+		rx.ErrOops, ErrTest,
 	)
 }

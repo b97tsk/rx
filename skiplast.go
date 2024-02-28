@@ -6,42 +6,29 @@ func SkipLast[T any](count int) Operator[T, T] {
 		return NewOperator(identity[Observable[T]])
 	}
 
-	return skipLast[T](count)
-}
-
-func skipLast[T any](count int) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return skipLastObservable[T]{source, count}.Subscribe
+			return func(c Context, sink Observer[T]) {
+				b := make([]T, 0, count)
+				i := 0
+
+				source.Subscribe(c, func(n Notification[T]) {
+					switch n.Kind {
+					case KindNext:
+						if len(b) < cap(b) {
+							b = b[:len(b)+1]
+						} else {
+							sink.Next(b[i])
+						}
+
+						b[i] = n.Value
+						i = (i + 1) % cap(b)
+
+					case KindError, KindComplete:
+						sink(n)
+					}
+				})
+			}
 		},
 	)
-}
-
-type skipLastObservable[T any] struct {
-	Source Observable[T]
-	Count  int
-}
-
-func (obs skipLastObservable[T]) Subscribe(c Context, sink Observer[T]) {
-	buffer := make([]T, obs.Count)
-	bufferSize := obs.Count
-
-	var index, count int
-
-	obs.Source.Subscribe(c, func(n Notification[T]) {
-		switch n.Kind {
-		case KindNext:
-			if count < bufferSize {
-				count++
-			} else {
-				sink.Next(buffer[index])
-			}
-
-			buffer[index] = n.Value
-			index = (index + 1) % bufferSize
-
-		case KindError, KindComplete:
-			sink(n)
-		}
-	})
 }

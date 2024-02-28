@@ -4,37 +4,36 @@ package rx
 // If the source turns out to be empty, it emits an error notification
 // of ErrEmpty.
 func First[T any]() Operator[T, T] {
-	return NewOperator(first[T])
-}
+	return NewOperator(
+		func(source Observable[T]) Observable[T] {
+			return func(c Context, sink Observer[T]) {
+				c, cancel := c.WithCancel()
 
-func first[T any](source Observable[T]) Observable[T] {
-	return func(c Context, sink Observer[T]) {
-		c, cancel := c.WithCancel()
+				var noop bool
 
-		var noop bool
+				source.Subscribe(c, func(n Notification[T]) {
+					if noop {
+						return
+					}
 
-		source.Subscribe(c, func(n Notification[T]) {
-			if noop {
-				return
+					switch n.Kind {
+					case KindNext, KindError, KindComplete:
+						cancel()
+						switch n.Kind {
+						case KindNext:
+							sink(n)
+							noop = true
+							sink.Complete()
+						case KindError:
+							sink(n)
+						case KindComplete:
+							sink.Error(ErrEmpty)
+						}
+					}
+				})
 			}
-
-			switch n.Kind {
-			case KindNext, KindError, KindComplete:
-				noop = true
-				cancel()
-
-				switch n.Kind {
-				case KindNext:
-					sink(n)
-					sink.Complete()
-				case KindError:
-					sink(n)
-				case KindComplete:
-					sink.Error(ErrEmpty)
-				}
-			}
-		})
-	}
+		},
+	)
 }
 
 // FirstOrElse emits only the first value emitted by the source Observable.
@@ -54,17 +53,16 @@ func FirstOrElse[T any](def T) Operator[T, T] {
 
 					switch n.Kind {
 					case KindNext, KindError, KindComplete:
-						noop = true
 						cancel()
-
 						switch n.Kind {
 						case KindNext:
 							sink(n)
+							noop = true
 							sink.Complete()
 						case KindError:
 							sink(n)
 						case KindComplete:
-							sink.Next(def)
+							Try1(sink, Next(def), func() { sink.Error(ErrOops) })
 							sink(n)
 						}
 					}

@@ -4,14 +4,6 @@ package rx
 // and emits the accumulated result when the source completes, given
 // an initial value.
 func Reduce[T, R any](init R, accumulator func(v1 R, v2 T) R) Operator[T, R] {
-	if accumulator == nil {
-		panic("accumulator == nil")
-	}
-
-	return reduce(init, accumulator)
-}
-
-func reduce[T, R any](init R, accumulator func(v1 R, v2 T) R) Operator[T, R] {
 	return NewOperator(
 		func(source Observable[T]) Observable[R] {
 			return func(c Context, sink Observer[R]) {
@@ -24,7 +16,7 @@ func reduce[T, R any](init R, accumulator func(v1 R, v2 T) R) Operator[T, R] {
 					case KindError:
 						sink.Error(n.Error)
 					case KindComplete:
-						sink.Next(res)
+						Try1(sink, Next(res), func() { sink.Error(ErrOops) })
 						sink.Complete()
 					}
 				})

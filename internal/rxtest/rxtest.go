@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -88,7 +89,11 @@ func (s *TestSuite[T]) WithContext(c rx.Context) *TestSuite[T] {
 func (s *TestSuite[T]) Case(obs rx.Observable[T], output ...any) *TestSuite[T] {
 	var wg sync.WaitGroup
 
-	_ = obs.BlockingSubscribe(s.c.WithWaitGroup(&wg), func(n rx.Notification[T]) {
+	var p atomic.Pointer[any]
+
+	f := func(v any) { p.Store(&v) }
+
+	_ = obs.BlockingSubscribe(s.c.WithWaitGroup(&wg).WithPanicHandler(f), func(n rx.Notification[T]) {
 		if len(output) == 0 {
 			switch n.Kind {
 			case rx.KindNext:
@@ -142,6 +147,24 @@ func (s *TestSuite[T]) Case(obs rx.Observable[T], output ...any) *TestSuite[T] {
 	case <-tm.C:
 		s.tb.Error("timeout waiting for WaitGroup")
 		return s
+	}
+
+	if p := p.Load(); p != nil {
+		v := *p
+
+		if len(output) == 0 {
+			s.tb.Errorf("want (nothing), but got %v", tos(v))
+			return s
+		}
+
+		wanted := output[0]
+		output = output[1:]
+
+		if wanted == v {
+			s.tb.Logf("want %v", tos(wanted))
+		} else {
+			s.tb.Errorf("want %v, but got %v", tos(wanted), tos(v))
+		}
 	}
 
 	if len(output) != 0 {

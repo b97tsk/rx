@@ -26,5 +26,11 @@ func TestFlat(t *testing.T) {
 			rx.Flat(rx.Concat[string]),
 		),
 		ErrTest,
+	).Case(
+		rx.Pipe1(
+			rx.Empty[rx.Observable[string]](),
+			rx.Flat(func(some ...rx.Observable[string]) rx.Observable[string] { panic(ErrTest) }),
+		),
+		rx.ErrOops, ErrTest,
 	)
 }

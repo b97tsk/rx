@@ -13,10 +13,6 @@ func Zip5[T1, T2, T3, T4, T5, R any](
 	obs5 Observable[T5],
 	proj func(v1 T1, v2 T2, v3 T3, v4 T4, v5 T5) R,
 ) Observable[R] {
-	if proj == nil {
-		panic("proj == nil")
-	}
-
 	return func(c Context, sink Observer[R]) {
 		c, cancel := c.WithCancel()
 		noop := make(chan struct{})
@@ -38,6 +34,7 @@ func Zip5[T1, T2, T3, T4, T5, R any](
 		c.Go(func() { obs5.Subscribe(c, channelObserver(chan5, noop)) })
 
 		c.Go(func() {
+			oops := func() { sink.Error(ErrOops) }
 			for {
 			Again1:
 				n1 := <-chan1
@@ -104,7 +101,8 @@ func Zip5[T1, T2, T3, T4, T5, R any](
 				default:
 					goto Again5
 				}
-				sink.Next(proj(n1.Value, n2.Value, n3.Value, n4.Value, n5.Value))
+				v := Try51(proj, n1.Value, n2.Value, n3.Value, n4.Value, n5.Value, oops)
+				Try1(sink, Next(v), oops)
 			}
 		})
 	}

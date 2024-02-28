@@ -4,36 +4,21 @@ package rx
 // a given condition holds true, but emits all further source values as
 // soon as the condition becomes false.
 func SkipWhile[T any](cond func(v T) bool) Operator[T, T] {
-	if cond == nil {
-		panic("cond == nil")
-	}
-
-	return skipWhile(cond)
-}
-
-func skipWhile[T any](cond func(v T) bool) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return skipWhileObservable[T]{source, cond}.Subscribe
+			return func(c Context, sink Observer[T]) {
+				var taking bool
+
+				source.Subscribe(c, func(n Notification[T]) {
+					switch {
+					case taking || n.Kind != KindNext:
+						sink(n)
+					case !cond(n.Value):
+						taking = true
+						sink(n)
+					}
+				})
+			}
 		},
 	)
-}
-
-type skipWhileObservable[T any] struct {
-	Source    Observable[T]
-	Condition func(T) bool
-}
-
-func (obs skipWhileObservable[T]) Subscribe(c Context, sink Observer[T]) {
-	var taking bool
-
-	obs.Source.Subscribe(c, func(n Notification[T]) {
-		switch {
-		case taking || n.Kind != KindNext:
-			sink(n)
-		case !obs.Condition(n.Value):
-			taking = true
-			sink(n)
-		}
-	})
 }

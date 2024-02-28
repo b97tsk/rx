@@ -90,5 +90,18 @@ func TestAudit(t *testing.T) {
 			rx.AuditTime[string](Step(3)),
 		),
 		ErrTest,
+	).Case(
+		rx.Pipe1(
+			rx.Just("A", "B", "C", "D", "E"),
+			rx.Audit(func(string) rx.Observable[int] { panic(ErrTest) }),
+		),
+		rx.ErrOops, ErrTest,
+	).Case(
+		rx.Pipe2(
+			rx.Just("A", "B", "C", "D", "E"),
+			rx.AuditTime[string](Step(3)),
+			rx.OnNext(func(string) { panic(ErrTest) }),
+		),
+		rx.ErrOops, ErrTest,
 	)
 }

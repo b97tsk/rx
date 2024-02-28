@@ -16,7 +16,7 @@ func Range[T constraints.Integer](low, high T) Observable[T] {
 				return
 			}
 
-			sink.Next(v)
+			Try1(sink, Next(v), func() { sink.Error(ErrOops) })
 		}
 
 		sink.Complete()
@@ -37,7 +37,7 @@ func Iota[T constraints.Integer](init T) Observable[T] {
 				return
 			}
 
-			sink.Next(v)
+			Try1(sink, Next(v), func() { sink.Error(ErrOops) })
 		}
 	}
 }

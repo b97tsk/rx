@@ -19,6 +19,12 @@ func TestRange(t *testing.T) {
 			rx.Take[int](5),
 		),
 		1, 2, 3, 4, 5, ErrComplete,
+	).Case(
+		rx.Pipe1(
+			rx.Range(1, 10),
+			rx.OnNext(func(int) { panic(ErrTest) }),
+		),
+		rx.ErrOops, ErrTest,
 	)
 }
 
@@ -31,5 +37,11 @@ func TestIota(t *testing.T) {
 			rx.Take[int](5),
 		),
 		1, 2, 3, 4, 5, ErrComplete,
+	).Case(
+		rx.Pipe1(
+			rx.Iota(1),
+			rx.OnNext(func(int) { panic(ErrTest) }),
+		),
+		rx.ErrOops, ErrTest,
 	)
 }

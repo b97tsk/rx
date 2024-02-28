@@ -17,7 +17,7 @@ func TestMulticast(t *testing.T) {
 		return v1 + v2
 	}
 
-	toString := func(v1, v2 int) string {
+	proj := func(v1, v2 int) string {
 		return fmt.Sprintf("[%v %v]", v1, v2)
 	}
 
@@ -35,7 +35,7 @@ func TestMulticast(t *testing.T) {
 			rx.Zip2(
 				m.Observable,
 				rx.Pipe1(m.Observable, rx.Scan(0, sum)),
-				toString,
+				proj,
 			),
 			"[3 3]", "[4 7]", "[5 12]", ErrComplete,
 		).Case(
@@ -64,7 +64,7 @@ func TestMulticast(t *testing.T) {
 			rx.Zip2(
 				m.Observable,
 				rx.Pipe1(m.Observable, rx.Scan(0, sum)),
-				toString,
+				proj,
 			),
 			"[3 3]", "[4 7]", "[5 12]", ErrTest,
 		).Case(

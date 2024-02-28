@@ -50,28 +50,20 @@ func (some observables[T]) Merge(c Context, sink Observer[T]) {
 // which concurrently delivers all values that are emitted on the inner
 // Observables.
 func MergeAll[_ Observable[T], T any]() MergeMapOperator[Observable[T], T] {
-	return mergeMap(identity[Observable[T]])
-}
-
-// MergeMap converts the source Observable into a higher-order Observable,
-// by projecting each source value to an Observable, then flattens it into
-// a first-order Observable using MergeAll.
-func MergeMap[T, R any](proj func(v T) Observable[R]) MergeMapOperator[T, R] {
-	if proj == nil {
-		panic("proj == nil")
-	}
-
-	return mergeMap(proj)
+	return MergeMap(identity[Observable[T]])
 }
 
 // MergeMapTo converts the source Observable into a higher-order Observable,
 // by projecting each source value to the same Observable, then flattens it
 // into a first-order Observable using MergeAll.
 func MergeMapTo[T, R any](inner Observable[R]) MergeMapOperator[T, R] {
-	return mergeMap(func(T) Observable[R] { return inner })
+	return MergeMap(func(T) Observable[R] { return inner })
 }
 
-func mergeMap[T, R any](proj func(v T) Observable[R]) MergeMapOperator[T, R] {
+// MergeMap converts the source Observable into a higher-order Observable,
+// by projecting each source value to an Observable, then flattens it into
+// a first-order Observable using MergeAll.
+func MergeMap[T, R any](proj func(v T) Observable[R]) MergeMapOperator[T, R] {
 	return MergeMapOperator[T, R]{
 		opts: mergeMapConfig[T, R]{
 			Project:      proj,
@@ -105,17 +97,16 @@ func (op MergeMapOperator[T, R]) WithBuffering() MergeMapOperator[T, R] {
 // WithConcurrency sets Concurrency option to a given value.
 // It must not be zero. The default value is -1 (unlimited).
 func (op MergeMapOperator[T, R]) WithConcurrency(n int) MergeMapOperator[T, R] {
-	if n == 0 {
-		panic("n == 0")
-	}
-
 	op.opts.Concurrency = n
-
 	return op
 }
 
 // Apply implements the Operator interface.
 func (op MergeMapOperator[T, R]) Apply(source Observable[T]) Observable[R] {
+	if op.opts.Concurrency == 0 {
+		return Oops[R]("MergeMap: Concurrency == 0")
+	}
+
 	return mergeMapObservable[T, R]{source, op.opts}.Subscribe
 }
 
@@ -126,14 +117,10 @@ type mergeMapObservable[T, R any] struct {
 
 func (obs mergeMapObservable[T, R]) Subscribe(c Context, sink Observer[R]) {
 	if obs.UseBuffering {
-		obs.subscribeWithBuffering(c, sink)
+		obs.SubscribeWithBuffering(c, sink)
 		return
 	}
 
-	obs.subscribe(c, sink)
-}
-
-func (obs mergeMapObservable[T, R]) subscribe(c Context, sink Observer[R]) {
 	c, cancel := c.WithCancel()
 	sink = sink.OnLastNotification(cancel).Serialized()
 
@@ -163,15 +150,20 @@ func (obs mergeMapObservable[T, R]) subscribe(c Context, sink Observer[R]) {
 			}
 
 			if x.HasError {
-				x.Unlock()
 				noop = true
+				x.Unlock()
 				return
 			}
 
+			obs1 := Try11(obs.Project, n.Value, func() {
+				defer x.Unlock()
+				noop = true
+				x.HasError = true
+				sink.Error(ErrOops)
+			})
+
 			x.Workers++
 			x.Unlock()
-
-			obs1 := obs.Project(n.Value)
 
 			c.Go(func() {
 				obs1.Subscribe(c, func(n Notification[R]) {
@@ -194,7 +186,9 @@ func (obs mergeMapObservable[T, R]) subscribe(c Context, sink Observer[R]) {
 						x.Workers--
 
 						if x.Workers == 0 && x.Complete && !x.HasError {
+							x.Unlock()
 							sink(n)
+							return
 						}
 
 						x.Unlock()
@@ -212,7 +206,9 @@ func (obs mergeMapObservable[T, R]) subscribe(c Context, sink Observer[R]) {
 			x.Complete = true
 
 			if x.Workers == 0 && !x.HasError {
+				x.Unlock()
 				sink.Complete()
+				return
 			}
 
 			x.Unlock()
@@ -220,7 +216,7 @@ func (obs mergeMapObservable[T, R]) subscribe(c Context, sink Observer[R]) {
 	})
 }
 
-func (obs mergeMapObservable[T, R]) subscribeWithBuffering(c Context, sink Observer[R]) {
+func (obs mergeMapObservable[T, R]) SubscribeWithBuffering(c Context, sink Observer[R]) {
 	c, cancel := c.WithCancel()
 	sink = sink.OnLastNotification(cancel).Serialized()
 
@@ -235,8 +231,14 @@ func (obs mergeMapObservable[T, R]) subscribeWithBuffering(c Context, sink Obser
 	var startWorker func()
 
 	startWorker = func() {
-		obs1 := obs.Project(x.Queue.Pop())
+		obs1 := Try11(obs.Project, x.Queue.Pop(), func() {
+			defer x.Unlock()
+			x.Queue.Init()
+			x.HasError = true
+			sink.Error(ErrOops)
+		})
 
+		x.Workers++
 		x.Unlock()
 
 		c.Go(func() {
@@ -257,15 +259,17 @@ func (obs mergeMapObservable[T, R]) subscribeWithBuffering(c Context, sink Obser
 				case KindComplete:
 					x.Lock()
 
+					x.Workers--
+
 					if x.Queue.Len() != 0 {
 						startWorker()
 						return
 					}
 
-					x.Workers--
-
 					if x.Workers == 0 && x.Complete && !x.HasError {
+						x.Unlock()
 						sink(n)
+						return
 					}
 
 					x.Unlock()
@@ -286,15 +290,14 @@ func (obs mergeMapObservable[T, R]) subscribeWithBuffering(c Context, sink Obser
 			x.Lock()
 
 			if x.HasError {
-				x.Unlock()
 				noop = true
+				x.Unlock()
 				return
 			}
 
 			x.Queue.Push(n.Value)
 
 			if x.Workers != obs.Concurrency {
-				x.Workers++
 				startWorker()
 				return
 			}
@@ -310,7 +313,9 @@ func (obs mergeMapObservable[T, R]) subscribeWithBuffering(c Context, sink Obser
 			x.Complete = true
 
 			if x.Workers == 0 && !x.HasError {
+				x.Unlock()
 				sink.Complete()
+				return
 			}
 
 			x.Unlock()

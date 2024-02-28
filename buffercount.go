@@ -8,10 +8,6 @@ package rx
 // For reducing allocations, slices emitted by the output Observable share
 // a same underlying array.
 func BufferCount[T any](bufferSize int) BufferCountOperator[T] {
-	if bufferSize <= 0 {
-		panic("bufferSize <= 0")
-	}
-
 	return BufferCountOperator[T]{
 		opts: bufferCountConfig{
 			BufferSize:       bufferSize,
@@ -32,17 +28,20 @@ type BufferCountOperator[T any] struct {
 
 // WithStartBufferEvery sets StartBufferEvery option to a given value.
 func (op BufferCountOperator[T]) WithStartBufferEvery(n int) BufferCountOperator[T] {
-	if n <= 0 {
-		panic("n <= 0")
-	}
-
 	op.opts.StartBufferEvery = n
-
 	return op
 }
 
 // Apply implements the Operator interface.
 func (op BufferCountOperator[T]) Apply(source Observable[T]) Observable[[]T] {
+	if op.opts.BufferSize <= 0 {
+		return Oops[[]T]("BufferCount: BufferSize <= 0")
+	}
+
+	if op.opts.StartBufferEvery <= 0 {
+		return Oops[[]T]("BufferCount: StartBufferEvery <= 0")
+	}
+
 	return bufferCountObservable[T]{source, op.opts}.Subscribe
 }
 
@@ -60,13 +59,13 @@ func (obs bufferCountObservable[T]) Subscribe(c Context, sink Observer[[]T]) {
 		case KindNext:
 			if skip > 0 {
 				skip--
-				break
+				return
 			}
 
 			s = append(s, n.Value)
 
 			if len(s) < obs.BufferSize {
-				break
+				return
 			}
 
 			sink.Next(s)
@@ -82,9 +81,9 @@ func (obs bufferCountObservable[T]) Subscribe(c Context, sink Observer[[]T]) {
 			sink.Error(n.Error)
 
 		case KindComplete:
-			if len(s) > 0 {
+			if len(s) != 0 {
 				for {
-					sink.Next(s)
+					Try1(sink, Next(s), func() { sink.Error(ErrOops) })
 
 					if len(s) <= obs.StartBufferEvery {
 						break

@@ -85,5 +85,27 @@ func TestDebounce(t *testing.T) {
 			rx.DebounceTime[string](Step(2)),
 		),
 		"A", "B", "C", ErrComplete,
+	).Case(
+		rx.Pipe1(
+			rx.Just("A", "B", "C"),
+			rx.Debounce(func(string) rx.Observable[int] { panic(ErrTest) }),
+		),
+		rx.ErrOops, ErrTest,
+	).Case(
+		rx.Pipe3(
+			rx.Just("A", "B", "C"),
+			AddLatencyToValues[string](1, 2),
+			rx.DebounceTime[string](Step(3)),
+			rx.OnNext(func(string) { panic(ErrTest) }),
+		),
+		rx.ErrOops, ErrTest,
+	).Case(
+		rx.Pipe3(
+			rx.Just("A", "B", "C"),
+			AddLatencyToValues[string](1, 3),
+			rx.DebounceTime[string](Step(2)),
+			rx.OnNext(func(string) { panic(ErrTest) }),
+		),
+		rx.ErrOops, ErrTest,
 	)
 }

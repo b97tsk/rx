@@ -3,14 +3,6 @@ package rx
 // Map applies a given projection function to each value emitted by
 // the source Observable, then emits the resulting values.
 func Map[T, R any](proj func(v T) R) Operator[T, R] {
-	if proj == nil {
-		panic("proj == nil")
-	}
-
-	return map1(proj)
-}
-
-func map1[T, R any](proj func(v T) R) Operator[T, R] {
 	return NewOperator(
 		func(source Observable[T]) Observable[R] {
 			return func(c Context, sink Observer[R]) {

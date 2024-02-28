@@ -45,5 +45,13 @@ func TestMaterialize(t *testing.T) {
 			rx.Reduce(0, count),
 		),
 		4, ErrComplete,
+	).Case(
+		rx.Pipe3(
+			rx.Empty[string](),
+			rx.Materialize[string](),
+			rx.OnNext(func(rx.Notification[string]) { panic(ErrTest) }),
+			rx.Reduce(0, count),
+		),
+		rx.ErrOops, ErrTest,
 	)
 }

@@ -32,41 +32,52 @@ func (obs takeUntilObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
 		}
 	}
 
+	x.Context.Store(c.Context)
+
 	{
 		w, cancelw := c.WithCancel()
 
-		x.Context.Store(w.Context)
-
 		var noop bool
 
-		obs.Notifier.Subscribe(w, func(n Notification[U]) {
-			if noop {
-				return
-			}
-
-			noop = true
-			cancelw()
-
-			switch n.Kind {
-			case KindNext, KindError:
-				if x.Context.CompareAndSwap(w.Context, sentinel) {
-					cancel()
-
-					x.Source.Lock()
-					x.Source.Wait()
-					x.Source.Unlock()
-
-					switch n.Kind {
-					case KindNext:
-						sink.Complete()
-					case KindError:
-						sink.Error(n.Error)
-					}
-
+		Try3(
+			Observable[U].Subscribe,
+			obs.Notifier,
+			w,
+			func(n Notification[U]) {
+				if noop {
 					return
 				}
-			}
-		})
+
+				noop = true
+				cancelw()
+
+				switch n.Kind {
+				case KindNext, KindError:
+					if x.Context.Swap(sentinel) != sentinel {
+						cancel()
+
+						x.Source.Lock()
+						x.Source.Wait()
+						x.Source.Unlock()
+
+						switch n.Kind {
+						case KindNext:
+							sink.Complete()
+						case KindError:
+							sink.Error(n.Error)
+						}
+					}
+
+				case KindComplete:
+					return
+				}
+			},
+			func() {
+				if x.Context.Swap(sentinel) != sentinel {
+					sink.Error(ErrOops)
+				}
+			},
+		)
 	}
 
 	x.Source.Lock()
@@ -95,7 +106,9 @@ func (obs takeUntilObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
 	obs.Source.Subscribe(c, func(n Notification[T]) {
 		switch n.Kind {
 		case KindNext:
-			sink(n)
+			if x.Context.Load() == c.Context {
+				sink(n)
+			}
 		case KindError, KindComplete:
 			finish(n)
 		}

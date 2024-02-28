@@ -34,10 +34,21 @@ type Observable[T any] func(c Context, sink Observer[T])
 // Subscribe invokes an execution of an Observable.
 //
 // Subscribing to a nil Observable results in an error notification of ErrNil.
+//
+// If obs panics and c.PanicHandler is not nil, Subscribe calls c.PanicHandler
+// with a value returned by the built-in recover function.
 func (obs Observable[T]) Subscribe(c Context, sink Observer[T]) {
 	if obs == nil {
 		sink.Error(ErrNil)
 		return
+	}
+
+	if c.PanicHandler != nil {
+		defer func() {
+			if v := recover(); v != nil {
+				c.PanicHandler(v)
+			}
+		}()
 	}
 
 	obs(c, sink)

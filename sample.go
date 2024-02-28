@@ -49,31 +49,41 @@ func (obs sampleObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
 		x.Context.Store(w.Context)
 		x.Worker.Add(1)
 
-		obs.Notifier.Subscribe(w, func(n Notification[U]) {
-			switch n.Kind {
-			case KindNext:
-				if x.Latest.HasValue.Load() {
-					x.Latest.Lock()
-					value := x.Latest.Value
-					x.Latest.HasValue.Store(false)
-					x.Latest.Unlock()
-					sink.Next(value)
+		Try3(
+			Observable[U].Subscribe,
+			obs.Notifier,
+			w,
+			func(n Notification[U]) {
+				switch n.Kind {
+				case KindNext:
+					if x.Latest.HasValue.Load() {
+						x.Latest.Lock()
+						value := x.Latest.Value
+						x.Latest.HasValue.Store(false)
+						x.Latest.Unlock()
+						sink.Next(value)
+					}
+
+				case KindError:
+					defer x.Worker.Done()
+
+					cancelw()
+
+					if x.Context.Swap(sentinel) != sentinel {
+						sink.Error(n.Error)
+					}
+
+				case KindComplete:
+					cancelw()
+					x.Worker.Done()
 				}
-
-				return
-
-			case KindError:
-				if x.Context.CompareAndSwap(w.Context, sentinel) {
-					sink.Error(n.Error)
+			},
+			func() {
+				if x.Context.Swap(sentinel) != sentinel {
+					sink.Error(ErrOops)
 				}
-
-			case KindComplete:
-				break
-			}
-
-			cancelw()
-			x.Worker.Done()
-		})
+			},
+		)
 	}
 
 	finish := func(n Notification[T]) {

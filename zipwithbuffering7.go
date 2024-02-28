@@ -18,10 +18,6 @@ func ZipWithBuffering7[T1, T2, T3, T4, T5, T6, T7, R any](
 	obs7 Observable[T7],
 	proj func(v1 T1, v2 T2, v3 T3, v4 T4, v5 T5, v6 T6, v7 T7) R,
 ) Observable[R] {
-	if proj == nil {
-		panic("proj == nil")
-	}
-
 	return func(c Context, sink Observer[R]) {
 		c, cancel := c.WithCancel()
 		noop := make(chan struct{})
@@ -54,19 +50,19 @@ func ZipWithBuffering7[T1, T2, T3, T4, T5, T6, T7, R any](
 			for cont {
 				select {
 				case n := <-chan1:
-					cont = zipSink7(n, sink, proj, &s, &s.Q1, 1)
+					cont = zipTry7(sink, n, proj, &s, &s.Q1, 1)
 				case n := <-chan2:
-					cont = zipSink7(n, sink, proj, &s, &s.Q2, 2)
+					cont = zipTry7(sink, n, proj, &s, &s.Q2, 2)
 				case n := <-chan3:
-					cont = zipSink7(n, sink, proj, &s, &s.Q3, 4)
+					cont = zipTry7(sink, n, proj, &s, &s.Q3, 4)
 				case n := <-chan4:
-					cont = zipSink7(n, sink, proj, &s, &s.Q4, 8)
+					cont = zipTry7(sink, n, proj, &s, &s.Q4, 8)
 				case n := <-chan5:
-					cont = zipSink7(n, sink, proj, &s, &s.Q5, 16)
+					cont = zipTry7(sink, n, proj, &s, &s.Q5, 16)
 				case n := <-chan6:
-					cont = zipSink7(n, sink, proj, &s, &s.Q6, 32)
+					cont = zipTry7(sink, n, proj, &s, &s.Q6, 32)
 				case n := <-chan7:
-					cont = zipSink7(n, sink, proj, &s, &s.Q7, 64)
+					cont = zipTry7(sink, n, proj, &s, &s.Q7, 64)
 				}
 			}
 		})
@@ -85,9 +81,9 @@ type zipState7[T1, T2, T3, T4, T5, T6, T7 any] struct {
 	Q7 queue.Queue[T7]
 }
 
-func zipSink7[T1, T2, T3, T4, T5, T6, T7, R, X any](
-	n Notification[X],
+func zipTry7[T1, T2, T3, T4, T5, T6, T7, R, X any](
 	sink Observer[R],
+	n Notification[X],
 	proj func(T1, T2, T3, T4, T5, T6, T7) R,
 	s *zipState7[T1, T2, T3, T4, T5, T6, T7],
 	q *queue.Queue[X],
@@ -102,7 +98,9 @@ func zipSink7[T1, T2, T3, T4, T5, T6, T7, R, X any](
 		if s.NBits |= bit; s.NBits == FullBits {
 			var complete bool
 
-			sink.Next(proj(
+			oops := func() { sink.Error(ErrOops) }
+			v := Try71(
+				proj,
 				zipPop7(s, &s.Q1, 1, &complete),
 				zipPop7(s, &s.Q2, 2, &complete),
 				zipPop7(s, &s.Q3, 4, &complete),
@@ -110,7 +108,9 @@ func zipSink7[T1, T2, T3, T4, T5, T6, T7, R, X any](
 				zipPop7(s, &s.Q5, 16, &complete),
 				zipPop7(s, &s.Q6, 32, &complete),
 				zipPop7(s, &s.Q7, 64, &complete),
-			))
+				oops,
+			)
+			Try1(sink, Next(v), oops)
 
 			if complete {
 				sink.Complete()

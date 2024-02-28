@@ -44,6 +44,12 @@ func TestCongestBlock(t *testing.T) {
 			rx.CongestBlock[int](3),
 		),
 		ErrTest,
+	).Case(
+		rx.Pipe1(
+			rx.Empty[int](),
+			rx.CongestBlock[int](0),
+		),
+		rx.ErrOops, "CongestBlock: capacity < 1",
 	)
 }
 
@@ -78,6 +84,12 @@ func TestCongestDropLatest(t *testing.T) {
 			rx.CongestDropLatest[int](3),
 		),
 		ErrTest,
+	).Case(
+		rx.Pipe1(
+			rx.Empty[int](),
+			rx.CongestDropLatest[int](0),
+		),
+		rx.ErrOops, "CongestDropLatest: capacity < 1",
 	)
 }
 
@@ -112,6 +124,12 @@ func TestCongestDropOldest(t *testing.T) {
 			rx.CongestDropOldest[int](3),
 		),
 		ErrTest,
+	).Case(
+		rx.Pipe1(
+			rx.Empty[int](),
+			rx.CongestDropOldest[int](0),
+		),
+		rx.ErrOops, "CongestDropOldest: capacity < 1",
 	)
 }
 
@@ -146,5 +164,11 @@ func TestCongestError(t *testing.T) {
 			rx.CongestError[int](3),
 		),
 		ErrTest,
+	).Case(
+		rx.Pipe1(
+			rx.Empty[int](),
+			rx.CongestError[int](0),
+		),
+		rx.ErrOops, "CongestError: capacity < 1",
 	)
 }

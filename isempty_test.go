@@ -34,5 +34,12 @@ func TestIsEmpty(t *testing.T) {
 			rx.IsEmpty[string](),
 		),
 		ErrTest,
+	).Case(
+		rx.Pipe2(
+			rx.Empty[string](),
+			rx.IsEmpty[string](),
+			rx.OnNext(func(bool) { panic(ErrTest) }),
+		),
+		rx.ErrOops, ErrTest,
 	)
 }

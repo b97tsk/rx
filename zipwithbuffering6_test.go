@@ -11,7 +11,7 @@ import (
 func TestZipWithBuffering6(t *testing.T) {
 	t.Parallel()
 
-	toString := func(v1, v2, v3, v4, v5 string, v6 int) string {
+	proj := func(v1, v2, v3, v4, v5 string, v6 int) string {
 		return fmt.Sprintf("[%v %v %v %v %v %v]", v1, v2, v3, v4, v5, v6)
 	}
 
@@ -23,7 +23,7 @@ func TestZipWithBuffering6(t *testing.T) {
 			rx.Just("D", "E"),
 			rx.Just("E", "F"),
 			rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
-			toString,
+			proj,
 		),
 		"[A B C D E 1]", "[B C D E F 2]", ErrComplete,
 	).Case(
@@ -34,7 +34,7 @@ func TestZipWithBuffering6(t *testing.T) {
 			rx.Just("D", "E", "F"),
 			rx.Just("E", "F", "G"),
 			rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
-			toString,
+			proj,
 		),
 		"[A B C D E 1]", "[B C D E F 2]", "[C D E F G 3]", ErrComplete,
 	).Case(
@@ -45,7 +45,7 @@ func TestZipWithBuffering6(t *testing.T) {
 			rx.Just("D", "E", "F", "G"),
 			rx.Just("E", "F", "G", "H"),
 			rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
-			toString,
+			proj,
 		),
 		"[A B C D E 1]", "[B C D E F 2]", "[C D E F G 3]", ErrComplete,
 	).Case(
@@ -62,7 +62,7 @@ func TestZipWithBuffering6(t *testing.T) {
 				),
 				DelaySubscription[int](1),
 			),
-			toString,
+			proj,
 		),
 		"[A B C D E 1]", "[B C D E F 2]", ErrComplete,
 	).Case(
@@ -79,7 +79,7 @@ func TestZipWithBuffering6(t *testing.T) {
 				),
 				DelaySubscription[int](1),
 			),
-			toString,
+			proj,
 		),
 		"[A B C D E 1]", "[B C D E F 2]", "[C D E F G 3]", ErrComplete,
 	).Case(
@@ -96,8 +96,22 @@ func TestZipWithBuffering6(t *testing.T) {
 				),
 				DelaySubscription[int](1),
 			),
-			toString,
+			proj,
 		),
 		"[A B C D E 1]", "[B C D E F 2]", "[C D E F G 3]", ErrTest,
+	).Case(
+		rx.Pipe1(
+			rx.ZipWithBuffering6(
+				rx.Just("A", "B", "C", "D"),
+				rx.Just("B", "C", "D", "E"),
+				rx.Just("C", "D", "E", "F"),
+				rx.Just("D", "E", "F", "G"),
+				rx.Just("E", "F", "G", "H"),
+				rx.Range(1, 5),
+				proj,
+			),
+			rx.OnNext(func(string) { panic(ErrTest) }),
+		),
+		rx.ErrOops, ErrTest,
 	)
 }

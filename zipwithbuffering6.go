@@ -17,10 +17,6 @@ func ZipWithBuffering6[T1, T2, T3, T4, T5, T6, R any](
 	obs6 Observable[T6],
 	proj func(v1 T1, v2 T2, v3 T3, v4 T4, v5 T5, v6 T6) R,
 ) Observable[R] {
-	if proj == nil {
-		panic("proj == nil")
-	}
-
 	return func(c Context, sink Observer[R]) {
 		c, cancel := c.WithCancel()
 		noop := make(chan struct{})
@@ -51,17 +47,17 @@ func ZipWithBuffering6[T1, T2, T3, T4, T5, T6, R any](
 			for cont {
 				select {
 				case n := <-chan1:
-					cont = zipSink6(n, sink, proj, &s, &s.Q1, 1)
+					cont = zipTry6(sink, n, proj, &s, &s.Q1, 1)
 				case n := <-chan2:
-					cont = zipSink6(n, sink, proj, &s, &s.Q2, 2)
+					cont = zipTry6(sink, n, proj, &s, &s.Q2, 2)
 				case n := <-chan3:
-					cont = zipSink6(n, sink, proj, &s, &s.Q3, 4)
+					cont = zipTry6(sink, n, proj, &s, &s.Q3, 4)
 				case n := <-chan4:
-					cont = zipSink6(n, sink, proj, &s, &s.Q4, 8)
+					cont = zipTry6(sink, n, proj, &s, &s.Q4, 8)
 				case n := <-chan5:
-					cont = zipSink6(n, sink, proj, &s, &s.Q5, 16)
+					cont = zipTry6(sink, n, proj, &s, &s.Q5, 16)
 				case n := <-chan6:
-					cont = zipSink6(n, sink, proj, &s, &s.Q6, 32)
+					cont = zipTry6(sink, n, proj, &s, &s.Q6, 32)
 				}
 			}
 		})
@@ -79,9 +75,9 @@ type zipState6[T1, T2, T3, T4, T5, T6 any] struct {
 	Q6 queue.Queue[T6]
 }
 
-func zipSink6[T1, T2, T3, T4, T5, T6, R, X any](
-	n Notification[X],
+func zipTry6[T1, T2, T3, T4, T5, T6, R, X any](
 	sink Observer[R],
+	n Notification[X],
 	proj func(T1, T2, T3, T4, T5, T6) R,
 	s *zipState6[T1, T2, T3, T4, T5, T6],
 	q *queue.Queue[X],
@@ -96,14 +92,18 @@ func zipSink6[T1, T2, T3, T4, T5, T6, R, X any](
 		if s.NBits |= bit; s.NBits == FullBits {
 			var complete bool
 
-			sink.Next(proj(
+			oops := func() { sink.Error(ErrOops) }
+			v := Try61(
+				proj,
 				zipPop6(s, &s.Q1, 1, &complete),
 				zipPop6(s, &s.Q2, 2, &complete),
 				zipPop6(s, &s.Q3, 4, &complete),
 				zipPop6(s, &s.Q4, 8, &complete),
 				zipPop6(s, &s.Q5, 16, &complete),
 				zipPop6(s, &s.Q6, 32, &complete),
-			))
+				oops,
+			)
+			Try1(sink, Next(v), oops)
 
 			if complete {
 				sink.Complete()

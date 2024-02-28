@@ -32,27 +32,37 @@ func (obs skipUntilObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
 
 		var noop bool
 
-		obs.Notifier.Subscribe(w, func(n Notification[U]) {
-			if noop {
-				return
-			}
-
-			noop = true
-			cancelw()
-
-			switch n.Kind {
-			case KindNext:
-				x.Context.CompareAndSwap(w.Context, c.Context)
-
-			case KindError:
-				if x.Context.CompareAndSwap(w.Context, sentinel) {
-					sink.Error(n.Error)
+		Try3(
+			Observable[U].Subscribe,
+			obs.Notifier,
+			w,
+			func(n Notification[U]) {
+				if noop {
+					return
 				}
 
-			case KindComplete:
-				break
-			}
-		})
+				noop = true
+				cancelw()
+
+				switch n.Kind {
+				case KindNext:
+					x.Context.CompareAndSwap(w.Context, c.Context)
+
+				case KindError:
+					if x.Context.CompareAndSwap(w.Context, sentinel) {
+						sink.Error(n.Error)
+					}
+
+				case KindComplete:
+					return
+				}
+			},
+			func() {
+				if x.Context.Swap(sentinel) != sentinel {
+					sink.Error(ErrOops)
+				}
+			},
+		)
 	}
 
 	finish := func(n Notification[T]) {
@@ -83,7 +93,6 @@ func (obs skipUntilObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
 			if x.Context.Load() == c.Context {
 				sink(n)
 			}
-
 		case KindError, KindComplete:
 			finish(n)
 		}

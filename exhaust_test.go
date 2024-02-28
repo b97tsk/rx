@@ -73,5 +73,11 @@ func TestExhaust(t *testing.T) {
 			rx.ExhaustAll[rx.Observable[string]](),
 		),
 		"A", "B", "C", ErrTest,
+	).Case(
+		rx.Pipe1(
+			rx.Timer(Step(1)),
+			rx.ExhaustMap(func(time.Time) rx.Observable[string] { panic(ErrTest) }),
+		),
+		rx.ErrOops, ErrTest,
 	)
 }

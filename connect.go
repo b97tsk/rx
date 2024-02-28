@@ -3,10 +3,6 @@ package rx
 // Connect multicasts the source Observable within a function where multiple
 // subscriptions can share the same source.
 func Connect[T, R any](selector func(source Observable[T]) Observable[R]) ConnectOperator[T, R] {
-	if selector == nil {
-		panic("selector == nil")
-	}
-
 	return ConnectOperator[T, R]{
 		opts: connectConfig[T, R]{
 			Connector: Multicast[T],
@@ -27,12 +23,7 @@ type ConnectOperator[T, R any] struct {
 
 // WithConnector sets Connector option to a given value.
 func (op ConnectOperator[T, R]) WithConnector(connector func() Subject[T]) ConnectOperator[T, R] {
-	if connector == nil {
-		panic("connector == nil")
-	}
-
 	op.opts.Connector = connector
-
 	return op
 }
 
@@ -49,7 +40,8 @@ type connectObservable[T, R any] struct {
 func (obs connectObservable[T, R]) Subscribe(c Context, sink Observer[R]) {
 	c, cancel := c.WithCancel()
 	sink = sink.OnLastNotification(cancel)
-	subject := obs.Connector()
-	obs.Selector(subject.Observable).Subscribe(c, sink)
+	oops := func() { sink.Error(ErrOops) }
+	subject := Try01(obs.Connector, oops)
+	Try11(obs.Selector, subject.Observable, oops).Subscribe(c, sink)
 	obs.Source.Subscribe(c, subject.Observer)
 }

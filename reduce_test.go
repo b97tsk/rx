@@ -64,5 +64,12 @@ func TestReduce(t *testing.T) {
 			rx.Reduce(0, sum),
 		),
 		ErrTest,
+	).Case(
+		rx.Pipe2(
+			rx.Range(1, 7),
+			rx.Reduce(0, sum),
+			rx.OnNext(func(int) { panic(ErrTest) }),
+		),
+		rx.ErrOops, ErrTest,
 	)
 }

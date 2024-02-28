@@ -28,9 +28,16 @@ func TestFromMap(t *testing.T) {
 		rx.Pipe2(
 			rx.FromMap(m),
 			rx.Single[rx.Pair[int, string]](),
-			rx.ValueOf[rx.Pair[int, string]](),
+			ToString[rx.Pair[int, string]](),
 		),
 		rx.ErrNotSingle,
+	).Case(
+		rx.Pipe2(
+			rx.FromMap(m),
+			rx.OnNext(func(rx.Pair[int, string]) { panic(ErrTest) }),
+			ToString[rx.Pair[int, string]](),
+		),
+		rx.ErrOops, ErrTest,
 	)
 }
 

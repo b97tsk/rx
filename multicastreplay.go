@@ -137,9 +137,7 @@ func (m *multicastReplay[T]) emit(n Notification[T]) {
 
 		m.mu.Unlock()
 
-		for _, observer := range obs.Observers {
-			observer.Emit(n)
-		}
+		obs.Emit(n)
 
 	case KindError, KindComplete:
 		var obs multiObserver[T]
@@ -153,9 +151,7 @@ func (m *multicastReplay[T]) emit(n Notification[T]) {
 
 		m.mu.Unlock()
 
-		for _, observer := range obs.Observers {
-			observer.Emit(n)
-		}
+		obs.Emit(n)
 
 	default: // Unknown kind.
 		m.mu.Unlock()
@@ -200,7 +196,7 @@ func (m *multicastReplay[T]) subscribe(c Context, sink Observer[T]) {
 			return
 		}
 
-		sink.Next(b.At(i).Value)
+		Try1(sink, Next(b.At(i).Value), func() { sink.Error(ErrOops) })
 	}
 
 	if last.Kind != 0 {

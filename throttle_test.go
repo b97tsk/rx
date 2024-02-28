@@ -71,6 +71,17 @@ func TestThrottle(t *testing.T) {
 	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B", "C", "D", "E"),
+			AddLatencyToValues[string](0, 2),
+			rx.Throttle(
+				func(string) rx.Observable[int] {
+					panic(ErrTest)
+				},
+			),
+		),
+		"A", rx.ErrOops, ErrTest,
+	).Case(
+		rx.Pipe2(
+			rx.Just("A", "B", "C", "D", "E"),
 			AddLatencyToValues[string](0, 4),
 			rx.Throttle(
 				func(string) rx.Observable[time.Time] {
@@ -79,6 +90,18 @@ func TestThrottle(t *testing.T) {
 			).WithLeading(false).WithTrailing(true),
 		),
 		"C", "E", ErrComplete,
+	).Case(
+		rx.Pipe3(
+			rx.Just("A", "B", "C", "D", "E"),
+			AddLatencyToValues[string](0, 4),
+			rx.Throttle(
+				func(string) rx.Observable[time.Time] {
+					return rx.Timer(Step(9))
+				},
+			).WithLeading(false).WithTrailing(true),
+			rx.OnNext(func(string) { panic(ErrTest) }),
+		),
+		rx.ErrOops, ErrTest,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B", "C", "D", "E"),
