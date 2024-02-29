@@ -1,8 +1,8 @@
 package rx
 
 // WithLatestFrom2 combines the source with 2 other Observables to create
-// an Observable that emits projection of latest values of each Observable,
-// only when the source emits.
+// an Observable that emits projections of the latest values emitted by
+// each Observable, only when the source emits.
 func WithLatestFrom2[T0, T1, T2, R any](
 	obs1 Observable[T1],
 	obs2 Observable[T2],

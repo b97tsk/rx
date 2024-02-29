@@ -3,7 +3,7 @@ package rx
 import "github.com/b97tsk/rx/internal/queue"
 
 // ZipWithBuffering9 combines multiple Observables to create an Observable that
-// emits projection of values of each of its input Observables.
+// emits projections of the values emitted by each of its input Observables.
 //
 // ZipWithBuffering9 buffers every value from each input Observable, which
 // might consume a lot of memory over time if there are lots of values emitting

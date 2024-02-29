@@ -1,7 +1,7 @@
 package rx
 
 // Zip8 combines multiple Observables to create an Observable that emits
-// projection of values of each of its input Observables.
+// projections of the values emitted by each of its input Observables.
 //
 // Zip8 pulls values from each input Observable one by one, it only buffers
 // one value for each input Observable.

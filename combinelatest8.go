@@ -1,7 +1,8 @@
 package rx
 
-// CombineLatest8 combines multiple Observables to create an Observable that
-// emits projection of latest values of each of its input Observables.
+// CombineLatest8 combines multiple Observables to create an Observable
+// that emits projections of the latest values emitted by each of its
+// input Observables.
 func CombineLatest8[T1, T2, T3, T4, T5, T6, T7, T8, R any](
 	obs1 Observable[T1],
 	obs2 Observable[T2],
