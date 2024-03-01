@@ -2,6 +2,7 @@ package rx_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/b97tsk/rx"
 	. "github.com/b97tsk/rx/internal/rxtest"
@@ -21,6 +22,32 @@ func TestAdditionalCoverage(t *testing.T) {
 		_ = rx.Compose7(op, op, op, op, op, op, op).Apply(obs)
 		_ = rx.Compose8(op, op, op, op, op, op, op, op).Apply(obs)
 		_ = rx.Compose9(op, op, op, op, op, op, op, op, op).Apply(obs)
+	})
+
+	t.Run("Context.WithCancelCause", func(t *testing.T) {
+		ctx, cancel := rx.NewBackgroundContext().WithCancelCause()
+		cancel(ErrTest)
+		if ctx.Cause() != ErrTest {
+			t.Fail()
+		}
+	})
+
+	t.Run("Context.WithDeadlineCause", func(t *testing.T) {
+		ctx, cancel := rx.NewBackgroundContext().WithDeadlineCause(time.Now().Add(Step(1)), ErrTest)
+		defer cancel()
+		time.Sleep(Step(2))
+		if ctx.Cause() != ErrTest {
+			t.Fail()
+		}
+	})
+
+	t.Run("Context.WithTimeoutCause", func(t *testing.T) {
+		ctx, cancel := rx.NewBackgroundContext().WithTimeoutCause(Step(1), ErrTest)
+		defer cancel()
+		time.Sleep(Step(2))
+		if ctx.Cause() != ErrTest {
+			t.Fail()
+		}
 	})
 
 	t.Run("NilObservable", func(t *testing.T) {

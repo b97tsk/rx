@@ -12,6 +12,12 @@ import (
 // After the first call, subsequent calls to a CancelFunc do nothing.
 type CancelFunc = context.CancelFunc
 
+// A CancelCauseFunc behaves like a [CancelFunc] but additionally sets
+// the cancellation cause.
+// This cause can be retrieved by calling [Context.Cause] on the canceled
+// [Context] or on any of its derived Contexts.
+type CancelCauseFunc = context.CancelCauseFunc
+
 // A Context carries a [context.Context], an optional [sync.WaitGroup], and
 // an optional panic handler.
 type Context struct {
@@ -56,15 +62,39 @@ func (c Context) AfterFunc(f func()) (stop func() bool) {
 	return context.AfterFunc(c.Context, c.PreAsyncCall(f))
 }
 
+// Cause returns a non-nil error explaining why c was canceled.
+// The first cancellation of c or one of its parents sets the cause.
+// If that cancellation happened via a call to CancelCauseFunc(err),
+// then Cause returns err.
+// Otherwise c.Cause() returns the same value as c.Err().
+// Cause returns nil if c has not been canceled yet.
+func (c Context) Cause() error {
+	return context.Cause(c.Context)
+}
+
 // WithCancel returns a copy of c with a new Done channel.
 // The returned context's Done channel is closed when the returned cancel
 // function is called or when c's Done channel is closed, whichever happens
 // first.
 //
-// Canceling this context releases resources associated with it, so code should
-// call cancel as soon as the operations running in this context complete.
+// Canceling this context releases resources associated with it, so code
+// should call the returned [CancelFunc] as soon as the operations running
+// in this context complete.
 func (c Context) WithCancel() (Context, CancelFunc) {
 	ctx, cancel := context.WithCancel(c.Context)
+	c.Context = ctx
+	return c, cancel
+}
+
+// WithCancelCause behaves like [Context.WithCancel] but returns
+// a [CancelCauseFunc] instead of a [CancelFunc].
+// Calling the returned [CancelCauseFunc] with a non-nil error (the "cause")
+// records that error in the returned [Context]; it can then be retrieved
+// using [Context.Cause].
+// Calling the returned [CancelCauseFunc] with nil sets the cause to
+// [context.Canceled].
+func (c Context) WithCancelCause() (Context, CancelCauseFunc) {
+	ctx, cancel := context.WithCancelCause(c.Context)
 	c.Context = ctx
 	return c, cancel
 }
@@ -75,20 +105,38 @@ func (c Context) WithCancel() (Context, CancelFunc) {
 // when the deadline expires, when the returned cancel function is called, or
 // when c's Done channel is closed, whichever happens first.
 //
-// Canceling this context releases resources associated with it, so code should
-// call cancel as soon as the operations running in this context complete.
+// Canceling this context releases resources associated with it, so code
+// should call the returned [CancelFunc] as soon as the operations running
+// in this context complete.
 func (c Context) WithDeadline(d time.Time) (Context, CancelFunc) {
 	ctx, cancel := context.WithDeadline(c.Context, d)
 	c.Context = ctx
 	return c, cancel
 }
 
+// WithDeadlineCause behaves like [Context.WithDeadline] but also sets
+// the cause of the returned [Context] when the deadline is exceeded.
+// The returned [CancelFunc] does not set the cause.
+func (c Context) WithDeadlineCause(d time.Time, cause error) (Context, CancelFunc) {
+	ctx, cancel := context.WithDeadlineCause(c.Context, d, cause)
+	c.Context = ctx
+	return c, cancel
+}
+
 // WithTimeout returns c.WithDeadline(time.Now().Add(timeout)).
 //
-// Canceling this context releases resources associated with it, so code should
-// call cancel as soon as the operations running in this context complete.
+// Canceling this context releases resources associated with it, so code
+// should call the returned [CancelFunc] as soon as the operations running
+// in this context complete.
 func (c Context) WithTimeout(timeout time.Duration) (Context, CancelFunc) {
 	return c.WithDeadline(time.Now().Add(timeout))
+}
+
+// WithTimeoutCause behaves like [Context.WithTimeout] but also sets the cause
+// of the returned [Context] when the timeout expires.
+// The returned [CancelFunc] does not set the cause.
+func (c Context) WithTimeoutCause(timeout time.Duration, cause error) (Context, CancelFunc) {
+	return c.WithDeadlineCause(time.Now().Add(timeout), cause)
 }
 
 // WithWaitGroup returns a copy of c with WaitGroup field set to wg.
