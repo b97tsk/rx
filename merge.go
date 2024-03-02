@@ -35,14 +35,14 @@ func (some observables[T]) Merge(c Context, sink Observer[T]) {
 
 	workers.Store(uint32(len(some)))
 
-	observer := func(n Notification[T]) {
+	worker := func(n Notification[T]) {
 		if n.Kind != KindComplete || workers.Add(^uint32(0)) == 0 {
 			sink(n)
 		}
 	}
 
 	for _, obs := range some {
-		c.Go(func() { obs.Subscribe(c, observer) })
+		c.Go(func() { obs.Subscribe(c, worker) })
 	}
 }
 
@@ -68,6 +68,7 @@ func MergeMap[T, R any](proj func(v T) Observable[R]) MergeMapOperator[T, R] {
 		opts: mergeMapConfig[T, R]{
 			Project:      proj,
 			Concurrency:  -1,
+			PassiveGo:    false,
 			UseBuffering: false,
 		},
 	}
@@ -76,6 +77,7 @@ func MergeMap[T, R any](proj func(v T) Observable[R]) MergeMapOperator[T, R] {
 type mergeMapConfig[T, R any] struct {
 	Project      func(T) Observable[R]
 	Concurrency  int
+	PassiveGo    bool
 	UseBuffering bool
 }
 
@@ -98,6 +100,16 @@ func (op MergeMapOperator[T, R]) WithBuffering() MergeMapOperator[T, R] {
 // It must not be zero. The default value is -1 (unlimited).
 func (op MergeMapOperator[T, R]) WithConcurrency(n int) MergeMapOperator[T, R] {
 	op.opts.Concurrency = n
+	return op
+}
+
+// WithPassiveGo turns on PassiveGo mode.
+// By default, this Operator flattens each source value in separate goroutines.
+// With PassiveGo mode on, this Operator, when flattening, blocks at each
+// source value until it's flattened or decides to work in separate goroutines.
+// In PassiveGo mode, goroutines can only be started by Observables themselves.
+func (op MergeMapOperator[T, R]) WithPassiveGo() MergeMapOperator[T, R] {
+	op.opts.PassiveGo = true
 	return op
 }
 
@@ -134,6 +146,36 @@ func (obs mergeMapObservable[T, R]) Subscribe(c Context, sink Observer[R]) {
 
 	x.Cond.L = &x.Mutex
 
+	worker := func(n Notification[R]) {
+		switch n.Kind {
+		case KindNext:
+			sink(n)
+
+		case KindError:
+			x.Lock()
+			x.Workers--
+			x.HasError = true
+			x.Unlock()
+			x.Signal()
+
+			sink(n)
+
+		case KindComplete:
+			x.Lock()
+
+			x.Workers--
+
+			if x.Workers == 0 && x.Complete && !x.HasError {
+				x.Unlock()
+				sink(n)
+				return
+			}
+
+			x.Unlock()
+			x.Signal()
+		}
+	}
+
 	var noop bool
 
 	obs.Source.Subscribe(c, func(n Notification[T]) {
@@ -165,37 +207,12 @@ func (obs mergeMapObservable[T, R]) Subscribe(c Context, sink Observer[R]) {
 			x.Workers++
 			x.Unlock()
 
-			c.Go(func() {
-				obs1.Subscribe(c, func(n Notification[R]) {
-					switch n.Kind {
-					case KindNext:
-						sink(n)
+			if obs.PassiveGo {
+				obs1.Subscribe(c, worker)
+				return
+			}
 
-					case KindError:
-						x.Lock()
-						x.Workers--
-						x.HasError = true
-						x.Unlock()
-						x.Signal()
-
-						sink(n)
-
-					case KindComplete:
-						x.Lock()
-
-						x.Workers--
-
-						if x.Workers == 0 && x.Complete && !x.HasError {
-							x.Unlock()
-							sink(n)
-							return
-						}
-
-						x.Unlock()
-						x.Signal()
-					}
-				})
-			})
+			c.Go(func() { obs1.Subscribe(c, worker) })
 
 		case KindError:
 			sink.Error(n.Error)
@@ -228,54 +245,75 @@ func (obs mergeMapObservable[T, R]) SubscribeWithBuffering(c Context, sink Obser
 		HasError bool
 	}
 
+	startWorkerFactory := func() (startWorker func()) {
+		worker := func(n Notification[R]) {
+			switch n.Kind {
+			case KindNext:
+				sink(n)
+
+			case KindError:
+				x.Lock()
+				x.Queue.Init()
+				x.Workers--
+				x.HasError = true
+				x.Unlock()
+
+				sink(n)
+
+			case KindComplete:
+				x.Lock()
+
+				x.Workers--
+
+				if x.Queue.Len() != 0 {
+					startWorker()
+					return
+				}
+
+				if x.Workers == 0 && x.Complete && !x.HasError {
+					x.Unlock()
+					sink(n)
+					return
+				}
+
+				x.Unlock()
+			}
+		}
+
+		startWorker = func() {
+			obs1 := Try11(obs.Project, x.Queue.Pop(), func() {
+				defer x.Unlock()
+				x.Queue.Init()
+				x.HasError = true
+				sink.Error(ErrOops)
+			})
+
+			x.Workers++
+			x.Unlock()
+
+			if obs.PassiveGo {
+				obs1.Subscribe(c, worker)
+				return
+			}
+
+			c.Go(func() { obs1.Subscribe(c, worker) })
+		}
+
+		if obs.PassiveGo {
+			startWorker = resistReentrance(startWorker)
+		}
+
+		return
+	}
+
 	var startWorker func()
 
-	startWorker = func() {
-		obs1 := Try11(obs.Project, x.Queue.Pop(), func() {
-			defer x.Unlock()
-			x.Queue.Init()
-			x.HasError = true
-			sink.Error(ErrOops)
-		})
-
-		x.Workers++
-		x.Unlock()
-
-		c.Go(func() {
-			obs1.Subscribe(c, func(n Notification[R]) {
-				switch n.Kind {
-				case KindNext:
-					sink(n)
-
-				case KindError:
-					x.Lock()
-					x.Queue.Init()
-					x.Workers--
-					x.HasError = true
-					x.Unlock()
-
-					sink(n)
-
-				case KindComplete:
-					x.Lock()
-
-					x.Workers--
-
-					if x.Queue.Len() != 0 {
-						startWorker()
-						return
-					}
-
-					if x.Workers == 0 && x.Complete && !x.HasError {
-						x.Unlock()
-						sink(n)
-						return
-					}
-
-					x.Unlock()
-				}
-			})
-		})
+	if obs.PassiveGo {
+		// In PassiveGo mode, each startWorker should have its own call of
+		// resistReentrance, which should not be shared by multiple goroutines.
+		startWorker = func() { startWorkerFactory()() }
+	} else {
+		startWorker = startWorkerFactory()
 	}
 
 	var noop bool

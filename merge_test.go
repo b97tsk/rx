@@ -47,6 +47,16 @@ func TestMergeMap(t *testing.T) {
 		),
 		"E", "C", "A", "F", "D", "B", ErrComplete,
 	).Case(
+		rx.Pipe1(
+			rx.Just(
+				rx.Just("A", "B"),
+				rx.Just("C", "D"),
+				rx.Just("E", "F"),
+			),
+			rx.MergeAll[rx.Observable[string]]().WithPassiveGo(),
+		),
+		"A", "B", "C", "D", "E", "F", ErrComplete,
+	).Case(
 		rx.Pipe3(
 			rx.Range(0, 9),
 			rx.MergeMap(
@@ -119,6 +129,16 @@ func TestMergeMapWithBuffering(t *testing.T) {
 			rx.MergeAll[rx.Observable[string]]().WithBuffering(),
 		),
 		"E", "C", "A", "F", "D", "B", ErrComplete,
+	).Case(
+		rx.Pipe1(
+			rx.Just(
+				rx.Just("A", "B"),
+				rx.Just("C", "D"),
+				rx.Just("E", "F"),
+			),
+			rx.MergeAll[rx.Observable[string]]().WithBuffering().WithPassiveGo(),
+		),
+		"A", "B", "C", "D", "E", "F", ErrComplete,
 	).Case(
 		rx.Pipe3(
 			rx.Range(0, 9),
