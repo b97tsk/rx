@@ -50,6 +50,16 @@ func TestAdditionalCoverage(t *testing.T) {
 		}
 	})
 
+	t.Run("Go", func(t *testing.T) {
+		v, err := rx.Pipe1(rx.Just(42), rx.Go[int]()).BlockingSingle(rx.NewBackgroundContext())
+		if err != nil {
+			t.Log(err)
+		}
+		if v != 42 {
+			t.Fail()
+		}
+	})
+
 	t.Run("NilObservable", func(t *testing.T) {
 		_ = rx.NewObservable[any](nil).BlockingSubscribe(rx.NewBackgroundContext(), func(n rx.Notification[any]) {
 			if n.Kind != rx.KindError || n.Error != rx.ErrNil {
