@@ -179,7 +179,7 @@ func (c Context) PreAsyncCall(f func()) func() {
 	return func() {
 		defer func() {
 			if c.WaitGroup != nil {
-				c.WaitGroup.Done()
+				defer c.WaitGroup.Done()
 			}
 			if c.PanicHandler != nil {
 				if v := recover(); v != nil {
