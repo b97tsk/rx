@@ -14,36 +14,56 @@ func Merge[T any](some ...Observable[T]) Observable[T] {
 		return Empty[T]()
 	}
 
-	return observables[T](some).Merge
+	return mergeWithObservable[T]{Others: some}.Subscribe
 }
 
-// MergeWith applies [Merge] to the source Observable along with some other
-// Observables to create a first-order Observable.
+// MergeWith merges the source Observable and some other Observables together
+// to create an Observable that concurrently emits all values from the source
+// and every given input Observable.
 func MergeWith[T any](some ...Observable[T]) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return observables[T](append([]Observable[T]{source}, some...)).Merge
+			return mergeWithObservable[T]{source, some}.Subscribe
 		},
 	)
 }
 
-func (some observables[T]) Merge(c Context, sink Observer[T]) {
+type mergeWithObservable[T any] struct {
+	Source Observable[T]
+	Others []Observable[T]
+}
+
+func (obs mergeWithObservable[T]) Subscribe(c Context, sink Observer[T]) {
 	c, cancel := c.WithCancel()
 	sink = sink.OnLastNotification(cancel).Serialized()
 
-	var workers atomic.Uint32
+	var num atomic.Uint32
 
-	workers.Store(uint32(len(some)))
+	num.Store(uint32(obs.numObservables()))
 
 	worker := func(n Notification[T]) {
-		if n.Kind != KindComplete || workers.Add(^uint32(0)) == 0 {
+		if n.Kind != KindComplete || num.Add(^uint32(0)) == 0 {
 			sink(n)
 		}
 	}
 
-	for _, obs := range some {
+	for _, obs := range obs.Others {
 		c.Go(func() { obs.Subscribe(c, worker) })
 	}
+
+	if obs.Source != nil {
+		obs.Source.Subscribe(c, worker)
+	}
+}
+
+func (obs mergeWithObservable[T]) numObservables() int {
+	n := len(obs.Others)
+
+	if obs.Source != nil {
+		n++
+	}
+
+	return n
 }
 
 // MergeAll flattens a higher-order Observable into a first-order Observable

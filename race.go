@@ -9,21 +9,26 @@ func Race[T any](some ...Observable[T]) Observable[T] {
 		return Empty[T]()
 	}
 
-	return observables[T](some).Race
+	return raceWithObservable[T]{Others: some}.Subscribe
 }
 
-// RaceWith applies [Race] to the source Observable along with some other
-// Observables to create a first-order Observable.
+// RaceWith mirrors the first Observable to emit a value, from the source
+// and given input Observables.
 func RaceWith[T any](some ...Observable[T]) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return observables[T](append([]Observable[T]{source}, some...)).Race
+			return raceWithObservable[T]{source, some}.Subscribe
 		},
 	)
 }
 
-func (some observables[T]) Race(c Context, sink Observer[T]) {
-	subs := make([]Pair[Context, CancelFunc], len(some))
+type raceWithObservable[T any] struct {
+	Source Observable[T]
+	Others []Observable[T]
+}
+
+func (obs raceWithObservable[T]) Subscribe(c Context, sink Observer[T]) {
+	subs := make([]Pair[Context, CancelFunc], obs.numObservables())
 
 	for i := range subs {
 		subs[i] = NewPair(c.WithCancel())
@@ -31,37 +36,53 @@ func (some observables[T]) Race(c Context, sink Observer[T]) {
 
 	var race atomic.Uint32
 
-	for index, obs := range some {
-		c.Go(func() {
-			var won, lost bool
+	subscribe := func(i int, obs Observable[T]) {
+		var won, lost bool
 
-			obs.Subscribe(subs[index].Left(), func(n Notification[T]) {
-				switch {
-				case won:
-					sink(n)
-					return
-				case lost:
-					return
-				}
+		obs.Subscribe(subs[i].Left(), func(n Notification[T]) {
+			switch {
+			case won:
+				sink(n)
+				return
+			case lost:
+				return
+			}
 
-				if race.CompareAndSwap(0, 1) {
-					for i := range subs {
-						if i != index {
-							subs[i].Right()()
-						}
+			if race.CompareAndSwap(0, 1) {
+				for j := range subs {
+					if j != i {
+						subs[j].Right()()
 					}
-
-					won = true
-
-					sink(n)
-
-					return
 				}
 
-				lost = true
+				won = true
 
-				subs[index].Right()()
-			})
+				sink(n)
+
+				return
+			}
+
+			lost = true
+
+			subs[i].Right()()
 		})
 	}
+
+	for i, obs := range obs.Others {
+		c.Go(func() { subscribe(i, obs) })
+	}
+
+	if obs.Source != nil {
+		subscribe(len(subs)-1, obs.Source)
+	}
+}
+
+func (obs raceWithObservable[T]) numObservables() int {
+	n := len(obs.Others)
+
+	if obs.Source != nil {
+		n++
+	}
+
+	return n
 }

@@ -15,25 +15,37 @@ func Concat[T any](some ...Observable[T]) Observable[T] {
 		return Empty[T]()
 	}
 
-	return observables[T](some).Concat
+	return concatWithObservable[T]{Others: some}.Subscribe
 }
 
-// ConcatWith applies [Concat] to the source Observable along with some other
-// Observables to create a first-order Observable.
+// ConcatWith concatenates the source Observable and some other Observables
+// together to create an Observable that sequentially emits their values,
+// one Observable after the other.
 func ConcatWith[T any](some ...Observable[T]) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return observables[T](append([]Observable[T]{source}, some...)).Concat
+			return concatWithObservable[T]{source, some}.Subscribe
 		},
 	)
 }
 
-func (some observables[T]) Concat(c Context, sink Observer[T]) {
+type concatWithObservable[T any] struct {
+	Source Observable[T]
+	Others []Observable[T]
+}
+
+func (obs concatWithObservable[T]) Subscribe(c Context, sink Observer[T]) {
 	var observer Observer[T]
 
 	done := c.Done()
 
-	subscribeToNext := resistReentrance(func() {
+	next := resistReentrance(func() {
+		if source := obs.Source; source != nil {
+			obs.Source = nil
+			source.Subscribe(c, observer)
+			return
+		}
+
 		select {
 		default:
 		case <-done:
@@ -41,15 +53,14 @@ func (some observables[T]) Concat(c Context, sink Observer[T]) {
 			return
 		}
 
-		if len(some) == 0 {
+		if len(obs.Others) == 0 {
 			sink.Complete()
 			return
 		}
 
-		obs := some[0]
-		some = some[1:]
-
-		obs.Subscribe(c, observer)
+		obs1 := obs.Others[0]
+		obs.Others = obs.Others[1:]
+		obs1.Subscribe(c, observer)
 	})
 
 	observer = func(n Notification[T]) {
@@ -58,10 +69,10 @@ func (some observables[T]) Concat(c Context, sink Observer[T]) {
 			return
 		}
 
-		subscribeToNext()
+		next()
 	}
 
-	subscribeToNext()
+	next()
 }
 
 // ConcatAll flattens a higher-order Observable into a first-order Observable

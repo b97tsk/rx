@@ -13,8 +13,6 @@ var sentinel = func() context.Context {
 	return ctx
 }()
 
-type observables[T any] []Observable[T]
-
 func identity[T any](v T) T { return v }
 
 // resistReentrance returns a function that calls f in a non-recursive way
