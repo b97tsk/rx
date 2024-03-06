@@ -44,6 +44,12 @@ func TestRace(t *testing.T) {
 		rx.Pipe1(s[0], rx.RaceWith(s[1:]...)),
 		Step(1),
 		ErrComplete,
+	).Case(
+		rx.Pipe1(
+			rx.Empty[time.Duration](),
+			rx.RaceWith(s[:]...),
+		),
+		ErrComplete,
 	)
 
 	time.Sleep(Step(len(s)))

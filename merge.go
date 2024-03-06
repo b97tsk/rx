@@ -47,12 +47,19 @@ func (obs mergeWithObservable[T]) Subscribe(c Context, sink Observer[T]) {
 		}
 	}
 
-	for _, obs := range obs.Others {
-		c.Go(func() { obs.Subscribe(c, worker) })
-	}
-
 	if obs.Source != nil {
 		obs.Source.Subscribe(c, worker)
+
+		select {
+		default:
+		case <-c.Done():
+			sink.Error(c.Err())
+			return
+		}
+	}
+
+	for _, obs := range obs.Others {
+		c.Go(func() { obs.Subscribe(c, worker) })
 	}
 }
 

@@ -68,12 +68,21 @@ func (obs raceWithObservable[T]) Subscribe(c Context, sink Observer[T]) {
 		})
 	}
 
-	for i, obs := range obs.Others {
-		c.Go(func() { subscribe(i, obs) })
-	}
+	var off int
 
 	if obs.Source != nil {
-		subscribe(len(subs)-1, obs.Source)
+		subscribe(0, obs.Source)
+
+		if race.Load() != 0 {
+			return
+		}
+
+		off = 1
+	}
+
+	for i, obs := range obs.Others {
+		i += off
+		c.Go(func() { subscribe(i, obs) })
 	}
 }
 
