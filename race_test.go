@@ -12,44 +12,47 @@ import (
 func TestRace(t *testing.T) {
 	t.Parallel()
 
-	var s [8]rx.Observable[time.Duration]
+	var s [8]rx.Observable[string]
 
 	detachContext := rx.NewOperator(
-		func(source rx.Observable[time.Duration]) rx.Observable[time.Duration] {
-			return func(_ rx.Context, sink rx.Observer[time.Duration]) {
+		func(source rx.Observable[string]) rx.Observable[string] {
+			return func(_ rx.Context, sink rx.Observer[string]) {
 				source.Subscribe(rx.NewBackgroundContext(), sink)
 			}
 		},
 	)
 
 	for i := range s {
-		d := Step(i + 1)
 		s[i] = rx.Pipe2(
-			rx.Timer(d),
-			rx.MapTo[time.Time](d),
+			rx.Timer(Step(i+1)),
+			rx.MapTo[time.Time](string(rune(i+'A'))),
 			detachContext,
 		)
 	}
 
 	rand.Shuffle(len(s), func(i, j int) { s[i], s[j] = s[j], s[i] })
 
-	NewTestSuite[time.Duration](t).Case(
-		rx.Race[time.Duration](),
+	NewTestSuite[string](t).Case(
+		rx.Race[string](),
 		ErrComplete,
 	).Case(
 		rx.Race(s[:]...),
-		Step(1),
-		ErrComplete,
+		"A", ErrComplete,
 	).Case(
 		rx.Pipe1(s[0], rx.RaceWith(s[1:]...)),
-		Step(1),
-		ErrComplete,
+		"A", ErrComplete,
 	).Case(
 		rx.Pipe1(
-			rx.Empty[time.Duration](),
+			rx.Empty[string](),
 			rx.RaceWith(s[:]...),
 		),
 		ErrComplete,
+	).Case(
+		rx.Pipe1(
+			rx.Race(s[:len(s)-1]...),
+			rx.RaceWith(s[len(s)-1], rx.Just("A"), rx.Just("B"), rx.Just("C")).WithPassiveGo(),
+		),
+		"A", ErrComplete,
 	)
 
 	time.Sleep(Step(len(s)))

@@ -14,17 +14,49 @@ func Race[T any](some ...Observable[T]) Observable[T] {
 
 // RaceWith mirrors the first Observable to emit a value, from the source
 // and given input Observables.
-func RaceWith[T any](some ...Observable[T]) Operator[T, T] {
-	return NewOperator(
-		func(source Observable[T]) Observable[T] {
-			return raceWithObservable[T]{source, some}.Subscribe
+func RaceWith[T any](some ...Observable[T]) RaceWithOperator[T] {
+	return RaceWithOperator[T]{
+		opts: raceWithConfig[T]{
+			Observables: some,
+			PassiveGo:   false,
 		},
-	)
+	}
+}
+
+type raceWithConfig[T any] struct {
+	Observables []Observable[T]
+	PassiveGo   bool
+}
+
+// RaceWithOperator is an [Operator] type for [RaceWith].
+type RaceWithOperator[T any] struct {
+	opts raceWithConfig[T]
+}
+
+// WithPassiveGo turns on PassiveGo mode.
+// By default, this Operator subscribes to Observables other than the source
+// in separate goroutines.
+// With PassiveGo mode on, this Operator subscribes to every Observable in
+// the same goroutine.
+// In PassiveGo mode, goroutines can only be started by Observables themselves.
+func (op RaceWithOperator[T]) WithPassiveGo() RaceWithOperator[T] {
+	op.opts.PassiveGo = true
+	return op
+}
+
+// Apply implements the Operator interface.
+func (op RaceWithOperator[T]) Apply(source Observable[T]) Observable[T] {
+	return raceWithObservable[T]{
+		Source:    source,
+		Others:    op.opts.Observables,
+		PassiveGo: op.opts.PassiveGo,
+	}.Subscribe
 }
 
 type raceWithObservable[T any] struct {
-	Source Observable[T]
-	Others []Observable[T]
+	Source    Observable[T]
+	Others    []Observable[T]
+	PassiveGo bool
 }
 
 func (obs raceWithObservable[T]) Subscribe(c Context, sink Observer[T]) {
@@ -80,9 +112,20 @@ func (obs raceWithObservable[T]) Subscribe(c Context, sink Observer[T]) {
 		off = 1
 	}
 
-	for i, obs := range obs.Others {
+	for i, obs1 := range obs.Others {
 		i += off
-		c.Go(func() { subscribe(i, obs) })
+
+		if obs.PassiveGo {
+			subscribe(i, obs1)
+
+			if race.Load() != 0 {
+				return
+			}
+
+			continue
+		}
+
+		c.Go(func() { subscribe(i, obs1) })
 	}
 }
 

@@ -20,17 +20,49 @@ func Merge[T any](some ...Observable[T]) Observable[T] {
 // MergeWith merges the source Observable and some other Observables together
 // to create an Observable that concurrently emits all values from the source
 // and every given input Observable.
-func MergeWith[T any](some ...Observable[T]) Operator[T, T] {
-	return NewOperator(
-		func(source Observable[T]) Observable[T] {
-			return mergeWithObservable[T]{source, some}.Subscribe
+func MergeWith[T any](some ...Observable[T]) MergeWithOperator[T] {
+	return MergeWithOperator[T]{
+		opts: mergeWithConfig[T]{
+			Observables: some,
+			PassiveGo:   false,
 		},
-	)
+	}
+}
+
+type mergeWithConfig[T any] struct {
+	Observables []Observable[T]
+	PassiveGo   bool
+}
+
+// MergeWithOperator is an [Operator] type for [MergeWith].
+type MergeWithOperator[T any] struct {
+	opts mergeWithConfig[T]
+}
+
+// WithPassiveGo turns on PassiveGo mode.
+// By default, this Operator subscribes to Observables other than the source
+// in separate goroutines.
+// With PassiveGo mode on, this Operator subscribes to every Observable in
+// the same goroutine.
+// In PassiveGo mode, goroutines can only be started by Observables themselves.
+func (op MergeWithOperator[T]) WithPassiveGo() MergeWithOperator[T] {
+	op.opts.PassiveGo = true
+	return op
+}
+
+// Apply implements the Operator interface.
+func (op MergeWithOperator[T]) Apply(source Observable[T]) Observable[T] {
+	return mergeWithObservable[T]{
+		Source:    source,
+		Others:    op.opts.Observables,
+		PassiveGo: op.opts.PassiveGo,
+	}.Subscribe
 }
 
 type mergeWithObservable[T any] struct {
-	Source Observable[T]
-	Others []Observable[T]
+	Source    Observable[T]
+	Others    []Observable[T]
+	PassiveGo bool
 }
 
 func (obs mergeWithObservable[T]) Subscribe(c Context, sink Observer[T]) {
@@ -47,19 +79,34 @@ func (obs mergeWithObservable[T]) Subscribe(c Context, sink Observer[T]) {
 		}
 	}
 
+	done := c.Done()
+
 	if obs.Source != nil {
 		obs.Source.Subscribe(c, worker)
 
 		select {
 		default:
-		case <-c.Done():
+		case <-done:
 			sink.Error(c.Err())
 			return
 		}
 	}
 
-	for _, obs := range obs.Others {
-		c.Go(func() { obs.Subscribe(c, worker) })
+	for _, obs1 := range obs.Others {
+		if obs.PassiveGo {
+			obs1.Subscribe(c, worker)
+
+			select {
+			default:
+			case <-done:
+				sink.Error(c.Err())
+				return
+			}
+
+			continue
+		}
+
+		c.Go(func() { obs1.Subscribe(c, worker) })
 	}
 }
 

@@ -36,6 +36,12 @@ func TestMerge(t *testing.T) {
 			rx.MergeWith(rx.Just("A")),
 		),
 		ErrTest,
+	).Case(
+		rx.Pipe1(
+			rx.Empty[string](),
+			rx.MergeWith(rx.Just("A"), rx.Just("B"), rx.Just("C")).WithPassiveGo(),
+		),
+		"A", "B", "C", ErrComplete,
 	)
 }
 
