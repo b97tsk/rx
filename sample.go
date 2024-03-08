@@ -39,69 +39,9 @@ func (obs sampleObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
 			HasValue atomic.Bool
 		}
 		Worker struct {
+			sync.Mutex
 			sync.WaitGroup
 		}
-	}
-
-	{
-		w, cancelw := c.WithCancel()
-
-		x.Context.Store(w.Context)
-		x.Worker.Add(1)
-
-		Try3(
-			Observable[U].Subscribe,
-			obs.Notifier,
-			w,
-			func(n Notification[U]) {
-				switch n.Kind {
-				case KindNext:
-					if x.Latest.HasValue.Load() {
-						x.Latest.Lock()
-						value := x.Latest.Value
-						x.Latest.HasValue.Store(false)
-						x.Latest.Unlock()
-						sink.Next(value)
-					}
-
-				case KindError:
-					defer x.Worker.Done()
-
-					cancelw()
-
-					if x.Context.Swap(sentinel) != sentinel {
-						sink.Error(n.Error)
-					}
-
-				case KindComplete:
-					cancelw()
-					x.Worker.Done()
-				}
-			},
-			func() {
-				if x.Context.Swap(sentinel) != sentinel {
-					sink.Error(ErrOops)
-				}
-			},
-		)
-	}
-
-	finish := func(n Notification[T]) {
-		old := x.Context.Swap(sentinel)
-
-		cancel()
-		x.Worker.Wait()
-
-		if old != sentinel {
-			sink(n)
-		}
-	}
-
-	select {
-	default:
-	case <-c.Done():
-		finish(Error[T](c.Err()))
-		return
 	}
 
 	obs.Source.Subscribe(c, func(n Notification[T]) {
@@ -112,7 +52,55 @@ func (obs sampleObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
 			x.Latest.HasValue.Store(true)
 			x.Latest.Unlock()
 		case KindError, KindComplete:
-			finish(n)
+			old := x.Context.Swap(sentinel)
+
+			cancel()
+
+			x.Worker.Lock()
+			x.Worker.Wait()
+			x.Worker.Unlock()
+
+			if old != sentinel {
+				sink(n)
+			}
+		}
+	})
+
+	select {
+	default:
+	case <-c.Done():
+		return
+	}
+
+	w, cancelw := c.WithCancel()
+
+	x.Worker.Lock()
+	x.Worker.Add(1)
+	x.Worker.Unlock()
+
+	obs.Notifier.Subscribe(w, func(n Notification[U]) {
+		switch n.Kind {
+		case KindNext:
+			if x.Latest.HasValue.Load() {
+				x.Latest.Lock()
+				value := x.Latest.Value
+				x.Latest.HasValue.Store(false)
+				x.Latest.Unlock()
+				sink.Next(value)
+			}
+
+		case KindError:
+			defer x.Worker.Done()
+
+			cancelw()
+
+			if x.Context.Swap(sentinel) != sentinel {
+				sink.Error(n.Error)
+			}
+
+		case KindComplete:
+			cancelw()
+			x.Worker.Done()
 		}
 	})
 }

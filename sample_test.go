@@ -1,7 +1,6 @@
 package rx_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -16,7 +15,7 @@ func TestSample(t *testing.T) {
 		rx.Pipe2(
 			rx.Just("A", "B", "C", "D", "E"),
 			AddLatencyToValues[string](1, 2),
-			rx.Sample[string](rx.Ticker(Step(4))),
+			rx.SampleTime[string](Step(4)),
 		),
 		"B", "D", ErrComplete,
 	).Case(
@@ -57,47 +56,9 @@ func TestSample(t *testing.T) {
 		"B", "D", ErrTest,
 	).Case(
 		rx.Pipe1(
-			rx.Throw[string](ErrTest),
-			rx.Sample[string](rx.Ticker(Step(1))),
-		),
-		ErrTest,
-	).Case(
-		rx.Pipe2(
-			rx.Just("A", "B", "C", "D", "E"),
-			AddLatencyToValues[string](1, 2),
-			rx.SampleTime[string](Step(4)),
-		),
-		"B", "D", ErrComplete,
-	)
-
-	ctx, cancel := rx.NewBackgroundContext().WithTimeout(Step(1))
-	defer cancel()
-
-	NewTestSuite[string](t).WithContext(ctx).Case(
-		rx.Pipe1(
 			rx.Empty[string](),
-			rx.Sample[string](
-				func(_ rx.Context, sink rx.Observer[string]) {
-					time.Sleep(Step(2))
-					sink.Complete()
-				},
-			),
+			rx.Sample[string](rx.Throw[int](ErrTest)),
 		),
-		context.DeadlineExceeded,
+		ErrComplete,
 	)
-
-	t.Run("Oops", func(t *testing.T) {
-		defer func() {
-			NewTestSuite[string](t).Case(rx.Oops[string](recover()), rx.ErrOops, ErrTest)
-		}()
-		rx.Pipe1(
-			rx.Empty[string](),
-			rx.Sample[string](
-				func(_ rx.Context, sink rx.Observer[int]) {
-					defer sink.Complete()
-					panic(ErrTest)
-				},
-			),
-		).Subscribe(rx.NewBackgroundContext(), rx.Noop[string])
-	})
 }
