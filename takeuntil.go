@@ -85,6 +85,8 @@ func (obs takeUntilObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
 	x.Source.Unlock()
 
 	finish := func(n Notification[T]) {
+		defer x.Source.Done()
+
 		old := x.Context.Swap(sentinel)
 
 		cancel()
@@ -92,8 +94,6 @@ func (obs takeUntilObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
 		if old != sentinel {
 			sink(n)
 		}
-
-		x.Source.Done()
 	}
 
 	select {
