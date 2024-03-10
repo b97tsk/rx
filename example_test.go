@@ -3,7 +3,6 @@ package rx_test
 import (
 	"context"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/b97tsk/rx"
@@ -84,9 +83,7 @@ func Example_blocking() {
 }
 
 func Example_waitGroup() {
-	var wg sync.WaitGroup
-
-	ctx := rx.NewContext(context.TODO()).WithWaitGroup(&wg)
+	ctx := rx.NewContext(context.TODO()).WithNewWaitGroup()
 
 	ctx.Go(func() {
 		for n := 1; n < 4; n++ {
@@ -98,7 +95,7 @@ func Example_waitGroup() {
 		}
 	})
 
-	wg.Wait()
+	ctx.Wait()
 
 	// Output:
 	// 1

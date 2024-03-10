@@ -46,6 +46,12 @@ func (c Context) Err() error {
 	return c.Context.Err()
 }
 
+// Wait runs c.WaitGroup.Wait().
+// If c.WaitGroup is not set, Wait panics.
+func (c Context) Wait() {
+	c.WaitGroup.Wait()
+}
+
 // AfterFunc arranges to call f in its own goroutine after c is done
 // (cancelled or timed out).
 // If c is already done, AfterFunc calls f immediately in its own goroutine.
@@ -137,6 +143,13 @@ func (c Context) WithTimeout(timeout time.Duration) (Context, CancelFunc) {
 // The returned [CancelFunc] does not set the cause.
 func (c Context) WithTimeoutCause(timeout time.Duration, cause error) (Context, CancelFunc) {
 	return c.WithDeadlineCause(time.Now().Add(timeout), cause)
+}
+
+// WithNewWaitGroup returns a copy of c with WaitGroup field set to
+// a new [sync.WaitGroup].
+func (c Context) WithNewWaitGroup() Context {
+	c.WaitGroup = new(sync.WaitGroup)
+	return c
 }
 
 // WithWaitGroup returns a copy of c with WaitGroup field set to wg.
