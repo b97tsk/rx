@@ -65,7 +65,21 @@ func (c Context) Wait() {
 // Internally, f is wrapped with [Context.PreAsyncCall] before being passed
 // to [context.AfterFunc].
 func (c Context) AfterFunc(f func()) (stop func() bool) {
-	return context.AfterFunc(c.Context, c.PreAsyncCall(f))
+	{
+		stop := context.AfterFunc(c.Context, c.PreAsyncCall(f))
+
+		return func() bool {
+			stopped := stop()
+
+			if stopped {
+				if c.WaitGroup != nil {
+					c.WaitGroup.Done()
+				}
+			}
+
+			return stopped
+		}
+	}
 }
 
 // Cause returns a non-nil error explaining why c was canceled.
