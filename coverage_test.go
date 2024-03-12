@@ -13,7 +13,7 @@ func TestAdditionalCoverage(t *testing.T) {
 
 	t.Run("ComposeFuncs", func(t *testing.T) {
 		obs := rx.Empty[int]()
-		op := rx.SkipAll[int]()
+		op := rx.Discard[int]()
 		_ = rx.Compose2(op, op).Apply(obs)
 		_ = rx.Compose3(op, op, op).Apply(obs)
 		_ = rx.Compose4(op, op, op, op).Apply(obs)

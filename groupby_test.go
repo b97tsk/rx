@@ -75,7 +75,7 @@ func TestGroupBy(t *testing.T) {
 				func(g rx.Pair[string, rx.Observable[string]]) rx.Observable[string] {
 					return rx.Pipe2(
 						g.Value,
-						rx.SkipAll[string](),
+						rx.Discard[string](),
 						rx.OnComplete[string](func() { panic(ErrTest) }),
 					)
 				},
