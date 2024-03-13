@@ -1,41 +1,15 @@
 package rx
 
-import (
-	"runtime"
-	"sync"
-)
+import "sync"
 
-// Multicast returns a Subject whose Observable part takes care of
-// all Observers that subscribed to it, all of which will receive
-// emissions from Subject's Observer part.
-//
-// Subjects are subject to memory leaks.
-// After finishing using a Subject, you should call either its Error method
-// or its Complete method to avoid that.
-// If you can guarantee that every subscription to a Subject is canceled
-// sooner or later, then you are fine.
-//
-// Internally, a runtime finalizer is set to call Error(ErrFinalized), which
-// may run any time after Subject's Observer part gets garbage-collected.
+// Multicast returns a Subject that mirrors every emission it receives to all
+// its subscribers.
 func Multicast[T any]() Subject[T] {
 	m := new(multicast[T])
-
-	runtime.SetFinalizer(&m, multicastFinalizer[T])
-
 	return Subject[T]{
-		Observable: m.subscribe, // Only Observer field holds &m, this doesn't.
-		Observer: func(n Notification[T]) {
-			m.emit(n)
-			switch n.Kind {
-			case KindError, KindComplete:
-				runtime.SetFinalizer(&m, nil)
-			}
-		},
+		Observable: NewObservable(m.subscribe),
+		Observer:   NewObserver(m.emit).WithRuntimeFinalizer(),
 	}
-}
-
-func multicastFinalizer[T any](m **multicast[T]) {
-	go (*m).emit(Error[T](ErrFinalized))
 }
 
 type multicast[T any] struct {

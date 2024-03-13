@@ -1,9 +1,18 @@
 package rx
 
-import "sync"
+import (
+	"runtime"
+	"sync"
+)
 
 // An Observer is a consumer of notifications delivered by an [Observable].
 type Observer[T any] func(n Notification[T])
+
+// Noop gives you an Observer that does nothing.
+func Noop[T any](Notification[T]) {}
+
+// NewObserver creates an Observer from f.
+func NewObserver[T any](f func(n Notification[T])) Observer[T] { return f }
 
 // Next passes a value to sink.
 func (sink Observer[T]) Next(v T) {
@@ -123,8 +132,20 @@ func (sink Observer[T]) Serialized() Observer[T] {
 	}
 }
 
-// Noop gives you an Observer that does nothing.
-func Noop[T any](Notification[T]) {}
+// WithRuntimeFinalizer creates an Observer with a runtime finalizer set to
+// run sink.Error(ErrFinalized) in a goroutine.
+// sink must be safe for concurrent use.
+func (sink Observer[T]) WithRuntimeFinalizer() Observer[T] {
+	runtime.SetFinalizer(&sink, func(sink *Observer[T]) {
+		go sink.Error(ErrFinalized)
+	})
 
-// NewObserver creates an Observer from f.
-func NewObserver[T any](f func(n Notification[T])) Observer[T] { return f }
+	return func(n Notification[T]) {
+		switch n.Kind {
+		case KindError, KindComplete:
+			runtime.SetFinalizer(&sink, nil)
+		}
+
+		sink(n)
+	}
+}

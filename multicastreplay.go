@@ -1,7 +1,6 @@
 package rx
 
 import (
-	"runtime"
 	"sync/atomic"
 	"time"
 
@@ -14,18 +13,9 @@ type ReplayConfig struct {
 	WindowTime time.Duration
 }
 
-// MulticastReplay returns a Subject whose Observable part takes care of
-// all Observers that subscribed to it, all of which will receive
-// buffered emissions and new emissions from Subject's Observer part.
-//
-// Subjects are subject to memory leaks.
-// After finishing using a Subject, you should call either its Error method
-// or its Complete method to avoid that.
-// If you can guarantee that every subscription to a Subject is canceled
-// sooner or later, then you are fine.
-//
-// Internally, a runtime finalizer is set to call Error(ErrFinalized), which
-// may run any time after Subject's Observer part gets garbage-collected.
+// MulticastReplay returns a Subject that keeps track of a certain number
+// and/or a window time of values it receive. Each subscriber will then
+// receive all tracked values as well as future values.
 func MulticastReplay[T any](opts *ReplayConfig) Subject[T] {
 	m := new(multicastReplay[T])
 
@@ -33,22 +23,10 @@ func MulticastReplay[T any](opts *ReplayConfig) Subject[T] {
 		m.ReplayConfig = *opts
 	}
 
-	runtime.SetFinalizer(&m, multicastReplayFinalizer[T])
-
 	return Subject[T]{
-		Observable: m.subscribe, // Only Observer field holds &m, this doesn't.
-		Observer: func(n Notification[T]) {
-			m.emit(n)
-			switch n.Kind {
-			case KindError, KindComplete:
-				runtime.SetFinalizer(&m, nil)
-			}
-		},
+		Observable: NewObservable(m.subscribe),
+		Observer:   NewObserver(m.emit).WithRuntimeFinalizer(),
 	}
-}
-
-func multicastReplayFinalizer[T any](m **multicastReplay[T]) {
-	go (*m).emit(Error[T](ErrFinalized))
 }
 
 type multicastReplay[T any] struct {
