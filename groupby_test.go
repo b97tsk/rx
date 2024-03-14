@@ -17,7 +17,7 @@ func TestGroupBy(t *testing.T) {
 
 	group := rx.GroupBy(
 		func(v string) string { return v },
-		func() rx.Subject[string] { return rx.MulticastReplay[string](nil) },
+		rx.MulticastReplayAll[string],
 	)
 
 	count := rx.ConcatMap(
@@ -50,7 +50,7 @@ func TestGroupBy(t *testing.T) {
 			source,
 			rx.GroupBy(
 				func(v string) string { panic(ErrTest) },
-				func() rx.Subject[string] { return rx.MulticastReplay[string](nil) },
+				rx.MulticastReplayAll[string],
 			),
 			count,
 			tostring,
