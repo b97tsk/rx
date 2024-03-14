@@ -51,7 +51,7 @@ func TestShare(t *testing.T) {
 				rx.Take[int](4),
 				rx.Share[int]().WithConnector(
 					func() rx.Subject[int] {
-						return rx.MulticastReplay[int](&rx.ReplayConfig{BufferSize: 1})
+						return rx.MulticastReplay[int](1)
 					},
 				),
 			)
@@ -70,7 +70,7 @@ func TestShare(t *testing.T) {
 				rx.Scan(-1, func(i int, _ time.Time) int { return i + 1 }),
 				rx.Share[int]().WithConnector(
 					func() rx.Subject[int] {
-						return rx.MulticastReplay[int](&rx.ReplayConfig{BufferSize: 1})
+						return rx.MulticastReplay[int](1)
 					},
 				),
 				rx.Take[int](4),

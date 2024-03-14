@@ -2,26 +2,29 @@ package rx
 
 import (
 	"sync/atomic"
-	"time"
 
 	"github.com/b97tsk/rx/internal/queue"
 )
 
-// ReplayConfig carries options for MulticastReplay.
-type ReplayConfig struct {
-	BufferSize int
-	WindowTime time.Duration
+// MulticastReplayAll returns a Subject that keeps track of every value
+// it receives. Each subscriber will then receive all tracked values as well
+// as future values.
+func MulticastReplayAll[T any]() Subject[T] {
+	return MulticastReplay[T](-1)
 }
 
-// MulticastReplay returns a Subject that keeps track of a certain number
-// and/or a window time of values it receive. Each subscriber will then
-// receive all tracked values as well as future values.
-func MulticastReplay[T any](opts *ReplayConfig) Subject[T] {
-	m := new(multicastReplay[T])
-
-	if opts != nil {
-		m.ReplayConfig = *opts
+// MulticastReplay returns a Subject that keeps track of a certain number of
+// values it receive. Each subscriber will then receive all tracked values as
+// well as future values.
+//
+// If n < 0, MulticastReplay keeps track of every value it receives;
+// if n == 0, MulticastReplay returns Multicast().
+func MulticastReplay[T any](n int) Subject[T] {
+	if n == 0 {
+		return Multicast[T]()
 	}
+
+	m := &multicastReplay[T]{n: n}
 
 	return Subject[T]{
 		Observable: NewObservable(m.subscribe),
@@ -31,14 +34,14 @@ func MulticastReplay[T any](opts *ReplayConfig) Subject[T] {
 
 type multicastReplay[T any] struct {
 	multicast[T]
-	ReplayConfig
+	n int
 	b struct {
-		q  queue.Queue[Pair[time.Time, T]]
+		q  queue.Queue[T]
 		rc *atomic.Uint32
 	}
 }
 
-func (m *multicastReplay[T]) bufferForRead() (queue.Queue[Pair[time.Time, T]], *atomic.Uint32) {
+func (m *multicastReplay[T]) bufferForRead() (queue.Queue[T], *atomic.Uint32) {
 	rc := m.b.rc
 
 	if rc == nil {
@@ -51,7 +54,7 @@ func (m *multicastReplay[T]) bufferForRead() (queue.Queue[Pair[time.Time, T]], *
 	return m.b.q, rc
 }
 
-func (m *multicastReplay[T]) bufferForWrite() *queue.Queue[Pair[time.Time, T]] {
+func (m *multicastReplay[T]) bufferForWrite() *queue.Queue[T] {
 	rc := m.b.rc
 
 	if rc != nil && rc.Load() != 0 {
@@ -60,34 +63,6 @@ func (m *multicastReplay[T]) bufferForWrite() *queue.Queue[Pair[time.Time, T]] {
 	}
 
 	return &m.b.q
-}
-
-func (m *multicastReplay[T]) trimBuffer(b *queue.Queue[Pair[time.Time, T]]) {
-	if m.WindowTime > 0 {
-		if b == nil {
-			b = m.bufferForWrite()
-		}
-
-		now := time.Now()
-
-		for b.Len() != 0 {
-			if b.Front().Key.After(now) {
-				break
-			}
-
-			b.Pop()
-		}
-	}
-
-	if n := m.BufferSize; n > 0 {
-		if b == nil {
-			b = m.bufferForWrite()
-		}
-
-		for b.Len() > n {
-			b.Pop()
-		}
-	}
 }
 
 func (m *multicastReplay[T]) emit(n Notification[T]) {
@@ -103,15 +78,13 @@ func (m *multicastReplay[T]) emit(n Notification[T]) {
 		obs := m.obs.Clone()
 		defer obs.Release()
 
-		var deadline time.Time
+		b := m.bufferForWrite()
 
-		if windowTime := m.WindowTime; windowTime > 0 {
-			deadline = time.Now().Add(windowTime)
+		if n := m.n; n > 0 && n == b.Len() {
+			b.Pop()
 		}
 
-		b := m.bufferForWrite()
-		b.Push(NewPair(deadline, n.Value))
-		m.trimBuffer(b)
+		b.Push(n.Value)
 
 		m.mu.Unlock()
 
@@ -157,8 +130,6 @@ func (m *multicastReplay[T]) subscribe(c Context, sink Observer[T]) {
 		})
 	}
 
-	m.trimBuffer(nil)
-
 	b, rc := m.bufferForRead()
 	defer rc.Add(^uint32(0))
 
@@ -174,7 +145,7 @@ func (m *multicastReplay[T]) subscribe(c Context, sink Observer[T]) {
 			return
 		}
 
-		Try1(sink, Next(b.At(i).Value), func() { sink.Error(ErrOops) })
+		Try1(sink, Next(b.At(i)), func() { sink.Error(ErrOops) })
 	}
 
 	if last.Kind != 0 {

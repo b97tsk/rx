@@ -12,10 +12,10 @@ import (
 func TestMulticastReplay(t *testing.T) {
 	t.Parallel()
 
-	t.Run("BufferSize", func(t *testing.T) {
+	t.Run("Replay", func(t *testing.T) {
 		t.Parallel()
 
-		m := rx.MulticastReplay[string](&rx.ReplayConfig{BufferSize: 3})
+		m := rx.MulticastReplay[string](3)
 
 		subscribeThenComplete := rx.NewObservable(
 			func(c rx.Context, sink rx.Observer[string]) {
@@ -64,58 +64,10 @@ func TestMulticastReplay(t *testing.T) {
 		NewTestSuite[string](t).Case(subscribeThenComplete, ErrTest)
 	})
 
-	t.Run("WindowTime", func(t *testing.T) {
-		t.Parallel()
-
-		m := rx.MulticastReplay[string](&rx.ReplayConfig{WindowTime: Step(5)})
-
-		subscribeThenComplete := rx.NewObservable(
-			func(c rx.Context, sink rx.Observer[string]) {
-				c, cancel := c.WithCancel()
-				sink = sink.Serialized()
-				m.Subscribe(c, sink)
-				sink.Complete()
-				cancel()
-			},
-		)
-
-		m.Next("A")
-
-		NewTestSuite[string](t).Case(subscribeThenComplete, "A", ErrComplete)
-
-		time.Sleep(Step(2))
-		m.Next("B")
-
-		NewTestSuite[string](t).Case(subscribeThenComplete, "A", "B", ErrComplete)
-
-		time.Sleep(Step(2))
-		m.Next("C")
-
-		NewTestSuite[string](t).Case(subscribeThenComplete, "A", "B", "C", ErrComplete)
-
-		time.Sleep(Step(2))
-		m.Next("D")
-		m.Complete()
-
-		NewTestSuite[string](t).Case(subscribeThenComplete, "B", "C", "D", ErrComplete)
-
-		time.Sleep(Step(2))
-
-		NewTestSuite[string](t).Case(subscribeThenComplete, "C", "D", ErrComplete)
-
-		time.Sleep(Step(2))
-
-		NewTestSuite[string](t).Case(subscribeThenComplete, "D", ErrComplete)
-
-		time.Sleep(Step(2))
-
-		NewTestSuite[string](t).Case(subscribeThenComplete, ErrComplete)
-	})
-
 	t.Run("ReplayAll", func(t *testing.T) {
 		t.Parallel()
 
-		m := rx.MulticastReplay[string](nil)
+		m := rx.MulticastReplayAll[string]()
 
 		for _, v := range []string{"A", "B", "C"} {
 			m.Next(v)
@@ -135,10 +87,24 @@ func TestMulticastReplay(t *testing.T) {
 		)
 	})
 
+	t.Run("ReplayNone", func(t *testing.T) {
+		t.Parallel()
+
+		m := rx.MulticastReplay[string](0)
+
+		for _, v := range []string{"A", "B", "C"} {
+			m.Next(v)
+		}
+
+		m.Complete()
+
+		NewTestSuite[string](t).Case(m.Observable, ErrComplete)
+	})
+
 	t.Run("AfterComplete", func(t *testing.T) {
 		t.Parallel()
 
-		m := rx.MulticastReplay[string](nil)
+		m := rx.MulticastReplayAll[string]()
 
 		m.Complete()
 
@@ -152,7 +118,7 @@ func TestMulticastReplay(t *testing.T) {
 	t.Run("AfterError", func(t *testing.T) {
 		t.Parallel()
 
-		m := rx.MulticastReplay[string](nil)
+		m := rx.MulticastReplayAll[string]()
 
 		m.Error(ErrTest)
 
@@ -163,22 +129,13 @@ func TestMulticastReplay(t *testing.T) {
 		NewTestSuite[string](t).Case(m.Observable, ErrTest)
 	})
 
-	t.Run("NilError", func(t *testing.T) {
-		t.Parallel()
-
-		m := rx.MulticastReplay[string](nil)
-
-		m.Error(nil)
-
-		NewTestSuite[string](t).Case(m.Observable, nil)
-	})
-
 	t.Run("Finalizer", func(t *testing.T) {
 		t.Parallel()
 
 		c := make(chan struct{})
 
-		m := rx.MulticastReplay[string](nil)
+		m := rx.MulticastReplayAll[string]()
+
 		m.Subscribe(rx.NewBackgroundContext(), func(n rx.Notification[string]) {
 			if n.Error != rx.ErrFinalized {
 				panic("want rx.ErrFinalized, but got something else")
