@@ -35,42 +35,42 @@ func (op ShareOperator[T]) WithConnector(connector func() Subject[T]) ShareOpera
 // Apply implements the Operator interface.
 func (op ShareOperator[T]) Apply(source Observable[T]) Observable[T] {
 	obs := shareObservable[T]{
-		source:    source,
-		connector: op.opts.Connector,
+		Source:    source,
+		Connector: op.opts.Connector,
 	}
 
 	return obs.Subscribe
 }
 
 type shareObservable[T any] struct {
-	mu         sync.Mutex
-	source     Observable[T]
-	connector  func() Subject[T]
-	subject    Subject[T]
-	connection context.Context
-	disconnect CancelFunc
-	shareCount int
+	Mutex      sync.Mutex
+	Source     Observable[T]
+	Connector  func() Subject[T]
+	Subject    Subject[T]
+	Connection context.Context
+	Disconnect CancelFunc
+	ShareCount int
 }
 
 func (obs *shareObservable[T]) Subscribe(c Context, sink Observer[T]) {
-	obs.mu.Lock()
+	obs.Mutex.Lock()
 
 	var unlocked bool
 
 	defer func() {
 		if !unlocked {
-			obs.mu.Unlock()
+			obs.Mutex.Unlock()
 		}
 	}()
 
-	if obs.subject.Observable == nil {
-		obs.subject = Try01(obs.connector, func() { sink.Error(ErrOops) })
+	if obs.Subject.Observable == nil {
+		obs.Subject = Try01(obs.Connector, func() { sink.Error(ErrOops) })
 	}
 
 	c, cancel := c.WithCancel()
 	sink = sink.OnLastNotification(cancel)
 
-	obs.subject.Subscribe(c, sink)
+	obs.Subject.Subscribe(c, sink)
 
 	select {
 	default:
@@ -78,39 +78,39 @@ func (obs *shareObservable[T]) Subscribe(c Context, sink Observer[T]) {
 		return
 	}
 
-	connection := obs.connection
+	connection := obs.Connection
 
-	obs.shareCount++
+	obs.ShareCount++
 
 	if connection == nil {
 		w, cancelw := NewBackgroundContext().WithCancel()
 
 		connection = w.Context
-		obs.connection = w.Context
-		obs.disconnect = cancelw
+		obs.Connection = w.Context
+		obs.Disconnect = cancelw
 
-		sink := obs.subject.Observer
+		sink := obs.Subject.Observer
 
-		obs.mu.Unlock()
+		obs.Mutex.Unlock()
 		unlocked = true
 
-		obs.source.Subscribe(w, func(n Notification[T]) {
+		obs.Source.Subscribe(w, func(n Notification[T]) {
 			switch n.Kind {
 			case KindNext:
 				sink(n)
 			case KindError, KindComplete:
 				cancelw()
 
-				obs.mu.Lock()
+				obs.Mutex.Lock()
 
-				if connection == obs.connection {
-					obs.subject = Subject[T]{}
-					obs.connection = nil
-					obs.disconnect = nil
-					obs.shareCount = 0
+				if connection == obs.Connection {
+					obs.Subject = Subject[T]{}
+					obs.Connection = nil
+					obs.Disconnect = nil
+					obs.ShareCount = 0
 				}
 
-				obs.mu.Unlock()
+				obs.Mutex.Unlock()
 
 				sink(n)
 			}
@@ -118,20 +118,20 @@ func (obs *shareObservable[T]) Subscribe(c Context, sink Observer[T]) {
 	}
 
 	c.AfterFunc(func() {
-		obs.mu.Lock()
+		obs.Mutex.Lock()
 
-		if connection == obs.connection {
-			obs.shareCount--
+		if connection == obs.Connection {
+			obs.ShareCount--
 
-			if obs.shareCount == 0 {
-				obs.disconnect()
+			if obs.ShareCount == 0 {
+				obs.Disconnect()
 
-				obs.subject = Subject[T]{}
-				obs.connection = nil
-				obs.disconnect = nil
+				obs.Subject = Subject[T]{}
+				obs.Connection = nil
+				obs.Disconnect = nil
 			}
 		}
 
-		obs.mu.Unlock()
+		obs.Mutex.Unlock()
 	})
 }

@@ -6,16 +6,15 @@ import (
 
 type multiObserver[T any] struct {
 	Observers []*Observer[T]
-
-	rc *atomic.Uint32
+	RefCount  *atomic.Uint32
 }
 
 func (m *multiObserver[T]) Clone() multiObserver[T] {
-	rc := m.rc
+	rc := m.RefCount
 
 	if rc == nil {
 		rc = new(atomic.Uint32)
-		m.rc = rc
+		m.RefCount = rc
 	}
 
 	rc.Add(1)
@@ -24,8 +23,8 @@ func (m *multiObserver[T]) Clone() multiObserver[T] {
 }
 
 func (m *multiObserver[T]) Release() {
-	if rc := m.rc; rc != nil {
-		m.rc = nil
+	if rc := m.RefCount; rc != nil {
+		m.RefCount = nil
 
 		rc.Add(^uint32(0))
 	}
@@ -39,8 +38,8 @@ func (m *multiObserver[T]) Add(observer *Observer[T]) {
 	m.Observers = observers
 
 	if cap(observers) != oldcap {
-		if rc := m.rc; rc != nil && rc.Load() != 0 {
-			m.rc = nil
+		if rc := m.RefCount; rc != nil && rc.Load() != 0 {
+			m.RefCount = nil
 		}
 	}
 }
@@ -52,12 +51,12 @@ func (m *multiObserver[T]) Delete(observer *Observer[T]) {
 		if sink == observer {
 			n := len(observers)
 
-			if rc := m.rc; rc != nil && rc.Load() != 0 {
+			if rc := m.RefCount; rc != nil && rc.Load() != 0 {
 				new := make([]*Observer[T], n-1, n)
 				copy(new, observers[:i])
 				copy(new[i:], observers[i+1:])
 				m.Observers = new
-				m.rc = nil
+				m.RefCount = nil
 			} else {
 				copy(observers[i:], observers[i+1:])
 				observers[n-1] = nil

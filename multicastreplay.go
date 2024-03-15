@@ -24,7 +24,7 @@ func MulticastReplay[T any](n int) Subject[T] {
 		return Multicast[T]()
 	}
 
-	m := &multicastReplay[T]{n: n}
+	m := &multicastReplay[T]{Cap: n}
 
 	return Subject[T]{
 		Observable: NewObservable(m.subscribe),
@@ -34,98 +34,104 @@ func MulticastReplay[T any](n int) Subject[T] {
 
 type multicastReplay[T any] struct {
 	multicast[T]
-	n int
-	b struct {
-		q  queue.Queue[T]
-		rc *atomic.Uint32
+	Cap int
+	Buf struct {
+		Queue    queue.Queue[T]
+		RefCount *atomic.Uint32
 	}
 }
 
 func (m *multicastReplay[T]) bufferForRead() (queue.Queue[T], *atomic.Uint32) {
-	rc := m.b.rc
+	rc := m.Buf.RefCount
 
 	if rc == nil {
 		rc = new(atomic.Uint32)
-		m.b.rc = rc
+		m.Buf.RefCount = rc
 	}
 
 	rc.Add(1)
 
-	return m.b.q, rc
+	return m.Buf.Queue, rc
 }
 
 func (m *multicastReplay[T]) bufferForWrite() *queue.Queue[T] {
-	rc := m.b.rc
+	rc := m.Buf.RefCount
 
 	if rc != nil && rc.Load() != 0 {
-		m.b.q = m.b.q.Clone()
-		m.b.rc = nil
+		m.Buf.Queue = m.Buf.Queue.Clone()
+		m.Buf.RefCount = nil
 	}
 
-	return &m.b.q
+	return &m.Buf.Queue
 }
 
 func (m *multicastReplay[T]) emit(n Notification[T]) {
-	m.mu.Lock()
+	m.Mu.Lock()
 
-	if m.last.Kind != 0 {
-		m.mu.Unlock()
+	if m.LastN.Kind != 0 {
+		m.Mu.Unlock()
 		return
 	}
 
 	switch n.Kind {
 	case KindNext:
-		obs := m.obs.Clone()
-		defer obs.Release()
+		mobs := m.Mobs.Clone()
+		defer mobs.Release()
 
 		b := m.bufferForWrite()
 
-		if n := m.n; n > 0 && n == b.Len() {
+		if n := m.Cap; n > 0 && n == b.Len() {
 			b.Pop()
 		}
 
 		b.Push(n.Value)
 
-		m.mu.Unlock()
+		m.Mu.Unlock()
 
-		obs.Emit(n)
+		mobs.Emit(n)
 
 	case KindError, KindComplete:
-		var obs multiObserver[T]
-		obs, m.obs = m.obs, obs
+		var mobs multiObserver[T]
 
-		m.last = n
+		m.Mobs, mobs = mobs, m.Mobs
 
-		if n.Kind == KindError {
-			m.b.q.Init()
+		switch n.Kind {
+		case KindError:
+			m.LastN = Error[struct{}](n.Error)
+		case KindComplete:
+			m.LastN = Complete[struct{}]()
 		}
 
-		m.mu.Unlock()
+		if n.Kind == KindError {
+			m.Buf.Queue.Init()
+		}
 
-		obs.Emit(n)
+		m.Mu.Unlock()
+
+		mobs.Emit(n)
 
 	default: // Unknown kind.
-		m.mu.Unlock()
+		m.Mu.Unlock()
 	}
 }
 
 func (m *multicastReplay[T]) subscribe(c Context, sink Observer[T]) {
-	m.mu.Lock()
+	m.Mu.Lock()
 
-	last := m.last
-	if last.Kind == 0 {
+	lastn := m.LastN
+	if lastn.Kind == 0 {
 		var cancel CancelFunc
 
 		c, cancel = c.WithCancel()
 		sink = sink.OnLastNotification(cancel).Serialized()
 
 		observer := sink
-		m.obs.Add(&observer)
+		m.Mobs.Add(&observer)
 
 		c.AfterFunc(func() {
-			m.mu.Lock()
-			m.obs.Delete(&observer)
-			m.mu.Unlock()
+			m.Mu.Lock()
+			m.Mobs.Delete(&observer)
+			m.Mu.Unlock()
 			observer.Error(c.Err())
 		})
 	}
@@ -133,7 +139,7 @@ func (m *multicastReplay[T]) subscribe(c Context, sink Observer[T]) {
 	b, rc := m.bufferForRead()
 	defer rc.Add(^uint32(0))
 
-	m.mu.Unlock()
+	m.Mu.Unlock()
 
 	done := c.Done()
 
@@ -148,7 +154,10 @@ func (m *multicastReplay[T]) subscribe(c Context, sink Observer[T]) {
 		Try1(sink, Next(b.At(i)), func() { sink.Error(ErrOops) })
 	}
 
-	if last.Kind != 0 {
-		sink(last)
+	switch lastn.Kind {
+	case KindError:
+		sink.Error(lastn.Error)
+	case KindComplete:
+		sink.Complete()
 	}
 }

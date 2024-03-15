@@ -13,67 +13,76 @@ func Multicast[T any]() Subject[T] {
 }
 
 type multicast[T any] struct {
-	mu   sync.Mutex
-	obs  multiObserver[T]
-	last Notification[T]
+	Mu    sync.Mutex
+	Mobs  multiObserver[T]
+	LastN Notification[struct{}]
 }
 
 func (m *multicast[T]) emit(n Notification[T]) {
-	m.mu.Lock()
+	m.Mu.Lock()
 
-	if m.last.Kind != 0 {
-		m.mu.Unlock()
+	if m.LastN.Kind != 0 {
+		m.Mu.Unlock()
 		return
 	}
 
 	switch n.Kind {
 	case KindNext:
-		obs := m.obs.Clone()
-		defer obs.Release()
+		mobs := m.Mobs.Clone()
+		defer mobs.Release()
 
-		m.mu.Unlock()
+		m.Mu.Unlock()
 
-		obs.Emit(n)
+		mobs.Emit(n)
 
 	case KindError, KindComplete:
-		var obs multiObserver[T]
-		obs, m.obs = m.obs, obs
+		var mobs multiObserver[T]
 
-		m.last = n
+		m.Mobs, mobs = mobs, m.Mobs
 
-		m.mu.Unlock()
+		switch n.Kind {
+		case KindError:
+			m.LastN = Error[struct{}](n.Error)
+		case KindComplete:
+			m.LastN = Complete[struct{}]()
+		}
 
-		obs.Emit(n)
+		m.Mu.Unlock()
+
+		mobs.Emit(n)
 
 	default: // Unknown kind.
-		m.mu.Unlock()
+		m.Mu.Unlock()
 	}
 }
 
 func (m *multicast[T]) subscribe(c Context, sink Observer[T]) {
-	m.mu.Lock()
+	m.Mu.Lock()
 
-	last := m.last
-	if last.Kind == 0 {
+	lastn := m.LastN
+	if lastn.Kind == 0 {
 		var cancel CancelFunc
 
 		c, cancel = c.WithCancel()
 		sink = sink.OnLastNotification(cancel).Serialized()
 
 		observer := sink
-		m.obs.Add(&observer)
+		m.Mobs.Add(&observer)
 
 		c.AfterFunc(func() {
-			m.mu.Lock()
-			m.obs.Delete(&observer)
-			m.mu.Unlock()
+			m.Mu.Lock()
+			m.Mobs.Delete(&observer)
+			m.Mu.Unlock()
 			observer.Error(c.Err())
 		})
 	}
 
-	m.mu.Unlock()
+	m.Mu.Unlock()
 
-	if last.Kind != 0 {
-		sink(last)
+	switch lastn.Kind {
+	case KindError:
+		sink.Error(lastn.Error)
+	case KindComplete:
+		sink.Complete()
 	}
 }
