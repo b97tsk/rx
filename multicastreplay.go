@@ -123,7 +123,7 @@ func (m *multicastReplay[T]) subscribe(c Context, sink Observer[T]) {
 		var cancel CancelFunc
 
 		c, cancel = c.WithCancel()
-		sink = sink.OnLastNotification(cancel).Serialized()
+		sink = sink.OnLastNotification(cancel).Serialized(c)
 
 		observer := sink
 		m.Mobs.Add(&observer)

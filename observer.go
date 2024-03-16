@@ -1,6 +1,7 @@
 package rx
 
 import (
+	"context"
 	"runtime"
 	"sync"
 )
@@ -58,75 +59,112 @@ func (sink Observer[T]) OnLastNotification(f func()) Observer[T] {
 
 // Serialized creates an Observer that passes incoming emissions to sink
 // in a mutually exclusive way.
-func (sink Observer[T]) Serialized() Observer[T] {
+func (sink Observer[T]) Serialized(c Context) Observer[T] {
 	var x struct {
-		sync.Mutex
-		Done     bool
+		Mu       sync.Mutex
 		Emitting bool
-		Queue    []Notification[T]
+		LastN    Notification[struct{}]
+		Queue    []T
+		Context  context.Context
+		DoneChan <-chan struct{}
+		Observer Observer[T]
 	}
 
-	return func(n Notification[T]) {
-		x.Lock()
+	x.Context = c.Context
+	x.DoneChan = c.Done()
+	x.Observer = sink
 
-		if x.Done {
-			x.Unlock()
+	return func(n Notification[T]) {
+		x.Mu.Lock()
+
+		if x.LastN.Kind != 0 {
+			x.Mu.Unlock()
 			return
 		}
 
 		switch n.Kind {
-		case KindError, KindComplete:
-			x.Done = true
+		case KindError:
+			x.LastN = Error[struct{}](n.Error)
+		case KindComplete:
+			x.LastN = Complete[struct{}]()
 		}
 
 		if x.Emitting {
-			x.Queue = append(x.Queue, n)
-			x.Unlock()
+			if n.Kind == KindNext {
+				x.Queue = append(x.Queue, n.Value)
+			}
+
+			x.Mu.Unlock()
+
 			return
 		}
 
 		x.Emitting = true
 
-		x.Unlock()
+		x.Mu.Unlock()
 
-		oops := func() {
-			x.Lock()
-			x.Done = true
+		throw := func(err error) {
+			x.Mu.Lock()
 			x.Emitting = false
+			x.LastN = Error[struct{}](err)
 			x.Queue = nil
-			x.Unlock()
-			sink.Error(ErrOops)
+			x.Mu.Unlock()
+			x.Observer.Error(err)
 		}
+
+		oops := func() { throw(ErrOops) }
+
+		sink := x.Observer
 
 		switch n.Kind {
 		case KindNext:
+			select {
+			default:
+			case <-x.DoneChan:
+				throw(x.Context.Err())
+				return
+			}
+
 			Try1(sink, n, oops)
+
 		case KindError, KindComplete:
 			sink(n)
 			return
 		}
 
 		for {
-			x.Lock()
+			x.Mu.Lock()
 
 			if x.Queue == nil {
+				lastn := x.LastN
+
 				x.Emitting = false
-				x.Unlock()
+				x.Mu.Unlock()
+
+				switch lastn.Kind {
+				case KindError:
+					sink.Error(lastn.Error)
+				case KindComplete:
+					sink.Complete()
+				}
+
 				return
 			}
 
 			q := x.Queue
 			x.Queue = nil
 
-			x.Unlock()
+			x.Mu.Unlock()
 
-			for _, n := range q {
-				switch n.Kind {
-				case KindNext:
-					Try1(sink, n, oops)
-				case KindError, KindComplete:
-					sink(n)
+			for _, v := range q {
+				select {
+				default:
+				case <-x.DoneChan:
+					throw(x.Context.Err())
+					return
 				}
+
+				Try1(sink, Next(v), oops)
 			}
 		}
 	}

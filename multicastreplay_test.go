@@ -20,7 +20,7 @@ func TestMulticastReplay(t *testing.T) {
 		subscribeThenComplete := rx.NewObservable(
 			func(c rx.Context, sink rx.Observer[string]) {
 				c, cancel := c.WithCancel()
-				sink = sink.Serialized()
+				sink = sink.Serialized(c)
 				m.Subscribe(c, sink)
 				sink.Complete()
 				cancel()
