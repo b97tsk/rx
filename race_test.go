@@ -50,7 +50,7 @@ func TestRace(t *testing.T) {
 	).Case(
 		rx.Pipe1(
 			rx.Race(s[:len(s)-1]...),
-			rx.RaceWith(s[len(s)-1], rx.Just("A"), rx.Just("B"), rx.Just("C")).WithPassiveGo(),
+			rx.RaceWith(s[len(s)-1], rx.Just("A"), rx.Just("B"), rx.Just("C")),
 		),
 		"A", ErrComplete,
 	)

@@ -20,49 +20,17 @@ func Merge[T any](some ...Observable[T]) Observable[T] {
 // MergeWith merges the source Observable and some other Observables together
 // to create an Observable that concurrently emits all values from the source
 // and every given input Observable.
-func MergeWith[T any](some ...Observable[T]) MergeWithOperator[T] {
-	return MergeWithOperator[T]{
-		opts: mergeWithConfig[T]{
-			Observables: some,
-			PassiveGo:   false,
+func MergeWith[T any](some ...Observable[T]) Operator[T, T] {
+	return NewOperator(
+		func(source Observable[T]) Observable[T] {
+			return mergeWithObservable[T]{source, some}.Subscribe
 		},
-	}
-}
-
-type mergeWithConfig[T any] struct {
-	Observables []Observable[T]
-	PassiveGo   bool
-}
-
-// MergeWithOperator is an [Operator] type for [MergeWith].
-type MergeWithOperator[T any] struct {
-	opts mergeWithConfig[T]
-}
-
-// WithPassiveGo turns on PassiveGo mode.
-// By default, this Operator subscribes to Observables other than the source
-// in separate goroutines.
-// With PassiveGo mode on, this Operator subscribes to every Observable in
-// the same goroutine.
-// In PassiveGo mode, goroutines can only be started by Observables themselves.
-func (op MergeWithOperator[T]) WithPassiveGo() MergeWithOperator[T] {
-	op.opts.PassiveGo = true
-	return op
-}
-
-// Apply implements the Operator interface.
-func (op MergeWithOperator[T]) Apply(source Observable[T]) Observable[T] {
-	return mergeWithObservable[T]{
-		Source:    source,
-		Others:    op.opts.Observables,
-		PassiveGo: op.opts.PassiveGo,
-	}.Subscribe
+	)
 }
 
 type mergeWithObservable[T any] struct {
-	Source    Observable[T]
-	Others    []Observable[T]
-	PassiveGo bool
+	Source Observable[T]
+	Others []Observable[T]
 }
 
 func (obs mergeWithObservable[T]) Subscribe(c Context, sink Observer[T]) {
@@ -93,20 +61,14 @@ func (obs mergeWithObservable[T]) Subscribe(c Context, sink Observer[T]) {
 	}
 
 	for _, obs1 := range obs.Others {
-		if obs.PassiveGo {
-			obs1.Subscribe(c, worker)
+		obs1.Subscribe(c, worker)
 
-			select {
-			default:
-			case <-done:
-				sink.Error(c.Err())
-				return
-			}
-
-			continue
+		select {
+		default:
+		case <-done:
+			sink.Error(c.Err())
+			return
 		}
-
-		c.Go(func() { obs1.Subscribe(c, worker) })
 	}
 }
 
@@ -142,7 +104,6 @@ func MergeMap[T, R any](proj func(v T) Observable[R]) MergeMapOperator[T, R] {
 		opts: mergeMapConfig[T, R]{
 			Project:      proj,
 			Concurrency:  -1,
-			PassiveGo:    false,
 			UseBuffering: false,
 		},
 	}
@@ -151,7 +112,6 @@ func MergeMap[T, R any](proj func(v T) Observable[R]) MergeMapOperator[T, R] {
 type mergeMapConfig[T, R any] struct {
 	Project      func(T) Observable[R]
 	Concurrency  int
-	PassiveGo    bool
 	UseBuffering bool
 }
 
@@ -174,16 +134,6 @@ func (op MergeMapOperator[T, R]) WithBuffering() MergeMapOperator[T, R] {
 // It must not be zero. The default value is -1 (unlimited).
 func (op MergeMapOperator[T, R]) WithConcurrency(n int) MergeMapOperator[T, R] {
 	op.opts.Concurrency = n
-	return op
-}
-
-// WithPassiveGo turns on PassiveGo mode.
-// By default, this Operator flattens each source value in separate goroutines.
-// With PassiveGo mode on, this Operator, when flattening, blocks at each
-// source value until it's flattened or decides to work in separate goroutines.
-// In PassiveGo mode, goroutines can only be started by Observables themselves.
-func (op MergeMapOperator[T, R]) WithPassiveGo() MergeMapOperator[T, R] {
-	op.opts.PassiveGo = true
 	return op
 }
 
@@ -281,12 +231,7 @@ func (obs mergeMapObservable[T, R]) Subscribe(c Context, sink Observer[R]) {
 			x.Workers++
 			x.Unlock()
 
-			if obs.PassiveGo {
-				obs1.Subscribe(c, worker)
-				return
-			}
-
-			c.Go(func() { obs1.Subscribe(c, worker) })
+			obs1.Subscribe(c, worker)
 
 		case KindError:
 			sink.Error(n.Error)
@@ -319,7 +264,9 @@ func (obs mergeMapObservable[T, R]) SubscribeWithBuffering(c Context, sink Obser
 		HasError bool
 	}
 
-	startWorkerFactory := func() (startWorker func()) {
+	startWorker := func() {
+		var startWorker func()
+
 		worker := func(n Notification[R]) {
 			switch n.Kind {
 			case KindNext:
@@ -354,7 +301,7 @@ func (obs mergeMapObservable[T, R]) SubscribeWithBuffering(c Context, sink Obser
 			}
 		}
 
-		startWorker = func() {
+		startWorker = resistReentrance(func() {
 			obs1 := Try11(obs.Project, x.Queue.Pop(), func() {
 				defer x.Unlock()
 				x.Queue.Init()
@@ -365,29 +312,10 @@ func (obs mergeMapObservable[T, R]) SubscribeWithBuffering(c Context, sink Obser
 			x.Workers++
 			x.Unlock()
 
-			if obs.PassiveGo {
-				obs1.Subscribe(c, worker)
-				return
-			}
+			obs1.Subscribe(c, worker)
+		})
 
-			c.Go(func() { obs1.Subscribe(c, worker) })
-		}
-
-		if obs.PassiveGo {
-			startWorker = resistReentrance(startWorker)
-		}
-
-		return
-	}
-
-	var startWorker func()
-
-	if obs.PassiveGo {
-		// In PassiveGo mode, each startWorker should have its own call of
-		// resistReentrance, which should not be shared by multiple goroutines.
-		startWorker = func() { startWorkerFactory()() }
-	} else {
-		startWorker = startWorkerFactory()
+		startWorker()
 	}
 
 	var noop bool
