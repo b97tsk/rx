@@ -258,13 +258,21 @@ func (obs mergeMapObservable[T, R]) SubscribeWithBuffering(c Context, sink Obser
 
 	var x struct {
 		sync.Mutex
+
 		Queue    queue.Queue[T]
 		Workers  int
 		Complete bool
 		HasError bool
+
+		StartWorkerPool sync.Pool
 	}
 
 	startWorker := func() {
+		if v := x.StartWorkerPool.Get(); v != nil {
+			(*v.(*func()))()
+			return
+		}
+
 		var startWorker func()
 
 		worker := func(n Notification[R]) {
@@ -296,6 +304,8 @@ func (obs mergeMapObservable[T, R]) SubscribeWithBuffering(c Context, sink Obser
 					sink(n)
 					return
 				}
+
+				x.StartWorkerPool.Put(&startWorker)
 
 				x.Unlock()
 			}
