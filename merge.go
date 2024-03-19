@@ -34,8 +34,7 @@ type mergeWithObservable[T any] struct {
 }
 
 func (obs mergeWithObservable[T]) Subscribe(c Context, sink Observer[T]) {
-	c, cancel := c.WithCancel()
-	sink = sink.OnLastNotification(cancel).Serialized(c)
+	c, sink = Serialize(c, sink)
 
 	var num atomic.Uint32
 
@@ -157,8 +156,7 @@ func (obs mergeMapObservable[T, R]) Subscribe(c Context, sink Observer[R]) {
 		return
 	}
 
-	c, cancel := c.WithCancel()
-	sink = sink.OnLastNotification(cancel).Serialized(c)
+	c, sink = Serialize(c, sink)
 
 	var x struct {
 		sync.Mutex
@@ -253,8 +251,7 @@ func (obs mergeMapObservable[T, R]) Subscribe(c Context, sink Observer[R]) {
 }
 
 func (obs mergeMapObservable[T, R]) SubscribeWithBuffering(c Context, sink Observer[R]) {
-	c, cancel := c.WithCancel()
-	sink = sink.OnLastNotification(cancel).Serialized(c)
+	c, sink = Serialize(c, sink)
 
 	var x struct {
 		sync.Mutex

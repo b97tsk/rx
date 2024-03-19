@@ -61,10 +61,7 @@ func (m *multicast[T]) subscribe(c Context, sink Observer[T]) {
 
 	lastn := m.LastN
 	if lastn.Kind == 0 {
-		var cancel CancelFunc
-
-		c, cancel = c.WithCancel()
-		sink = sink.OnLastNotification(cancel).Serialized(c)
+		c, sink = Serialize(c, sink)
 
 		observer := sink
 		m.Mobs.Add(&observer)
