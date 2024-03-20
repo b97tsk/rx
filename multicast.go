@@ -1,11 +1,37 @@
 package rx
 
-import "sync"
+import (
+	"sync"
+	"sync/atomic"
 
-// Multicast returns a Subject that mirrors every emission it receives to all
-// its subscribers.
+	"github.com/b97tsk/rx/internal/queue"
+)
+
+// Multicast returns a Subject that forwards every value it receives to
+// all its subscribers.
+// Values emitted to a Multicast before the first subscriber are lost.
 func Multicast[T any]() Subject[T] {
-	m := new(multicast[T])
+	return MulticastReplay[T](0)
+}
+
+// MulticastReplayAll returns a Subject that keeps track of every value
+// it receives.
+// Each subscriber will then receive all tracked values as well as future
+// values.
+func MulticastReplayAll[T any]() Subject[T] {
+	return MulticastReplay[T](-1)
+}
+
+// MulticastReplay returns a Subject that keeps track of a certain number of
+// recent values it receive.
+// Each subscriber will then receive all tracked values as well as future
+// values.
+//
+// If n < 0, MulticastReplay keeps track of every value it receives;
+// if n == 0, MulticastReplay doesn't keep track of any value it receives
+// at all.
+func MulticastReplay[T any](n int) Subject[T] {
+	m := &multicast[T]{Cap: n}
 	return Subject[T]{
 		Observable: NewObservable(m.subscribe),
 		Observer:   NewObserver(m.emit).WithRuntimeFinalizer(),
@@ -14,9 +40,16 @@ func Multicast[T any]() Subject[T] {
 
 type multicast[T any] struct {
 	Mu    sync.Mutex
+	Cap   int
 	Mobs  multiObserver[T]
 	LastN Notification[struct{}]
+	Buf   *struct {
+		Queue    queue.Queue[T]
+		RefCount atomic.Uint32
+	}
 }
+
+func pnew[T any](*T) *T { return new(T) }
 
 func (m *multicast[T]) emit(n Notification[T]) {
 	m.Mu.Lock()
@@ -30,6 +63,29 @@ func (m *multicast[T]) emit(n Notification[T]) {
 	case KindNext:
 		mobs := m.Mobs.Clone()
 		defer mobs.Release()
+
+		if m.Cap != 0 {
+			b := m.Buf
+
+			switch {
+			case b == nil:
+				b = pnew(b)
+				m.Buf = b
+			case b.RefCount.Load() != 0:
+				q := b.Queue.Clone()
+				b = pnew(b)
+				b.Queue = q
+				m.Buf = b
+			}
+
+			q := &b.Queue
+
+			if q.Len() == m.Cap {
+				q.Pop()
+			}
+
+			q.Push(n.Value)
+		}
 
 		m.Mu.Unlock()
 
@@ -74,7 +130,29 @@ func (m *multicast[T]) subscribe(c Context, sink Observer[T]) {
 		})
 	}
 
+	b := m.Buf
+	if b != nil {
+		b.RefCount.Add(1)
+		defer b.RefCount.Add(^uint32(0))
+	}
+
 	m.Mu.Unlock()
+
+	if b != nil {
+		q := b.Queue
+		done := c.Done()
+
+		for i, j := 0, q.Len(); i < j; i++ {
+			select {
+			default:
+			case <-done:
+				sink.Error(c.Err())
+				return
+			}
+
+			Try1(sink, Next(q.At(i)), func() { sink.Error(ErrOops) })
+		}
+	}
 
 	switch lastn.Kind {
 	case KindError:

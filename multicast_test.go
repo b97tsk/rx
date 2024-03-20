@@ -1,7 +1,6 @@
 package rx_test
 
 import (
-	"fmt"
 	"runtime"
 	"testing"
 	"time"
@@ -13,105 +12,119 @@ import (
 func TestMulticast(t *testing.T) {
 	t.Parallel()
 
-	sum := func(v1, v2 int) int {
-		return v1 + v2
-	}
-
-	proj := func(v1, v2 int) string {
-		return fmt.Sprintf("[%v %v]", v1, v2)
-	}
-
-	t.Run("Normal", func(t *testing.T) {
+	t.Run("Replay", func(t *testing.T) {
 		t.Parallel()
 
-		m := rx.Multicast[int]()
+		m := rx.MulticastReplay[string](3)
 
-		rx.Pipe1(
-			rx.Just(3, 4, 5),
-			AddLatencyToValues[int](1, 1),
-		).Subscribe(rx.NewBackgroundContext(), m.Observer)
+		subscribeThenComplete := rx.NewObservable(
+			func(c rx.Context, sink rx.Observer[string]) {
+				c, sink = rx.Serialize(c, sink)
+				m.Subscribe(c, sink)
+				sink.Complete()
+			},
+		)
+
+		m.Next("A")
+
+		NewTestSuite[string](t).Case(subscribeThenComplete, "A", ErrComplete)
+
+		m.Next("B")
+
+		NewTestSuite[string](t).Case(subscribeThenComplete, "A", "B", ErrComplete)
+
+		m.Next("C")
+
+		NewTestSuite[string](t).Case(subscribeThenComplete, "A", "B", "C", ErrComplete)
+
+		ctx, cancel := rx.NewBackgroundContext().WithTimeout(Step(2))
+		defer cancel()
+
+		go rx.Pipe1(
+			m.Observable,
+			rx.OnNext(
+				func(string) {
+					time.Sleep(Step(2))
+				},
+			),
+		).Subscribe(ctx, rx.Noop[string])
+
+		time.Sleep(Step(1))
+
+		m.Next("D")
+
+		time.Sleep(Step(2))
+
+		NewTestSuite[string](t).Case(subscribeThenComplete, "B", "C", "D", ErrComplete)
+
+		m.Error(ErrTest)
+
+		NewTestSuite[string](t).Case(subscribeThenComplete, "B", "C", "D", ErrTest)
+	})
+
+	t.Run("ReplayAll", func(t *testing.T) {
+		t.Parallel()
+
+		m := rx.MulticastReplayAll[string]()
+
+		for _, v := range []string{"A", "B", "C"} {
+			m.Next(v)
+		}
+
+		m.Complete()
 
 		NewTestSuite[string](t).Case(
-			rx.Zip2(
-				m.Observable,
-				rx.Pipe1(m.Observable, rx.Scan(0, sum)),
-				proj,
-			),
-			"[3 3]", "[4 7]", "[5 12]", ErrComplete,
+			m.Observable,
+			"A", "B", "C", ErrComplete,
 		).Case(
 			rx.Pipe1(
 				m.Observable,
-				ToString[int](),
+				rx.OnNext(func(string) { panic(ErrTest) }),
 			),
-			ErrComplete,
+			rx.ErrOops, ErrTest,
 		)
 	})
 
-	t.Run("Error", func(t *testing.T) {
+	t.Run("Multicast", func(t *testing.T) {
 		t.Parallel()
 
-		m := rx.Multicast[int]()
+		m := rx.Multicast[string]()
 
-		rx.Pipe1(
-			rx.Concat(
-				rx.Just(3, 4, 5),
-				rx.Throw[int](ErrTest),
-			),
-			AddLatencyToNotifications[int](1, 1),
-		).Subscribe(rx.NewBackgroundContext(), m.Observer)
+		for _, v := range []string{"A", "B", "C"} {
+			m.Next(v)
+		}
 
-		NewTestSuite[string](t).Case(
-			rx.Zip2(
-				m.Observable,
-				rx.Pipe1(m.Observable, rx.Scan(0, sum)),
-				proj,
-			),
-			"[3 3]", "[4 7]", "[5 12]", ErrTest,
-		).Case(
-			rx.Pipe1(
-				m.Observable,
-				ToString[int](),
-			),
-			ErrTest,
-		)
+		m.Complete()
+
+		NewTestSuite[string](t).Case(m.Observable, ErrComplete)
 	})
 
 	t.Run("AfterComplete", func(t *testing.T) {
 		t.Parallel()
 
-		m := rx.Multicast[int]()
+		m := rx.Multicast[string]()
 
 		m.Complete()
 
-		NewTestSuite[int](t).Case(m.Observable, ErrComplete)
+		NewTestSuite[string](t).Case(m.Observable, ErrComplete)
 
 		m.Error(ErrTest)
 
-		NewTestSuite[int](t).Case(m.Observable, ErrComplete)
+		NewTestSuite[string](t).Case(m.Observable, ErrComplete)
 	})
 
 	t.Run("AfterError", func(t *testing.T) {
 		t.Parallel()
 
-		m := rx.Multicast[int]()
+		m := rx.Multicast[string]()
 
 		m.Error(ErrTest)
 
-		NewTestSuite[int](t).Case(m.Observable, ErrTest)
+		NewTestSuite[string](t).Case(m.Observable, ErrTest)
 
 		m.Complete()
 
-		NewTestSuite[int](t).Case(m.Observable, ErrTest)
-	})
-
-	t.Run("NilError", func(t *testing.T) {
-		t.Parallel()
-
-		m := rx.Multicast[int]()
-
-		m.Error(nil)
-
-		NewTestSuite[int](t).Case(m.Observable, nil)
+		NewTestSuite[string](t).Case(m.Observable, ErrTest)
 	})
 
 	t.Run("Finalizer", func(t *testing.T) {
@@ -119,8 +132,9 @@ func TestMulticast(t *testing.T) {
 
 		c := make(chan struct{})
 
-		m := rx.Multicast[int]()
-		m.Subscribe(rx.NewBackgroundContext(), func(n rx.Notification[int]) {
+		m := rx.Multicast[string]()
+
+		m.Subscribe(rx.NewBackgroundContext(), func(n rx.Notification[string]) {
 			if n.Error != rx.ErrFinalized {
 				panic("want rx.ErrFinalized, but got something else")
 			}
