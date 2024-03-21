@@ -11,26 +11,26 @@ import (
 // all its subscribers.
 // Values emitted to a Multicast before the first subscriber are lost.
 func Multicast[T any]() Subject[T] {
-	return MulticastReplay[T](0)
+	return MulticastBuffer[T](0)
 }
 
-// MulticastReplayAll returns a Subject that keeps track of every value
+// MulticastBufferAll returns a Subject that keeps track of every value
 // it receives.
 // Each subscriber will then receive all tracked values as well as future
 // values.
-func MulticastReplayAll[T any]() Subject[T] {
-	return MulticastReplay[T](-1)
+func MulticastBufferAll[T any]() Subject[T] {
+	return MulticastBuffer[T](-1)
 }
 
-// MulticastReplay returns a Subject that keeps track of a certain number of
+// MulticastBuffer returns a Subject that keeps track of a certain number of
 // recent values it receive.
 // Each subscriber will then receive all tracked values as well as future
 // values.
 //
-// If n < 0, MulticastReplay keeps track of every value it receives;
-// if n == 0, MulticastReplay doesn't keep track of any value it receives
+// If n < 0, MulticastBuffer keeps track of every value it receives;
+// if n == 0, MulticastBuffer doesn't keep track of any value it receives
 // at all.
-func MulticastReplay[T any](n int) Subject[T] {
+func MulticastBuffer[T any](n int) Subject[T] {
 	m := &multicast[T]{Cap: n}
 	return Subject[T]{
 		Observable: NewObservable(m.subscribe),

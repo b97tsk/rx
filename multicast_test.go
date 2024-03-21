@@ -12,10 +12,10 @@ import (
 func TestMulticast(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Replay", func(t *testing.T) {
+	t.Run("Buffer", func(t *testing.T) {
 		t.Parallel()
 
-		m := rx.MulticastReplay[string](3)
+		m := rx.MulticastBuffer[string](3)
 
 		subscribeThenComplete := rx.NewObservable(
 			func(c rx.Context, sink rx.Observer[string]) {
@@ -62,10 +62,10 @@ func TestMulticast(t *testing.T) {
 		NewTestSuite[string](t).Case(subscribeThenComplete, "B", "C", "D", ErrTest)
 	})
 
-	t.Run("ReplayAll", func(t *testing.T) {
+	t.Run("BufferAll", func(t *testing.T) {
 		t.Parallel()
 
-		m := rx.MulticastReplayAll[string]()
+		m := rx.MulticastBufferAll[string]()
 
 		for _, v := range []string{"A", "B", "C"} {
 			m.Next(v)
