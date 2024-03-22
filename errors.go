@@ -10,4 +10,5 @@ var (
 	ErrNotSingle      = errors.New("not single")
 	ErrOops           = errors.New("oops")
 	ErrTimeout        = errors.New("timeout")
+	ErrUnicast        = errors.New("unicast")
 )

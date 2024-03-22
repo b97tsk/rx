@@ -102,3 +102,49 @@ func Example_waitGroup() {
 	// 2
 	// 3
 }
+
+// Multicasts and Unicasts are special Observables that developers can decide
+// what values they produce or when they complete, later after they are subscribed.
+// Multicasts can be subscribed multiple times, whereas Unicasts can only be
+// successfully subscribed once.
+// Both Multicasts and Unicasts are safe for concurrent use.
+// Here is an example demonstrates how to use a Unicast.
+func Example_unicast() {
+	ctx := rx.NewContext(context.TODO()).WithNewWaitGroup()
+
+	u := rx.Unicast[time.Time]()
+
+	ctx.Go(func() {
+		rx.Pipe2(
+			rx.Concat(
+				u.Observable,
+				rx.Timer(500*time.Millisecond),
+			),
+			rx.MapTo[time.Time](42),
+			rx.Do(
+				func(n rx.Notification[int]) {
+					switch n.Kind {
+					case rx.KindNext:
+						fmt.Println(n.Value)
+					case rx.KindError:
+						fmt.Println(n.Error)
+					case rx.KindComplete:
+						fmt.Println("Complete")
+					}
+				},
+			),
+		).Subscribe(ctx, rx.Noop[int])
+	})
+
+	ctx.Go(func() {
+		u.Complete() // Start timer.
+	})
+
+	ctx.Wait()
+
+	// This example works properly, no matter which ctx.Go(...) runs first.
+
+	// Output:
+	// 42
+	// Complete
+}
