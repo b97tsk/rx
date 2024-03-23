@@ -1,8 +1,8 @@
 package rx
 
 // CombineLatest8 combines multiple Observables to create an Observable
-// that emits projections of the latest values emitted by each of its
-// input Observables.
+// that emits mappings of the latest values emitted by each of its input
+// Observables.
 func CombineLatest8[T1, T2, T3, T4, T5, T6, T7, T8, R any](
 	obs1 Observable[T1],
 	obs2 Observable[T2],
@@ -12,7 +12,7 @@ func CombineLatest8[T1, T2, T3, T4, T5, T6, T7, T8, R any](
 	obs6 Observable[T6],
 	obs7 Observable[T7],
 	obs8 Observable[T8],
-	proj func(v1 T1, v2 T2, v3 T3, v4 T4, v5 T5, v6 T6, v7 T7, v8 T8) R,
+	mapping func(v1 T1, v2 T2, v3 T3, v4 T4, v5 T5, v6 T6, v7 T7, v8 T8) R,
 ) Observable[R] {
 	return func(c Context, sink Observer[R]) {
 		c, cancel := c.WithCancel()
@@ -48,21 +48,21 @@ func CombineLatest8[T1, T2, T3, T4, T5, T6, T7, T8, R any](
 			for cont {
 				select {
 				case n := <-chan1:
-					cont = combineLatestTry8(sink, n, proj, &s, &s.V1, 1)
+					cont = combineLatestTry8(sink, n, mapping, &s, &s.V1, 1)
 				case n := <-chan2:
-					cont = combineLatestTry8(sink, n, proj, &s, &s.V2, 2)
+					cont = combineLatestTry8(sink, n, mapping, &s, &s.V2, 2)
 				case n := <-chan3:
-					cont = combineLatestTry8(sink, n, proj, &s, &s.V3, 4)
+					cont = combineLatestTry8(sink, n, mapping, &s, &s.V3, 4)
 				case n := <-chan4:
-					cont = combineLatestTry8(sink, n, proj, &s, &s.V4, 8)
+					cont = combineLatestTry8(sink, n, mapping, &s, &s.V4, 8)
 				case n := <-chan5:
-					cont = combineLatestTry8(sink, n, proj, &s, &s.V5, 16)
+					cont = combineLatestTry8(sink, n, mapping, &s, &s.V5, 16)
 				case n := <-chan6:
-					cont = combineLatestTry8(sink, n, proj, &s, &s.V6, 32)
+					cont = combineLatestTry8(sink, n, mapping, &s, &s.V6, 32)
 				case n := <-chan7:
-					cont = combineLatestTry8(sink, n, proj, &s, &s.V7, 64)
+					cont = combineLatestTry8(sink, n, mapping, &s, &s.V7, 64)
 				case n := <-chan8:
-					cont = combineLatestTry8(sink, n, proj, &s, &s.V8, 128)
+					cont = combineLatestTry8(sink, n, mapping, &s, &s.V8, 128)
 				}
 			}
 		})
@@ -85,7 +85,7 @@ type combineLatestState8[T1, T2, T3, T4, T5, T6, T7, T8 any] struct {
 func combineLatestTry8[T1, T2, T3, T4, T5, T6, T7, T8, R, X any](
 	sink Observer[R],
 	n Notification[X],
-	proj func(T1, T2, T3, T4, T5, T6, T7, T8) R,
+	mapping func(T1, T2, T3, T4, T5, T6, T7, T8) R,
 	s *combineLatestState8[T1, T2, T3, T4, T5, T6, T7, T8],
 	v *X,
 	bit uint8,
@@ -98,7 +98,7 @@ func combineLatestTry8[T1, T2, T3, T4, T5, T6, T7, T8, R, X any](
 
 		if s.NBits |= bit; s.NBits == FullBits {
 			oops := func() { sink.Error(ErrOops) }
-			v := Try81(proj, s.V1, s.V2, s.V3, s.V4, s.V5, s.V6, s.V7, s.V8, oops)
+			v := Try81(mapping, s.V1, s.V2, s.V3, s.V4, s.V5, s.V6, s.V7, s.V8, oops)
 			Try1(sink, Next(v), oops)
 		}
 

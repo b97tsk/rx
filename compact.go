@@ -57,8 +57,8 @@ func Compact[T any](eq func(v1, v2 T) bool) Operator[T, T] {
 }
 
 // CompactComparableKey emits all values emitted by the source Observable whose
-// projections are distinct from the previous.
-func CompactComparableKey[T any, K comparable](proj func(v T) K) Operator[T, T] {
+// mappings are distinct from the previous.
+func CompactComparableKey[T any, K comparable](mapping func(v T) K) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return func(c Context, sink Observer[T]) {
@@ -69,7 +69,7 @@ func CompactComparableKey[T any, K comparable](proj func(v T) K) Operator[T, T] 
 
 				source.Subscribe(c, func(n Notification[T]) {
 					if n.Kind == KindNext {
-						keyValue := proj(n.Value)
+						keyValue := mapping(n.Value)
 
 						if last.HasValue && last.Value == keyValue {
 							return
@@ -86,9 +86,9 @@ func CompactComparableKey[T any, K comparable](proj func(v T) K) Operator[T, T] 
 	)
 }
 
-// CompactKey emits all values emitted by the source Observable whose
-// projections are distinct from the previous, given a comparison function.
-func CompactKey[T, K any](proj func(v T) K, eq func(v1, v2 K) bool) Operator[T, T] {
+// CompactKey emits all values emitted by the source Observable whose mappings
+// are distinct from the previous, given a comparison function.
+func CompactKey[T, K any](mapping func(v T) K, eq func(v1, v2 K) bool) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return func(c Context, sink Observer[T]) {
@@ -99,7 +99,7 @@ func CompactKey[T, K any](proj func(v T) K, eq func(v1, v2 K) bool) Operator[T, 
 
 				source.Subscribe(c, func(n Notification[T]) {
 					if n.Kind == KindNext {
-						keyValue := proj(n.Value)
+						keyValue := mapping(n.Value)
 
 						if last.HasValue && eq(last.Value, keyValue) {
 							return

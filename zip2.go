@@ -1,14 +1,14 @@
 package rx
 
 // Zip2 combines multiple Observables to create an Observable that emits
-// projections of the values emitted by each of its input Observables.
+// mappings of the values emitted by each of its input Observables.
 //
 // Zip2 pulls values from each input Observable one by one, it only buffers
 // one value for each input Observable.
 func Zip2[T1, T2, R any](
 	obs1 Observable[T1],
 	obs2 Observable[T2],
-	proj func(v1 T1, v2 T2) R,
+	mapping func(v1 T1, v2 T2) R,
 ) Observable[R] {
 	return func(c Context, sink Observer[R]) {
 		c, cancel := c.WithCancel()
@@ -53,7 +53,7 @@ func Zip2[T1, T2, R any](
 				default:
 					goto Again2
 				}
-				v := Try21(proj, n1.Value, n2.Value, oops)
+				v := Try21(mapping, n1.Value, n2.Value, oops)
 				Try1(sink, Next(v), oops)
 			}
 		})

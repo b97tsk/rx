@@ -89,19 +89,19 @@ func MergeAll[_ Observable[T], T any]() MergeMapOperator[Observable[T], T] {
 }
 
 // MergeMapTo converts the source Observable into a higher-order Observable,
-// by projecting each source value to the same Observable, then flattens it
-// into a first-order Observable using MergeAll.
+// by mapping each source value to the same Observable, then flattens it into
+// a first-order Observable using MergeAll.
 func MergeMapTo[T, R any](inner Observable[R]) MergeMapOperator[T, R] {
 	return MergeMap(func(T) Observable[R] { return inner })
 }
 
 // MergeMap converts the source Observable into a higher-order Observable,
-// by projecting each source value to an Observable, then flattens it into
+// by mapping each source value to an Observable, then flattens it into
 // a first-order Observable using MergeAll.
-func MergeMap[T, R any](proj func(v T) Observable[R]) MergeMapOperator[T, R] {
+func MergeMap[T, R any](mapping func(v T) Observable[R]) MergeMapOperator[T, R] {
 	return MergeMapOperator[T, R]{
 		opts: mergeMapConfig[T, R]{
-			Project:      proj,
+			Mapping:      mapping,
 			Concurrency:  -1,
 			UseBuffering: false,
 		},
@@ -109,7 +109,7 @@ func MergeMap[T, R any](proj func(v T) Observable[R]) MergeMapOperator[T, R] {
 }
 
 type mergeMapConfig[T, R any] struct {
-	Project      func(T) Observable[R]
+	Mapping      func(T) Observable[R]
 	Concurrency  int
 	UseBuffering bool
 }
@@ -219,7 +219,7 @@ func (obs mergeMapObservable[T, R]) Subscribe(c Context, sink Observer[R]) {
 				return
 			}
 
-			obs1 := Try11(obs.Project, n.Value, func() {
+			obs1 := Try11(obs.Mapping, n.Value, func() {
 				defer x.Unlock()
 				noop = true
 				x.HasError = true
@@ -309,7 +309,7 @@ func (obs mergeMapObservable[T, R]) SubscribeWithBuffering(c Context, sink Obser
 		}
 
 		startWorker = resistReentrance(func() {
-			obs1 := Try11(obs.Project, x.Queue.Pop(), func() {
+			obs1 := Try11(obs.Mapping, x.Queue.Pop(), func() {
 				defer x.Unlock()
 				x.Queue.Init()
 				x.HasError = true

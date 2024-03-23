@@ -3,7 +3,7 @@ package rx
 import "github.com/b97tsk/rx/internal/queue"
 
 // ZipWithBuffering2 combines multiple Observables to create an Observable that
-// emits projections of the values emitted by each of its input Observables.
+// emits mappings of the values emitted by each of its input Observables.
 //
 // ZipWithBuffering2 buffers every value from each input Observable, which
 // might consume a lot of memory over time if there are lots of values emitting
@@ -11,7 +11,7 @@ import "github.com/b97tsk/rx/internal/queue"
 func ZipWithBuffering2[T1, T2, R any](
 	obs1 Observable[T1],
 	obs2 Observable[T2],
-	proj func(v1 T1, v2 T2) R,
+	mapping func(v1 T1, v2 T2) R,
 ) Observable[R] {
 	return func(c Context, sink Observer[R]) {
 		c, cancel := c.WithCancel()
@@ -35,9 +35,9 @@ func ZipWithBuffering2[T1, T2, R any](
 			for cont {
 				select {
 				case n := <-chan1:
-					cont = zipTry2(sink, n, proj, &s, &s.Q1, 1)
+					cont = zipTry2(sink, n, mapping, &s, &s.Q1, 1)
 				case n := <-chan2:
-					cont = zipTry2(sink, n, proj, &s, &s.Q2, 2)
+					cont = zipTry2(sink, n, mapping, &s, &s.Q2, 2)
 				}
 			}
 		})
@@ -54,7 +54,7 @@ type zipState2[T1, T2 any] struct {
 func zipTry2[T1, T2, R, X any](
 	sink Observer[R],
 	n Notification[X],
-	proj func(T1, T2) R,
+	mapping func(T1, T2) R,
 	s *zipState2[T1, T2],
 	q *queue.Queue[X],
 	bit uint8,
@@ -70,7 +70,7 @@ func zipTry2[T1, T2, R, X any](
 
 			oops := func() { sink.Error(ErrOops) }
 			v := Try21(
-				proj,
+				mapping,
 				zipPop2(s, &s.Q1, 1, &complete),
 				zipPop2(s, &s.Q2, 2, &complete),
 				oops,

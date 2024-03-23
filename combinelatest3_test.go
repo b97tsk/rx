@@ -11,7 +11,7 @@ import (
 func TestCombineLatest3(t *testing.T) {
 	t.Parallel()
 
-	proj := func(v1, v2, v3 string) string {
+	mapping := func(v1, v2, v3 string) string {
 		return fmt.Sprintf("[%v %v %v]", v1, v2, v3)
 	}
 
@@ -20,7 +20,7 @@ func TestCombineLatest3(t *testing.T) {
 			rx.Pipe1(rx.Just("A1", "A2"), AddLatencyToValues[string](1, 3)),
 			rx.Pipe1(rx.Just("B1", "B2"), AddLatencyToValues[string](2, 3)),
 			rx.Pipe1(rx.Just("C1", "C2"), AddLatencyToValues[string](3, 3)),
-			proj,
+			mapping,
 		),
 		"[A1 B1 C1]",
 		"[A2 B1 C1]",
@@ -32,7 +32,7 @@ func TestCombineLatest3(t *testing.T) {
 			rx.Throw[string](ErrTest),
 			rx.Throw[string](ErrTest),
 			rx.Throw[string](ErrTest),
-			proj,
+			mapping,
 		),
 		ErrTest,
 	).Case(
@@ -41,7 +41,7 @@ func TestCombineLatest3(t *testing.T) {
 				rx.Pipe1(rx.Just("A1", "A2"), AddLatencyToValues[string](1, 3)),
 				rx.Pipe1(rx.Just("B1", "B2"), AddLatencyToValues[string](2, 3)),
 				rx.Pipe1(rx.Just("C1", "C2"), AddLatencyToValues[string](3, 3)),
-				proj,
+				mapping,
 			),
 			rx.OnNext(func(string) { panic(ErrTest) }),
 		),

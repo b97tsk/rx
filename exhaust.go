@@ -13,26 +13,26 @@ func ExhaustAll[_ Observable[T], T any]() Operator[Observable[T], T] {
 }
 
 // ExhaustMapTo converts the source Observable into a higher-order Observable,
-// by projecting each source value to the same Observable, then flattens it
-// into a first-order Observable using ExhaustAll.
+// by mapping each source value to the same Observable, then flattens it into
+// a first-order Observable using ExhaustAll.
 func ExhaustMapTo[T, R any](inner Observable[R]) Operator[T, R] {
 	return ExhaustMap(func(T) Observable[R] { return inner })
 }
 
 // ExhaustMap converts the source Observable into a higher-order Observable,
-// by projecting each source value to an Observable, then flattens it into
+// by mapping each source value to an Observable, then flattens it into
 // a first-order Observable using ExhaustAll.
-func ExhaustMap[T, R any](proj func(v T) Observable[R]) Operator[T, R] {
+func ExhaustMap[T, R any](mapping func(v T) Observable[R]) Operator[T, R] {
 	return NewOperator(
 		func(source Observable[T]) Observable[R] {
-			return exhaustMapObservable[T, R]{source, proj}.Subscribe
+			return exhaustMapObservable[T, R]{source, mapping}.Subscribe
 		},
 	)
 }
 
 type exhaustMapObservable[T, R any] struct {
 	Source  Observable[T]
-	Project func(T) Observable[R]
+	Mapping func(T) Observable[R]
 }
 
 func (obs exhaustMapObservable[T, R]) Subscribe(c Context, sink Observer[R]) {
@@ -50,7 +50,7 @@ func (obs exhaustMapObservable[T, R]) Subscribe(c Context, sink Observer[R]) {
 	x.Context.Store(c.Context)
 
 	startWorker := func(v T) {
-		obs1 := obs.Project(v)
+		obs1 := obs.Mapping(v)
 		w, cancelw := c.WithCancel()
 
 		x.Context.Store(w.Context)

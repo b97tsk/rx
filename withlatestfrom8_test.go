@@ -11,7 +11,7 @@ import (
 func TestWithLatestFrom8(t *testing.T) {
 	t.Parallel()
 
-	proj := func(v0, v1, v2, v3, v4, v5, v6, v7, v8 string) string {
+	mapping := func(v0, v1, v2, v3, v4, v5, v6, v7, v8 string) string {
 		return fmt.Sprintf("[%v %v %v %v %v %v %v %v %v]", v0, v1, v2, v3, v4, v5, v6, v7, v8)
 	}
 
@@ -27,7 +27,7 @@ func TestWithLatestFrom8(t *testing.T) {
 				rx.Pipe1(rx.Just("G1", "G2", "G3"), AddLatencyToValues[string](7, 9)),
 				rx.Pipe1(rx.Just("H1", "H2", "H3"), AddLatencyToValues[string](8, 9)),
 				rx.Pipe1(rx.Just("I1", "I2", "I3"), AddLatencyToValues[string](9, 9)),
-				proj,
+				mapping,
 			),
 		),
 		"[A2 B1 C1 D1 E1 F1 G1 H1 I1]",
@@ -45,7 +45,7 @@ func TestWithLatestFrom8(t *testing.T) {
 				rx.Throw[string](ErrTest),
 				rx.Throw[string](ErrTest),
 				rx.Throw[string](ErrTest),
-				proj,
+				mapping,
 			),
 		),
 		ErrTest,
@@ -61,7 +61,7 @@ func TestWithLatestFrom8(t *testing.T) {
 				rx.Pipe1(rx.Just("G1", "G2", "G3"), AddLatencyToValues[string](7, 9)),
 				rx.Pipe1(rx.Just("H1", "H2", "H3"), AddLatencyToValues[string](8, 9)),
 				rx.Pipe1(rx.Just("I1", "I2", "I3"), AddLatencyToValues[string](9, 9)),
-				proj,
+				mapping,
 			),
 			rx.OnNext(func(string) { panic(ErrTest) }),
 		),

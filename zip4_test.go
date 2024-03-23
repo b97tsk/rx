@@ -21,7 +21,7 @@ func TestZip4(t *testing.T) {
 }
 
 func testZip4(t *testing.T, op rx.Operator[string, string], err error) {
-	proj := func(v1, v2, v3, v4 string) string {
+	mapping := func(v1, v2, v3, v4 string) string {
 		return fmt.Sprintf("[%v %v %v %v]", v1, v2, v3, v4)
 	}
 
@@ -31,7 +31,7 @@ func testZip4(t *testing.T, op rx.Operator[string, string], err error) {
 			rx.Just("B", "C", "D", "E"),
 			rx.Just("C", "D", "E", "F"),
 			rx.Just("D", "E", "F", "G"),
-			proj,
+			mapping,
 		),
 		"[A B C D]", "[B C D E]", "[C D E F]", err,
 	).Case(
@@ -40,7 +40,7 @@ func testZip4(t *testing.T, op rx.Operator[string, string], err error) {
 			rx.Pipe1(rx.Just("B", "C", "D"), op),
 			rx.Just("C", "D", "E", "F"),
 			rx.Just("D", "E", "F", "G"),
-			proj,
+			mapping,
 		),
 		"[A B C D]", "[B C D E]", "[C D E F]", err,
 	).Case(
@@ -49,7 +49,7 @@ func testZip4(t *testing.T, op rx.Operator[string, string], err error) {
 			rx.Just("B", "C", "D", "E"),
 			rx.Pipe1(rx.Just("C", "D", "E"), op),
 			rx.Just("D", "E", "F", "G"),
-			proj,
+			mapping,
 		),
 		"[A B C D]", "[B C D E]", "[C D E F]", err,
 	).Case(
@@ -58,7 +58,7 @@ func testZip4(t *testing.T, op rx.Operator[string, string], err error) {
 			rx.Just("B", "C", "D", "E"),
 			rx.Just("C", "D", "E", "F"),
 			rx.Pipe1(rx.Just("D", "E", "F"), op),
-			proj,
+			mapping,
 		),
 		"[A B C D]", "[B C D E]", "[C D E F]", err,
 	).Case(
@@ -68,7 +68,7 @@ func testZip4(t *testing.T, op rx.Operator[string, string], err error) {
 				rx.Just("B", "C", "D", "E"),
 				rx.Just("C", "D", "E", "F"),
 				rx.Just("D", "E", "F", "G"),
-				proj,
+				mapping,
 			),
 			rx.OnNext(func(string) { panic(ErrTest) }),
 		),

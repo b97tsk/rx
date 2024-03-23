@@ -38,8 +38,8 @@ func FromMap[M ~map[K]V, K comparable, V any](m M) Observable[Pair[K, V]] {
 	}
 }
 
-// KeyOf projects each Pair emitted by the source Observable to a value
-// stored in the Key field of that Pair.
+// KeyOf maps each Pair emitted by the source Observable to a value stored in
+// the Key field of that Pair.
 func KeyOf[_ Pair[K, V], K, V any]() Operator[Pair[K, V], K] {
 	return LeftOf[Pair[K, V]]()
 }
@@ -64,8 +64,8 @@ func LeftOf[_ Pair[K, V], K, V any]() Operator[Pair[K, V], K] {
 	)
 }
 
-// ValueOf projects each Pair emitted by the source Observable to a value
-// stored in the Value field of that Pair.
+// ValueOf maps each Pair emitted by the source Observable to a value stored in
+// the Value field of that Pair.
 func ValueOf[_ Pair[K, V], K, V any]() Operator[Pair[K, V], V] {
 	return RightOf[Pair[K, V]]()
 }
@@ -90,7 +90,7 @@ func RightOf[_ Pair[K, V], K, V any]() Operator[Pair[K, V], V] {
 	)
 }
 
-// WithIndex projects each value emitted by the source Observable to a Pair
+// WithIndex maps each value emitted by the source Observable to a Pair
 // containing two elements: the Key field stores the index of each value
 // starting from init; the Value field stores the value.
 func WithIndex[V any, K constraints.Integer](init K) Operator[V, Pair[K, V]] {

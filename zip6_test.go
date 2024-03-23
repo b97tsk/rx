@@ -21,7 +21,7 @@ func TestZip6(t *testing.T) {
 }
 
 func testZip6(t *testing.T, op rx.Operator[string, string], err error) {
-	proj := func(v1, v2, v3, v4, v5, v6 string) string {
+	mapping := func(v1, v2, v3, v4, v5, v6 string) string {
 		return fmt.Sprintf("[%v %v %v %v %v %v]", v1, v2, v3, v4, v5, v6)
 	}
 
@@ -33,7 +33,7 @@ func testZip6(t *testing.T, op rx.Operator[string, string], err error) {
 			rx.Just("D", "E", "F", "G"),
 			rx.Just("E", "F", "G", "H"),
 			rx.Just("F", "G", "H", "I"),
-			proj,
+			mapping,
 		),
 		"[A B C D E F]", "[B C D E F G]", "[C D E F G H]", err,
 	).Case(
@@ -44,7 +44,7 @@ func testZip6(t *testing.T, op rx.Operator[string, string], err error) {
 			rx.Just("D", "E", "F", "G"),
 			rx.Just("E", "F", "G", "H"),
 			rx.Just("F", "G", "H", "I"),
-			proj,
+			mapping,
 		),
 		"[A B C D E F]", "[B C D E F G]", "[C D E F G H]", err,
 	).Case(
@@ -55,7 +55,7 @@ func testZip6(t *testing.T, op rx.Operator[string, string], err error) {
 			rx.Just("D", "E", "F", "G"),
 			rx.Just("E", "F", "G", "H"),
 			rx.Just("F", "G", "H", "I"),
-			proj,
+			mapping,
 		),
 		"[A B C D E F]", "[B C D E F G]", "[C D E F G H]", err,
 	).Case(
@@ -66,7 +66,7 @@ func testZip6(t *testing.T, op rx.Operator[string, string], err error) {
 			rx.Pipe1(rx.Just("D", "E", "F"), op),
 			rx.Just("E", "F", "G", "H"),
 			rx.Just("F", "G", "H", "I"),
-			proj,
+			mapping,
 		),
 		"[A B C D E F]", "[B C D E F G]", "[C D E F G H]", err,
 	).Case(
@@ -77,7 +77,7 @@ func testZip6(t *testing.T, op rx.Operator[string, string], err error) {
 			rx.Just("D", "E", "F", "G"),
 			rx.Pipe1(rx.Just("E", "F", "G"), op),
 			rx.Just("F", "G", "H", "I"),
-			proj,
+			mapping,
 		),
 		"[A B C D E F]", "[B C D E F G]", "[C D E F G H]", err,
 	).Case(
@@ -88,7 +88,7 @@ func testZip6(t *testing.T, op rx.Operator[string, string], err error) {
 			rx.Just("D", "E", "F", "G"),
 			rx.Just("E", "F", "G", "H"),
 			rx.Pipe1(rx.Just("F", "G", "H"), op),
-			proj,
+			mapping,
 		),
 		"[A B C D E F]", "[B C D E F G]", "[C D E F G H]", err,
 	).Case(
@@ -100,7 +100,7 @@ func testZip6(t *testing.T, op rx.Operator[string, string], err error) {
 				rx.Just("D", "E", "F", "G"),
 				rx.Just("E", "F", "G", "H"),
 				rx.Just("F", "G", "H", "I"),
-				proj,
+				mapping,
 			),
 			rx.OnNext(func(string) { panic(ErrTest) }),
 		),

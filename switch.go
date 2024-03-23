@@ -12,26 +12,26 @@ func SwitchAll[_ Observable[T], T any]() Operator[Observable[T], T] {
 }
 
 // SwitchMapTo converts the source Observable into a higher-order Observable,
-// by projecting each source value to the same Observable, then flattens it
-// into a first-order Observable using SwitchAll.
+// by mapping each source value to the same Observable, then flattens it into
+// a first-order Observable using SwitchAll.
 func SwitchMapTo[T, R any](inner Observable[R]) Operator[T, R] {
 	return SwitchMap(func(T) Observable[R] { return inner })
 }
 
 // SwitchMap converts the source Observable into a higher-order Observable,
-// by projecting each source value to an Observable, then flattens it into
+// by mapping each source value to an Observable, then flattens it into
 // a first-order Observable using SwitchAll.
-func SwitchMap[T, R any](proj func(v T) Observable[R]) Operator[T, R] {
+func SwitchMap[T, R any](mapping func(v T) Observable[R]) Operator[T, R] {
 	return NewOperator(
 		func(source Observable[T]) Observable[R] {
-			return switchMapObservable[T, R]{source, proj}.Subscribe
+			return switchMapObservable[T, R]{source, mapping}.Subscribe
 		},
 	)
 }
 
 type switchMapObservable[T, R any] struct {
 	Source  Observable[T]
-	Project func(T) Observable[R]
+	Mapping func(T) Observable[R]
 }
 
 func (obs switchMapObservable[T, R]) Subscribe(c Context, sink Observer[R]) {
@@ -50,7 +50,7 @@ func (obs switchMapObservable[T, R]) Subscribe(c Context, sink Observer[R]) {
 	x.Context.Store(c.Context)
 
 	startWorker := func(v T) {
-		obs1 := obs.Project(v)
+		obs1 := obs.Mapping(v)
 		w, cancelw := c.WithCancel()
 
 		x.Context.Store(w.Context)

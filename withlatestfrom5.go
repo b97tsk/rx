@@ -1,19 +1,19 @@
 package rx
 
 // WithLatestFrom5 combines the source with 5 other Observables to create
-// an Observable that emits projections of the latest values emitted by
-// each Observable, only when the source emits.
+// an Observable that emits mappings of the latest values emitted by each
+// Observable, only when the source emits.
 func WithLatestFrom5[T0, T1, T2, T3, T4, T5, R any](
 	obs1 Observable[T1],
 	obs2 Observable[T2],
 	obs3 Observable[T3],
 	obs4 Observable[T4],
 	obs5 Observable[T5],
-	proj func(v0 T0, v1 T1, v2 T2, v3 T3, v4 T4, v5 T5) R,
+	mapping func(v0 T0, v1 T1, v2 T2, v3 T3, v4 T4, v5 T5) R,
 ) Operator[T0, R] {
 	return NewOperator(
 		func(source Observable[T0]) Observable[R] {
-			return withLatestFrom6(source, obs1, obs2, obs3, obs4, obs5, proj)
+			return withLatestFrom6(source, obs1, obs2, obs3, obs4, obs5, mapping)
 		},
 	)
 }
@@ -25,7 +25,7 @@ func withLatestFrom6[T1, T2, T3, T4, T5, T6, R any](
 	obs4 Observable[T4],
 	obs5 Observable[T5],
 	obs6 Observable[T6],
-	proj func(v1 T1, v2 T2, v3 T3, v4 T4, v5 T5, v6 T6) R,
+	mapping func(v1 T1, v2 T2, v3 T3, v4 T4, v5 T5, v6 T6) R,
 ) Observable[R] {
 	return func(c Context, sink Observer[R]) {
 		c, cancel := c.WithCancel()
@@ -57,17 +57,17 @@ func withLatestFrom6[T1, T2, T3, T4, T5, T6, R any](
 			for cont {
 				select {
 				case n := <-chan1:
-					cont = withLatestFromTry6(sink, n, proj, &s, &s.V1, 1)
+					cont = withLatestFromTry6(sink, n, mapping, &s, &s.V1, 1)
 				case n := <-chan2:
-					cont = withLatestFromTry6(sink, n, proj, &s, &s.V2, 2)
+					cont = withLatestFromTry6(sink, n, mapping, &s, &s.V2, 2)
 				case n := <-chan3:
-					cont = withLatestFromTry6(sink, n, proj, &s, &s.V3, 4)
+					cont = withLatestFromTry6(sink, n, mapping, &s, &s.V3, 4)
 				case n := <-chan4:
-					cont = withLatestFromTry6(sink, n, proj, &s, &s.V4, 8)
+					cont = withLatestFromTry6(sink, n, mapping, &s, &s.V4, 8)
 				case n := <-chan5:
-					cont = withLatestFromTry6(sink, n, proj, &s, &s.V5, 16)
+					cont = withLatestFromTry6(sink, n, mapping, &s, &s.V5, 16)
 				case n := <-chan6:
-					cont = withLatestFromTry6(sink, n, proj, &s, &s.V6, 32)
+					cont = withLatestFromTry6(sink, n, mapping, &s, &s.V6, 32)
 				}
 			}
 		})
@@ -88,7 +88,7 @@ type withLatestFromState6[T1, T2, T3, T4, T5, T6 any] struct {
 func withLatestFromTry6[T1, T2, T3, T4, T5, T6, R, X any](
 	sink Observer[R],
 	n Notification[X],
-	proj func(T1, T2, T3, T4, T5, T6) R,
+	mapping func(T1, T2, T3, T4, T5, T6) R,
 	s *withLatestFromState6[T1, T2, T3, T4, T5, T6],
 	v *X,
 	bit uint8,
@@ -101,7 +101,7 @@ func withLatestFromTry6[T1, T2, T3, T4, T5, T6, R, X any](
 
 		if s.NBits |= bit; s.NBits == FullBits && bit == 1 {
 			oops := func() { sink.Error(ErrOops) }
-			v := Try61(proj, s.V1, s.V2, s.V3, s.V4, s.V5, s.V6, oops)
+			v := Try61(mapping, s.V1, s.V2, s.V3, s.V4, s.V5, s.V6, oops)
 			Try1(sink, Next(v), oops)
 		}
 

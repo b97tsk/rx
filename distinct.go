@@ -26,9 +26,9 @@ func DistinctComparable[T comparable]() Operator[T, T] {
 	)
 }
 
-// Distinct emits all values emitted by the source Observable whose projections
+// Distinct emits all values emitted by the source Observable whose mappings
 // are distinct from each other.
-func Distinct[T any, K comparable](proj func(v T) K) Operator[T, T] {
+func Distinct[T any, K comparable](mapping func(v T) K) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return func(c Context, sink Observer[T]) {
@@ -36,7 +36,7 @@ func Distinct[T any, K comparable](proj func(v T) K) Operator[T, T] {
 
 				source.Subscribe(c, func(n Notification[T]) {
 					if n.Kind == KindNext {
-						v := proj(n.Value)
+						v := mapping(n.Value)
 
 						if _, exists := seen[v]; exists {
 							return

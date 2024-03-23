@@ -11,7 +11,7 @@ import (
 func TestZipWithBuffering9(t *testing.T) {
 	t.Parallel()
 
-	proj := func(v1, v2, v3, v4, v5, v6, v7, v8 string, v9 int) string {
+	mapping := func(v1, v2, v3, v4, v5, v6, v7, v8 string, v9 int) string {
 		return fmt.Sprintf("[%v %v %v %v %v %v %v %v %v]", v1, v2, v3, v4, v5, v6, v7, v8, v9)
 	}
 
@@ -26,7 +26,7 @@ func TestZipWithBuffering9(t *testing.T) {
 			rx.Just("G", "H"),
 			rx.Just("H", "I"),
 			rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
-			proj,
+			mapping,
 		),
 		"[A B C D E F G H 1]", "[B C D E F G H I 2]", ErrComplete,
 	).Case(
@@ -40,7 +40,7 @@ func TestZipWithBuffering9(t *testing.T) {
 			rx.Just("G", "H", "I"),
 			rx.Just("H", "I", "J"),
 			rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
-			proj,
+			mapping,
 		),
 		"[A B C D E F G H 1]", "[B C D E F G H I 2]", "[C D E F G H I J 3]", ErrComplete,
 	).Case(
@@ -54,7 +54,7 @@ func TestZipWithBuffering9(t *testing.T) {
 			rx.Just("G", "H", "I", "J"),
 			rx.Just("H", "I", "J", "K"),
 			rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
-			proj,
+			mapping,
 		),
 		"[A B C D E F G H 1]", "[B C D E F G H I 2]", "[C D E F G H I J 3]", ErrComplete,
 	).Case(
@@ -74,7 +74,7 @@ func TestZipWithBuffering9(t *testing.T) {
 				),
 				DelaySubscription[int](1),
 			),
-			proj,
+			mapping,
 		),
 		"[A B C D E F G H 1]", "[B C D E F G H I 2]", ErrComplete,
 	).Case(
@@ -94,7 +94,7 @@ func TestZipWithBuffering9(t *testing.T) {
 				),
 				DelaySubscription[int](1),
 			),
-			proj,
+			mapping,
 		),
 		"[A B C D E F G H 1]", "[B C D E F G H I 2]", "[C D E F G H I J 3]", ErrComplete,
 	).Case(
@@ -114,7 +114,7 @@ func TestZipWithBuffering9(t *testing.T) {
 				),
 				DelaySubscription[int](1),
 			),
-			proj,
+			mapping,
 		),
 		"[A B C D E F G H 1]", "[B C D E F G H I 2]", "[C D E F G H I J 3]", ErrTest,
 	).Case(
@@ -129,7 +129,7 @@ func TestZipWithBuffering9(t *testing.T) {
 				rx.Just("G", "H", "I", "J"),
 				rx.Just("H", "I", "J", "K"),
 				rx.Range(1, 5),
-				proj,
+				mapping,
 			),
 			rx.OnNext(func(string) { panic(ErrTest) }),
 		),

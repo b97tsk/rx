@@ -11,7 +11,7 @@ import (
 func TestZipWithBuffering8(t *testing.T) {
 	t.Parallel()
 
-	proj := func(v1, v2, v3, v4, v5, v6, v7 string, v8 int) string {
+	mapping := func(v1, v2, v3, v4, v5, v6, v7 string, v8 int) string {
 		return fmt.Sprintf("[%v %v %v %v %v %v %v %v]", v1, v2, v3, v4, v5, v6, v7, v8)
 	}
 
@@ -25,7 +25,7 @@ func TestZipWithBuffering8(t *testing.T) {
 			rx.Just("F", "G"),
 			rx.Just("G", "H"),
 			rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
-			proj,
+			mapping,
 		),
 		"[A B C D E F G 1]", "[B C D E F G H 2]", ErrComplete,
 	).Case(
@@ -38,7 +38,7 @@ func TestZipWithBuffering8(t *testing.T) {
 			rx.Just("F", "G", "H"),
 			rx.Just("G", "H", "I"),
 			rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
-			proj,
+			mapping,
 		),
 		"[A B C D E F G 1]", "[B C D E F G H 2]", "[C D E F G H I 3]", ErrComplete,
 	).Case(
@@ -51,7 +51,7 @@ func TestZipWithBuffering8(t *testing.T) {
 			rx.Just("F", "G", "H", "I"),
 			rx.Just("G", "H", "I", "J"),
 			rx.Pipe1(rx.Range(1, 4), DelaySubscription[int](1)),
-			proj,
+			mapping,
 		),
 		"[A B C D E F G 1]", "[B C D E F G H 2]", "[C D E F G H I 3]", ErrComplete,
 	).Case(
@@ -70,7 +70,7 @@ func TestZipWithBuffering8(t *testing.T) {
 				),
 				DelaySubscription[int](1),
 			),
-			proj,
+			mapping,
 		),
 		"[A B C D E F G 1]", "[B C D E F G H 2]", ErrComplete,
 	).Case(
@@ -89,7 +89,7 @@ func TestZipWithBuffering8(t *testing.T) {
 				),
 				DelaySubscription[int](1),
 			),
-			proj,
+			mapping,
 		),
 		"[A B C D E F G 1]", "[B C D E F G H 2]", "[C D E F G H I 3]", ErrComplete,
 	).Case(
@@ -108,7 +108,7 @@ func TestZipWithBuffering8(t *testing.T) {
 				),
 				DelaySubscription[int](1),
 			),
-			proj,
+			mapping,
 		),
 		"[A B C D E F G 1]", "[B C D E F G H 2]", "[C D E F G H I 3]", ErrTest,
 	).Case(
@@ -122,7 +122,7 @@ func TestZipWithBuffering8(t *testing.T) {
 				rx.Just("F", "G", "H", "I"),
 				rx.Just("G", "H", "I", "J"),
 				rx.Range(1, 5),
-				proj,
+				mapping,
 			),
 			rx.OnNext(func(string) { panic(ErrTest) }),
 		),

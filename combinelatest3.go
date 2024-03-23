@@ -1,13 +1,13 @@
 package rx
 
 // CombineLatest3 combines multiple Observables to create an Observable
-// that emits projections of the latest values emitted by each of its
-// input Observables.
+// that emits mappings of the latest values emitted by each of its input
+// Observables.
 func CombineLatest3[T1, T2, T3, R any](
 	obs1 Observable[T1],
 	obs2 Observable[T2],
 	obs3 Observable[T3],
-	proj func(v1 T1, v2 T2, v3 T3) R,
+	mapping func(v1 T1, v2 T2, v3 T3) R,
 ) Observable[R] {
 	return func(c Context, sink Observer[R]) {
 		c, cancel := c.WithCancel()
@@ -33,11 +33,11 @@ func CombineLatest3[T1, T2, T3, R any](
 			for cont {
 				select {
 				case n := <-chan1:
-					cont = combineLatestTry3(sink, n, proj, &s, &s.V1, 1)
+					cont = combineLatestTry3(sink, n, mapping, &s, &s.V1, 1)
 				case n := <-chan2:
-					cont = combineLatestTry3(sink, n, proj, &s, &s.V2, 2)
+					cont = combineLatestTry3(sink, n, mapping, &s, &s.V2, 2)
 				case n := <-chan3:
-					cont = combineLatestTry3(sink, n, proj, &s, &s.V3, 4)
+					cont = combineLatestTry3(sink, n, mapping, &s, &s.V3, 4)
 				}
 			}
 		})
@@ -55,7 +55,7 @@ type combineLatestState3[T1, T2, T3 any] struct {
 func combineLatestTry3[T1, T2, T3, R, X any](
 	sink Observer[R],
 	n Notification[X],
-	proj func(T1, T2, T3) R,
+	mapping func(T1, T2, T3) R,
 	s *combineLatestState3[T1, T2, T3],
 	v *X,
 	bit uint8,
@@ -68,7 +68,7 @@ func combineLatestTry3[T1, T2, T3, R, X any](
 
 		if s.NBits |= bit; s.NBits == FullBits {
 			oops := func() { sink.Error(ErrOops) }
-			v := Try31(proj, s.V1, s.V2, s.V3, oops)
+			v := Try31(mapping, s.V1, s.V2, s.V3, oops)
 			Try1(sink, Next(v), oops)
 		}
 

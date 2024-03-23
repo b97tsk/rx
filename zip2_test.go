@@ -21,7 +21,7 @@ func TestZip2(t *testing.T) {
 }
 
 func testZip2(t *testing.T, op rx.Operator[string, string], err error) {
-	proj := func(v1, v2 string) string {
+	mapping := func(v1, v2 string) string {
 		return fmt.Sprintf("[%v %v]", v1, v2)
 	}
 
@@ -29,14 +29,14 @@ func testZip2(t *testing.T, op rx.Operator[string, string], err error) {
 		rx.Zip2(
 			rx.Pipe1(rx.Just("A", "B", "C"), op),
 			rx.Just("B", "C", "D", "E"),
-			proj,
+			mapping,
 		),
 		"[A B]", "[B C]", "[C D]", err,
 	).Case(
 		rx.Zip2(
 			rx.Just("A", "B", "C", "D"),
 			rx.Pipe1(rx.Just("B", "C", "D"), op),
-			proj,
+			mapping,
 		),
 		"[A B]", "[B C]", "[C D]", err,
 	).Case(
@@ -44,7 +44,7 @@ func testZip2(t *testing.T, op rx.Operator[string, string], err error) {
 			rx.Zip2(
 				rx.Just("A", "B", "C", "D"),
 				rx.Just("B", "C", "D", "E"),
-				proj,
+				mapping,
 			),
 			rx.OnNext(func(string) { panic(ErrTest) }),
 		),

@@ -1,7 +1,7 @@
 package rx
 
 // Zip7 combines multiple Observables to create an Observable that emits
-// projections of the values emitted by each of its input Observables.
+// mappings of the values emitted by each of its input Observables.
 //
 // Zip7 pulls values from each input Observable one by one, it only buffers
 // one value for each input Observable.
@@ -13,7 +13,7 @@ func Zip7[T1, T2, T3, T4, T5, T6, T7, R any](
 	obs5 Observable[T5],
 	obs6 Observable[T6],
 	obs7 Observable[T7],
-	proj func(v1 T1, v2 T2, v3 T3, v4 T4, v5 T5, v6 T6, v7 T7) R,
+	mapping func(v1 T1, v2 T2, v3 T3, v4 T4, v5 T5, v6 T6, v7 T7) R,
 ) Observable[R] {
 	return func(c Context, sink Observer[R]) {
 		c, cancel := c.WithCancel()
@@ -133,7 +133,7 @@ func Zip7[T1, T2, T3, T4, T5, T6, T7, R any](
 				default:
 					goto Again7
 				}
-				v := Try71(proj, n1.Value, n2.Value, n3.Value, n4.Value, n5.Value, n6.Value, n7.Value, oops)
+				v := Try71(mapping, n1.Value, n2.Value, n3.Value, n4.Value, n5.Value, n6.Value, n7.Value, oops)
 				Try1(sink, Next(v), oops)
 			}
 		})

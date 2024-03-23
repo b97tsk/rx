@@ -82,26 +82,26 @@ func ConcatAll[_ Observable[T], T any]() ConcatMapOperator[Observable[T], T] {
 }
 
 // ConcatMapTo converts the source Observable into a higher-order Observable,
-// by projecting each source value to the same Observable, then flattens it
-// into a first-order Observable using ConcatAll.
+// by mapping each source value to the same Observable, then flattens it into
+// a first-order Observable using ConcatAll.
 func ConcatMapTo[T, R any](inner Observable[R]) ConcatMapOperator[T, R] {
 	return ConcatMap(func(T) Observable[R] { return inner })
 }
 
 // ConcatMap converts the source Observable into a higher-order Observable,
-// by projecting each source value to an Observable, then flattens it into
+// by mapping each source value to an Observable, then flattens it into
 // a first-order Observable using ConcatAll.
-func ConcatMap[T, R any](proj func(v T) Observable[R]) ConcatMapOperator[T, R] {
+func ConcatMap[T, R any](mapping func(v T) Observable[R]) ConcatMapOperator[T, R] {
 	return ConcatMapOperator[T, R]{
 		opts: concatMapConfig[T, R]{
-			Project:      proj,
+			Mapping:      mapping,
 			UseBuffering: false,
 		},
 	}
 }
 
 type concatMapConfig[T, R any] struct {
-	Project      func(T) Observable[R]
+	Mapping      func(T) Observable[R]
 	UseBuffering bool
 }
 
@@ -148,7 +148,7 @@ func (obs concatMapObservable[T, R]) Subscribe(c Context, sink Observer[R]) {
 
 		switch n.Kind {
 		case KindNext:
-			if err := obs.Project(n.Value).BlockingSubscribe(c, sink.ElementsOnly); err != nil {
+			if err := obs.Mapping(n.Value).BlockingSubscribe(c, sink.ElementsOnly); err != nil {
 				noop = true
 				sink.Error(err)
 			}
@@ -185,7 +185,7 @@ func (obs concatMapObservable[T, R]) SubscribeWithBuffering(c Context, sink Obse
 
 		x.Queue.Unlock()
 
-		obs1 := obs.Project(v)
+		obs1 := obs.Mapping(v)
 		w, cancelw := c.WithCancel()
 
 		if !x.Context.CompareAndSwap(c.Context, w.Context) { // This fails if x.Context was swapped to sentinel.

@@ -3,7 +3,7 @@ package rx
 import "github.com/b97tsk/rx/internal/queue"
 
 // ZipWithBuffering9 combines multiple Observables to create an Observable that
-// emits projections of the values emitted by each of its input Observables.
+// emits mappings of the values emitted by each of its input Observables.
 //
 // ZipWithBuffering9 buffers every value from each input Observable, which
 // might consume a lot of memory over time if there are lots of values emitting
@@ -18,7 +18,7 @@ func ZipWithBuffering9[T1, T2, T3, T4, T5, T6, T7, T8, T9, R any](
 	obs7 Observable[T7],
 	obs8 Observable[T8],
 	obs9 Observable[T9],
-	proj func(v1 T1, v2 T2, v3 T3, v4 T4, v5 T5, v6 T6, v7 T7, v8 T8, v9 T9) R,
+	mapping func(v1 T1, v2 T2, v3 T3, v4 T4, v5 T5, v6 T6, v7 T7, v8 T8, v9 T9) R,
 ) Observable[R] {
 	return func(c Context, sink Observer[R]) {
 		c, cancel := c.WithCancel()
@@ -56,23 +56,23 @@ func ZipWithBuffering9[T1, T2, T3, T4, T5, T6, T7, T8, T9, R any](
 			for cont {
 				select {
 				case n := <-chan1:
-					cont = zipTry9(sink, n, proj, &s, &s.Q1, 1)
+					cont = zipTry9(sink, n, mapping, &s, &s.Q1, 1)
 				case n := <-chan2:
-					cont = zipTry9(sink, n, proj, &s, &s.Q2, 2)
+					cont = zipTry9(sink, n, mapping, &s, &s.Q2, 2)
 				case n := <-chan3:
-					cont = zipTry9(sink, n, proj, &s, &s.Q3, 4)
+					cont = zipTry9(sink, n, mapping, &s, &s.Q3, 4)
 				case n := <-chan4:
-					cont = zipTry9(sink, n, proj, &s, &s.Q4, 8)
+					cont = zipTry9(sink, n, mapping, &s, &s.Q4, 8)
 				case n := <-chan5:
-					cont = zipTry9(sink, n, proj, &s, &s.Q5, 16)
+					cont = zipTry9(sink, n, mapping, &s, &s.Q5, 16)
 				case n := <-chan6:
-					cont = zipTry9(sink, n, proj, &s, &s.Q6, 32)
+					cont = zipTry9(sink, n, mapping, &s, &s.Q6, 32)
 				case n := <-chan7:
-					cont = zipTry9(sink, n, proj, &s, &s.Q7, 64)
+					cont = zipTry9(sink, n, mapping, &s, &s.Q7, 64)
 				case n := <-chan8:
-					cont = zipTry9(sink, n, proj, &s, &s.Q8, 128)
+					cont = zipTry9(sink, n, mapping, &s, &s.Q8, 128)
 				case n := <-chan9:
-					cont = zipTry9(sink, n, proj, &s, &s.Q9, 256)
+					cont = zipTry9(sink, n, mapping, &s, &s.Q9, 256)
 				}
 			}
 		})
@@ -96,7 +96,7 @@ type zipState9[T1, T2, T3, T4, T5, T6, T7, T8, T9 any] struct {
 func zipTry9[T1, T2, T3, T4, T5, T6, T7, T8, T9, R, X any](
 	sink Observer[R],
 	n Notification[X],
-	proj func(T1, T2, T3, T4, T5, T6, T7, T8, T9) R,
+	mapping func(T1, T2, T3, T4, T5, T6, T7, T8, T9) R,
 	s *zipState9[T1, T2, T3, T4, T5, T6, T7, T8, T9],
 	q *queue.Queue[X],
 	bit uint16,
@@ -112,7 +112,7 @@ func zipTry9[T1, T2, T3, T4, T5, T6, T7, T8, T9, R, X any](
 
 			oops := func() { sink.Error(ErrOops) }
 			v := Try91(
-				proj,
+				mapping,
 				zipPop9(s, &s.Q1, 1, &complete),
 				zipPop9(s, &s.Q2, 2, &complete),
 				zipPop9(s, &s.Q3, 4, &complete),

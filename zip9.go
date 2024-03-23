@@ -1,7 +1,7 @@
 package rx
 
 // Zip9 combines multiple Observables to create an Observable that emits
-// projections of the values emitted by each of its input Observables.
+// mappings of the values emitted by each of its input Observables.
 //
 // Zip9 pulls values from each input Observable one by one, it only buffers
 // one value for each input Observable.
@@ -15,7 +15,7 @@ func Zip9[T1, T2, T3, T4, T5, T6, T7, T8, T9, R any](
 	obs7 Observable[T7],
 	obs8 Observable[T8],
 	obs9 Observable[T9],
-	proj func(v1 T1, v2 T2, v3 T3, v4 T4, v5 T5, v6 T6, v7 T7, v8 T8, v9 T9) R,
+	mapping func(v1 T1, v2 T2, v3 T3, v4 T4, v5 T5, v6 T6, v7 T7, v8 T8, v9 T9) R,
 ) Observable[R] {
 	return func(c Context, sink Observer[R]) {
 		c, cancel := c.WithCancel()
@@ -165,7 +165,7 @@ func Zip9[T1, T2, T3, T4, T5, T6, T7, T8, T9, R any](
 				default:
 					goto Again9
 				}
-				v := Try91(proj, n1.Value, n2.Value, n3.Value, n4.Value, n5.Value, n6.Value, n7.Value, n8.Value, n9.Value, oops)
+				v := Try91(mapping, n1.Value, n2.Value, n3.Value, n4.Value, n5.Value, n6.Value, n7.Value, n8.Value, n9.Value, oops)
 				Try1(sink, Next(v), oops)
 			}
 		})

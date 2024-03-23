@@ -1,15 +1,15 @@
 package rx
 
-// Map applies a given projection function to each value emitted by
-// the source Observable, then emits the resulting values.
-func Map[T, R any](proj func(v T) R) Operator[T, R] {
+// Map applies a given mapping function to each value emitted by the source
+// Observable, then emits the resulting values.
+func Map[T, R any](mapping func(v T) R) Operator[T, R] {
 	return NewOperator(
 		func(source Observable[T]) Observable[R] {
 			return func(c Context, sink Observer[R]) {
 				source.Subscribe(c, func(n Notification[T]) {
 					switch n.Kind {
 					case KindNext:
-						sink.Next(proj(n.Value))
+						sink.Next(mapping(n.Value))
 					case KindError:
 						sink.Error(n.Error)
 					case KindComplete:
