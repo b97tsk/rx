@@ -1,9 +1,9 @@
 package rx
 
 // TakeWhile emits values emitted by the source Observable so long as
-// each value satisfies a given condition, and then completes as soon as
-// the condition is not satisfied.
-func TakeWhile[T any](cond func(v T) bool) Operator[T, T] {
+// each value satisfies a given predicate function, and then completes
+// as soon as the predicate function returns false.
+func TakeWhile[T any](pred func(v T) bool) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return func(c Context, sink Observer[T]) {
@@ -19,7 +19,7 @@ func TakeWhile[T any](cond func(v T) bool) Operator[T, T] {
 
 					switch n.Kind {
 					case KindNext:
-						if cond(n.Value) {
+						if pred(n.Value) {
 							sink(n)
 							return
 						}

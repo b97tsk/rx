@@ -1,8 +1,8 @@
 package rx
 
 // Contains emits a boolean to indicate whether any value of the source
-// Observable satisfies a given condition.
-func Contains[T any](cond func(v T) bool) Operator[T, bool] {
+// Observable satisfies a given predicate function.
+func Contains[T any](pred func(v T) bool) Operator[T, bool] {
 	return NewOperator(
 		func(source Observable[T]) Observable[bool] {
 			return func(c Context, sink Observer[bool]) {
@@ -18,7 +18,7 @@ func Contains[T any](cond func(v T) bool) Operator[T, bool] {
 
 					switch n.Kind {
 					case KindNext:
-						if cond(n.Value) {
+						if pred(n.Value) {
 							sink.Next(true)
 							noop = true
 							sink.Complete()

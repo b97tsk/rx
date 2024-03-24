@@ -1,8 +1,8 @@
 package rx
 
 // Find emits only the first value emitted by the source Observable that
-// meets some condition.
-func Find[T any](cond func(v T) bool) Operator[T, T] {
+// satisfies a given predicate function.
+func Find[T any](pred func(v T) bool) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return func(c Context, sink Observer[T]) {
@@ -18,7 +18,7 @@ func Find[T any](cond func(v T) bool) Operator[T, T] {
 
 					switch n.Kind {
 					case KindNext:
-						if cond(n.Value) {
+						if pred(n.Value) {
 							sink(n)
 							noop = true
 							sink.Complete()
