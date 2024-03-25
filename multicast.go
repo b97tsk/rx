@@ -34,7 +34,7 @@ func MulticastBuffer[T any](n int) Subject[T] {
 	m := &multicast[T]{Cap: n}
 	return Subject[T]{
 		Observable: NewObservable(m.subscribe),
-		Observer:   NewObserver(m.emit).WithRuntimeFinalizer(),
+		Observer:   WithRuntimeFinalizer(m.emit),
 	}
 }
 

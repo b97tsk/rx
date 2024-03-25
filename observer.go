@@ -56,7 +56,7 @@ func (sink Observer[T]) OnLastNotification(f func()) Observer[T] {
 // WithRuntimeFinalizer creates an Observer with a runtime finalizer set to
 // run sink.Error(ErrFinalized) in a goroutine.
 // sink must be safe for concurrent use.
-func (sink Observer[T]) WithRuntimeFinalizer() Observer[T] {
+func WithRuntimeFinalizer[T any](sink Observer[T]) Observer[T] {
 	runtime.SetFinalizer(&sink, func(sink *Observer[T]) {
 		go sink.Error(ErrFinalized)
 	})

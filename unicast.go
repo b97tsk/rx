@@ -41,7 +41,7 @@ func UnicastBuffer[T any](n int) Subject[T] {
 	u := &unicast[T]{Cap: n}
 	return Subject[T]{
 		Observable: NewObservable(u.subscribe),
-		Observer:   NewObserver(u.emit).WithRuntimeFinalizer(),
+		Observer:   WithRuntimeFinalizer(u.emit),
 	}
 }
 
