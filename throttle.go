@@ -26,7 +26,7 @@ func ThrottleTime[T any](d time.Duration) ThrottleOperator[T, time.Time] {
 // by a second Observable.
 func Throttle[T, U any](durationSelector func(v T) Observable[U]) ThrottleOperator[T, U] {
 	return ThrottleOperator[T, U]{
-		opts: throttleConfig[T, U]{
+		ts: throttleConfig[T, U]{
 			DurationSelector: durationSelector,
 			Leading:          true,
 			Trailing:         false,
@@ -42,24 +42,24 @@ type throttleConfig[T, U any] struct {
 
 // ThrottleOperator is an [Operator] type for [Throttle].
 type ThrottleOperator[T, U any] struct {
-	opts throttleConfig[T, U]
+	ts throttleConfig[T, U]
 }
 
 // WithLeading sets Leading option to a given value.
 func (op ThrottleOperator[T, U]) WithLeading(v bool) ThrottleOperator[T, U] {
-	op.opts.Leading = v
+	op.ts.Leading = v
 	return op
 }
 
 // WithTrailing sets Trailing option to a given value.
 func (op ThrottleOperator[T, U]) WithTrailing(v bool) ThrottleOperator[T, U] {
-	op.opts.Trailing = v
+	op.ts.Trailing = v
 	return op
 }
 
 // Apply implements the Operator interface.
 func (op ThrottleOperator[T, U]) Apply(source Observable[T]) Observable[T] {
-	return throttleObservable[T, U]{source, op.opts}.Subscribe
+	return throttleObservable[T, U]{source, op.ts}.Subscribe
 }
 
 type throttleObservable[T, U any] struct {

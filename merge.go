@@ -100,7 +100,7 @@ func MergeMapTo[T, R any](inner Observable[R]) MergeMapOperator[T, R] {
 // a first-order Observable using MergeAll.
 func MergeMap[T, R any](mapping func(v T) Observable[R]) MergeMapOperator[T, R] {
 	return MergeMapOperator[T, R]{
-		opts: mergeMapConfig[T, R]{
+		ts: mergeMapConfig[T, R]{
 			Mapping:      mapping,
 			Concurrency:  -1,
 			UseBuffering: false,
@@ -116,7 +116,7 @@ type mergeMapConfig[T, R any] struct {
 
 // MergeMapOperator is an [Operator] type for [MergeMap].
 type MergeMapOperator[T, R any] struct {
-	opts mergeMapConfig[T, R]
+	ts mergeMapConfig[T, R]
 }
 
 // WithBuffering turns on source buffering.
@@ -125,24 +125,24 @@ type MergeMapOperator[T, R any] struct {
 // might consume a lot of memory over time if the source has lots of values
 // emitting faster than merging.
 func (op MergeMapOperator[T, R]) WithBuffering() MergeMapOperator[T, R] {
-	op.opts.UseBuffering = true
+	op.ts.UseBuffering = true
 	return op
 }
 
 // WithConcurrency sets Concurrency option to a given value.
 // It must not be zero. The default value is -1 (unlimited).
 func (op MergeMapOperator[T, R]) WithConcurrency(n int) MergeMapOperator[T, R] {
-	op.opts.Concurrency = n
+	op.ts.Concurrency = n
 	return op
 }
 
 // Apply implements the Operator interface.
 func (op MergeMapOperator[T, R]) Apply(source Observable[T]) Observable[R] {
-	if op.opts.Concurrency == 0 {
+	if op.ts.Concurrency == 0 {
 		return Oops[R]("MergeMap: Concurrency == 0")
 	}
 
-	return mergeMapObservable[T, R]{source, op.opts}.Subscribe
+	return mergeMapObservable[T, R]{source, op.ts}.Subscribe
 }
 
 type mergeMapObservable[T, R any] struct {

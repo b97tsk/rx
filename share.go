@@ -11,7 +11,7 @@ import (
 // have unsubscribed it will unsubscribe from the source.
 func Share[T any]() ShareOperator[T] {
 	return ShareOperator[T]{
-		opts: shareConfig[T]{
+		ts: shareConfig[T]{
 			Connector: Multicast[T],
 		},
 	}
@@ -23,12 +23,12 @@ type shareConfig[T any] struct {
 
 // ShareOperator is an [Operator] type for [Share].
 type ShareOperator[T any] struct {
-	opts shareConfig[T]
+	ts shareConfig[T]
 }
 
 // WithConnector sets Connector option to a given value.
 func (op ShareOperator[T]) WithConnector(connector func() Subject[T]) ShareOperator[T] {
-	op.opts.Connector = connector
+	op.ts.Connector = connector
 	return op
 }
 
@@ -36,7 +36,7 @@ func (op ShareOperator[T]) WithConnector(connector func() Subject[T]) ShareOpera
 func (op ShareOperator[T]) Apply(source Observable[T]) Observable[T] {
 	obs := shareObservable[T]{
 		Source:    source,
-		Connector: op.opts.Connector,
+		Connector: op.ts.Connector,
 	}
 
 	return obs.Subscribe

@@ -93,7 +93,7 @@ func ConcatMapTo[T, R any](inner Observable[R]) ConcatMapOperator[T, R] {
 // a first-order Observable using ConcatAll.
 func ConcatMap[T, R any](mapping func(v T) Observable[R]) ConcatMapOperator[T, R] {
 	return ConcatMapOperator[T, R]{
-		opts: concatMapConfig[T, R]{
+		ts: concatMapConfig[T, R]{
 			Mapping:      mapping,
 			UseBuffering: false,
 		},
@@ -107,7 +107,7 @@ type concatMapConfig[T, R any] struct {
 
 // ConcatMapOperator is an [Operator] type for [ConcatMap].
 type ConcatMapOperator[T, R any] struct {
-	opts concatMapConfig[T, R]
+	ts concatMapConfig[T, R]
 }
 
 // WithBuffering turns on source buffering.
@@ -116,13 +116,13 @@ type ConcatMapOperator[T, R any] struct {
 // might consume a lot of memory over time if the source has lots of values
 // emitting faster than concatenating.
 func (op ConcatMapOperator[T, R]) WithBuffering() ConcatMapOperator[T, R] {
-	op.opts.UseBuffering = true
+	op.ts.UseBuffering = true
 	return op
 }
 
 // Apply implements the Operator interface.
 func (op ConcatMapOperator[T, R]) Apply(source Observable[T]) Observable[R] {
-	return concatMapObservable[T, R]{source, op.opts}.Subscribe
+	return concatMapObservable[T, R]{source, op.ts}.Subscribe
 }
 
 type concatMapObservable[T, R any] struct {

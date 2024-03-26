@@ -9,7 +9,7 @@ package rx
 // a same underlying array.
 func BufferCount[T any](bufferSize int) BufferCountOperator[T] {
 	return BufferCountOperator[T]{
-		opts: bufferCountConfig{
+		ts: bufferCountConfig{
 			BufferSize:       bufferSize,
 			StartBufferEvery: bufferSize,
 		},
@@ -23,26 +23,26 @@ type bufferCountConfig struct {
 
 // BufferCountOperator is an [Operator] type for [BufferCount].
 type BufferCountOperator[T any] struct {
-	opts bufferCountConfig
+	ts bufferCountConfig
 }
 
 // WithStartBufferEvery sets StartBufferEvery option to a given value.
 func (op BufferCountOperator[T]) WithStartBufferEvery(n int) BufferCountOperator[T] {
-	op.opts.StartBufferEvery = n
+	op.ts.StartBufferEvery = n
 	return op
 }
 
 // Apply implements the Operator interface.
 func (op BufferCountOperator[T]) Apply(source Observable[T]) Observable[[]T] {
-	if op.opts.BufferSize <= 0 {
+	if op.ts.BufferSize <= 0 {
 		return Oops[[]T]("BufferCount: BufferSize <= 0")
 	}
 
-	if op.opts.StartBufferEvery <= 0 {
+	if op.ts.StartBufferEvery <= 0 {
 		return Oops[[]T]("BufferCount: StartBufferEvery <= 0")
 	}
 
-	return bufferCountObservable[T]{source, op.opts}.Subscribe
+	return bufferCountObservable[T]{source, op.ts}.Subscribe
 }
 
 type bufferCountObservable[T any] struct {
