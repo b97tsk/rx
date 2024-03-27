@@ -1,8 +1,8 @@
 package rx
 
-// JustIfEmpty mirrors the source Observable, or emits given values
+// DefaultIfEmpty mirrors the source Observable, or emits given values
 // if the source completes without emitting any value.
-func JustIfEmpty[T any](s ...T) Operator[T, T] {
+func DefaultIfEmpty[T any](s ...T) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return func(c Context, sink Observer[T]) {
