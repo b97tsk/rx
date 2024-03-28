@@ -22,7 +22,7 @@ type takeUntilObservable[T, U any] struct {
 
 func (obs takeUntilObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
 	c, cancel := c.WithCancel()
-	sink = sink.OnLastNotification(cancel)
+	sink = sink.OnTermination(cancel)
 
 	var x struct {
 		Context atomic.Value
@@ -84,7 +84,7 @@ func (obs takeUntilObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
 	x.Source.Add(1)
 	x.Source.Unlock()
 
-	finish := func(n Notification[T]) {
+	terminate := func(n Notification[T]) {
 		defer x.Source.Done()
 
 		old := x.Context.Swap(sentinel)
@@ -99,7 +99,7 @@ func (obs takeUntilObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
 	select {
 	default:
 	case <-c.Done():
-		finish(Error[T](c.Err()))
+		terminate(Error[T](c.Err()))
 		return
 	}
 
@@ -110,7 +110,7 @@ func (obs takeUntilObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
 				sink(n)
 			}
 		case KindError, KindComplete:
-			finish(n)
+			terminate(n)
 		}
 	})
 }

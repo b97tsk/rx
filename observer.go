@@ -38,10 +38,10 @@ func (sink Observer[T]) ElementsOnly(n Notification[T]) {
 	}
 }
 
-// OnLastNotification creates an Observer that passes incoming emissions to
-// sink, and when a notification of error or completion passes in, calls f
-// just before passing it to sink.
-func (sink Observer[T]) OnLastNotification(f func()) Observer[T] {
+// OnTermination creates an Observer that passes incoming emissions to sink,
+// and when a notification of error or completion passes in, calls f just
+// before passing it to sink.
+func (sink Observer[T]) OnTermination(f func()) Observer[T] {
 	return func(n Notification[T]) {
 		switch n.Kind {
 		case KindNext:

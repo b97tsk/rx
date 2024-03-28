@@ -36,7 +36,7 @@ type switchMapObservable[T, R any] struct {
 
 func (obs switchMapObservable[T, R]) Subscribe(c Context, sink Observer[R]) {
 	c, cancel := c.WithCancel()
-	sink = sink.OnLastNotification(cancel)
+	sink = sink.OnTermination(cancel)
 
 	var x struct {
 		Context  atomic.Value

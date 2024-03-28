@@ -20,7 +20,7 @@ func TestDo(t *testing.T) {
 	doTest(t, func(f func()) rx.Operator[int, int] {
 		return rx.OnError[int](func(error) { f() })
 	}, 0, 0, 0, 1)
-	doTest(t, rx.OnLastNotification[int], 1, 2, 3, 4)
+	doTest(t, rx.OnTermination[int], 1, 2, 3, 4)
 
 	NewTestSuite[string](t).Case(
 		rx.Pipe1(rx.Just("A"), rx.Do(func(n rx.Notification[string]) { panic(ErrTest) })),
@@ -35,7 +35,7 @@ func TestDo(t *testing.T) {
 		rx.Pipe1(rx.Throw[string](ErrTest), rx.OnError[string](func(err error) { panic(err) })),
 		rx.ErrOops, ErrTest,
 	).Case(
-		rx.Pipe1(rx.Throw[string](ErrTest), rx.OnLastNotification[string](func() { panic(ErrTest) })),
+		rx.Pipe1(rx.Throw[string](ErrTest), rx.OnTermination[string](func() { panic(ErrTest) })),
 		rx.ErrOops, ErrTest,
 	)
 }

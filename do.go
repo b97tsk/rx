@@ -72,13 +72,13 @@ func OnError[T any](f func(err error)) Operator[T, T] {
 	)
 }
 
-// OnLastNotification mirrors the source Observable, and calls f when
-// the source completes or emits an error notification.
-func OnLastNotification[T any](f func()) Operator[T, T] {
+// OnTermination mirrors the source Observable, and calls f when the source
+// emits a notification of error or completion.
+func OnTermination[T any](f func()) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return func(c Context, sink Observer[T]) {
-				source.Subscribe(c, sink.OnLastNotification(f))
+				source.Subscribe(c, sink.OnTermination(f))
 			}
 		},
 	)

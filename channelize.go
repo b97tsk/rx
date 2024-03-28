@@ -11,7 +11,7 @@ func Channelize[T any](join func(upstream <-chan Notification[T], downstream cha
 		func(source Observable[T]) Observable[T] {
 			return func(c Context, sink Observer[T]) {
 				c, cancel := c.WithCancel()
-				sink = sink.OnLastNotification(cancel)
+				sink = sink.OnTermination(cancel)
 
 				upstream := make(chan Notification[T])
 				downstream := make(chan Notification[T])

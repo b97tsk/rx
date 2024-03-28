@@ -35,7 +35,7 @@ type debounceObservable[T, U any] struct {
 
 func (obs debounceObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
 	c, cancel := c.WithCancel()
-	sink = sink.OnLastNotification(cancel)
+	sink = sink.OnTermination(cancel)
 
 	var x struct {
 		Context atomic.Value

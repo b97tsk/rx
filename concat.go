@@ -137,7 +137,7 @@ func (obs concatMapObservable[T, R]) Subscribe(c Context, sink Observer[R]) {
 	}
 
 	c, cancel := c.WithCancel()
-	sink = sink.OnLastNotification(cancel)
+	sink = sink.OnTermination(cancel)
 
 	var noop bool
 
@@ -162,7 +162,7 @@ func (obs concatMapObservable[T, R]) Subscribe(c Context, sink Observer[R]) {
 
 func (obs concatMapObservable[T, R]) SubscribeWithBuffering(c Context, sink Observer[R]) {
 	c, cancel := c.WithCancel()
-	sink = sink.OnLastNotification(cancel)
+	sink = sink.OnTermination(cancel)
 
 	var x struct {
 		Context  atomic.Value

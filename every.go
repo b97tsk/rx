@@ -7,7 +7,7 @@ func Every[T any](pred func(v T) bool) Operator[T, bool] {
 		func(source Observable[T]) Observable[bool] {
 			return func(c Context, sink Observer[bool]) {
 				c, cancel := c.WithCancel()
-				sink = sink.OnLastNotification(cancel)
+				sink = sink.OnTermination(cancel)
 
 				var noop bool
 

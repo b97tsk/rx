@@ -18,7 +18,7 @@ func Zip7[T1, T2, T3, T4, T5, T6, T7, R any](
 	return func(c Context, sink Observer[R]) {
 		c, cancel := c.WithCancel()
 		noop := make(chan struct{})
-		sink = sink.OnLastNotification(func() {
+		sink = sink.OnTermination(func() {
 			cancel()
 			close(noop)
 		})

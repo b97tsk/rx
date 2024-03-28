@@ -7,7 +7,7 @@ func Find[T any](pred func(v T) bool) Operator[T, T] {
 		func(source Observable[T]) Observable[T] {
 			return func(c Context, sink Observer[T]) {
 				c, cancel := c.WithCancel()
-				sink = sink.OnLastNotification(cancel)
+				sink = sink.OnTermination(cancel)
 
 				var noop bool
 

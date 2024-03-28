@@ -19,7 +19,7 @@ type skipUntilObservable[T, U any] struct {
 
 func (obs skipUntilObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
 	c, cancel := c.WithCancel()
-	sink = sink.OnLastNotification(cancel)
+	sink = sink.OnTermination(cancel)
 
 	var x struct {
 		Context atomic.Value
@@ -65,7 +65,7 @@ func (obs skipUntilObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
 		)
 	}
 
-	finish := func(n Notification[T]) {
+	terminate := func(n Notification[T]) {
 		old := x.Context.Swap(sentinel)
 
 		cancel()
@@ -78,7 +78,7 @@ func (obs skipUntilObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
 	select {
 	default:
 	case <-c.Done():
-		finish(Error[T](c.Err()))
+		terminate(Error[T](c.Err()))
 		return
 	}
 
@@ -94,7 +94,7 @@ func (obs skipUntilObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
 				sink(n)
 			}
 		case KindError, KindComplete:
-			finish(n)
+			terminate(n)
 		}
 	})
 }
