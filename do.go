@@ -21,9 +21,9 @@ func Do[T any](tap Observer[T]) Operator[T, T] {
 	)
 }
 
-// OnNext mirrors the source Observable, passing values to f before
+// DoOnNext mirrors the source Observable, passing values to f before
 // each value emission.
-func OnNext[T any](f func(v T)) Operator[T, T] {
+func DoOnNext[T any](f func(v T)) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return func(c Context, sink Observer[T]) {
@@ -38,26 +38,9 @@ func OnNext[T any](f func(v T)) Operator[T, T] {
 	)
 }
 
-// OnComplete mirrors the source Observable, and calls f when the source
-// completes.
-func OnComplete[T any](f func()) Operator[T, T] {
-	return NewOperator(
-		func(source Observable[T]) Observable[T] {
-			return func(c Context, sink Observer[T]) {
-				source.Subscribe(c, func(n Notification[T]) {
-					if n.Kind == KindComplete {
-						Try0(f, func() { sink.Error(ErrOops) })
-					}
-					sink(n)
-				})
-			}
-		},
-	)
-}
-
-// OnError mirrors the source Observable, and calls f when the source emits
+// DoOnError mirrors the source Observable, and calls f when the source emits
 // an error notification.
-func OnError[T any](f func(err error)) Operator[T, T] {
+func DoOnError[T any](f func(err error)) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return func(c Context, sink Observer[T]) {
@@ -72,13 +55,30 @@ func OnError[T any](f func(err error)) Operator[T, T] {
 	)
 }
 
-// OnTermination mirrors the source Observable, and calls f when the source
-// emits a notification of error or completion.
-func OnTermination[T any](f func()) Operator[T, T] {
+// DoOnComplete mirrors the source Observable, and calls f when the source
+// completes.
+func DoOnComplete[T any](f func()) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return func(c Context, sink Observer[T]) {
-				source.Subscribe(c, sink.OnTermination(f))
+				source.Subscribe(c, func(n Notification[T]) {
+					if n.Kind == KindComplete {
+						Try0(f, func() { sink.Error(ErrOops) })
+					}
+					sink(n)
+				})
+			}
+		},
+	)
+}
+
+// DoOnTermination mirrors the source Observable, and calls f when the source
+// emits a notification of error or completion.
+func DoOnTermination[T any](f func()) Operator[T, T] {
+	return NewOperator(
+		func(source Observable[T]) Observable[T] {
+			return func(c Context, sink Observer[T]) {
+				source.Subscribe(c, sink.DoOnTermination(f))
 			}
 		},
 	)

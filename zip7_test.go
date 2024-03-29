@@ -121,7 +121,7 @@ func testZip7(t *testing.T, op rx.Operator[string, string], err error) {
 				rx.Just("G", "H", "I", "J"),
 				mapping,
 			),
-			rx.OnNext(func(string) { panic(ErrTest) }),
+			rx.DoOnNext(func(string) { panic(ErrTest) }),
 		),
 		rx.ErrOops, ErrTest,
 	)

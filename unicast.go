@@ -181,7 +181,7 @@ func (u *unicast[T]) subscribe(c Context, sink Observer[T]) {
 	done := c.Done()
 	if done != nil {
 		stop := c.AfterFunc(func() { u.emit(Error[T](c.Err())) })
-		sink = sink.OnTermination(func() { stop() })
+		sink = sink.DoOnTermination(func() { stop() })
 	}
 
 	u.Context = c.Context

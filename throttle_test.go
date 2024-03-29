@@ -99,7 +99,7 @@ func TestThrottle(t *testing.T) {
 					return rx.Timer(Step(9))
 				},
 			).WithLeading(false).WithTrailing(true),
-			rx.OnNext(func(string) { panic(ErrTest) }),
+			rx.DoOnNext(func(string) { panic(ErrTest) }),
 		),
 		rx.ErrOops, ErrTest,
 	).Case(

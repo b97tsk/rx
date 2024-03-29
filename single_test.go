@@ -38,7 +38,7 @@ func TestSingle(t *testing.T) {
 		rx.Pipe2(
 			rx.Just("A"),
 			rx.Single[string](),
-			rx.OnNext(func(string) { panic(ErrTest) }),
+			rx.DoOnNext(func(string) { panic(ErrTest) }),
 		),
 		rx.ErrOops, ErrTest,
 	)

@@ -8,7 +8,7 @@ func TakeWhile[T any](pred func(v T) bool) Operator[T, T] {
 		func(source Observable[T]) Observable[T] {
 			return func(c Context, sink Observer[T]) {
 				c, cancel := c.WithCancel()
-				sink = sink.OnTermination(cancel)
+				sink = sink.DoOnTermination(cancel)
 
 				var noop bool
 

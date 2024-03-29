@@ -56,7 +56,7 @@ func TestLast(t *testing.T) {
 		rx.Pipe2(
 			rx.Just(1, 2),
 			rx.Last[int](),
-			rx.OnNext(func(int) { panic(ErrTest) }),
+			rx.DoOnNext(func(int) { panic(ErrTest) }),
 		),
 		rx.ErrOops, ErrTest,
 	)
@@ -111,7 +111,7 @@ func TestLastOrElse(t *testing.T) {
 		rx.Pipe2(
 			rx.Empty[int](),
 			rx.LastOrElse(404),
-			rx.OnNext(func(int) { panic(ErrTest) }),
+			rx.DoOnNext(func(int) { panic(ErrTest) }),
 		),
 		rx.ErrOops, ErrTest,
 	)

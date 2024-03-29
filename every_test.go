@@ -48,14 +48,14 @@ func TestEvery(t *testing.T) {
 		rx.Pipe2(
 			rx.Range(1, 10),
 			rx.Every(lessThanFive),
-			rx.OnNext(func(bool) { panic(ErrTest) }),
+			rx.DoOnNext(func(bool) { panic(ErrTest) }),
 		),
 		rx.ErrOops, ErrTest,
 	).Case(
 		rx.Pipe2(
 			rx.Range(1, 5),
 			rx.Every(lessThanFive),
-			rx.OnNext(func(bool) { panic(ErrTest) }),
+			rx.DoOnNext(func(bool) { panic(ErrTest) }),
 		),
 		rx.ErrOops, ErrTest,
 	)

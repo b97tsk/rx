@@ -38,7 +38,7 @@ func TestIsEmpty(t *testing.T) {
 		rx.Pipe2(
 			rx.Empty[string](),
 			rx.IsEmpty[string](),
-			rx.OnNext(func(bool) { panic(ErrTest) }),
+			rx.DoOnNext(func(bool) { panic(ErrTest) }),
 		),
 		rx.ErrOops, ErrTest,
 	)

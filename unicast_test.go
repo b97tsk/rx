@@ -119,7 +119,7 @@ func TestUnicast(t *testing.T) {
 		NewTestSuite[string](t).Case(
 			rx.Pipe1(
 				u.Observable,
-				rx.OnNext(func(string) { panic(ErrTest) }),
+				rx.DoOnNext(func(string) { panic(ErrTest) }),
 			),
 			rx.ErrOops, ErrTest,
 		).Case(

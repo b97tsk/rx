@@ -76,7 +76,7 @@ func TestGroupBy(t *testing.T) {
 					return rx.Pipe2(
 						g.Value,
 						rx.Discard[string](),
-						rx.OnComplete[string](func() { panic(ErrTest) }),
+						rx.DoOnComplete[string](func() { panic(ErrTest) }),
 					)
 				},
 			).WithBuffering(),

@@ -117,7 +117,7 @@ func TestZipWithBuffering7(t *testing.T) {
 				rx.Range(1, 5),
 				mapping,
 			),
-			rx.OnNext(func(string) { panic(ErrTest) }),
+			rx.DoOnNext(func(string) { panic(ErrTest) }),
 		),
 		rx.ErrOops, ErrTest,
 	)

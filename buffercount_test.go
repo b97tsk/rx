@@ -70,7 +70,7 @@ func TestBufferCount(t *testing.T) {
 		rx.Pipe3(
 			rx.Just("A"),
 			rx.BufferCount[string](2),
-			rx.OnNext(func([]string) { panic(ErrTest) }),
+			rx.DoOnNext(func([]string) { panic(ErrTest) }),
 			ToString[[]string](),
 		),
 		rx.ErrOops, ErrTest,

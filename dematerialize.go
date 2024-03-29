@@ -7,7 +7,7 @@ func Dematerialize[_ Notification[T], T any]() Operator[Notification[T], T] {
 		func(source Observable[Notification[T]]) Observable[T] {
 			return func(c Context, sink Observer[T]) {
 				c, cancel := c.WithCancel()
-				sink = sink.OnTermination(cancel)
+				sink = sink.DoOnTermination(cancel)
 
 				var noop bool
 

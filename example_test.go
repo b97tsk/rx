@@ -67,7 +67,7 @@ func Example_blocking() {
 		rx.Scan(-1, func(i int, _ time.Time) int { return i + 1 }), // 0, 1, 2, 3, ...
 		rx.Scan(0, func(v1, v2 int) int { return v1 + v2 }),        // 0, 1, 3, 6, ...
 		rx.Skip[int](4),
-		rx.OnNext(func(v int) { fmt.Println(v) }), // 10, 15, 21, ...
+		rx.DoOnNext(func(v int) { fmt.Println(v) }), // 10, 15, 21, ...
 	)
 
 	err := obs.BlockingSubscribe(ctx, rx.Noop[int])
@@ -90,7 +90,7 @@ func Example_waitGroup() {
 			rx.Pipe2(
 				rx.Timer(50*time.Millisecond*time.Duration(n)),
 				rx.MapTo[time.Time](n),
-				rx.OnNext(func(v int) { fmt.Println(v) }),
+				rx.DoOnNext(func(v int) { fmt.Println(v) }),
 			).Subscribe(ctx, rx.Noop[int])
 		}
 	})

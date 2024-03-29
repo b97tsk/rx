@@ -74,7 +74,7 @@ func TestRepeat(t *testing.T) {
 	NewTestSuite[string](t).WithContext(ctx).Case(
 		rx.Pipe2(
 			rx.Empty[string](),
-			rx.OnComplete[string](func() { time.Sleep(Step(2)) }),
+			rx.DoOnComplete[string](func() { time.Sleep(Step(2)) }),
 			rx.Repeat[string](2),
 		),
 		context.DeadlineExceeded,

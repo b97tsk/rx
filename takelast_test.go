@@ -76,7 +76,7 @@ func TestTakeLast(t *testing.T) {
 		rx.Pipe2(
 			rx.Range(1, 10),
 			rx.TakeLast[int](3),
-			rx.OnNext(func(int) { panic(ErrTest) }),
+			rx.DoOnNext(func(int) { panic(ErrTest) }),
 		),
 		rx.ErrOops, ErrTest,
 	)
@@ -88,7 +88,7 @@ func TestTakeLast(t *testing.T) {
 		rx.Pipe2(
 			rx.Range(1, 10),
 			rx.TakeLast[int](3),
-			rx.OnNext(func(int) { time.Sleep(Step(2)) }),
+			rx.DoOnNext(func(int) { time.Sleep(Step(2)) }),
 		),
 		7, context.DeadlineExceeded,
 	)

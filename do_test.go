@@ -14,28 +14,28 @@ func TestDo(t *testing.T) {
 		return rx.Do(func(rx.Notification[int]) { f() })
 	}, 1, 3, 6, 9)
 	doTest(t, func(f func()) rx.Operator[int, int] {
-		return rx.OnNext(func(int) { f() })
+		return rx.DoOnNext(func(int) { f() })
 	}, 0, 1, 3, 5)
-	doTest(t, rx.OnComplete[int], 1, 2, 3, 3)
 	doTest(t, func(f func()) rx.Operator[int, int] {
-		return rx.OnError[int](func(error) { f() })
+		return rx.DoOnError[int](func(error) { f() })
 	}, 0, 0, 0, 1)
-	doTest(t, rx.OnTermination[int], 1, 2, 3, 4)
+	doTest(t, rx.DoOnComplete[int], 1, 2, 3, 3)
+	doTest(t, rx.DoOnTermination[int], 1, 2, 3, 4)
 
 	NewTestSuite[string](t).Case(
 		rx.Pipe1(rx.Just("A"), rx.Do(func(n rx.Notification[string]) { panic(ErrTest) })),
 		rx.ErrOops, ErrTest,
 	).Case(
-		rx.Pipe1(rx.Just("A"), rx.OnNext(func(string) { panic(ErrTest) })),
+		rx.Pipe1(rx.Just("A"), rx.DoOnNext(func(string) { panic(ErrTest) })),
 		rx.ErrOops, ErrTest,
 	).Case(
-		rx.Pipe1(rx.Empty[string](), rx.OnComplete[string](func() { panic(ErrTest) })),
+		rx.Pipe1(rx.Throw[string](ErrTest), rx.DoOnError[string](func(err error) { panic(err) })),
 		rx.ErrOops, ErrTest,
 	).Case(
-		rx.Pipe1(rx.Throw[string](ErrTest), rx.OnError[string](func(err error) { panic(err) })),
+		rx.Pipe1(rx.Empty[string](), rx.DoOnComplete[string](func() { panic(ErrTest) })),
 		rx.ErrOops, ErrTest,
 	).Case(
-		rx.Pipe1(rx.Throw[string](ErrTest), rx.OnTermination[string](func() { panic(ErrTest) })),
+		rx.Pipe1(rx.Throw[string](ErrTest), rx.DoOnTermination[string](func() { panic(ErrTest) })),
 		rx.ErrOops, ErrTest,
 	)
 }

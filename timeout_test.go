@@ -43,7 +43,7 @@ func TestTimeout(t *testing.T) {
 			rx.Just("A", "B", "C"),
 			AddLatencyToValues[string](1, 3),
 			rx.Timeout[string](Step(2)).WithObservable(rx.Throw[string](ErrTest)),
-			rx.OnNext(func(string) { panic(ErrTest) }),
+			rx.DoOnNext(func(string) { panic(ErrTest) }),
 		),
 		rx.ErrOops, ErrTest,
 	)

@@ -25,7 +25,7 @@ type delayObservable[T any] struct {
 
 func (obs delayObservable[T]) Subscribe(c Context, sink Observer[T]) {
 	c, cancel := c.WithCancel()
-	sink = sink.OnTermination(cancel)
+	sink = sink.DoOnTermination(cancel)
 
 	var x struct {
 		Context  atomic.Value

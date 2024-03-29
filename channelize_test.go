@@ -42,7 +42,7 @@ func TestChannelize(t *testing.T) {
 		rx.Pipe2(
 			rx.Just("A", "B", "C"),
 			rx.Channelize(join),
-			rx.OnNext(func(string) { panic(ErrTest) }),
+			rx.DoOnNext(func(string) { panic(ErrTest) }),
 		),
 		rx.ErrOops, ErrTest,
 	)

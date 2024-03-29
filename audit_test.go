@@ -100,7 +100,7 @@ func TestAudit(t *testing.T) {
 		rx.Pipe2(
 			rx.Just("A", "B", "C", "D", "E"),
 			rx.AuditTime[string](Step(3)),
-			rx.OnNext(func(string) { panic(ErrTest) }),
+			rx.DoOnNext(func(string) { panic(ErrTest) }),
 		),
 		rx.ErrOops, ErrTest,
 	)

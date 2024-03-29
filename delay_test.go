@@ -64,7 +64,7 @@ func TestDelay(t *testing.T) {
 			rx.Pipe2(
 				rx.Just("A", "B", "C", "D", "E"),
 				rx.Delay[string](Step(1)),
-				rx.OnNext(func(string) { time.Sleep(Step(2)) }),
+				rx.DoOnNext(func(string) { time.Sleep(Step(2)) }),
 			),
 			"A", context.DeadlineExceeded,
 		)

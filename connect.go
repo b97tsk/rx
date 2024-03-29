@@ -39,7 +39,7 @@ type connectObservable[T, R any] struct {
 
 func (obs connectObservable[T, R]) Subscribe(c Context, sink Observer[R]) {
 	c, cancel := c.WithCancel()
-	sink = sink.OnTermination(cancel)
+	sink = sink.DoOnTermination(cancel)
 	oops := func() { sink.Error(ErrOops) }
 	subject := Try01(obs.Connector, oops)
 	Try11(obs.Selector, subject.Observable, oops).Subscribe(c, sink)

@@ -96,7 +96,7 @@ func TestDebounce(t *testing.T) {
 			rx.Just("A", "B", "C"),
 			AddLatencyToValues[string](1, 2),
 			rx.DebounceTime[string](Step(3)),
-			rx.OnNext(func(string) { panic(ErrTest) }),
+			rx.DoOnNext(func(string) { panic(ErrTest) }),
 		),
 		rx.ErrOops, ErrTest,
 	).Case(
@@ -104,7 +104,7 @@ func TestDebounce(t *testing.T) {
 			rx.Just("A", "B", "C"),
 			AddLatencyToValues[string](1, 3),
 			rx.DebounceTime[string](Step(2)),
-			rx.OnNext(func(string) { panic(ErrTest) }),
+			rx.DoOnNext(func(string) { panic(ErrTest) }),
 		),
 		rx.ErrOops, ErrTest,
 	)

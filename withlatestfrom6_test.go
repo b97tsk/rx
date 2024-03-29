@@ -57,7 +57,7 @@ func TestWithLatestFrom6(t *testing.T) {
 				rx.Pipe1(rx.Just("G1", "G2", "G3"), AddLatencyToValues[string](7, 7)),
 				mapping,
 			),
-			rx.OnNext(func(string) { panic(ErrTest) }),
+			rx.DoOnNext(func(string) { panic(ErrTest) }),
 		),
 		rx.ErrOops, ErrTest,
 	)

@@ -42,7 +42,7 @@ func TestDefaultIfEmpty(t *testing.T) {
 		rx.Pipe2(
 			rx.Empty[int](),
 			rx.DefaultIfEmpty(1, 2, 3),
-			rx.OnNext(func(int) { panic(ErrTest) }),
+			rx.DoOnNext(func(int) { panic(ErrTest) }),
 		),
 		rx.ErrOops, ErrTest,
 	)

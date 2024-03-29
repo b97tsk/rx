@@ -30,7 +30,7 @@ func TestTicker(t *testing.T) {
 		rx.Pipe2(
 			rx.Ticker(Step(1)),
 			rx.Scan(-1, func(i int, _ time.Time) int { return i + 1 }),
-			rx.OnNext(func(int) { panic(ErrTest) }),
+			rx.DoOnNext(func(int) { panic(ErrTest) }),
 		),
 		rx.ErrOops, ErrTest,
 	)
@@ -49,7 +49,7 @@ func TestTimer(t *testing.T) {
 		rx.Pipe2(
 			rx.Timer(Step(1)),
 			rx.MapTo[time.Time](42),
-			rx.OnNext(func(int) { panic(ErrTest) }),
+			rx.DoOnNext(func(int) { panic(ErrTest) }),
 		),
 		rx.ErrOops, ErrTest,
 	)

@@ -22,7 +22,7 @@ func ZipWithBuffering8[T1, T2, T3, T4, T5, T6, T7, T8, R any](
 	return func(c Context, sink Observer[R]) {
 		c, cancel := c.WithCancel()
 		noop := make(chan struct{})
-		sink = sink.OnTermination(func() {
+		sink = sink.DoOnTermination(func() {
 			cancel()
 			close(noop)
 		})

@@ -34,7 +34,7 @@ func TestFromMap(t *testing.T) {
 	).Case(
 		rx.Pipe2(
 			rx.FromMap(m),
-			rx.OnNext(func(rx.Pair[int, string]) { panic(ErrTest) }),
+			rx.DoOnNext(func(rx.Pair[int, string]) { panic(ErrTest) }),
 			ToString[rx.Pair[int, string]](),
 		),
 		rx.ErrOops, ErrTest,

@@ -16,7 +16,7 @@ func ZipWithBuffering2[T1, T2, R any](
 	return func(c Context, sink Observer[R]) {
 		c, cancel := c.WithCancel()
 		noop := make(chan struct{})
-		sink = sink.OnTermination(func() {
+		sink = sink.DoOnTermination(func() {
 			cancel()
 			close(noop)
 		})

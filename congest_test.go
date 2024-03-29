@@ -29,7 +29,7 @@ func TestCongestBlock(t *testing.T) {
 			rx.Range(1, 8),
 			AddLatencyToValues[int](1, 2),
 			rx.CongestBlock[int](3),
-			rx.OnNext(congestOnNext),
+			rx.DoOnNext(congestOnNext),
 		),
 		1, 2, 3, 4, 5, 6, 7, ErrComplete,
 	).Case(
@@ -61,7 +61,7 @@ func TestCongestDropLatest(t *testing.T) {
 			rx.Range(1, 8),
 			AddLatencyToValues[int](1, 2),
 			rx.CongestDropLatest[int](3),
-			rx.OnNext(congestOnNext),
+			rx.DoOnNext(congestOnNext),
 		),
 		1, 2, 3, 4, 5, 6, 7, ErrComplete,
 	).Case(
@@ -69,7 +69,7 @@ func TestCongestDropLatest(t *testing.T) {
 			rx.Range(1, 11),
 			AddLatencyToValues[int](1, 2),
 			rx.CongestDropLatest[int](3),
-			rx.OnNext(congestOnNext),
+			rx.DoOnNext(congestOnNext),
 		),
 		1, 2, 3, 4, 5, 6, 7, 9, ErrComplete,
 	).Case(
@@ -101,7 +101,7 @@ func TestCongestDropOldest(t *testing.T) {
 			rx.Range(1, 8),
 			AddLatencyToValues[int](1, 2),
 			rx.CongestDropOldest[int](3),
-			rx.OnNext(congestOnNext),
+			rx.DoOnNext(congestOnNext),
 		),
 		1, 2, 3, 4, 5, 6, 7, ErrComplete,
 	).Case(
@@ -109,7 +109,7 @@ func TestCongestDropOldest(t *testing.T) {
 			rx.Range(1, 11),
 			AddLatencyToValues[int](1, 2),
 			rx.CongestDropOldest[int](3),
-			rx.OnNext(congestOnNext),
+			rx.DoOnNext(congestOnNext),
 		),
 		1, 2, 3, 4, 6, 8, 9, 10, ErrComplete,
 	).Case(
@@ -141,7 +141,7 @@ func TestCongestError(t *testing.T) {
 			rx.Range(1, 8),
 			AddLatencyToValues[int](1, 2),
 			rx.CongestError[int](3),
-			rx.OnNext(congestOnNext),
+			rx.DoOnNext(congestOnNext),
 		),
 		1, 2, 3, 4, 5, 6, 7, ErrComplete,
 	).Case(
@@ -149,7 +149,7 @@ func TestCongestError(t *testing.T) {
 			rx.Range(1, 11),
 			AddLatencyToValues[int](1, 2),
 			rx.CongestError[int](3),
-			rx.OnNext(congestOnNext),
+			rx.DoOnNext(congestOnNext),
 		),
 		1, 2, 3, 4, rx.ErrBufferOverflow,
 	).Case(

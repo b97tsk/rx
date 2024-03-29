@@ -42,7 +42,7 @@ func TestMulticast(t *testing.T) {
 
 		go rx.Pipe1(
 			m.Observable,
-			rx.OnNext(
+			rx.DoOnNext(
 				func(string) {
 					time.Sleep(Step(2))
 				},
@@ -79,7 +79,7 @@ func TestMulticast(t *testing.T) {
 		).Case(
 			rx.Pipe1(
 				m.Observable,
-				rx.OnNext(func(string) { panic(ErrTest) }),
+				rx.DoOnNext(func(string) { panic(ErrTest) }),
 			),
 			rx.ErrOops, ErrTest,
 		)

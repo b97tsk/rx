@@ -68,7 +68,7 @@ func (obs *shareObservable[T]) Subscribe(c Context, sink Observer[T]) {
 	}
 
 	c, cancel := c.WithCancel()
-	sink = sink.OnTermination(cancel)
+	sink = sink.DoOnTermination(cancel)
 
 	obs.Subject.Subscribe(c, sink)
 

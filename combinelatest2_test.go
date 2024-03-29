@@ -39,7 +39,7 @@ func TestCombineLatest2(t *testing.T) {
 				rx.Pipe1(rx.Just("B1", "B2"), AddLatencyToValues[string](2, 2)),
 				mapping,
 			),
-			rx.OnNext(func(string) { panic(ErrTest) }),
+			rx.DoOnNext(func(string) { panic(ErrTest) }),
 		),
 		rx.ErrOops, ErrTest,
 	)

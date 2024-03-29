@@ -34,7 +34,7 @@ func TestMultiObserver(t *testing.T) {
 
 	rx.Pipe1(
 		m.Observable,
-		rx.OnNext(
+		rx.DoOnNext(
 			func(string) {
 				time.Sleep(Step(2))
 			},
@@ -45,7 +45,7 @@ func TestMultiObserver(t *testing.T) {
 
 	rx.Pipe1(
 		m.Observable,
-		rx.OnNext(
+		rx.DoOnNext(
 			func(string) {
 				m.Observable.Subscribe(rx.NewBackgroundContext(), rx.Noop[string])
 			},

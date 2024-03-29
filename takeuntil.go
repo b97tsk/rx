@@ -22,7 +22,7 @@ type takeUntilObservable[T, U any] struct {
 
 func (obs takeUntilObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
 	c, cancel := c.WithCancel()
-	sink = sink.OnTermination(cancel)
+	sink = sink.DoOnTermination(cancel)
 
 	var x struct {
 		Context atomic.Value

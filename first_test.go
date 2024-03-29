@@ -104,7 +104,7 @@ func TestFirstOrElse(t *testing.T) {
 		rx.Pipe2(
 			rx.Empty[int](),
 			rx.FirstOrElse(404),
-			rx.OnNext(func(int) { panic(ErrTest) }),
+			rx.DoOnNext(func(int) { panic(ErrTest) }),
 		),
 		rx.ErrOops, ErrTest,
 	)

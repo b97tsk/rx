@@ -49,7 +49,7 @@ func TestMaterialize(t *testing.T) {
 		rx.Pipe3(
 			rx.Empty[string](),
 			rx.Materialize[string](),
-			rx.OnNext(func(rx.Notification[string]) { panic(ErrTest) }),
+			rx.DoOnNext(func(rx.Notification[string]) { panic(ErrTest) }),
 			rx.Reduce(0, count),
 		),
 		rx.ErrOops, ErrTest,

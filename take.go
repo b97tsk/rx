@@ -10,7 +10,7 @@ func Take[T any](count int) Operator[T, T] {
 
 			return func(c Context, sink Observer[T]) {
 				c, cancel := c.WithCancel()
-				sink = sink.OnTermination(cancel)
+				sink = sink.DoOnTermination(cancel)
 
 				var noop bool
 

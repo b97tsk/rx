@@ -7,7 +7,7 @@ func Contains[T any](pred func(v T) bool) Operator[T, bool] {
 		func(source Observable[T]) Observable[bool] {
 			return func(c Context, sink Observer[bool]) {
 				c, cancel := c.WithCancel()
-				sink = sink.OnTermination(cancel)
+				sink = sink.DoOnTermination(cancel)
 
 				var noop bool
 
@@ -42,7 +42,7 @@ func ContainsElement[T comparable](v T) Operator[T, bool] {
 		func(source Observable[T]) Observable[bool] {
 			return func(c Context, sink Observer[bool]) {
 				c, cancel := c.WithCancel()
-				sink = sink.OnTermination(cancel)
+				sink = sink.DoOnTermination(cancel)
 
 				var noop bool
 

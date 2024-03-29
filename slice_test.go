@@ -24,7 +24,7 @@ func TestFromSlice(t *testing.T) {
 	).Case(
 		rx.Pipe1(
 			rx.FromSlice(s),
-			rx.OnNext(func(string) { panic(ErrTest) }),
+			rx.DoOnNext(func(string) { panic(ErrTest) }),
 		),
 		rx.ErrOops, ErrTest,
 	)
@@ -45,7 +45,7 @@ func TestJust(t *testing.T) {
 	).Case(
 		rx.Pipe1(
 			rx.Just("A", "B", "C"),
-			rx.OnNext(func(string) { panic(ErrTest) }),
+			rx.DoOnNext(func(string) { panic(ErrTest) }),
 		),
 		rx.ErrOops, ErrTest,
 	)
