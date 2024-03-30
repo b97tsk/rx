@@ -1,8 +1,7 @@
 package rx
 
 // Last emits only the last value emitted by the source Observable.
-// If the source turns out to be empty, it emits an error notification
-// of ErrEmpty.
+// If the source turns out to be empty, Last emits a notification of ErrEmpty.
 func Last[T any]() Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
@@ -34,7 +33,8 @@ func Last[T any]() Operator[T, T] {
 }
 
 // LastOrElse emits only the last value emitted by the source Observable.
-// If the source turns out to be empty, it emits a specified default value.
+// If the source turns out to be empty, LastOrElse emits a specified default
+// value.
 func LastOrElse[T any](def T) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {

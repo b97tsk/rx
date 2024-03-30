@@ -1,7 +1,7 @@
 package rx
 
 // RetryForever mirrors the source Observable, and resubscribes to the source
-// whenever the source emits an error notification.
+// whenever the source emits a notification of error.
 //
 // RetryForever does not retry after context cancellation.
 func RetryForever[T any]() Operator[T, T] {
@@ -9,7 +9,7 @@ func RetryForever[T any]() Operator[T, T] {
 }
 
 // Retry mirrors the source Observable, and resubscribes to the source
-// when the source emits an error notification, for a maximum of count
+// when the source emits a notification of error, for a maximum of count
 // resubscriptions.
 //
 // Retry(0) is a no-op.

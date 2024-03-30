@@ -177,8 +177,8 @@ func CongestDropOldest[T any](capacity int) Operator[T, T] {
 }
 
 // CongestError mirrors the source Observable, buffering emissions
-// if the source emits too fast, and terminating the stream with an error
-// notification of ErrBufferOverflow if the buffer is full.
+// if the source emits too fast, and terminating the subscription with
+// a notification of ErrBufferOverflow if the buffer is full.
 func CongestError[T any](capacity int) Operator[T, T] {
 	return Channelize(
 		func(upstream <-chan Notification[T], downstream chan<- Notification[T]) {

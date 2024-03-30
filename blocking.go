@@ -2,7 +2,7 @@ package rx
 
 // BlockingFirst subscribes to obs, returning the first emitted value.
 // If obs emits no values, it returns the zero value of T and ErrEmpty;
-// if obs emits an error notification, it returns the zero value of T and
+// if obs emits a notification of error, it returns the zero value of T and
 // the error.
 //
 // The cancellation of parent will cause BlockingFirst to immediately return
@@ -50,7 +50,7 @@ func (obs Observable[T]) BlockingFirst(parent Context) (v T, err error) {
 }
 
 // BlockingFirstOrElse subscribes to obs, returning the first emitted value or
-// def if obs emits no values or an error notification.
+// def if obs emits no values or emits a notification of error.
 //
 // The cancellation of parent will cause BlockingFirstOrElse to immediately
 // return def.
@@ -65,7 +65,7 @@ func (obs Observable[T]) BlockingFirstOrElse(parent Context, def T) T {
 
 // BlockingLast subscribes to obs, returning the last emitted value.
 // If obs emits no values, it returns the zero value of T and ErrEmpty;
-// if obs emits an error notification, it returns the zero value of T and
+// if obs emits a notification of error, it returns the zero value of T and
 // the error.
 //
 // The cancellation of parent will cause BlockingLast to immediately return
@@ -105,7 +105,7 @@ func (obs Observable[T]) BlockingLast(parent Context) (v T, err error) {
 }
 
 // BlockingLastOrElse subscribes to obs, returning the last emitted value or
-// def if obs emits no values or an error notification.
+// def if obs emits no values or emits a notification of error.
 //
 // The cancellation of parent will cause BlockingLastOrElse to immediately
 // return def.

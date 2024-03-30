@@ -10,7 +10,7 @@ import (
 // Unicast returns a Subject that only forwards every value it receives to
 // the first subscriber.
 // The first subscriber gets all future values.
-// Subsequent subscribers will immediately receive an error notification of
+// Subsequent subscribers will immediately receive a notification of
 // ErrUnicast.
 // Values emitted to a Unicast before the first subscriber are lost.
 func Unicast[T any]() Subject[T] {
@@ -21,7 +21,7 @@ func Unicast[T any]() Subject[T] {
 // it receives before the first subscriber.
 // The first subscriber will then receive all tracked values as well as
 // future values.
-// Subsequent subscribers will immediately receive an error notification of
+// Subsequent subscribers will immediately receive a notification of
 // ErrUnicast.
 func UnicastBufferAll[T any]() Subject[T] {
 	return UnicastBuffer[T](-1)
@@ -31,7 +31,7 @@ func UnicastBufferAll[T any]() Subject[T] {
 // recent values it receive before the first subscriber.
 // The first subscriber will then receive all tracked values as well as
 // future values.
-// Subsequent subscribers will immediately receive an error notification of
+// Subsequent subscribers will immediately receive a notification of
 // ErrUnicast.
 //
 // If n < 0, UnicastBuffer keeps track of every value it receives before

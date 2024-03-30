@@ -16,9 +16,9 @@ package rx
 // the given [Observer] must be concurrency safe.
 //
 // An Observable must honor the cancellation of the given [Context].
-// When the cancellation of the given [Context] is detected, an Observable must
-// emit an error notification (as a termination) to the given Observer as soon
-// as possible.
+// When the cancellation of the given [Context] is detected, an Observable
+// must emit a notification of error (as a termination) to the given [Observer]
+// as soon as possible.
 //
 // If an Observable needs to start goroutines, it must use [Context.Go] to do
 // so; if an Observable needs to start an asynchronous operation other than
@@ -33,7 +33,7 @@ type Observable[T any] func(c Context, sink Observer[T])
 
 // Subscribe invokes an execution of an Observable.
 //
-// Subscribing to a nil Observable results in an error notification of ErrNil.
+// Subscribing to a nil Observable results in a notification of ErrNil.
 //
 // If obs panics and c.PanicHandler is not nil, Subscribe calls c.PanicHandler
 // with a value returned by the built-in recover function.

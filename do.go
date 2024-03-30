@@ -39,7 +39,7 @@ func DoOnNext[T any](f func(v T)) Operator[T, T] {
 }
 
 // DoOnError mirrors the source Observable, and calls f when the source emits
-// an error notification.
+// a notification of error.
 func DoOnError[T any](f func(err error)) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {

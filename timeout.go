@@ -6,8 +6,8 @@ import (
 	"github.com/b97tsk/rx/internal/timerpool"
 )
 
-// Timeout mirrors the source Observable, or emits an error notification
-// of ErrTimeout if the source does not emit a value in given time span.
+// Timeout mirrors the source Observable, or emits a notification of ErrTimeout
+// if the source does not emit a value in given time span.
 func Timeout[T any](d time.Duration) TimeoutOperator[T] {
 	return TimeoutOperator[T]{
 		ts: timeoutConfig[T]{

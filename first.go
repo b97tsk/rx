@@ -1,8 +1,7 @@
 package rx
 
 // First emits only the first value emitted by the source Observable.
-// If the source turns out to be empty, it emits an error notification
-// of ErrEmpty.
+// If the source turns out to be empty, First emits a notification of ErrEmpty.
 func First[T any]() Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
@@ -37,7 +36,8 @@ func First[T any]() Operator[T, T] {
 }
 
 // FirstOrElse emits only the first value emitted by the source Observable.
-// If the source turns out to be empty, it emits a specified default value.
+// If the source turns out to be empty, FirstOrElse emits a specified default
+// value.
 func FirstOrElse[T any](def T) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {

@@ -1,7 +1,7 @@
 package rx
 
-// Catch handles errors on the source Observable by mirroring a new Observable
-// returned by selector.
+// Catch mirrors the source or switches to another Observable, returned from
+// a call to selector, if the source emits a notification of error.
 //
 // Catch does not catch context cancellations.
 func Catch[T any](selector func(err error) Observable[T]) Operator[T, T] {
@@ -34,7 +34,7 @@ func Catch[T any](selector func(err error) Observable[T]) Operator[T, T] {
 }
 
 // OnErrorResumeWith mirrors the source or specified Observable if the source
-// emits an error notification.
+// emits a notification of error.
 //
 // OnErrorResumeWith does not resume after context cancellation.
 func OnErrorResumeWith[T any](obs Observable[T]) Operator[T, T] {
@@ -66,7 +66,7 @@ func OnErrorResumeWith[T any](obs Observable[T]) Operator[T, T] {
 }
 
 // OnErrorComplete mirrors the source Observable, or completes if the source
-// emits an error notification.
+// emits a notification of error.
 //
 // OnErrorComplete does not complete after context cancellation.
 func OnErrorComplete[T any]() Operator[T, T] {

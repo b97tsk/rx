@@ -2,7 +2,7 @@ package rx
 
 // Single emits the single value emitted by the source Observable.
 // If the source emits more than one value or no values, it emits
-// an error notification of ErrNotSingle or ErrEmpty respectively.
+// a notification of ErrNotSingle or ErrEmpty respectively.
 func Single[T any]() Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {

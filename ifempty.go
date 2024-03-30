@@ -37,8 +37,8 @@ func DefaultIfEmpty[T any](s ...T) Operator[T, T] {
 	)
 }
 
-// ThrowIfEmpty mirrors the source Observable, or emits an error notification
-// of ErrEmpty if the source completes without emitting any value.
+// ThrowIfEmpty mirrors the source Observable, or emits a notification of
+// ErrEmpty if the source completes without emitting any value.
 func ThrowIfEmpty[T any]() Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
