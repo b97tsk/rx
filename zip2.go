@@ -3,8 +3,8 @@ package rx
 // Zip2 combines multiple Observables to create an Observable that emits
 // mappings of the values emitted by each of its input Observables.
 //
-// Zip2 pulls values from each input Observable one by one, it only buffers
-// one value for each input Observable.
+// Zip2 pulls values from each input Observable one by one, it does not
+// buffer any value.
 func Zip2[T1, T2, R any](
 	obs1 Observable[T1],
 	obs2 Observable[T2],
@@ -18,11 +18,8 @@ func Zip2[T1, T2, R any](
 			close(noop)
 		})
 
-		chan1 := make(chan Notification[T1], 1)
-		chan2 := make(chan Notification[T2], 1)
-
-		c.Go(func() { obs1.Subscribe(c, channelObserver(chan1, noop)) })
-		c.Go(func() { obs2.Subscribe(c, channelObserver(chan2, noop)) })
+		chan1 := make(chan Notification[T1])
+		chan2 := make(chan Notification[T2])
 
 		c.Go(func() {
 			oops := func() { sink.Error(ErrOops) }
@@ -57,5 +54,8 @@ func Zip2[T1, T2, R any](
 				Try1(sink, Next(v), oops)
 			}
 		})
+
+		c.Go(func() { obs1.Subscribe(c, channelObserver(chan1, noop)) })
+		c.Go(func() { obs2.Subscribe(c, channelObserver(chan2, noop)) })
 	}
 }
