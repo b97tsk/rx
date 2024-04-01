@@ -35,11 +35,22 @@ func resistReentrance(f func()) func() {
 	}
 }
 
-func channelObserver[T any](c chan<- Notification[T], noop <-chan struct{}) Observer[T] {
+func channelObserver[T any](ch chan<- Notification[T], noop <-chan struct{}) Observer[T] {
 	return func(n Notification[T]) {
 		select {
-		case c <- n:
+		case ch <- n:
 		case <-noop:
 		}
+	}
+}
+
+func subscribeChannel[T any](c Context, obs Observable[T], ch chan<- Notification[T], noop <-chan struct{}) bool {
+	obs.Subscribe(c, channelObserver(ch, noop))
+
+	select {
+	case <-noop:
+		return false
+	default:
+		return true
 	}
 }

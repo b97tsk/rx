@@ -23,11 +23,6 @@ func CombineLatest4[T1, T2, T3, T4, R any](
 		chan3 := make(chan Notification[T3])
 		chan4 := make(chan Notification[T4])
 
-		c.Go(func() { obs1.Subscribe(c, channelObserver(chan1, noop)) })
-		c.Go(func() { obs2.Subscribe(c, channelObserver(chan2, noop)) })
-		c.Go(func() { obs3.Subscribe(c, channelObserver(chan3, noop)) })
-		c.Go(func() { obs4.Subscribe(c, channelObserver(chan4, noop)) })
-
 		c.Go(func() {
 			var s combineLatestState4[T1, T2, T3, T4]
 
@@ -46,6 +41,12 @@ func CombineLatest4[T1, T2, T3, T4, R any](
 				}
 			}
 		})
+
+		_ = true &&
+			subscribeChannel(c, obs1, chan1, noop) &&
+			subscribeChannel(c, obs2, chan2, noop) &&
+			subscribeChannel(c, obs3, chan3, noop) &&
+			subscribeChannel(c, obs4, chan4, noop)
 	}
 }
 
