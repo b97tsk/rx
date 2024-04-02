@@ -30,9 +30,6 @@ func withLatestFrom2[T1, T2, R any](
 		chan1 := make(chan Notification[T1])
 		chan2 := make(chan Notification[T2])
 
-		c.Go(func() { obs1.Subscribe(c, channelObserver(chan1, noop)) })
-		c.Go(func() { obs2.Subscribe(c, channelObserver(chan2, noop)) })
-
 		c.Go(func() {
 			var s withLatestFromState2[T1, T2]
 
@@ -47,6 +44,10 @@ func withLatestFrom2[T1, T2, R any](
 				}
 			}
 		})
+
+		_ = true &&
+			subscribeChannel(c, obs1, chan1, noop) &&
+			subscribeChannel(c, obs2, chan2, noop)
 	}
 }
 

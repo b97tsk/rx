@@ -51,16 +51,6 @@ func withLatestFrom9[T1, T2, T3, T4, T5, T6, T7, T8, T9, R any](
 		chan8 := make(chan Notification[T8])
 		chan9 := make(chan Notification[T9])
 
-		c.Go(func() { obs1.Subscribe(c, channelObserver(chan1, noop)) })
-		c.Go(func() { obs2.Subscribe(c, channelObserver(chan2, noop)) })
-		c.Go(func() { obs3.Subscribe(c, channelObserver(chan3, noop)) })
-		c.Go(func() { obs4.Subscribe(c, channelObserver(chan4, noop)) })
-		c.Go(func() { obs5.Subscribe(c, channelObserver(chan5, noop)) })
-		c.Go(func() { obs6.Subscribe(c, channelObserver(chan6, noop)) })
-		c.Go(func() { obs7.Subscribe(c, channelObserver(chan7, noop)) })
-		c.Go(func() { obs8.Subscribe(c, channelObserver(chan8, noop)) })
-		c.Go(func() { obs9.Subscribe(c, channelObserver(chan9, noop)) })
-
 		c.Go(func() {
 			var s withLatestFromState9[T1, T2, T3, T4, T5, T6, T7, T8, T9]
 
@@ -89,6 +79,17 @@ func withLatestFrom9[T1, T2, T3, T4, T5, T6, T7, T8, T9, R any](
 				}
 			}
 		})
+
+		_ = true &&
+			subscribeChannel(c, obs1, chan1, noop) &&
+			subscribeChannel(c, obs2, chan2, noop) &&
+			subscribeChannel(c, obs3, chan3, noop) &&
+			subscribeChannel(c, obs4, chan4, noop) &&
+			subscribeChannel(c, obs5, chan5, noop) &&
+			subscribeChannel(c, obs6, chan6, noop) &&
+			subscribeChannel(c, obs7, chan7, noop) &&
+			subscribeChannel(c, obs8, chan8, noop) &&
+			subscribeChannel(c, obs9, chan9, noop)
 	}
 }
 

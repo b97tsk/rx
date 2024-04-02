@@ -39,12 +39,6 @@ func withLatestFrom5[T1, T2, T3, T4, T5, R any](
 		chan4 := make(chan Notification[T4])
 		chan5 := make(chan Notification[T5])
 
-		c.Go(func() { obs1.Subscribe(c, channelObserver(chan1, noop)) })
-		c.Go(func() { obs2.Subscribe(c, channelObserver(chan2, noop)) })
-		c.Go(func() { obs3.Subscribe(c, channelObserver(chan3, noop)) })
-		c.Go(func() { obs4.Subscribe(c, channelObserver(chan4, noop)) })
-		c.Go(func() { obs5.Subscribe(c, channelObserver(chan5, noop)) })
-
 		c.Go(func() {
 			var s withLatestFromState5[T1, T2, T3, T4, T5]
 
@@ -65,6 +59,13 @@ func withLatestFrom5[T1, T2, T3, T4, T5, R any](
 				}
 			}
 		})
+
+		_ = true &&
+			subscribeChannel(c, obs1, chan1, noop) &&
+			subscribeChannel(c, obs2, chan2, noop) &&
+			subscribeChannel(c, obs3, chan3, noop) &&
+			subscribeChannel(c, obs4, chan4, noop) &&
+			subscribeChannel(c, obs5, chan5, noop)
 	}
 }
 
