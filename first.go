@@ -7,6 +7,7 @@ func First[T any]() Operator[T, T] {
 		func(source Observable[T]) Observable[T] {
 			return func(c Context, sink Observer[T]) {
 				c, cancel := c.WithCancel()
+				sink = sink.DoOnTermination(cancel)
 
 				var noop bool
 
@@ -16,18 +17,14 @@ func First[T any]() Operator[T, T] {
 					}
 
 					switch n.Kind {
-					case KindNext, KindError, KindComplete:
-						cancel()
-						switch n.Kind {
-						case KindNext:
-							sink(n)
-							noop = true
-							sink.Complete()
-						case KindError:
-							sink(n)
-						case KindComplete:
-							sink.Error(ErrEmpty)
-						}
+					case KindNext:
+						sink(n)
+						noop = true
+						sink.Complete()
+					case KindError:
+						sink(n)
+					case KindComplete:
+						sink.Error(ErrEmpty)
 					}
 				})
 			}
@@ -43,6 +40,7 @@ func FirstOrElse[T any](def T) Operator[T, T] {
 		func(source Observable[T]) Observable[T] {
 			return func(c Context, sink Observer[T]) {
 				c, cancel := c.WithCancel()
+				sink = sink.DoOnTermination(cancel)
 
 				var noop bool
 
@@ -52,19 +50,15 @@ func FirstOrElse[T any](def T) Operator[T, T] {
 					}
 
 					switch n.Kind {
-					case KindNext, KindError, KindComplete:
-						cancel()
-						switch n.Kind {
-						case KindNext:
-							sink(n)
-							noop = true
-							sink.Complete()
-						case KindError:
-							sink(n)
-						case KindComplete:
-							Try1(sink, Next(def), func() { sink.Error(ErrOops) })
-							sink(n)
-						}
+					case KindNext:
+						sink(n)
+						noop = true
+						sink.Complete()
+					case KindError:
+						sink(n)
+					case KindComplete:
+						Try1(sink, Next(def), func() { sink.Error(ErrOops) })
+						sink(n)
 					}
 				})
 			}

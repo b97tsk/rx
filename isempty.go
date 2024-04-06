@@ -6,6 +6,7 @@ func IsEmpty[T any]() Operator[T, bool] {
 		func(source Observable[T]) Observable[bool] {
 			return func(c Context, sink Observer[bool]) {
 				c, cancel := c.WithCancel()
+				sink = sink.DoOnTermination(cancel)
 
 				var noop bool
 
@@ -15,19 +16,15 @@ func IsEmpty[T any]() Operator[T, bool] {
 					}
 
 					switch n.Kind {
-					case KindNext, KindError, KindComplete:
-						cancel()
-						switch n.Kind {
-						case KindNext:
-							sink.Next(false)
-							noop = true
-							sink.Complete()
-						case KindError:
-							sink.Error(n.Error)
-						case KindComplete:
-							Try1(sink, Next(true), func() { sink.Error(ErrOops) })
-							sink.Complete()
-						}
+					case KindNext:
+						sink.Next(false)
+						noop = true
+						sink.Complete()
+					case KindError:
+						sink.Error(n.Error)
+					case KindComplete:
+						Try1(sink, Next(true), func() { sink.Error(ErrOops) })
+						sink.Complete()
 					}
 				})
 			}
