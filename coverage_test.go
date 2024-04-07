@@ -61,11 +61,7 @@ func TestAdditionalCoverage(t *testing.T) {
 	})
 
 	t.Run("NilObservable", func(t *testing.T) {
-		_ = rx.NewObservable[any](nil).BlockingSubscribe(rx.NewBackgroundContext(), func(n rx.Notification[any]) {
-			if n.Kind != rx.KindError || n.Error != rx.ErrNil {
-				t.Fail()
-			}
-		})
+		NewTestSuite[int](t).Case(rx.NewObservable[int](nil), rx.ErrOops, "nil Observable")
 	})
 
 	t.Run("NewObserver", func(t *testing.T) {
