@@ -40,8 +40,8 @@ func UnicastBufferAll[T any]() Subject[T] {
 func UnicastBuffer[T any](n int) Subject[T] {
 	u := &unicast[T]{Cap: n}
 	return Subject[T]{
-		Observable: NewObservable(u.subscribe),
-		Observer:   WithRuntimeFinalizer(u.emit),
+		Observable: NewObservable(u.Subscribe),
+		Observer:   WithRuntimeFinalizer(u.Emit),
 	}
 }
 
@@ -127,7 +127,7 @@ func (u *unicast[T]) startEmitting(n Notification[T]) {
 	}
 }
 
-func (u *unicast[T]) emit(n Notification[T]) {
+func (u *unicast[T]) Emit(n Notification[T]) {
 	u.Mu.Lock()
 
 	if u.LastN.Kind != 0 {
@@ -169,7 +169,7 @@ func (u *unicast[T]) emit(n Notification[T]) {
 	u.startEmitting(n)
 }
 
-func (u *unicast[T]) subscribe(c Context, sink Observer[T]) {
+func (u *unicast[T]) Subscribe(c Context, sink Observer[T]) {
 	u.Mu.Lock()
 
 	if u.Observer != nil {
@@ -180,7 +180,7 @@ func (u *unicast[T]) subscribe(c Context, sink Observer[T]) {
 
 	done := c.Done()
 	if done != nil {
-		stop := c.AfterFunc(func() { u.emit(Error[T](c.Err())) })
+		stop := c.AfterFunc(func() { u.Emit(Error[T](c.Err())) })
 		sink = sink.DoOnTermination(func() { stop() })
 	}
 

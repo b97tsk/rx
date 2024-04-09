@@ -29,8 +29,8 @@ func Next[T any](v T) Notification[T] {
 }
 
 // Error creates a Notification that represents an error.
-func Error[T any](e error) Notification[T] {
-	return Notification[T]{Kind: KindError, Error: e}
+func Error[T any](err error) Notification[T] {
+	return Notification[T]{Kind: KindError, Error: err}
 }
 
 // Complete creates a Notification that represents a completion.

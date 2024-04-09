@@ -17,8 +17,8 @@ func (sink Observer[T]) Next(v T) {
 }
 
 // Error passes an error to sink.
-func (sink Observer[T]) Error(e error) {
-	sink(Error[T](e))
+func (sink Observer[T]) Error(err error) {
+	sink(Error[T](err))
 }
 
 // Complete passes a completion to sink.

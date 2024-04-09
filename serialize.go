@@ -7,6 +7,6 @@ package rx
 func Serialize[T any](c Context, sink Observer[T]) (Context, Observer[T]) {
 	c, cancel := c.WithCancel()
 	u := new(unicast[T])
-	u.subscribe(c, sink.DoOnTermination(cancel))
-	return c, u.emit
+	u.Subscribe(c, sink.DoOnTermination(cancel))
+	return c, u.Emit
 }

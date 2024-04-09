@@ -33,8 +33,8 @@ func MulticastBufferAll[T any]() Subject[T] {
 func MulticastBuffer[T any](n int) Subject[T] {
 	m := &multicast[T]{Cap: n}
 	return Subject[T]{
-		Observable: NewObservable(m.subscribe),
-		Observer:   WithRuntimeFinalizer(m.emit),
+		Observable: NewObservable(m.Subscribe),
+		Observer:   WithRuntimeFinalizer(m.Emit),
 	}
 }
 
@@ -51,7 +51,7 @@ type multicast[T any] struct {
 
 func pnew[T any](*T) *T { return new(T) }
 
-func (m *multicast[T]) emit(n Notification[T]) {
+func (m *multicast[T]) Emit(n Notification[T]) {
 	m.Mu.Lock()
 
 	if m.LastN.Kind != 0 {
@@ -112,7 +112,7 @@ func (m *multicast[T]) emit(n Notification[T]) {
 	}
 }
 
-func (m *multicast[T]) subscribe(c Context, sink Observer[T]) {
+func (m *multicast[T]) Subscribe(c Context, sink Observer[T]) {
 	m.Mu.Lock()
 
 	lastn := m.LastN
