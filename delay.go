@@ -23,9 +23,9 @@ type delayObservable[T any] struct {
 	Duration time.Duration
 }
 
-func (obs delayObservable[T]) Subscribe(c Context, sink Observer[T]) {
+func (obs delayObservable[T]) Subscribe(c Context, o Observer[T]) {
 	c, cancel := c.WithCancel()
-	sink = sink.DoOnTermination(cancel)
+	o = o.DoOnTermination(cancel)
 
 	var x struct {
 		Context  atomic.Value
@@ -66,7 +66,7 @@ func (obs delayObservable[T]) Subscribe(c Context, sink Observer[T]) {
 						x.Queue.Unlock()
 
 						if old != sentinel {
-							sink.Error(w.Err())
+							o.Error(w.Err())
 						}
 
 						return
@@ -83,7 +83,7 @@ func (obs delayObservable[T]) Subscribe(c Context, sink Observer[T]) {
 					x.Queue.Pop()
 
 					x.Queue.Unlock()
-					sink.Next(n.Value)
+					o.Next(n.Value)
 					x.Queue.Lock()
 
 					if x.Queue.Len() == 0 {
@@ -92,7 +92,7 @@ func (obs delayObservable[T]) Subscribe(c Context, sink Observer[T]) {
 						x.Queue.Unlock()
 
 						if swapped && x.Complete.Load() && x.Context.CompareAndSwap(c.Context, sentinel) {
-							sink.Complete()
+							o.Complete()
 						}
 
 						return
@@ -110,7 +110,7 @@ func (obs delayObservable[T]) Subscribe(c Context, sink Observer[T]) {
 				x.Queue.Unlock()
 
 				if old != sentinel {
-					sink.Error(n.Error)
+					o.Error(n.Error)
 				}
 
 			case KindComplete:
@@ -144,14 +144,14 @@ func (obs delayObservable[T]) Subscribe(c Context, sink Observer[T]) {
 			x.Queue.Init()
 
 			if old != sentinel {
-				sink(n)
+				o.Emit(n)
 			}
 
 		case KindComplete:
 			x.Complete.Store(true)
 
 			if x.Context.CompareAndSwap(c.Context, sentinel) {
-				sink(n)
+				o.Emit(n)
 			}
 		}
 	})

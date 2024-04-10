@@ -5,9 +5,9 @@ package rx
 func First[T any]() Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(c Context, sink Observer[T]) {
+			return func(c Context, o Observer[T]) {
 				c, cancel := c.WithCancel()
-				sink = sink.DoOnTermination(cancel)
+				o = o.DoOnTermination(cancel)
 
 				var noop bool
 
@@ -18,13 +18,13 @@ func First[T any]() Operator[T, T] {
 
 					switch n.Kind {
 					case KindNext:
-						sink(n)
+						o.Emit(n)
 						noop = true
-						sink.Complete()
+						o.Complete()
 					case KindError:
-						sink(n)
+						o.Emit(n)
 					case KindComplete:
-						sink.Error(ErrEmpty)
+						o.Error(ErrEmpty)
 					}
 				})
 			}
@@ -38,9 +38,9 @@ func First[T any]() Operator[T, T] {
 func FirstOrElse[T any](def T) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(c Context, sink Observer[T]) {
+			return func(c Context, o Observer[T]) {
 				c, cancel := c.WithCancel()
-				sink = sink.DoOnTermination(cancel)
+				o = o.DoOnTermination(cancel)
 
 				var noop bool
 
@@ -51,14 +51,14 @@ func FirstOrElse[T any](def T) Operator[T, T] {
 
 					switch n.Kind {
 					case KindNext:
-						sink(n)
+						o.Emit(n)
 						noop = true
-						sink.Complete()
+						o.Complete()
 					case KindError:
-						sink(n)
+						o.Emit(n)
 					case KindComplete:
-						Try1(sink, Next(def), func() { sink.Error(ErrOops) })
-						sink(n)
+						Try1(o, Next(def), func() { o.Error(ErrOops) })
+						o.Emit(n)
 					}
 				})
 			}

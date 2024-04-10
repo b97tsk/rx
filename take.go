@@ -8,9 +8,9 @@ func Take[T any](count int) Operator[T, T] {
 				return Empty[T]()
 			}
 
-			return func(c Context, sink Observer[T]) {
+			return func(c Context, o Observer[T]) {
 				c, cancel := c.WithCancel()
-				sink = sink.DoOnTermination(cancel)
+				o = o.DoOnTermination(cancel)
 
 				var noop bool
 
@@ -21,14 +21,14 @@ func Take[T any](count int) Operator[T, T] {
 						return
 					}
 
-					sink(n)
+					o.Emit(n)
 
 					if n.Kind == KindNext {
 						count--
 
 						if count == 0 {
 							noop = true
-							sink.Complete()
+							o.Complete()
 						}
 					}
 				})

@@ -25,16 +25,15 @@ func (m *multiObserver[T]) Clone() multiObserver[T] {
 func (m *multiObserver[T]) Release() {
 	if rc := m.RefCount; rc != nil {
 		m.RefCount = nil
-
 		rc.Add(^uint32(0))
 	}
 }
 
-func (m *multiObserver[T]) Add(observer *Observer[T]) {
+func (m *multiObserver[T]) Add(o *Observer[T]) {
 	observers := m.Observers
 	oldcap := cap(observers)
 
-	observers = append(observers, observer)
+	observers = append(observers, o)
 	m.Observers = observers
 
 	if cap(observers) != oldcap {
@@ -44,11 +43,11 @@ func (m *multiObserver[T]) Add(observer *Observer[T]) {
 	}
 }
 
-func (m *multiObserver[T]) Delete(observer *Observer[T]) {
+func (m *multiObserver[T]) Delete(o *Observer[T]) {
 	observers := m.Observers
 
-	for i, sink := range observers {
-		if sink == observer {
+	for i := range observers {
+		if o == observers[i] {
 			n := len(observers)
 
 			if rc := m.RefCount; rc != nil && rc.Load() != 0 {
@@ -81,9 +80,9 @@ func emitNotificationToObservers[T any](observers []*Observer[T], n Notification
 		}
 	}()
 
-	var sink *Observer[T]
+	var o *Observer[T]
 
-	for i, sink = range observers {
-		sink.Emit(n)
+	for i, o = range observers {
+		o.Emit(n)
 	}
 }

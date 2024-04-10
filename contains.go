@@ -5,9 +5,9 @@ package rx
 func Contains[T any](pred func(v T) bool) Operator[T, bool] {
 	return NewOperator(
 		func(source Observable[T]) Observable[bool] {
-			return func(c Context, sink Observer[bool]) {
+			return func(c Context, o Observer[bool]) {
 				c, cancel := c.WithCancel()
-				sink = sink.DoOnTermination(cancel)
+				o = o.DoOnTermination(cancel)
 
 				var noop bool
 
@@ -19,15 +19,15 @@ func Contains[T any](pred func(v T) bool) Operator[T, bool] {
 					switch n.Kind {
 					case KindNext:
 						if pred(n.Value) {
-							sink.Next(true)
+							o.Next(true)
 							noop = true
-							sink.Complete()
+							o.Complete()
 						}
 					case KindError:
-						sink.Error(n.Error)
+						o.Error(n.Error)
 					case KindComplete:
-						Try1(sink, Next(false), func() { sink.Error(ErrOops) })
-						sink.Complete()
+						Try1(o, Next(false), func() { o.Error(ErrOops) })
+						o.Complete()
 					}
 				})
 			}
@@ -40,9 +40,9 @@ func Contains[T any](pred func(v T) bool) Operator[T, bool] {
 func ContainsElement[T comparable](v T) Operator[T, bool] {
 	return NewOperator(
 		func(source Observable[T]) Observable[bool] {
-			return func(c Context, sink Observer[bool]) {
+			return func(c Context, o Observer[bool]) {
 				c, cancel := c.WithCancel()
-				sink = sink.DoOnTermination(cancel)
+				o = o.DoOnTermination(cancel)
 
 				var noop bool
 
@@ -54,15 +54,15 @@ func ContainsElement[T comparable](v T) Operator[T, bool] {
 					switch n.Kind {
 					case KindNext:
 						if n.Value == v {
-							sink.Next(true)
+							o.Next(true)
 							noop = true
-							sink.Complete()
+							o.Complete()
 						}
 					case KindError:
-						sink.Error(n.Error)
+						o.Error(n.Error)
 					case KindComplete:
-						Try1(sink, Next(false), func() { sink.Error(ErrOops) })
-						sink.Complete()
+						Try1(o, Next(false), func() { o.Error(ErrOops) })
+						o.Complete()
 					}
 				})
 			}

@@ -13,7 +13,7 @@ func Ticker(d time.Duration) Observable[time.Time] {
 		return Oops[time.Time]("Ticker: d <= 0")
 	}
 
-	return func(c Context, sink Observer[time.Time]) {
+	return func(c Context, o Observer[time.Time]) {
 		tk := time.NewTicker(d)
 
 		c.Go(func() {
@@ -24,10 +24,10 @@ func Ticker(d time.Duration) Observable[time.Time] {
 			for {
 				select {
 				case <-done:
-					sink.Error(c.Err())
+					o.Error(c.Err())
 					return
 				case t := <-tk.C:
-					Try1(sink, Next(t), func() { sink.Error(ErrOops) })
+					Try1(o, Next(t), func() { o.Error(ErrOops) })
 				}
 			}
 		})
@@ -37,18 +37,18 @@ func Ticker(d time.Duration) Observable[time.Time] {
 // Timer creates an Observable that emits a [time.Time] value
 // after a particular time span has passed, and then completes.
 func Timer(d time.Duration) Observable[time.Time] {
-	return func(c Context, sink Observer[time.Time]) {
+	return func(c Context, o Observer[time.Time]) {
 		tm := timerpool.Get(d)
 
 		c.Go(func() {
 			select {
 			case <-c.Done():
 				timerpool.Put(tm)
-				sink.Error(c.Err())
+				o.Error(c.Err())
 			case t := <-tm.C:
 				timerpool.PutExpired(tm)
-				Try1(sink, Next(t), func() { sink.Error(ErrOops) })
-				sink.Complete()
+				Try1(o, Next(t), func() { o.Error(ErrOops) })
+				o.Complete()
 			}
 		})
 	}

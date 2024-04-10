@@ -5,7 +5,7 @@ package rx
 func CompactComparable[T comparable]() Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(c Context, sink Observer[T]) {
+			return func(c Context, o Observer[T]) {
 				var last struct {
 					Value    T
 					HasValue bool
@@ -21,7 +21,7 @@ func CompactComparable[T comparable]() Operator[T, T] {
 						last.HasValue = true
 					}
 
-					sink(n)
+					o.Emit(n)
 				})
 			}
 		},
@@ -33,7 +33,7 @@ func CompactComparable[T comparable]() Operator[T, T] {
 func Compact[T any](eq func(v1, v2 T) bool) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(c Context, sink Observer[T]) {
+			return func(c Context, o Observer[T]) {
 				var last struct {
 					Value    T
 					HasValue bool
@@ -49,7 +49,7 @@ func Compact[T any](eq func(v1, v2 T) bool) Operator[T, T] {
 						last.HasValue = true
 					}
 
-					sink(n)
+					o.Emit(n)
 				})
 			}
 		},
@@ -61,7 +61,7 @@ func Compact[T any](eq func(v1, v2 T) bool) Operator[T, T] {
 func CompactComparableKey[T any, K comparable](mapping func(v T) K) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(c Context, sink Observer[T]) {
+			return func(c Context, o Observer[T]) {
 				var last struct {
 					Value    K
 					HasValue bool
@@ -79,7 +79,7 @@ func CompactComparableKey[T any, K comparable](mapping func(v T) K) Operator[T, 
 						last.HasValue = true
 					}
 
-					sink(n)
+					o.Emit(n)
 				})
 			}
 		},
@@ -91,7 +91,7 @@ func CompactComparableKey[T any, K comparable](mapping func(v T) K) Operator[T, 
 func CompactKey[T, K any](mapping func(v T) K, eq func(v1, v2 K) bool) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(c Context, sink Observer[T]) {
+			return func(c Context, o Observer[T]) {
 				var last struct {
 					Value    K
 					HasValue bool
@@ -109,7 +109,7 @@ func CompactKey[T, K any](mapping func(v T) K, eq func(v1, v2 K) bool) Operator[
 						last.HasValue = true
 					}
 
-					sink(n)
+					o.Emit(n)
 				})
 			}
 		},

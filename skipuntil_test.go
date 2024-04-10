@@ -83,8 +83,8 @@ func TestSkipUntil(t *testing.T) {
 		rx.Pipe1(
 			rx.Empty[string](),
 			rx.SkipUntil[string](
-				func(_ rx.Context, sink rx.Observer[int]) {
-					defer sink.Complete()
+				func(_ rx.Context, o rx.Observer[int]) {
+					defer o.Complete()
 					panic(ErrTest)
 				},
 			),

@@ -64,23 +64,23 @@ func TestSwitch(t *testing.T) {
 		"A", ErrComplete,
 	).Case(
 		rx.Pipe1(
-			func(_ rx.Context, sink rx.Observer[rx.Observable[string]]) {
-				sink.Next(rx.Pipe1(rx.Just("A", "B", "C", "D"), AddLatencyToValues[string](0, 2)))
+			func(_ rx.Context, o rx.Observer[rx.Observable[string]]) {
+				o.Next(rx.Pipe1(rx.Just("A", "B", "C", "D"), AddLatencyToValues[string](0, 2)))
 				time.Sleep(Step(5))
-				sink.Error(ErrTest)
+				o.Error(ErrTest)
 			},
 			rx.SwitchAll[rx.Observable[string]](),
 		),
 		"A", "B", "C", ErrTest,
 	).Case(
 		rx.Pipe1(
-			func(_ rx.Context, sink rx.Observer[rx.Observable[string]]) {
-				sink.Next(rx.Pipe1(rx.Just("A", "B", "C", "D"), AddLatencyToValues[string](0, 2)))
+			func(_ rx.Context, o rx.Observer[rx.Observable[string]]) {
+				o.Next(rx.Pipe1(rx.Just("A", "B", "C", "D"), AddLatencyToValues[string](0, 2)))
 				time.Sleep(Step(5))
-				sink.Next(rx.Throw[string](ErrTest))
+				o.Next(rx.Throw[string](ErrTest))
 				time.Sleep(Step(5))
-				sink.Next(rx.Pipe1(rx.Just("E", "F", "G", "H"), AddLatencyToValues[string](0, 3)))
-				sink.Complete()
+				o.Next(rx.Pipe1(rx.Just("E", "F", "G", "H"), AddLatencyToValues[string](0, 3)))
+				o.Complete()
 			},
 			rx.SwitchAll[rx.Observable[string]](),
 		),

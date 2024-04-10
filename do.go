@@ -5,15 +5,15 @@ package rx
 func Do[T any](tap Observer[T]) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(c Context, sink Observer[T]) {
+			return func(c Context, o Observer[T]) {
 				source.Subscribe(c, func(n Notification[T]) {
 					switch n.Kind {
 					case KindNext:
 						tap(n)
-						sink(n)
+						o.Emit(n)
 					case KindError, KindComplete:
-						Try1(tap, n, func() { sink.Error(ErrOops) })
-						sink(n)
+						Try1(tap, n, func() { o.Error(ErrOops) })
+						o.Emit(n)
 					}
 				})
 			}
@@ -26,12 +26,12 @@ func Do[T any](tap Observer[T]) Operator[T, T] {
 func DoOnNext[T any](f func(v T)) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(c Context, sink Observer[T]) {
+			return func(c Context, o Observer[T]) {
 				source.Subscribe(c, func(n Notification[T]) {
 					if n.Kind == KindNext {
 						f(n.Value)
 					}
-					sink(n)
+					o.Emit(n)
 				})
 			}
 		},
@@ -43,12 +43,12 @@ func DoOnNext[T any](f func(v T)) Operator[T, T] {
 func DoOnError[T any](f func(err error)) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(c Context, sink Observer[T]) {
+			return func(c Context, o Observer[T]) {
 				source.Subscribe(c, func(n Notification[T]) {
 					if n.Kind == KindError {
-						Try1(f, n.Error, func() { sink.Error(ErrOops) })
+						Try1(f, n.Error, func() { o.Error(ErrOops) })
 					}
-					sink(n)
+					o.Emit(n)
 				})
 			}
 		},
@@ -60,12 +60,12 @@ func DoOnError[T any](f func(err error)) Operator[T, T] {
 func DoOnComplete[T any](f func()) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(c Context, sink Observer[T]) {
+			return func(c Context, o Observer[T]) {
 				source.Subscribe(c, func(n Notification[T]) {
 					if n.Kind == KindComplete {
-						Try0(f, func() { sink.Error(ErrOops) })
+						Try0(f, func() { o.Error(ErrOops) })
 					}
-					sink(n)
+					o.Emit(n)
 				})
 			}
 		},
@@ -77,8 +77,8 @@ func DoOnComplete[T any](f func()) Operator[T, T] {
 func DoOnTermination[T any](f func()) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(c Context, sink Observer[T]) {
-				source.Subscribe(c, sink.DoOnTermination(f))
+			return func(c Context, o Observer[T]) {
+				source.Subscribe(c, o.DoOnTermination(f))
 			}
 		},
 	)

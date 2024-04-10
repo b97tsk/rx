@@ -178,14 +178,14 @@ func (obs Observable[T]) BlockingSingle(parent Context) (v T, err error) {
 //
 // The cancellation of parent will cause BlockingSubscribe to immediately
 // return parent.Err().
-func (obs Observable[T]) BlockingSubscribe(parent Context, sink Observer[T]) error {
+func (obs Observable[T]) BlockingSubscribe(parent Context, o Observer[T]) error {
 	var res Notification[T]
 
 	c, cancel := parent.WithCancel()
 
 	obs.Subscribe(c, func(n Notification[T]) {
 		res = n
-		sink(n)
+		o.Emit(n)
 		switch n.Kind {
 		case KindError, KindComplete:
 			cancel()

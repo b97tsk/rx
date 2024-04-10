@@ -32,7 +32,7 @@ type retryObservable[T any] struct {
 	Count  int
 }
 
-func (obs retryObservable[T]) Subscribe(c Context, sink Observer[T]) {
+func (obs retryObservable[T]) Subscribe(c Context, o Observer[T]) {
 	var observer Observer[T]
 
 	done := c.Done()
@@ -41,7 +41,7 @@ func (obs retryObservable[T]) Subscribe(c Context, sink Observer[T]) {
 		select {
 		default:
 		case <-done:
-			sink.Error(c.Err())
+			o.Error(c.Err())
 			return
 		}
 
@@ -52,7 +52,7 @@ func (obs retryObservable[T]) Subscribe(c Context, sink Observer[T]) {
 
 	observer = func(n Notification[T]) {
 		if n.Kind != KindError || count == 0 {
-			sink(n)
+			o.Emit(n)
 			return
 		}
 

@@ -27,7 +27,7 @@ type raceWithObservable[T any] struct {
 	Others []Observable[T]
 }
 
-func (obs raceWithObservable[T]) Subscribe(c Context, sink Observer[T]) {
+func (obs raceWithObservable[T]) Subscribe(c Context, o Observer[T]) {
 	subs := make([]Pair[Context, CancelFunc], obs.numObservables())
 
 	for i := range subs {
@@ -42,7 +42,7 @@ func (obs raceWithObservable[T]) Subscribe(c Context, sink Observer[T]) {
 		obs.Subscribe(subs[i].Left(), func(n Notification[T]) {
 			switch {
 			case won:
-				sink(n)
+				o.Emit(n)
 				return
 			case lost:
 				return
@@ -57,7 +57,7 @@ func (obs raceWithObservable[T]) Subscribe(c Context, sink Observer[T]) {
 
 				won = true
 
-				sink(n)
+				o.Emit(n)
 
 				return
 			}

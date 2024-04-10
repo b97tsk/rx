@@ -33,8 +33,8 @@ type mergeWithObservable[T any] struct {
 	Others []Observable[T]
 }
 
-func (obs mergeWithObservable[T]) Subscribe(c Context, sink Observer[T]) {
-	c, sink = Serialize(c, sink)
+func (obs mergeWithObservable[T]) Subscribe(c Context, o Observer[T]) {
+	c, o = Serialize(c, o)
 
 	var num atomic.Uint32
 
@@ -42,7 +42,7 @@ func (obs mergeWithObservable[T]) Subscribe(c Context, sink Observer[T]) {
 
 	worker := func(n Notification[T]) {
 		if n.Kind != KindComplete || num.Add(^uint32(0)) == 0 {
-			sink(n)
+			o.Emit(n)
 		}
 	}
 
@@ -54,7 +54,7 @@ func (obs mergeWithObservable[T]) Subscribe(c Context, sink Observer[T]) {
 		select {
 		default:
 		case <-done:
-			sink.Error(c.Err())
+			o.Error(c.Err())
 			return
 		}
 	}
@@ -65,7 +65,7 @@ func (obs mergeWithObservable[T]) Subscribe(c Context, sink Observer[T]) {
 		select {
 		default:
 		case <-done:
-			sink.Error(c.Err())
+			o.Error(c.Err())
 			return
 		}
 	}
@@ -150,13 +150,13 @@ type mergeMapObservable[T, R any] struct {
 	mergeMapConfig[T, R]
 }
 
-func (obs mergeMapObservable[T, R]) Subscribe(c Context, sink Observer[R]) {
+func (obs mergeMapObservable[T, R]) Subscribe(c Context, o Observer[R]) {
 	if obs.UseBuffering {
-		obs.SubscribeWithBuffering(c, sink)
+		obs.SubscribeWithBuffering(c, o)
 		return
 	}
 
-	c, sink = Serialize(c, sink)
+	c, o = Serialize(c, o)
 
 	var x struct {
 		sync.Mutex
@@ -171,7 +171,7 @@ func (obs mergeMapObservable[T, R]) Subscribe(c Context, sink Observer[R]) {
 	worker := func(n Notification[R]) {
 		switch n.Kind {
 		case KindNext:
-			sink(n)
+			o.Emit(n)
 
 		case KindError:
 			x.Lock()
@@ -180,7 +180,7 @@ func (obs mergeMapObservable[T, R]) Subscribe(c Context, sink Observer[R]) {
 			x.Unlock()
 			x.Signal()
 
-			sink(n)
+			o.Emit(n)
 
 		case KindComplete:
 			x.Lock()
@@ -189,7 +189,7 @@ func (obs mergeMapObservable[T, R]) Subscribe(c Context, sink Observer[R]) {
 
 			if x.Workers == 0 && x.Complete && !x.HasError {
 				x.Unlock()
-				sink(n)
+				o.Emit(n)
 				return
 			}
 
@@ -223,7 +223,7 @@ func (obs mergeMapObservable[T, R]) Subscribe(c Context, sink Observer[R]) {
 				defer x.Unlock()
 				noop = true
 				x.HasError = true
-				sink.Error(ErrOops)
+				o.Error(ErrOops)
 			})
 
 			x.Workers++
@@ -232,7 +232,7 @@ func (obs mergeMapObservable[T, R]) Subscribe(c Context, sink Observer[R]) {
 			obs1.Subscribe(c, worker)
 
 		case KindError:
-			sink.Error(n.Error)
+			o.Error(n.Error)
 
 		case KindComplete:
 			x.Lock()
@@ -241,7 +241,7 @@ func (obs mergeMapObservable[T, R]) Subscribe(c Context, sink Observer[R]) {
 
 			if x.Workers == 0 && !x.HasError {
 				x.Unlock()
-				sink.Complete()
+				o.Complete()
 				return
 			}
 
@@ -250,8 +250,8 @@ func (obs mergeMapObservable[T, R]) Subscribe(c Context, sink Observer[R]) {
 	})
 }
 
-func (obs mergeMapObservable[T, R]) SubscribeWithBuffering(c Context, sink Observer[R]) {
-	c, sink = Serialize(c, sink)
+func (obs mergeMapObservable[T, R]) SubscribeWithBuffering(c Context, o Observer[R]) {
+	c, o = Serialize(c, o)
 
 	var x struct {
 		sync.Mutex
@@ -275,7 +275,7 @@ func (obs mergeMapObservable[T, R]) SubscribeWithBuffering(c Context, sink Obser
 		worker := func(n Notification[R]) {
 			switch n.Kind {
 			case KindNext:
-				sink(n)
+				o.Emit(n)
 
 			case KindError:
 				x.Lock()
@@ -284,7 +284,7 @@ func (obs mergeMapObservable[T, R]) SubscribeWithBuffering(c Context, sink Obser
 				x.HasError = true
 				x.Unlock()
 
-				sink(n)
+				o.Emit(n)
 
 			case KindComplete:
 				x.Lock()
@@ -298,7 +298,7 @@ func (obs mergeMapObservable[T, R]) SubscribeWithBuffering(c Context, sink Obser
 
 				if x.Workers == 0 && x.Complete && !x.HasError {
 					x.Unlock()
-					sink(n)
+					o.Emit(n)
 					return
 				}
 
@@ -313,7 +313,7 @@ func (obs mergeMapObservable[T, R]) SubscribeWithBuffering(c Context, sink Obser
 				defer x.Unlock()
 				x.Queue.Init()
 				x.HasError = true
-				sink.Error(ErrOops)
+				o.Error(ErrOops)
 			})
 
 			x.Workers++
@@ -352,7 +352,7 @@ func (obs mergeMapObservable[T, R]) SubscribeWithBuffering(c Context, sink Obser
 			x.Unlock()
 
 		case KindError:
-			sink.Error(n.Error)
+			o.Error(n.Error)
 
 		case KindComplete:
 			x.Lock()
@@ -361,7 +361,7 @@ func (obs mergeMapObservable[T, R]) SubscribeWithBuffering(c Context, sink Obser
 
 			if x.Workers == 0 && !x.HasError {
 				x.Unlock()
-				sink.Complete()
+				o.Complete()
 				return
 			}
 

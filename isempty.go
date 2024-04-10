@@ -4,9 +4,9 @@ package rx
 func IsEmpty[T any]() Operator[T, bool] {
 	return NewOperator(
 		func(source Observable[T]) Observable[bool] {
-			return func(c Context, sink Observer[bool]) {
+			return func(c Context, o Observer[bool]) {
 				c, cancel := c.WithCancel()
-				sink = sink.DoOnTermination(cancel)
+				o = o.DoOnTermination(cancel)
 
 				var noop bool
 
@@ -17,14 +17,14 @@ func IsEmpty[T any]() Operator[T, bool] {
 
 					switch n.Kind {
 					case KindNext:
-						sink.Next(false)
+						o.Next(false)
 						noop = true
-						sink.Complete()
+						o.Complete()
 					case KindError:
-						sink.Error(n.Error)
+						o.Error(n.Error)
 					case KindComplete:
-						Try1(sink, Next(true), func() { sink.Error(ErrOops) })
-						sink.Complete()
+						Try1(o, Next(true), func() { o.Error(ErrOops) })
+						o.Complete()
 					}
 				})
 			}

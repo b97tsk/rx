@@ -46,13 +46,13 @@ func TestDebounce(t *testing.T) {
 		"C", ErrComplete,
 	).Case(
 		rx.Pipe1(
-			func(_ rx.Context, sink rx.Observer[string]) {
-				sink.Next("A")
+			func(_ rx.Context, o rx.Observer[string]) {
+				o.Next("A")
 				time.Sleep(Step(1))
-				sink.Next("B")
+				o.Next("B")
 				time.Sleep(Step(1))
-				sink.Next("C")
-				sink.Complete()
+				o.Next("C")
+				o.Complete()
 			},
 			rx.Debounce(
 				func(string) rx.Observable[int] {

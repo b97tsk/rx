@@ -6,9 +6,9 @@ package rx
 func TakeWhile[T any](pred func(v T) bool) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(c Context, sink Observer[T]) {
+			return func(c Context, o Observer[T]) {
 				c, cancel := c.WithCancel()
-				sink = sink.DoOnTermination(cancel)
+				o = o.DoOnTermination(cancel)
 
 				var noop bool
 
@@ -20,15 +20,15 @@ func TakeWhile[T any](pred func(v T) bool) Operator[T, T] {
 					switch n.Kind {
 					case KindNext:
 						if pred(n.Value) {
-							sink(n)
+							o.Emit(n)
 							return
 						}
 
 						noop = true
-						sink.Complete()
+						o.Complete()
 
 					case KindError, KindComplete:
-						sink(n)
+						o.Emit(n)
 					}
 				})
 			}

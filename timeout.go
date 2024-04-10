@@ -50,7 +50,7 @@ type timeoutObservable[T any] struct {
 	timeoutConfig[T]
 }
 
-func (obs timeoutObservable[T]) Subscribe(parent Context, sink Observer[T]) {
+func (obs timeoutObservable[T]) Subscribe(parent Context, o Observer[T]) {
 	c, cancel := parent.WithCancel()
 
 	q := make(chan Notification[T])
@@ -64,16 +64,16 @@ func (obs timeoutObservable[T]) Subscribe(parent Context, sink Observer[T]) {
 			case n := <-q:
 				switch n.Kind {
 				case KindNext:
-					Try1(sink, n, func() {
+					Try1(o, n, func() {
 						cancel()
 						close(noop)
-						sink.Error(ErrOops)
+						o.Error(ErrOops)
 					})
 				case KindError, KindComplete:
 					timerpool.Put(tm)
 					cancel()
 					close(noop)
-					sink(n)
+					o.Emit(n)
 					return
 				}
 
@@ -86,11 +86,11 @@ func (obs timeoutObservable[T]) Subscribe(parent Context, sink Observer[T]) {
 				close(noop)
 
 				if obs.With != nil {
-					obs.With.Subscribe(parent, sink)
+					obs.With.Subscribe(parent, o)
 					return
 				}
 
-				sink.Error(ErrTimeout)
+				o.Error(ErrTimeout)
 
 				return
 			}

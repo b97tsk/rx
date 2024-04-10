@@ -7,25 +7,25 @@ package rx
 func Catch[T any](selector func(err error) Observable[T]) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(c Context, sink Observer[T]) {
+			return func(c Context, o Observer[T]) {
 				source.Subscribe(c, func(n Notification[T]) {
 					switch n.Kind {
 					case KindNext:
-						sink(n)
+						o.Emit(n)
 
 					case KindError:
 						select {
 						default:
 						case <-c.Done():
-							sink.Error(c.Err())
+							o.Error(c.Err())
 							return
 						}
 
-						obs := Try11(selector, n.Error, func() { sink.Error(ErrOops) })
-						obs.Subscribe(c, sink)
+						obs := Try11(selector, n.Error, func() { o.Error(ErrOops) })
+						obs.Subscribe(c, o)
 
 					case KindComplete:
-						sink(n)
+						o.Emit(n)
 					}
 				})
 			}
@@ -40,24 +40,24 @@ func Catch[T any](selector func(err error) Observable[T]) Operator[T, T] {
 func OnErrorResumeWith[T any](obs Observable[T]) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(c Context, sink Observer[T]) {
+			return func(c Context, o Observer[T]) {
 				source.Subscribe(c, func(n Notification[T]) {
 					switch n.Kind {
 					case KindNext:
-						sink(n)
+						o.Emit(n)
 
 					case KindError:
 						select {
 						default:
 						case <-c.Done():
-							sink.Error(c.Err())
+							o.Error(c.Err())
 							return
 						}
 
-						obs.Subscribe(c, sink)
+						obs.Subscribe(c, o)
 
 					case KindComplete:
-						sink(n)
+						o.Emit(n)
 					}
 				})
 			}
@@ -72,24 +72,24 @@ func OnErrorResumeWith[T any](obs Observable[T]) Operator[T, T] {
 func OnErrorComplete[T any]() Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(c Context, sink Observer[T]) {
+			return func(c Context, o Observer[T]) {
 				source.Subscribe(c, func(n Notification[T]) {
 					switch n.Kind {
 					case KindNext:
-						sink(n)
+						o.Emit(n)
 
 					case KindError:
 						select {
 						default:
 						case <-c.Done():
-							sink.Error(c.Err())
+							o.Error(c.Err())
 							return
 						}
 
-						sink.Complete()
+						o.Complete()
 
 					case KindComplete:
-						sink(n)
+						o.Emit(n)
 					}
 				})
 			}

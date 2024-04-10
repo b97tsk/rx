@@ -5,9 +5,9 @@ package rx
 func Dematerialize[_ Notification[T], T any]() Operator[Notification[T], T] {
 	return NewOperator(
 		func(source Observable[Notification[T]]) Observable[T] {
-			return func(c Context, sink Observer[T]) {
+			return func(c Context, o Observer[T]) {
 				c, cancel := c.WithCancel()
-				sink = sink.DoOnTermination(cancel)
+				o = o.DoOnTermination(cancel)
 
 				var noop bool
 
@@ -25,11 +25,11 @@ func Dematerialize[_ Notification[T], T any]() Operator[Notification[T], T] {
 							noop = true
 						}
 
-						sink(n)
+						o.Emit(n)
 					case KindError:
-						sink.Error(n.Error)
+						o.Error(n.Error)
 					case KindComplete:
-						sink.Complete()
+						o.Complete()
 					}
 				})
 			}

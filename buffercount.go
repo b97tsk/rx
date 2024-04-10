@@ -50,7 +50,7 @@ type bufferCountObservable[T any] struct {
 	bufferCountConfig
 }
 
-func (obs bufferCountObservable[T]) Subscribe(c Context, sink Observer[[]T]) {
+func (obs bufferCountObservable[T]) Subscribe(c Context, o Observer[[]T]) {
 	s := make([]T, 0, obs.BufferSize)
 	skip := 0
 
@@ -68,7 +68,7 @@ func (obs bufferCountObservable[T]) Subscribe(c Context, sink Observer[[]T]) {
 				return
 			}
 
-			sink.Next(s)
+			o.Next(s)
 
 			if obs.StartBufferEvery < obs.BufferSize {
 				s = append(s[:0], s[obs.StartBufferEvery:]...)
@@ -78,12 +78,12 @@ func (obs bufferCountObservable[T]) Subscribe(c Context, sink Observer[[]T]) {
 			}
 
 		case KindError:
-			sink.Error(n.Error)
+			o.Error(n.Error)
 
 		case KindComplete:
 			if len(s) != 0 {
 				for {
-					Try1(sink, Next(s), func() { sink.Error(ErrOops) })
+					Try1(o, Next(s), func() { o.Error(ErrOops) })
 
 					if len(s) <= obs.StartBufferEvery {
 						break
@@ -93,7 +93,7 @@ func (obs bufferCountObservable[T]) Subscribe(c Context, sink Observer[[]T]) {
 				}
 			}
 
-			sink.Complete()
+			o.Complete()
 		}
 	})
 }

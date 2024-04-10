@@ -8,24 +8,24 @@ func SkipLast[T any](count int) Operator[T, T] {
 
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(c Context, sink Observer[T]) {
-				b := make([]T, 0, count)
+			return func(c Context, o Observer[T]) {
+				buf := make([]T, 0, count)
 				i := 0
 
 				source.Subscribe(c, func(n Notification[T]) {
 					switch n.Kind {
 					case KindNext:
-						if len(b) < cap(b) {
-							b = b[:len(b)+1]
+						if len(buf) < cap(buf) {
+							buf = buf[:len(buf)+1]
 						} else {
-							sink.Next(b[i])
+							o.Next(buf[i])
 						}
 
-						b[i] = n.Value
-						i = (i + 1) % cap(b)
+						buf[i] = n.Value
+						i = (i + 1) % cap(buf)
 
 					case KindError, KindComplete:
-						sink(n)
+						o.Emit(n)
 					}
 				})
 			}

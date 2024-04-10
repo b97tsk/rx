@@ -100,15 +100,15 @@ func TestMergeMap(t *testing.T) {
 		ErrTest,
 	).Case(
 		rx.Pipe1(
-			func(_ rx.Context, sink rx.Observer[rx.Observable[string]]) {
-				sink.Next(rx.Just("A", "B"))
+			func(_ rx.Context, o rx.Observer[rx.Observable[string]]) {
+				o.Next(rx.Just("A", "B"))
 				time.Sleep(Step(1))
-				sink.Next(rx.Throw[string](ErrTest))
+				o.Next(rx.Throw[string](ErrTest))
 				time.Sleep(Step(1))
-				sink.Next(rx.Just("C", "D"))
+				o.Next(rx.Just("C", "D"))
 				time.Sleep(Step(1))
-				sink.Next(rx.Just("E", "F"))
-				sink.Complete()
+				o.Next(rx.Just("E", "F"))
+				o.Complete()
 			},
 			rx.MergeAll[rx.Observable[string]](),
 		),
@@ -183,15 +183,15 @@ func TestMergeMapWithBuffering(t *testing.T) {
 		ErrTest,
 	).Case(
 		rx.Pipe1(
-			func(_ rx.Context, sink rx.Observer[rx.Observable[string]]) {
-				sink.Next(rx.Just("A", "B"))
+			func(_ rx.Context, o rx.Observer[rx.Observable[string]]) {
+				o.Next(rx.Just("A", "B"))
 				time.Sleep(Step(1))
-				sink.Next(rx.Throw[string](ErrTest))
+				o.Next(rx.Throw[string](ErrTest))
 				time.Sleep(Step(1))
-				sink.Next(rx.Just("C", "D"))
+				o.Next(rx.Just("C", "D"))
 				time.Sleep(Step(1))
-				sink.Next(rx.Just("E", "F"))
-				sink.Complete()
+				o.Next(rx.Just("E", "F"))
+				o.Complete()
 			},
 			rx.MergeAll[rx.Observable[string]]().WithBuffering(),
 		),

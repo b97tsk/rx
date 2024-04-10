@@ -34,9 +34,9 @@ type switchMapObservable[T, R any] struct {
 	Mapping func(T) Observable[R]
 }
 
-func (obs switchMapObservable[T, R]) Subscribe(c Context, sink Observer[R]) {
+func (obs switchMapObservable[T, R]) Subscribe(c Context, o Observer[R]) {
 	c, cancel := c.WithCancel()
-	sink = sink.DoOnTermination(cancel)
+	o = o.DoOnTermination(cancel)
 
 	var x struct {
 		Context  atomic.Value
@@ -60,7 +60,7 @@ func (obs switchMapObservable[T, R]) Subscribe(c Context, sink Observer[R]) {
 		obs1.Subscribe(w, func(n Notification[R]) {
 			switch n.Kind {
 			case KindNext:
-				sink(n)
+				o.Emit(n)
 
 			case KindError, KindComplete:
 				defer x.Worker.Done()
@@ -70,11 +70,11 @@ func (obs switchMapObservable[T, R]) Subscribe(c Context, sink Observer[R]) {
 				switch n.Kind {
 				case KindError:
 					if x.Context.CompareAndSwap(w.Context, sentinel) {
-						sink(n)
+						o.Emit(n)
 					}
 				case KindComplete:
 					if x.Context.CompareAndSwap(w.Context, c.Context) && x.Complete.Load() && x.Context.CompareAndSwap(c.Context, sentinel) {
-						sink(n)
+						o.Emit(n)
 					}
 				}
 			}
@@ -103,14 +103,14 @@ func (obs switchMapObservable[T, R]) Subscribe(c Context, sink Observer[R]) {
 			x.Worker.Wait()
 
 			if old != sentinel {
-				sink.Error(n.Error)
+				o.Error(n.Error)
 			}
 
 		case KindComplete:
 			x.Complete.Store(true)
 
 			if x.Context.CompareAndSwap(c.Context, sentinel) {
-				sink.Complete()
+				o.Complete()
 			}
 		}
 	})

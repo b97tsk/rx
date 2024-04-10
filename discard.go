@@ -4,11 +4,11 @@ package rx
 func Discard[T any]() Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(c Context, sink Observer[T]) {
+			return func(c Context, o Observer[T]) {
 				source.Subscribe(c, func(n Notification[T]) {
 					switch n.Kind {
 					case KindError, KindComplete:
-						sink(n)
+						o.Emit(n)
 					}
 				})
 			}
@@ -23,14 +23,14 @@ func Discard[T any]() Operator[T, T] {
 func IgnoreElements[T, R any]() Operator[T, R] {
 	return NewOperator(
 		func(source Observable[T]) Observable[R] {
-			return func(c Context, sink Observer[R]) {
+			return func(c Context, o Observer[R]) {
 				source.Subscribe(c, func(n Notification[T]) {
 					switch n.Kind {
 					case KindNext:
 					case KindError:
-						sink.Error(n.Error)
+						o.Error(n.Error)
 					case KindComplete:
-						sink.Complete()
+						o.Complete()
 					}
 				})
 			}

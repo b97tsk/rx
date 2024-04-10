@@ -5,7 +5,7 @@ package rx
 func Pairwise[T any]() Operator[T, Pair[T, T]] {
 	return NewOperator(
 		func(source Observable[T]) Observable[Pair[T, T]] {
-			return func(c Context, sink Observer[Pair[T, T]]) {
+			return func(c Context, o Observer[Pair[T, T]]) {
 				var p struct {
 					Value    T
 					HasValue bool
@@ -15,17 +15,17 @@ func Pairwise[T any]() Operator[T, Pair[T, T]] {
 					switch n.Kind {
 					case KindNext:
 						if p.HasValue {
-							sink.Next(NewPair(p.Value, n.Value))
+							o.Next(NewPair(p.Value, n.Value))
 						}
 
 						p.Value = n.Value
 						p.HasValue = true
 
 					case KindError:
-						sink.Error(n.Error)
+						o.Error(n.Error)
 
 					case KindComplete:
-						sink.Complete()
+						o.Complete()
 					}
 				})
 			}

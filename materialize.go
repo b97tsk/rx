@@ -5,14 +5,14 @@ package rx
 func Materialize[T any]() Operator[T, Notification[T]] {
 	return NewOperator(
 		func(source Observable[T]) Observable[Notification[T]] {
-			return func(c Context, sink Observer[Notification[T]]) {
+			return func(c Context, o Observer[Notification[T]]) {
 				source.Subscribe(c, func(n Notification[T]) {
 					switch n.Kind {
 					case KindNext:
-						sink.Next(n)
+						o.Next(n)
 					case KindError, KindComplete:
-						Try1(sink, Next(n), func() { sink.Error(ErrOops) })
-						sink.Complete()
+						Try1(o, Next(n), func() { o.Error(ErrOops) })
+						o.Complete()
 					}
 				})
 			}

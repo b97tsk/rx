@@ -71,7 +71,7 @@ func (u *unicast[T]) startEmitting(n Notification[T]) {
 
 	oops := func() { throw(ErrOops) }
 
-	sink := u.Observer
+	o := u.Observer
 
 	switch n.Kind {
 	case KindNext:
@@ -82,10 +82,10 @@ func (u *unicast[T]) startEmitting(n Notification[T]) {
 			return
 		}
 
-		Try1(sink, n, oops)
+		Try1(o, n, oops)
 
 	case KindError, KindComplete:
-		sink(n)
+		o.Emit(n)
 		return
 	}
 
@@ -100,21 +100,21 @@ func (u *unicast[T]) startEmitting(n Notification[T]) {
 
 			switch lastn.Kind {
 			case KindError:
-				sink.Error(lastn.Error)
+				o.Error(lastn.Error)
 			case KindComplete:
-				sink.Complete()
+				o.Complete()
 			}
 
 			return
 		}
 
-		var b queue.Queue[T]
+		var buf queue.Queue[T]
 
-		u.Buf, b = b, u.Buf
+		u.Buf, buf = buf, u.Buf
 
 		u.Mu.Unlock()
 
-		for i, j := 0, b.Len(); i < j; i++ {
+		for i, j := 0, buf.Len(); i < j; i++ {
 			select {
 			default:
 			case <-u.DoneChan:
@@ -122,7 +122,7 @@ func (u *unicast[T]) startEmitting(n Notification[T]) {
 				return
 			}
 
-			Try1(sink, Next(b.At(i)), oops)
+			Try1(o, Next(buf.At(i)), oops)
 		}
 	}
 }
@@ -169,24 +169,24 @@ func (u *unicast[T]) Emit(n Notification[T]) {
 	u.startEmitting(n)
 }
 
-func (u *unicast[T]) Subscribe(c Context, sink Observer[T]) {
+func (u *unicast[T]) Subscribe(c Context, o Observer[T]) {
 	u.Mu.Lock()
 
 	if u.Observer != nil {
 		defer u.Mu.Unlock()
-		sink.Error(ErrUnicast)
+		o.Error(ErrUnicast)
 		return
 	}
 
 	done := c.Done()
 	if done != nil {
 		stop := c.AfterFunc(func() { u.Emit(Error[T](c.Err())) })
-		sink = sink.DoOnTermination(func() { stop() })
+		o = o.DoOnTermination(func() { stop() })
 	}
 
 	u.Context = c.Context
 	u.DoneChan = done
-	u.Observer = sink
+	u.Observer = o
 
 	if u.LastN.Kind == 0 && u.Buf.Len() == 0 {
 		u.Mu.Unlock()

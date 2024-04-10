@@ -17,9 +17,9 @@ type skipUntilObservable[T, U any] struct {
 	Notifier Observable[U]
 }
 
-func (obs skipUntilObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
+func (obs skipUntilObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 	c, cancel := c.WithCancel()
-	sink = sink.DoOnTermination(cancel)
+	o = o.DoOnTermination(cancel)
 
 	var x struct {
 		Context atomic.Value
@@ -50,7 +50,7 @@ func (obs skipUntilObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
 
 				case KindError:
 					if x.Context.CompareAndSwap(w.Context, sentinel) {
-						sink.Error(n.Error)
+						o.Error(n.Error)
 					}
 
 				case KindComplete:
@@ -59,7 +59,7 @@ func (obs skipUntilObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
 			},
 			func() {
 				if x.Context.Swap(sentinel) != sentinel {
-					sink.Error(ErrOops)
+					o.Error(ErrOops)
 				}
 			},
 		)
@@ -71,7 +71,7 @@ func (obs skipUntilObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
 		cancel()
 
 		if old != sentinel {
-			sink(n)
+			o.Emit(n)
 		}
 	}
 
@@ -83,7 +83,7 @@ func (obs skipUntilObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
 	}
 
 	if x.Context.Load() == c.Context {
-		obs.Source.Subscribe(c, sink)
+		obs.Source.Subscribe(c, o)
 		return
 	}
 
@@ -91,7 +91,7 @@ func (obs skipUntilObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
 		switch n.Kind {
 		case KindNext:
 			if x.Context.Load() == c.Context {
-				sink(n)
+				o.Emit(n)
 			}
 		case KindError, KindComplete:
 			terminate(n)

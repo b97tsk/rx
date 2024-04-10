@@ -65,8 +65,8 @@ func TestAdditionalCoverage(t *testing.T) {
 	})
 
 	t.Run("NewObserver", func(t *testing.T) {
-		observer := rx.NewObserver(rx.Noop[int])
-		observer.Emit(rx.Next(0))
+		o := rx.NewObserver(rx.Noop[int])
+		o.Emit(rx.Next(0))
 	})
 
 	t.Run("TryFuncs", func(t *testing.T) {

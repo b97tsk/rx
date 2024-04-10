@@ -38,9 +38,9 @@ func TestConcat(t *testing.T) {
 
 	NewTestSuite[int](t).WithContext(ctx).Case(
 		rx.Concat(
-			func(_ rx.Context, sink rx.Observer[int]) {
+			func(_ rx.Context, o rx.Observer[int]) {
 				time.Sleep(Step(2))
-				sink.Complete()
+				o.Complete()
 			},
 			rx.Oops[int]("should not happen"),
 		),
@@ -86,9 +86,9 @@ func TestConcatMap(t *testing.T) {
 	).Case(
 		rx.Pipe1(
 			rx.NewObservable(
-				func(_ rx.Context, sink rx.Observer[rx.Observable[string]]) {
-					sink.Next(rx.Throw[string](ErrTest))
-					sink.Complete()
+				func(_ rx.Context, o rx.Observer[rx.Observable[string]]) {
+					o.Next(rx.Throw[string](ErrTest))
+					o.Complete()
 				},
 			),
 			rx.ConcatAll[rx.Observable[string]](),
@@ -152,9 +152,9 @@ func TestConcatMapWithBuffering(t *testing.T) {
 	NewTestSuite[string](t).WithContext(ctx).Case(
 		rx.Pipe1(
 			rx.Just[rx.Observable[string]](
-				func(_ rx.Context, sink rx.Observer[string]) {
+				func(_ rx.Context, o rx.Observer[string]) {
 					time.Sleep(Step(2))
-					sink.Complete()
+					o.Complete()
 				},
 				rx.Oops[string]("should not happen"),
 			),

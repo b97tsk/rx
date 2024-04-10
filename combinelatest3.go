@@ -9,10 +9,10 @@ func CombineLatest3[T1, T2, T3, R any](
 	obs3 Observable[T3],
 	mapping func(v1 T1, v2 T2, v3 T3) R,
 ) Observable[R] {
-	return func(c Context, sink Observer[R]) {
+	return func(c Context, o Observer[R]) {
 		c, cancel := c.WithCancel()
 		noop := make(chan struct{})
-		sink = sink.DoOnTermination(func() {
+		o = o.DoOnTermination(func() {
 			cancel()
 			close(noop)
 		})
@@ -29,11 +29,11 @@ func CombineLatest3[T1, T2, T3, R any](
 			for cont {
 				select {
 				case n := <-chan1:
-					cont = combineLatestTry3(sink, n, mapping, &s, &s.V1, 1)
+					cont = combineLatestTry3(o, n, mapping, &s, &s.V1, 1)
 				case n := <-chan2:
-					cont = combineLatestTry3(sink, n, mapping, &s, &s.V2, 2)
+					cont = combineLatestTry3(o, n, mapping, &s, &s.V2, 2)
 				case n := <-chan3:
-					cont = combineLatestTry3(sink, n, mapping, &s, &s.V3, 4)
+					cont = combineLatestTry3(o, n, mapping, &s, &s.V3, 4)
 				}
 			}
 		})
@@ -54,7 +54,7 @@ type combineLatestState3[T1, T2, T3 any] struct {
 }
 
 func combineLatestTry3[T1, T2, T3, R, X any](
-	sink Observer[R],
+	o Observer[R],
 	n Notification[X],
 	mapping func(T1, T2, T3) R,
 	s *combineLatestState3[T1, T2, T3],
@@ -68,18 +68,18 @@ func combineLatestTry3[T1, T2, T3, R, X any](
 		*v = n.Value
 
 		if s.NBits |= bit; s.NBits == FullBits {
-			oops := func() { sink.Error(ErrOops) }
+			oops := func() { o.Error(ErrOops) }
 			v := Try31(mapping, s.V1, s.V2, s.V3, oops)
-			Try1(sink, Next(v), oops)
+			Try1(o, Next(v), oops)
 		}
 
 	case KindError:
-		sink.Error(n.Error)
+		o.Error(n.Error)
 		return false
 
 	case KindComplete:
 		if s.CBits |= bit; s.CBits == FullBits {
-			sink.Complete()
+			o.Complete()
 			return false
 		}
 	}

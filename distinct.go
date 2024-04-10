@@ -5,7 +5,7 @@ package rx
 func DistinctComparable[T comparable]() Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(c Context, sink Observer[T]) {
+			return func(c Context, o Observer[T]) {
 				seen := make(map[T]struct{})
 
 				source.Subscribe(c, func(n Notification[T]) {
@@ -19,7 +19,7 @@ func DistinctComparable[T comparable]() Operator[T, T] {
 						seen[v] = struct{}{}
 					}
 
-					sink(n)
+					o.Emit(n)
 				})
 			}
 		},
@@ -31,7 +31,7 @@ func DistinctComparable[T comparable]() Operator[T, T] {
 func Distinct[T any, K comparable](mapping func(v T) K) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(c Context, sink Observer[T]) {
+			return func(c Context, o Observer[T]) {
 				seen := make(map[K]struct{})
 
 				source.Subscribe(c, func(n Notification[T]) {
@@ -45,7 +45,7 @@ func Distinct[T any, K comparable](mapping func(v T) K) Operator[T, T] {
 						seen[v] = struct{}{}
 					}
 
-					sink(n)
+					o.Emit(n)
 				})
 			}
 		},

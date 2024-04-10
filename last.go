@@ -5,7 +5,7 @@ package rx
 func Last[T any]() Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(c Context, sink Observer[T]) {
+			return func(c Context, o Observer[T]) {
 				var last struct {
 					Value    T
 					HasValue bool
@@ -17,13 +17,13 @@ func Last[T any]() Operator[T, T] {
 						last.Value = n.Value
 						last.HasValue = true
 					case KindError:
-						sink(n)
+						o.Emit(n)
 					case KindComplete:
 						if last.HasValue {
-							Try1(sink, Next(last.Value), func() { sink.Error(ErrOops) })
-							sink.Complete()
+							Try1(o, Next(last.Value), func() { o.Error(ErrOops) })
+							o.Complete()
 						} else {
-							sink.Error(ErrEmpty)
+							o.Error(ErrEmpty)
 						}
 					}
 				})
@@ -38,7 +38,7 @@ func Last[T any]() Operator[T, T] {
 func LastOrElse[T any](def T) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(c Context, sink Observer[T]) {
+			return func(c Context, o Observer[T]) {
 				var last struct {
 					Value    T
 					HasValue bool
@@ -50,7 +50,7 @@ func LastOrElse[T any](def T) Operator[T, T] {
 						last.Value = n.Value
 						last.HasValue = true
 					case KindError:
-						sink(n)
+						o.Emit(n)
 					case KindComplete:
 						v := def
 
@@ -58,8 +58,8 @@ func LastOrElse[T any](def T) Operator[T, T] {
 							v = last.Value
 						}
 
-						Try1(sink, Next(v), func() { sink.Error(ErrOops) })
-						sink(n)
+						Try1(o, Next(v), func() { o.Error(ErrOops) })
+						o.Emit(n)
 					}
 				})
 			}

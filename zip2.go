@@ -10,10 +10,10 @@ func Zip2[T1, T2, R any](
 	obs2 Observable[T2],
 	mapping func(v1 T1, v2 T2) R,
 ) Observable[R] {
-	return func(c Context, sink Observer[R]) {
+	return func(c Context, o Observer[R]) {
 		c, cancel := c.WithCancel()
 		noop := make(chan struct{})
-		sink = sink.DoOnTermination(func() {
+		o = o.DoOnTermination(func() {
 			cancel()
 			close(noop)
 		})
@@ -22,17 +22,17 @@ func Zip2[T1, T2, R any](
 		chan2 := make(chan Notification[T2])
 
 		c.Go(func() {
-			oops := func() { sink.Error(ErrOops) }
+			oops := func() { o.Error(ErrOops) }
 			for {
 			Again1:
 				n1 := <-chan1
 				switch n1.Kind {
 				case KindNext:
 				case KindError:
-					sink.Error(n1.Error)
+					o.Error(n1.Error)
 					return
 				case KindComplete:
-					sink.Complete()
+					o.Complete()
 					return
 				default:
 					goto Again1
@@ -42,16 +42,16 @@ func Zip2[T1, T2, R any](
 				switch n2.Kind {
 				case KindNext:
 				case KindError:
-					sink.Error(n2.Error)
+					o.Error(n2.Error)
 					return
 				case KindComplete:
-					sink.Complete()
+					o.Complete()
 					return
 				default:
 					goto Again2
 				}
 				v := Try21(mapping, n1.Value, n2.Value, oops)
-				Try1(sink, Next(v), oops)
+				Try1(o, Next(v), oops)
 			}
 		})
 

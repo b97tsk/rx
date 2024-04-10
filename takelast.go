@@ -10,7 +10,7 @@ func TakeLast[T any](count int) Operator[T, T] {
 				return Empty[T]()
 			}
 
-			return func(c Context, sink Observer[T]) {
+			return func(c Context, o Observer[T]) {
 				var q queue.Queue[T]
 
 				source.Subscribe(c, func(n Notification[T]) {
@@ -23,7 +23,7 @@ func TakeLast[T any](count int) Operator[T, T] {
 						q.Push(n.Value)
 
 					case KindError:
-						sink(n)
+						o.Emit(n)
 
 					case KindComplete:
 						done := c.Done()
@@ -32,14 +32,14 @@ func TakeLast[T any](count int) Operator[T, T] {
 							select {
 							default:
 							case <-done:
-								sink.Error(c.Err())
+								o.Error(c.Err())
 								return
 							}
 
-							Try1(sink, Next(q.At(i)), func() { sink.Error(ErrOops) })
+							Try1(o, Next(q.At(i)), func() { o.Error(ErrOops) })
 						}
 
-						sink(n)
+						o.Emit(n)
 					}
 				})
 			}

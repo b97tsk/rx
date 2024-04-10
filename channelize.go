@@ -9,9 +9,9 @@ package rx
 func Channelize[T any](join func(upstream <-chan Notification[T], downstream chan<- Notification[T])) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(c Context, sink Observer[T]) {
+			return func(c Context, o Observer[T]) {
 				c, cancel := c.WithCancel()
-				sink = sink.DoOnTermination(cancel)
+				o = o.DoOnTermination(cancel)
 
 				upstream := make(chan Notification[T])
 				downstream := make(chan Notification[T])
@@ -29,13 +29,13 @@ func Channelize[T any](join func(upstream <-chan Notification[T], downstream cha
 					for n := range downstream {
 						switch n.Kind {
 						case KindNext:
-							Try1(sink, n, func() {
+							Try1(o, n, func() {
 								c.Go(func() { drain(downstream) })
-								sink.Error(ErrOops)
+								o.Error(ErrOops)
 							})
 						case KindError, KindComplete:
 							defer drain(downstream)
-							sink(n)
+							o.Emit(n)
 							return
 						}
 					}

@@ -6,9 +6,9 @@ package rx
 func Single[T any]() Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(c Context, sink Observer[T]) {
+			return func(c Context, o Observer[T]) {
 				c, cancel := c.WithCancel()
-				sink = sink.DoOnTermination(cancel)
+				o = o.DoOnTermination(cancel)
 
 				var first struct {
 					Value    T
@@ -31,17 +31,17 @@ func Single[T any]() Operator[T, T] {
 						}
 
 						noop = true
-						sink.Error(ErrNotSingle)
+						o.Error(ErrNotSingle)
 
 					case KindError:
-						sink(n)
+						o.Emit(n)
 
 					case KindComplete:
 						if first.HasValue {
-							Try1(sink, Next(first.Value), func() { sink.Error(ErrOops) })
-							sink.Complete()
+							Try1(o, Next(first.Value), func() { o.Error(ErrOops) })
+							o.Complete()
 						} else {
-							sink.Error(ErrEmpty)
+							o.Error(ErrEmpty)
 						}
 					}
 				})

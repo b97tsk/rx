@@ -5,15 +5,15 @@ package rx
 func Filter[T any](pred func(v T) bool) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(c Context, sink Observer[T]) {
+			return func(c Context, o Observer[T]) {
 				source.Subscribe(c, func(n Notification[T]) {
 					switch n.Kind {
 					case KindNext:
 						if pred(n.Value) {
-							sink(n)
+							o.Emit(n)
 						}
 					case KindError, KindComplete:
-						sink(n)
+						o.Emit(n)
 					}
 				})
 			}
@@ -26,15 +26,15 @@ func Filter[T any](pred func(v T) bool) Operator[T, T] {
 func FilterOut[T any](pred func(v T) bool) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(c Context, sink Observer[T]) {
+			return func(c Context, o Observer[T]) {
 				source.Subscribe(c, func(n Notification[T]) {
 					switch n.Kind {
 					case KindNext:
 						if !pred(n.Value) {
-							sink(n)
+							o.Emit(n)
 						}
 					case KindError, KindComplete:
-						sink(n)
+						o.Emit(n)
 					}
 				})
 			}
@@ -48,17 +48,17 @@ func FilterOut[T any](pred func(v T) bool) Operator[T, T] {
 func FilterMap[T, R any](pred func(v T) (R, bool)) Operator[T, R] {
 	return NewOperator(
 		func(source Observable[T]) Observable[R] {
-			return func(c Context, sink Observer[R]) {
+			return func(c Context, o Observer[R]) {
 				source.Subscribe(c, func(n Notification[T]) {
 					switch n.Kind {
 					case KindNext:
 						if v, ok := pred(n.Value); ok {
-							sink.Next(v)
+							o.Next(v)
 						}
 					case KindError:
-						sink.Error(n.Error)
+						o.Error(n.Error)
 					case KindComplete:
-						sink.Complete()
+						o.Complete()
 					}
 				})
 			}

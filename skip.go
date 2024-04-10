@@ -8,14 +8,14 @@ func Skip[T any](count int) Operator[T, T] {
 
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(c Context, sink Observer[T]) {
+			return func(c Context, o Observer[T]) {
 				var taking bool
 
 				count := count
 
 				source.Subscribe(c, func(n Notification[T]) {
 					if taking || n.Kind != KindNext {
-						sink(n)
+						o.Emit(n)
 						return
 					}
 

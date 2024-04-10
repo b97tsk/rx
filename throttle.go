@@ -67,9 +67,9 @@ type throttleObservable[T, U any] struct {
 	throttleConfig[T, U]
 }
 
-func (obs throttleObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
+func (obs throttleObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 	c, cancel := c.WithCancel()
-	sink = sink.DoOnTermination(cancel)
+	o = o.DoOnTermination(cancel)
 
 	var x struct {
 		Context  atomic.Value
@@ -117,11 +117,11 @@ func (obs throttleObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
 
 					oops := func() {
 						if x.Context.Swap(sentinel) != sentinel {
-							sink.Error(ErrOops)
+							o.Error(ErrOops)
 						}
 					}
 
-					Try1(sink, Next(value), oops)
+					Try1(o, Next(value), oops)
 
 					if !x.Complete.Load() {
 						Try1(doThrottle, value, oops)
@@ -129,17 +129,17 @@ func (obs throttleObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
 				}
 
 				if x.Context.CompareAndSwap(w.Context, c.Context) && x.Complete.Load() && x.Context.CompareAndSwap(c.Context, sentinel) {
-					sink.Complete()
+					o.Complete()
 				}
 
 			case KindError:
 				if x.Context.Swap(sentinel) != sentinel {
-					sink.Error(n.Error)
+					o.Error(n.Error)
 				}
 
 			case KindComplete:
 				if x.Context.CompareAndSwap(w.Context, c.Context) && x.Complete.Load() && x.Context.CompareAndSwap(c.Context, sentinel) {
-					sink.Complete()
+					o.Complete()
 				}
 			}
 		})
@@ -156,7 +156,7 @@ func (obs throttleObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
 			if x.Context.Load() == c.Context {
 				if obs.Leading {
 					x.Trailing.HasValue.Store(false)
-					sink(n)
+					o.Emit(n)
 				}
 
 				doThrottle(n.Value)
@@ -169,14 +169,14 @@ func (obs throttleObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
 			x.Worker.Wait()
 
 			if old != sentinel {
-				sink(n)
+				o.Emit(n)
 			}
 
 		case KindComplete:
 			x.Complete.Store(true)
 
 			if x.Context.CompareAndSwap(c.Context, sentinel) {
-				sink(n)
+				o.Emit(n)
 			}
 		}
 	})

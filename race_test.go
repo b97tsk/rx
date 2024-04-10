@@ -16,8 +16,8 @@ func TestRace(t *testing.T) {
 
 	detachContext := rx.NewOperator(
 		func(source rx.Observable[string]) rx.Observable[string] {
-			return func(_ rx.Context, sink rx.Observer[string]) {
-				source.Subscribe(rx.NewBackgroundContext(), sink)
+			return func(_ rx.Context, o rx.Observer[string]) {
+				source.Subscribe(rx.NewBackgroundContext(), o)
 			}
 		},
 	)

@@ -6,16 +6,16 @@ package rx
 func SkipWhile[T any](pred func(v T) bool) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(c Context, sink Observer[T]) {
+			return func(c Context, o Observer[T]) {
 				var taking bool
 
 				source.Subscribe(c, func(n Notification[T]) {
 					switch {
 					case taking || n.Kind != KindNext:
-						sink(n)
+						o.Emit(n)
 					case !pred(n.Value):
 						taking = true
-						sink(n)
+						o.Emit(n)
 					}
 				})
 			}

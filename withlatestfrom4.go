@@ -25,10 +25,10 @@ func withLatestFrom5[T1, T2, T3, T4, T5, R any](
 	obs5 Observable[T5],
 	mapping func(v1 T1, v2 T2, v3 T3, v4 T4, v5 T5) R,
 ) Observable[R] {
-	return func(c Context, sink Observer[R]) {
+	return func(c Context, o Observer[R]) {
 		c, cancel := c.WithCancel()
 		noop := make(chan struct{})
-		sink = sink.DoOnTermination(func() {
+		o = o.DoOnTermination(func() {
 			cancel()
 			close(noop)
 		})
@@ -47,15 +47,15 @@ func withLatestFrom5[T1, T2, T3, T4, T5, R any](
 			for cont {
 				select {
 				case n := <-chan1:
-					cont = withLatestFromTry5(sink, n, mapping, &s, &s.V1, 1)
+					cont = withLatestFromTry5(o, n, mapping, &s, &s.V1, 1)
 				case n := <-chan2:
-					cont = withLatestFromTry5(sink, n, mapping, &s, &s.V2, 2)
+					cont = withLatestFromTry5(o, n, mapping, &s, &s.V2, 2)
 				case n := <-chan3:
-					cont = withLatestFromTry5(sink, n, mapping, &s, &s.V3, 4)
+					cont = withLatestFromTry5(o, n, mapping, &s, &s.V3, 4)
 				case n := <-chan4:
-					cont = withLatestFromTry5(sink, n, mapping, &s, &s.V4, 8)
+					cont = withLatestFromTry5(o, n, mapping, &s, &s.V4, 8)
 				case n := <-chan5:
-					cont = withLatestFromTry5(sink, n, mapping, &s, &s.V5, 16)
+					cont = withLatestFromTry5(o, n, mapping, &s, &s.V5, 16)
 				}
 			}
 		})
@@ -80,7 +80,7 @@ type withLatestFromState5[T1, T2, T3, T4, T5 any] struct {
 }
 
 func withLatestFromTry5[T1, T2, T3, T4, T5, R, X any](
-	sink Observer[R],
+	o Observer[R],
 	n Notification[X],
 	mapping func(T1, T2, T3, T4, T5) R,
 	s *withLatestFromState5[T1, T2, T3, T4, T5],
@@ -94,18 +94,18 @@ func withLatestFromTry5[T1, T2, T3, T4, T5, R, X any](
 		*v = n.Value
 
 		if s.NBits |= bit; s.NBits == FullBits && bit == 1 {
-			oops := func() { sink.Error(ErrOops) }
+			oops := func() { o.Error(ErrOops) }
 			v := Try51(mapping, s.V1, s.V2, s.V3, s.V4, s.V5, oops)
-			Try1(sink, Next(v), oops)
+			Try1(o, Next(v), oops)
 		}
 
 	case KindError:
-		sink.Error(n.Error)
+		o.Error(n.Error)
 		return false
 
 	case KindComplete:
 		if bit == 1 {
-			sink.Complete()
+			o.Complete()
 			return false
 		}
 	}

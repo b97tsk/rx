@@ -12,9 +12,9 @@ func TestZip9(t *testing.T) {
 	t.Parallel()
 
 	testZip9(t, rx.ConcatWith(
-		func(_ rx.Context, sink rx.Observer[string]) {
-			sink(rx.Notification[string]{}) // For coverage.
-			sink.Complete()
+		func(_ rx.Context, o rx.Observer[string]) {
+			o.Emit(rx.Notification[string]{}) // For coverage.
+			o.Complete()
 		},
 	), ErrComplete)
 	testZip9(t, rx.ConcatWith(rx.Throw[string](ErrTest)), ErrTest)

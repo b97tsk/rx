@@ -27,9 +27,9 @@ type sampleObservable[T, U any] struct {
 	Notifier Observable[U]
 }
 
-func (obs sampleObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
+func (obs sampleObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 	c, cancel := c.WithCancel()
-	sink = sink.DoOnTermination(cancel)
+	o = o.DoOnTermination(cancel)
 
 	var x struct {
 		Context atomic.Value
@@ -61,7 +61,7 @@ func (obs sampleObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
 			x.Worker.Unlock()
 
 			if old != sentinel {
-				sink(n)
+				o.Emit(n)
 			}
 		}
 	})
@@ -86,7 +86,7 @@ func (obs sampleObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
 				value := x.Latest.Value
 				x.Latest.HasValue.Store(false)
 				x.Latest.Unlock()
-				sink.Next(value)
+				o.Next(value)
 			}
 
 		case KindError:
@@ -95,7 +95,7 @@ func (obs sampleObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
 			cancelw()
 
 			if x.Context.Swap(sentinel) != sentinel {
-				sink.Error(n.Error)
+				o.Error(n.Error)
 			}
 
 		case KindComplete:

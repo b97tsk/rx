@@ -65,20 +65,20 @@ func (m *multicast[T]) Emit(n Notification[T]) {
 		defer mobs.Release()
 
 		if m.Cap != 0 {
-			b := m.Buf
+			buf := m.Buf
 
 			switch {
-			case b == nil:
-				b = pnew(b)
-				m.Buf = b
-			case b.RefCount.Load() != 0:
-				q := b.Queue.Clone()
-				b = pnew(b)
-				b.Queue = q
-				m.Buf = b
+			case buf == nil:
+				buf = pnew(buf)
+				m.Buf = buf
+			case buf.RefCount.Load() != 0:
+				q := buf.Queue.Clone()
+				buf = pnew(buf)
+				buf.Queue = q
+				m.Buf = buf
 			}
 
-			q := &b.Queue
+			q := &buf.Queue
 
 			if q.Len() == m.Cap {
 				q.Pop()
@@ -112,52 +112,52 @@ func (m *multicast[T]) Emit(n Notification[T]) {
 	}
 }
 
-func (m *multicast[T]) Subscribe(c Context, sink Observer[T]) {
+func (m *multicast[T]) Subscribe(c Context, o Observer[T]) {
 	m.Mu.Lock()
 
 	lastn := m.LastN
 	if lastn.Kind == 0 {
-		c, sink = Serialize(c, sink)
+		c, o = Serialize(c, o)
 
-		observer := sink
-		m.Mobs.Add(&observer)
+		o := o
+		m.Mobs.Add(&o)
 
 		c.AfterFunc(func() {
 			m.Mu.Lock()
-			m.Mobs.Delete(&observer)
+			m.Mobs.Delete(&o)
 			m.Mu.Unlock()
-			observer.Error(c.Err())
+			o.Error(c.Err())
 		})
 	}
 
-	b := m.Buf
-	if b != nil {
-		b.RefCount.Add(1)
-		defer b.RefCount.Add(^uint32(0))
+	buf := m.Buf
+	if buf != nil {
+		buf.RefCount.Add(1)
+		defer buf.RefCount.Add(^uint32(0))
 	}
 
 	m.Mu.Unlock()
 
-	if b != nil {
-		q := b.Queue
+	if buf != nil {
+		q := buf.Queue
 		done := c.Done()
 
 		for i, j := 0, q.Len(); i < j; i++ {
 			select {
 			default:
 			case <-done:
-				sink.Error(c.Err())
+				o.Error(c.Err())
 				return
 			}
 
-			Try1(sink, Next(q.At(i)), func() { sink.Error(ErrOops) })
+			Try1(o, Next(q.At(i)), func() { o.Error(ErrOops) })
 		}
 	}
 
 	switch lastn.Kind {
 	case KindError:
-		sink.Error(lastn.Error)
+		o.Error(lastn.Error)
 	case KindComplete:
-		sink.Complete()
+		o.Complete()
 	}
 }

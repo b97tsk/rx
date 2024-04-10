@@ -50,9 +50,9 @@ func doTest(
 	do := op(func() { n++ })
 
 	obs := rx.NewObservable(
-		func(_ rx.Context, sink rx.Observer[int]) {
-			sink.Next(n)
-			sink.Complete()
+		func(_ rx.Context, o rx.Observer[int]) {
+			o.Next(n)
+			o.Complete()
 		},
 	)
 

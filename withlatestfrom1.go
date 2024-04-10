@@ -19,10 +19,10 @@ func withLatestFrom2[T1, T2, R any](
 	obs2 Observable[T2],
 	mapping func(v1 T1, v2 T2) R,
 ) Observable[R] {
-	return func(c Context, sink Observer[R]) {
+	return func(c Context, o Observer[R]) {
 		c, cancel := c.WithCancel()
 		noop := make(chan struct{})
-		sink = sink.DoOnTermination(func() {
+		o = o.DoOnTermination(func() {
 			cancel()
 			close(noop)
 		})
@@ -38,9 +38,9 @@ func withLatestFrom2[T1, T2, R any](
 			for cont {
 				select {
 				case n := <-chan1:
-					cont = withLatestFromTry2(sink, n, mapping, &s, &s.V1, 1)
+					cont = withLatestFromTry2(o, n, mapping, &s, &s.V1, 1)
 				case n := <-chan2:
-					cont = withLatestFromTry2(sink, n, mapping, &s, &s.V2, 2)
+					cont = withLatestFromTry2(o, n, mapping, &s, &s.V2, 2)
 				}
 			}
 		})
@@ -59,7 +59,7 @@ type withLatestFromState2[T1, T2 any] struct {
 }
 
 func withLatestFromTry2[T1, T2, R, X any](
-	sink Observer[R],
+	o Observer[R],
 	n Notification[X],
 	mapping func(T1, T2) R,
 	s *withLatestFromState2[T1, T2],
@@ -73,18 +73,18 @@ func withLatestFromTry2[T1, T2, R, X any](
 		*v = n.Value
 
 		if s.NBits |= bit; s.NBits == FullBits && bit == 1 {
-			oops := func() { sink.Error(ErrOops) }
+			oops := func() { o.Error(ErrOops) }
 			v := Try21(mapping, s.V1, s.V2, oops)
-			Try1(sink, Next(v), oops)
+			Try1(o, Next(v), oops)
 		}
 
 	case KindError:
-		sink.Error(n.Error)
+		o.Error(n.Error)
 		return false
 
 	case KindComplete:
 		if bit == 1 {
-			sink.Complete()
+			o.Complete()
 			return false
 		}
 	}

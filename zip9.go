@@ -17,10 +17,10 @@ func Zip9[T1, T2, T3, T4, T5, T6, T7, T8, T9, R any](
 	obs9 Observable[T9],
 	mapping func(v1 T1, v2 T2, v3 T3, v4 T4, v5 T5, v6 T6, v7 T7, v8 T8, v9 T9) R,
 ) Observable[R] {
-	return func(c Context, sink Observer[R]) {
+	return func(c Context, o Observer[R]) {
 		c, cancel := c.WithCancel()
 		noop := make(chan struct{})
-		sink = sink.DoOnTermination(func() {
+		o = o.DoOnTermination(func() {
 			cancel()
 			close(noop)
 		})
@@ -36,17 +36,17 @@ func Zip9[T1, T2, T3, T4, T5, T6, T7, T8, T9, R any](
 		chan9 := make(chan Notification[T9])
 
 		c.Go(func() {
-			oops := func() { sink.Error(ErrOops) }
+			oops := func() { o.Error(ErrOops) }
 			for {
 			Again1:
 				n1 := <-chan1
 				switch n1.Kind {
 				case KindNext:
 				case KindError:
-					sink.Error(n1.Error)
+					o.Error(n1.Error)
 					return
 				case KindComplete:
-					sink.Complete()
+					o.Complete()
 					return
 				default:
 					goto Again1
@@ -56,10 +56,10 @@ func Zip9[T1, T2, T3, T4, T5, T6, T7, T8, T9, R any](
 				switch n2.Kind {
 				case KindNext:
 				case KindError:
-					sink.Error(n2.Error)
+					o.Error(n2.Error)
 					return
 				case KindComplete:
-					sink.Complete()
+					o.Complete()
 					return
 				default:
 					goto Again2
@@ -69,10 +69,10 @@ func Zip9[T1, T2, T3, T4, T5, T6, T7, T8, T9, R any](
 				switch n3.Kind {
 				case KindNext:
 				case KindError:
-					sink.Error(n3.Error)
+					o.Error(n3.Error)
 					return
 				case KindComplete:
-					sink.Complete()
+					o.Complete()
 					return
 				default:
 					goto Again3
@@ -82,10 +82,10 @@ func Zip9[T1, T2, T3, T4, T5, T6, T7, T8, T9, R any](
 				switch n4.Kind {
 				case KindNext:
 				case KindError:
-					sink.Error(n4.Error)
+					o.Error(n4.Error)
 					return
 				case KindComplete:
-					sink.Complete()
+					o.Complete()
 					return
 				default:
 					goto Again4
@@ -95,10 +95,10 @@ func Zip9[T1, T2, T3, T4, T5, T6, T7, T8, T9, R any](
 				switch n5.Kind {
 				case KindNext:
 				case KindError:
-					sink.Error(n5.Error)
+					o.Error(n5.Error)
 					return
 				case KindComplete:
-					sink.Complete()
+					o.Complete()
 					return
 				default:
 					goto Again5
@@ -108,10 +108,10 @@ func Zip9[T1, T2, T3, T4, T5, T6, T7, T8, T9, R any](
 				switch n6.Kind {
 				case KindNext:
 				case KindError:
-					sink.Error(n6.Error)
+					o.Error(n6.Error)
 					return
 				case KindComplete:
-					sink.Complete()
+					o.Complete()
 					return
 				default:
 					goto Again6
@@ -121,10 +121,10 @@ func Zip9[T1, T2, T3, T4, T5, T6, T7, T8, T9, R any](
 				switch n7.Kind {
 				case KindNext:
 				case KindError:
-					sink.Error(n7.Error)
+					o.Error(n7.Error)
 					return
 				case KindComplete:
-					sink.Complete()
+					o.Complete()
 					return
 				default:
 					goto Again7
@@ -134,10 +134,10 @@ func Zip9[T1, T2, T3, T4, T5, T6, T7, T8, T9, R any](
 				switch n8.Kind {
 				case KindNext:
 				case KindError:
-					sink.Error(n8.Error)
+					o.Error(n8.Error)
 					return
 				case KindComplete:
-					sink.Complete()
+					o.Complete()
 					return
 				default:
 					goto Again8
@@ -147,16 +147,16 @@ func Zip9[T1, T2, T3, T4, T5, T6, T7, T8, T9, R any](
 				switch n9.Kind {
 				case KindNext:
 				case KindError:
-					sink.Error(n9.Error)
+					o.Error(n9.Error)
 					return
 				case KindComplete:
-					sink.Complete()
+					o.Complete()
 					return
 				default:
 					goto Again9
 				}
 				v := Try91(mapping, n1.Value, n2.Value, n3.Value, n4.Value, n5.Value, n6.Value, n7.Value, n8.Value, n9.Value, oops)
-				Try1(sink, Next(v), oops)
+				Try1(o, Next(v), oops)
 			}
 		})
 

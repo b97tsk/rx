@@ -5,7 +5,7 @@ package rx
 func ToSlice[T any]() Operator[T, []T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[[]T] {
-			return func(c Context, sink Observer[[]T]) {
+			return func(c Context, o Observer[[]T]) {
 				var s []T
 
 				source.Subscribe(c, func(n Notification[T]) {
@@ -13,10 +13,10 @@ func ToSlice[T any]() Operator[T, []T] {
 					case KindNext:
 						s = append(s, n.Value)
 					case KindError:
-						sink.Error(n.Error)
+						o.Error(n.Error)
 					case KindComplete:
-						Try1(sink, Next(s), func() { sink.Error(ErrOops) })
-						sink.Complete()
+						Try1(o, Next(s), func() { o.Error(ErrOops) })
+						o.Complete()
 					}
 				})
 			}

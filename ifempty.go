@@ -5,7 +5,7 @@ package rx
 func DefaultIfEmpty[T any](s ...T) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(c Context, sink Observer[T]) {
+			return func(c Context, o Observer[T]) {
 				haveValue := false
 
 				source.Subscribe(c, func(n Notification[T]) {
@@ -21,16 +21,16 @@ func DefaultIfEmpty[T any](s ...T) Operator[T, T] {
 								select {
 								default:
 								case <-done:
-									sink.Error(c.Err())
+									o.Error(c.Err())
 									return
 								}
 
-								Try1(sink, Next(v), func() { sink.Error(ErrOops) })
+								Try1(o, Next(v), func() { o.Error(ErrOops) })
 							}
 						}
 					}
 
-					sink(n)
+					o.Emit(n)
 				})
 			}
 		},
@@ -42,7 +42,7 @@ func DefaultIfEmpty[T any](s ...T) Operator[T, T] {
 func ThrowIfEmpty[T any]() Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(c Context, sink Observer[T]) {
+			return func(c Context, o Observer[T]) {
 				haveValue := false
 
 				source.Subscribe(c, func(n Notification[T]) {
@@ -52,12 +52,12 @@ func ThrowIfEmpty[T any]() Operator[T, T] {
 					case KindError:
 					case KindComplete:
 						if !haveValue {
-							sink.Error(ErrEmpty)
+							o.Error(ErrEmpty)
 							return
 						}
 					}
 
-					sink(n)
+					o.Emit(n)
 				})
 			}
 		},
@@ -69,7 +69,7 @@ func ThrowIfEmpty[T any]() Operator[T, T] {
 func SwitchIfEmpty[T any](obs Observable[T]) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
-			return func(c Context, sink Observer[T]) {
+			return func(c Context, o Observer[T]) {
 				haveValue := false
 
 				source.Subscribe(c, func(n Notification[T]) {
@@ -79,12 +79,12 @@ func SwitchIfEmpty[T any](obs Observable[T]) Operator[T, T] {
 					case KindError:
 					case KindComplete:
 						if !haveValue {
-							obs.Subscribe(c, sink)
+							obs.Subscribe(c, o)
 							return
 						}
 					}
 
-					sink(n)
+					o.Emit(n)
 				})
 			}
 		},

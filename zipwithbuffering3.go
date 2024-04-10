@@ -14,10 +14,10 @@ func ZipWithBuffering3[T1, T2, T3, R any](
 	obs3 Observable[T3],
 	mapping func(v1 T1, v2 T2, v3 T3) R,
 ) Observable[R] {
-	return func(c Context, sink Observer[R]) {
+	return func(c Context, o Observer[R]) {
 		c, cancel := c.WithCancel()
 		noop := make(chan struct{})
-		sink = sink.DoOnTermination(func() {
+		o = o.DoOnTermination(func() {
 			cancel()
 			close(noop)
 		})
@@ -34,11 +34,11 @@ func ZipWithBuffering3[T1, T2, T3, R any](
 			for cont {
 				select {
 				case n := <-chan1:
-					cont = zipTry3(sink, n, mapping, &s, &s.Q1, 1)
+					cont = zipTry3(o, n, mapping, &s, &s.Q1, 1)
 				case n := <-chan2:
-					cont = zipTry3(sink, n, mapping, &s, &s.Q2, 2)
+					cont = zipTry3(o, n, mapping, &s, &s.Q2, 2)
 				case n := <-chan3:
-					cont = zipTry3(sink, n, mapping, &s, &s.Q3, 4)
+					cont = zipTry3(o, n, mapping, &s, &s.Q3, 4)
 				}
 			}
 		})
@@ -59,7 +59,7 @@ type zipState3[T1, T2, T3 any] struct {
 }
 
 func zipTry3[T1, T2, T3, R, X any](
-	sink Observer[R],
+	o Observer[R],
 	n Notification[X],
 	mapping func(T1, T2, T3) R,
 	s *zipState3[T1, T2, T3],
@@ -75,7 +75,7 @@ func zipTry3[T1, T2, T3, R, X any](
 		if s.NBits |= bit; s.NBits == FullBits {
 			var complete bool
 
-			oops := func() { sink.Error(ErrOops) }
+			oops := func() { o.Error(ErrOops) }
 			v := Try31(
 				mapping,
 				zipPop3(s, &s.Q1, 1, &complete),
@@ -83,23 +83,23 @@ func zipTry3[T1, T2, T3, R, X any](
 				zipPop3(s, &s.Q3, 4, &complete),
 				oops,
 			)
-			Try1(sink, Next(v), oops)
+			Try1(o, Next(v), oops)
 
 			if complete {
-				sink.Complete()
+				o.Complete()
 				return false
 			}
 		}
 
 	case KindError:
-		sink.Error(n.Error)
+		o.Error(n.Error)
 		return false
 
 	case KindComplete:
 		s.CBits |= bit
 
 		if q.Len() == 0 {
-			sink.Complete()
+			o.Complete()
 			return false
 		}
 	}

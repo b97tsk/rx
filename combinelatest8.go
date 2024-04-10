@@ -14,10 +14,10 @@ func CombineLatest8[T1, T2, T3, T4, T5, T6, T7, T8, R any](
 	obs8 Observable[T8],
 	mapping func(v1 T1, v2 T2, v3 T3, v4 T4, v5 T5, v6 T6, v7 T7, v8 T8) R,
 ) Observable[R] {
-	return func(c Context, sink Observer[R]) {
+	return func(c Context, o Observer[R]) {
 		c, cancel := c.WithCancel()
 		noop := make(chan struct{})
-		sink = sink.DoOnTermination(func() {
+		o = o.DoOnTermination(func() {
 			cancel()
 			close(noop)
 		})
@@ -39,21 +39,21 @@ func CombineLatest8[T1, T2, T3, T4, T5, T6, T7, T8, R any](
 			for cont {
 				select {
 				case n := <-chan1:
-					cont = combineLatestTry8(sink, n, mapping, &s, &s.V1, 1)
+					cont = combineLatestTry8(o, n, mapping, &s, &s.V1, 1)
 				case n := <-chan2:
-					cont = combineLatestTry8(sink, n, mapping, &s, &s.V2, 2)
+					cont = combineLatestTry8(o, n, mapping, &s, &s.V2, 2)
 				case n := <-chan3:
-					cont = combineLatestTry8(sink, n, mapping, &s, &s.V3, 4)
+					cont = combineLatestTry8(o, n, mapping, &s, &s.V3, 4)
 				case n := <-chan4:
-					cont = combineLatestTry8(sink, n, mapping, &s, &s.V4, 8)
+					cont = combineLatestTry8(o, n, mapping, &s, &s.V4, 8)
 				case n := <-chan5:
-					cont = combineLatestTry8(sink, n, mapping, &s, &s.V5, 16)
+					cont = combineLatestTry8(o, n, mapping, &s, &s.V5, 16)
 				case n := <-chan6:
-					cont = combineLatestTry8(sink, n, mapping, &s, &s.V6, 32)
+					cont = combineLatestTry8(o, n, mapping, &s, &s.V6, 32)
 				case n := <-chan7:
-					cont = combineLatestTry8(sink, n, mapping, &s, &s.V7, 64)
+					cont = combineLatestTry8(o, n, mapping, &s, &s.V7, 64)
 				case n := <-chan8:
-					cont = combineLatestTry8(sink, n, mapping, &s, &s.V8, 128)
+					cont = combineLatestTry8(o, n, mapping, &s, &s.V8, 128)
 				}
 			}
 		})
@@ -84,7 +84,7 @@ type combineLatestState8[T1, T2, T3, T4, T5, T6, T7, T8 any] struct {
 }
 
 func combineLatestTry8[T1, T2, T3, T4, T5, T6, T7, T8, R, X any](
-	sink Observer[R],
+	o Observer[R],
 	n Notification[X],
 	mapping func(T1, T2, T3, T4, T5, T6, T7, T8) R,
 	s *combineLatestState8[T1, T2, T3, T4, T5, T6, T7, T8],
@@ -98,18 +98,18 @@ func combineLatestTry8[T1, T2, T3, T4, T5, T6, T7, T8, R, X any](
 		*v = n.Value
 
 		if s.NBits |= bit; s.NBits == FullBits {
-			oops := func() { sink.Error(ErrOops) }
+			oops := func() { o.Error(ErrOops) }
 			v := Try81(mapping, s.V1, s.V2, s.V3, s.V4, s.V5, s.V6, s.V7, s.V8, oops)
-			Try1(sink, Next(v), oops)
+			Try1(o, Next(v), oops)
 		}
 
 	case KindError:
-		sink.Error(n.Error)
+		o.Error(n.Error)
 		return false
 
 	case KindComplete:
 		if s.CBits |= bit; s.CBits == FullBits {
-			sink.Complete()
+			o.Complete()
 			return false
 		}
 	}

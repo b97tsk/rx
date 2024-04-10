@@ -29,13 +29,13 @@ package rx
 // To achieve something in parallel, multiple Observables might be involved.
 // There are a couple of functions and Operators in this library can handle
 // multiple Observables, most of them can do things concurrently.
-type Observable[T any] func(c Context, sink Observer[T])
+type Observable[T any] func(c Context, o Observer[T])
 
 // Subscribe invokes an execution of an Observable.
 //
 // If obs panics and c.PanicHandler is not nil, Subscribe calls c.PanicHandler
 // with a value returned by the built-in recover function.
-func (obs Observable[T]) Subscribe(c Context, sink Observer[T]) {
+func (obs Observable[T]) Subscribe(c Context, o Observer[T]) {
 	if c.PanicHandler != nil {
 		defer func() {
 			if v := recover(); v != nil {
@@ -45,15 +45,15 @@ func (obs Observable[T]) Subscribe(c Context, sink Observer[T]) {
 	}
 
 	if obs == nil {
-		defer sink.Error(ErrOops)
+		defer o.Error(ErrOops)
 		panic("nil Observable")
 		return
 	}
 
-	obs(c, sink)
+	obs(c, o)
 }
 
 // NewObservable creates an Observable from f.
-func NewObservable[T any](f func(c Context, sink Observer[T])) Observable[T] {
+func NewObservable[T any](f func(c Context, o Observer[T])) Observable[T] {
 	return f
 }

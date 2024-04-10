@@ -20,9 +20,9 @@ type takeUntilObservable[T, U any] struct {
 	Notifier Observable[U]
 }
 
-func (obs takeUntilObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
+func (obs takeUntilObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 	c, cancel := c.WithCancel()
-	sink = sink.DoOnTermination(cancel)
+	o = o.DoOnTermination(cancel)
 
 	var x struct {
 		Context atomic.Value
@@ -62,9 +62,9 @@ func (obs takeUntilObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
 
 						switch n.Kind {
 						case KindNext:
-							sink.Complete()
+							o.Complete()
 						case KindError:
-							sink.Error(n.Error)
+							o.Error(n.Error)
 						}
 					}
 
@@ -74,7 +74,7 @@ func (obs takeUntilObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
 			},
 			func() {
 				if x.Context.Swap(sentinel) != sentinel {
-					sink.Error(ErrOops)
+					o.Error(ErrOops)
 				}
 			},
 		)
@@ -92,7 +92,7 @@ func (obs takeUntilObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
 		cancel()
 
 		if old != sentinel {
-			sink(n)
+			o.Emit(n)
 		}
 	}
 
@@ -107,7 +107,7 @@ func (obs takeUntilObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
 		switch n.Kind {
 		case KindNext:
 			if x.Context.Load() == c.Context {
-				sink(n)
+				o.Emit(n)
 			}
 		case KindError, KindComplete:
 			terminate(n)

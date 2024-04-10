@@ -20,7 +20,7 @@ type groupByObservable[T any, K comparable] struct {
 	GroupFactory func() Subject[T]
 }
 
-func (obs groupByObservable[T, K]) Subscribe(c Context, sink Observer[Pair[K, Observable[T]]]) {
+func (obs groupByObservable[T, K]) Subscribe(c Context, o Observer[Pair[K, Observable[T]]]) {
 	groups := make(map[K]Observer[T])
 
 	obs.Source.Subscribe(c, func(n Notification[T]) {
@@ -33,19 +33,19 @@ func (obs groupByObservable[T, K]) Subscribe(c Context, sink Observer[Pair[K, Ob
 				g := obs.GroupFactory()
 				group = g.Observer
 				groups[key] = group
-				sink.Next(NewPair(key, g.Observable))
+				o.Next(NewPair(key, g.Observable))
 			}
 
 			group.Emit(n)
 
 		case KindError, KindComplete:
-			Try2(emitLastNotificationToGroups, groups, n, func() { sink.Error(ErrOops) })
+			Try2(emitLastNotificationToGroups, groups, n, func() { o.Error(ErrOops) })
 
 			switch n.Kind {
 			case KindError:
-				sink.Error(n.Error)
+				o.Error(n.Error)
 			case KindComplete:
-				sink.Complete()
+				o.Complete()
 			}
 		}
 	})

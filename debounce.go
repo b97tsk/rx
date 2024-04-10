@@ -33,9 +33,9 @@ type debounceObservable[T, U any] struct {
 	DurationSelector func(T) Observable[U]
 }
 
-func (obs debounceObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
+func (obs debounceObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 	c, cancel := c.WithCancel()
-	sink = sink.DoOnTermination(cancel)
+	o = o.DoOnTermination(cancel)
 
 	var x struct {
 		Context atomic.Value
@@ -79,16 +79,16 @@ func (obs debounceObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
 					value := x.Latest.Value
 					x.Latest.HasValue.Store(false)
 					x.Latest.Unlock()
-					Try1(sink, Next(value), func() {
+					Try1(o, Next(value), func() {
 						if x.Context.CompareAndSwap(w.Context, sentinel) {
-							sink.Error(ErrOops)
+							o.Error(ErrOops)
 						}
 					})
 				}
 
 			case KindError:
 				if x.Context.CompareAndSwap(w.Context, sentinel) {
-					sink.Error(n.Error)
+					o.Error(n.Error)
 				}
 
 			case KindComplete:
@@ -125,10 +125,10 @@ func (obs debounceObservable[T, U]) Subscribe(c Context, sink Observer[T]) {
 
 			if old != sentinel {
 				if n.Kind == KindComplete && x.Latest.HasValue.Load() {
-					Try1(sink, Next(x.Latest.Value), func() { sink.Error(ErrOops) })
+					Try1(o, Next(x.Latest.Value), func() { o.Error(ErrOops) })
 				}
 
-				sink(n)
+				o.Emit(n)
 			}
 		}
 	})

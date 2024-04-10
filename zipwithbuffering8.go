@@ -19,10 +19,10 @@ func ZipWithBuffering8[T1, T2, T3, T4, T5, T6, T7, T8, R any](
 	obs8 Observable[T8],
 	mapping func(v1 T1, v2 T2, v3 T3, v4 T4, v5 T5, v6 T6, v7 T7, v8 T8) R,
 ) Observable[R] {
-	return func(c Context, sink Observer[R]) {
+	return func(c Context, o Observer[R]) {
 		c, cancel := c.WithCancel()
 		noop := make(chan struct{})
-		sink = sink.DoOnTermination(func() {
+		o = o.DoOnTermination(func() {
 			cancel()
 			close(noop)
 		})
@@ -44,21 +44,21 @@ func ZipWithBuffering8[T1, T2, T3, T4, T5, T6, T7, T8, R any](
 			for cont {
 				select {
 				case n := <-chan1:
-					cont = zipTry8(sink, n, mapping, &s, &s.Q1, 1)
+					cont = zipTry8(o, n, mapping, &s, &s.Q1, 1)
 				case n := <-chan2:
-					cont = zipTry8(sink, n, mapping, &s, &s.Q2, 2)
+					cont = zipTry8(o, n, mapping, &s, &s.Q2, 2)
 				case n := <-chan3:
-					cont = zipTry8(sink, n, mapping, &s, &s.Q3, 4)
+					cont = zipTry8(o, n, mapping, &s, &s.Q3, 4)
 				case n := <-chan4:
-					cont = zipTry8(sink, n, mapping, &s, &s.Q4, 8)
+					cont = zipTry8(o, n, mapping, &s, &s.Q4, 8)
 				case n := <-chan5:
-					cont = zipTry8(sink, n, mapping, &s, &s.Q5, 16)
+					cont = zipTry8(o, n, mapping, &s, &s.Q5, 16)
 				case n := <-chan6:
-					cont = zipTry8(sink, n, mapping, &s, &s.Q6, 32)
+					cont = zipTry8(o, n, mapping, &s, &s.Q6, 32)
 				case n := <-chan7:
-					cont = zipTry8(sink, n, mapping, &s, &s.Q7, 64)
+					cont = zipTry8(o, n, mapping, &s, &s.Q7, 64)
 				case n := <-chan8:
-					cont = zipTry8(sink, n, mapping, &s, &s.Q8, 128)
+					cont = zipTry8(o, n, mapping, &s, &s.Q8, 128)
 				}
 			}
 		})
@@ -89,7 +89,7 @@ type zipState8[T1, T2, T3, T4, T5, T6, T7, T8 any] struct {
 }
 
 func zipTry8[T1, T2, T3, T4, T5, T6, T7, T8, R, X any](
-	sink Observer[R],
+	o Observer[R],
 	n Notification[X],
 	mapping func(T1, T2, T3, T4, T5, T6, T7, T8) R,
 	s *zipState8[T1, T2, T3, T4, T5, T6, T7, T8],
@@ -105,7 +105,7 @@ func zipTry8[T1, T2, T3, T4, T5, T6, T7, T8, R, X any](
 		if s.NBits |= bit; s.NBits == FullBits {
 			var complete bool
 
-			oops := func() { sink.Error(ErrOops) }
+			oops := func() { o.Error(ErrOops) }
 			v := Try81(
 				mapping,
 				zipPop8(s, &s.Q1, 1, &complete),
@@ -118,23 +118,23 @@ func zipTry8[T1, T2, T3, T4, T5, T6, T7, T8, R, X any](
 				zipPop8(s, &s.Q8, 128, &complete),
 				oops,
 			)
-			Try1(sink, Next(v), oops)
+			Try1(o, Next(v), oops)
 
 			if complete {
-				sink.Complete()
+				o.Complete()
 				return false
 			}
 		}
 
 	case KindError:
-		sink.Error(n.Error)
+		o.Error(n.Error)
 		return false
 
 	case KindComplete:
 		s.CBits |= bit
 
 		if q.Len() == 0 {
-			sink.Complete()
+			o.Complete()
 			return false
 		}
 	}

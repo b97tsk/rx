@@ -18,10 +18,10 @@ func TestMulticast(t *testing.T) {
 		m := rx.MulticastBuffer[string](3)
 
 		subscribeThenComplete := rx.NewObservable(
-			func(c rx.Context, sink rx.Observer[string]) {
-				c, sink = rx.Serialize(c, sink)
-				m.Subscribe(c, sink)
-				sink.Complete()
+			func(c rx.Context, o rx.Observer[string]) {
+				c, o = rx.Serialize(c, o)
+				m.Subscribe(c, o)
+				o.Complete()
 			},
 		)
 

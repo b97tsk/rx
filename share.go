@@ -52,7 +52,7 @@ type shareObservable[T any] struct {
 	ShareCount int
 }
 
-func (obs *shareObservable[T]) Subscribe(c Context, sink Observer[T]) {
+func (obs *shareObservable[T]) Subscribe(c Context, o Observer[T]) {
 	obs.Mutex.Lock()
 
 	var unlocked bool
@@ -64,13 +64,13 @@ func (obs *shareObservable[T]) Subscribe(c Context, sink Observer[T]) {
 	}()
 
 	if obs.Subject.Observable == nil {
-		obs.Subject = Try01(obs.Connector, func() { sink.Error(ErrOops) })
+		obs.Subject = Try01(obs.Connector, func() { o.Error(ErrOops) })
 	}
 
 	c, cancel := c.WithCancel()
-	sink = sink.DoOnTermination(cancel)
+	o = o.DoOnTermination(cancel)
 
-	obs.Subject.Subscribe(c, sink)
+	obs.Subject.Subscribe(c, o)
 
 	select {
 	default:
@@ -89,7 +89,7 @@ func (obs *shareObservable[T]) Subscribe(c Context, sink Observer[T]) {
 		obs.Connection = w.Context
 		obs.Disconnect = cancelw
 
-		sink := obs.Subject.Observer
+		o := obs.Subject.Observer
 
 		obs.Mutex.Unlock()
 		unlocked = true
@@ -97,7 +97,7 @@ func (obs *shareObservable[T]) Subscribe(c Context, sink Observer[T]) {
 		obs.Source.Subscribe(w, func(n Notification[T]) {
 			switch n.Kind {
 			case KindNext:
-				sink(n)
+				o.Emit(n)
 			case KindError, KindComplete:
 				cancelw()
 
@@ -112,7 +112,7 @@ func (obs *shareObservable[T]) Subscribe(c Context, sink Observer[T]) {
 
 				obs.Mutex.Unlock()
 
-				sink(n)
+				o.Emit(n)
 			}
 		})
 	}
