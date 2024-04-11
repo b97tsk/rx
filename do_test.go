@@ -49,7 +49,7 @@ func doTest(
 
 	do := op(func() { n++ })
 
-	obs := rx.NewObservable(
+	ob := rx.NewObservable(
 		func(_ rx.Context, o rx.Observer[int]) {
 			o.Next(n)
 			o.Complete()
@@ -59,19 +59,19 @@ func doTest(
 	NewTestSuite[int](t).Case(
 		rx.Concat(
 			rx.Pipe1(rx.Empty[int](), do),
-			obs,
+			ob,
 		),
 		r1, ErrComplete,
 	).Case(
 		rx.Concat(
 			rx.Pipe1(rx.Just(-1), do),
-			obs,
+			ob,
 		),
 		-1, r2, ErrComplete,
 	).Case(
 		rx.Concat(
 			rx.Pipe1(rx.Just(-1, -2), do),
-			obs,
+			ob,
 		),
 		-1, -2, r3, ErrComplete,
 	).Case(
@@ -83,11 +83,11 @@ func doTest(
 				),
 				do,
 			),
-			obs,
+			ob,
 		),
 		-1, -2, ErrTest,
 	).Case(
-		obs,
+		ob,
 		r4, ErrComplete,
 	)
 }

@@ -35,7 +35,7 @@ type exhaustMapObservable[T, R any] struct {
 	Mapping func(T) Observable[R]
 }
 
-func (obs exhaustMapObservable[T, R]) Subscribe(c Context, o Observer[R]) {
+func (ob exhaustMapObservable[T, R]) Subscribe(c Context, o Observer[R]) {
 	c, cancel := c.WithCancel()
 	o = o.DoOnTermination(cancel)
 
@@ -50,13 +50,13 @@ func (obs exhaustMapObservable[T, R]) Subscribe(c Context, o Observer[R]) {
 	x.Context.Store(c.Context)
 
 	startWorker := func(v T) {
-		obs1 := obs.Mapping(v)
+		obs := ob.Mapping(v)
 		w, cancelw := c.WithCancel()
 
 		x.Context.Store(w.Context)
 		x.Worker.Add(1)
 
-		obs1.Subscribe(w, func(n Notification[R]) {
+		obs.Subscribe(w, func(n Notification[R]) {
 			switch n.Kind {
 			case KindNext:
 				o.Emit(n)
@@ -80,7 +80,7 @@ func (obs exhaustMapObservable[T, R]) Subscribe(c Context, o Observer[R]) {
 		})
 	}
 
-	obs.Source.Subscribe(c, func(n Notification[T]) {
+	ob.Source.Subscribe(c, func(n Notification[T]) {
 		switch n.Kind {
 		case KindNext:
 			if x.Context.Load() == c.Context {

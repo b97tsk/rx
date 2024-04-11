@@ -66,7 +66,7 @@ func ThrowIfEmpty[T any]() Operator[T, T] {
 
 // SwitchIfEmpty mirrors the source or specified Observable if the source
 // completes without emitting any value.
-func SwitchIfEmpty[T any](obs Observable[T]) Operator[T, T] {
+func SwitchIfEmpty[T any](ob Observable[T]) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return func(c Context, o Observer[T]) {
@@ -79,7 +79,7 @@ func SwitchIfEmpty[T any](obs Observable[T]) Operator[T, T] {
 					case KindError:
 					case KindComplete:
 						if !haveValue {
-							obs.Subscribe(c, o)
+							ob.Subscribe(c, o)
 							return
 						}
 					}

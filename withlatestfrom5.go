@@ -4,27 +4,27 @@ package rx
 // an Observable that emits mappings of the latest values emitted by each
 // Observable, only when the source emits.
 func WithLatestFrom5[T0, T1, T2, T3, T4, T5, R any](
-	obs1 Observable[T1],
-	obs2 Observable[T2],
-	obs3 Observable[T3],
-	obs4 Observable[T4],
-	obs5 Observable[T5],
+	ob1 Observable[T1],
+	ob2 Observable[T2],
+	ob3 Observable[T3],
+	ob4 Observable[T4],
+	ob5 Observable[T5],
 	mapping func(v0 T0, v1 T1, v2 T2, v3 T3, v4 T4, v5 T5) R,
 ) Operator[T0, R] {
 	return NewOperator(
 		func(source Observable[T0]) Observable[R] {
-			return withLatestFrom6(source, obs1, obs2, obs3, obs4, obs5, mapping)
+			return withLatestFrom6(source, ob1, ob2, ob3, ob4, ob5, mapping)
 		},
 	)
 }
 
 func withLatestFrom6[T1, T2, T3, T4, T5, T6, R any](
-	obs1 Observable[T1],
-	obs2 Observable[T2],
-	obs3 Observable[T3],
-	obs4 Observable[T4],
-	obs5 Observable[T5],
-	obs6 Observable[T6],
+	ob1 Observable[T1],
+	ob2 Observable[T2],
+	ob3 Observable[T3],
+	ob4 Observable[T4],
+	ob5 Observable[T5],
+	ob6 Observable[T6],
 	mapping func(v1 T1, v2 T2, v3 T3, v4 T4, v5 T5, v6 T6) R,
 ) Observable[R] {
 	return func(c Context, o Observer[R]) {
@@ -66,12 +66,12 @@ func withLatestFrom6[T1, T2, T3, T4, T5, T6, R any](
 		})
 
 		_ = true &&
-			subscribeChannel(c, obs1, chan1, noop) &&
-			subscribeChannel(c, obs2, chan2, noop) &&
-			subscribeChannel(c, obs3, chan3, noop) &&
-			subscribeChannel(c, obs4, chan4, noop) &&
-			subscribeChannel(c, obs5, chan5, noop) &&
-			subscribeChannel(c, obs6, chan6, noop)
+			subscribeChannel(c, ob1, chan1, noop) &&
+			subscribeChannel(c, ob2, chan2, noop) &&
+			subscribeChannel(c, ob3, chan3, noop) &&
+			subscribeChannel(c, ob4, chan4, noop) &&
+			subscribeChannel(c, ob5, chan5, noop) &&
+			subscribeChannel(c, ob6, chan6, noop)
 	}
 }
 

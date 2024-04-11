@@ -13,9 +13,8 @@ import (
 // ThrottleTime lets a value pass, then ignores source values
 // for the next duration time.
 func ThrottleTime[T any](d time.Duration) ThrottleOperator[T, time.Time] {
-	obsTimer := Timer(d)
-	durationSelector := func(T) Observable[time.Time] { return obsTimer }
-	return Throttle(durationSelector)
+	ob := Timer(d)
+	return Throttle(func(T) Observable[time.Time] { return ob })
 }
 
 // Throttle emits a value from the source Observable, then ignores
@@ -67,7 +66,7 @@ type throttleObservable[T, U any] struct {
 	throttleConfig[T, U]
 }
 
-func (obs throttleObservable[T, U]) Subscribe(c Context, o Observer[T]) {
+func (ob throttleObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 	c, cancel := c.WithCancel()
 	o = o.DoOnTermination(cancel)
 
@@ -89,7 +88,7 @@ func (obs throttleObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 	var doThrottle func(T)
 
 	doThrottle = func(v T) {
-		obs1 := obs.DurationSelector(v)
+		obs := ob.DurationSelector(v)
 		w, cancelw := c.WithCancel()
 
 		x.Context.Store(w.Context)
@@ -97,7 +96,7 @@ func (obs throttleObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 
 		var noop bool
 
-		obs1.Subscribe(w, func(n Notification[U]) {
+		obs.Subscribe(w, func(n Notification[U]) {
 			if noop {
 				return
 			}
@@ -109,7 +108,7 @@ func (obs throttleObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 
 			switch n.Kind {
 			case KindNext:
-				if obs.Trailing && x.Trailing.HasValue.Load() {
+				if ob.Trailing && x.Trailing.HasValue.Load() {
 					x.Trailing.Lock()
 					value := x.Trailing.Value
 					x.Trailing.HasValue.Store(false)
@@ -145,7 +144,7 @@ func (obs throttleObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 		})
 	}
 
-	obs.Source.Subscribe(c, func(n Notification[T]) {
+	ob.Source.Subscribe(c, func(n Notification[T]) {
 		switch n.Kind {
 		case KindNext:
 			x.Trailing.Lock()
@@ -154,7 +153,7 @@ func (obs throttleObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 			x.Trailing.Unlock()
 
 			if x.Context.Load() == c.Context {
-				if obs.Leading {
+				if ob.Leading {
 					x.Trailing.HasValue.Store(false)
 					o.Emit(n)
 				}

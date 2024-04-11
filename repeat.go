@@ -39,7 +39,7 @@ type repeatObservable[T any] struct {
 	Count  int
 }
 
-func (obs repeatObservable[T]) Subscribe(c Context, o Observer[T]) {
+func (ob repeatObservable[T]) Subscribe(c Context, o Observer[T]) {
 	var observer Observer[T]
 
 	done := c.Done()
@@ -52,10 +52,10 @@ func (obs repeatObservable[T]) Subscribe(c Context, o Observer[T]) {
 			return
 		}
 
-		obs.Source.Subscribe(c, observer)
+		ob.Source.Subscribe(c, observer)
 	})
 
-	count := obs.Count
+	count := ob.Count
 
 	observer = func(n Notification[T]) {
 		if n.Kind != KindComplete || count == 0 {

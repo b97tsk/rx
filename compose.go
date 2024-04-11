@@ -7,8 +7,8 @@ func Compose2[A, B, C any](
 	op2 Operator[B, C],
 ) Operator[A, C] {
 	return NewOperator(
-		func(obs Observable[A]) Observable[C] {
-			return Pipe2(obs, op1, op2)
+		func(ob Observable[A]) Observable[C] {
+			return Pipe2(ob, op1, op2)
 		},
 	)
 }
@@ -21,8 +21,8 @@ func Compose3[A, B, C, D any](
 	op3 Operator[C, D],
 ) Operator[A, D] {
 	return NewOperator(
-		func(obs Observable[A]) Observable[D] {
-			return Pipe3(obs, op1, op2, op3)
+		func(ob Observable[A]) Observable[D] {
+			return Pipe3(ob, op1, op2, op3)
 		},
 	)
 }
@@ -36,8 +36,8 @@ func Compose4[A, B, C, D, E any](
 	op4 Operator[D, E],
 ) Operator[A, E] {
 	return NewOperator(
-		func(obs Observable[A]) Observable[E] {
-			return Pipe4(obs, op1, op2, op3, op4)
+		func(ob Observable[A]) Observable[E] {
+			return Pipe4(ob, op1, op2, op3, op4)
 		},
 	)
 }
@@ -52,8 +52,8 @@ func Compose5[A, B, C, D, E, F any](
 	op5 Operator[E, F],
 ) Operator[A, F] {
 	return NewOperator(
-		func(obs Observable[A]) Observable[F] {
-			return Pipe5(obs, op1, op2, op3, op4, op5)
+		func(ob Observable[A]) Observable[F] {
+			return Pipe5(ob, op1, op2, op3, op4, op5)
 		},
 	)
 }
@@ -69,8 +69,8 @@ func Compose6[A, B, C, D, E, F, G any](
 	op6 Operator[F, G],
 ) Operator[A, G] {
 	return NewOperator(
-		func(obs Observable[A]) Observable[G] {
-			return Pipe6(obs, op1, op2, op3, op4, op5, op6)
+		func(ob Observable[A]) Observable[G] {
+			return Pipe6(ob, op1, op2, op3, op4, op5, op6)
 		},
 	)
 }
@@ -87,8 +87,8 @@ func Compose7[A, B, C, D, E, F, G, H any](
 	op7 Operator[G, H],
 ) Operator[A, H] {
 	return NewOperator(
-		func(obs Observable[A]) Observable[H] {
-			return Pipe7(obs, op1, op2, op3, op4, op5, op6, op7)
+		func(ob Observable[A]) Observable[H] {
+			return Pipe7(ob, op1, op2, op3, op4, op5, op6, op7)
 		},
 	)
 }
@@ -106,8 +106,8 @@ func Compose8[A, B, C, D, E, F, G, H, I any](
 	op8 Operator[H, I],
 ) Operator[A, I] {
 	return NewOperator(
-		func(obs Observable[A]) Observable[I] {
-			return Pipe8(obs, op1, op2, op3, op4, op5, op6, op7, op8)
+		func(ob Observable[A]) Observable[I] {
+			return Pipe8(ob, op1, op2, op3, op4, op5, op6, op7, op8)
 		},
 	)
 }
@@ -126,8 +126,8 @@ func Compose9[A, B, C, D, E, F, G, H, I, J any](
 	op9 Operator[I, J],
 ) Operator[A, J] {
 	return NewOperator(
-		func(obs Observable[A]) Observable[J] {
-			return Pipe9(obs, op1, op2, op3, op4, op5, op6, op7, op8, op9)
+		func(ob Observable[A]) Observable[J] {
+			return Pipe9(ob, op1, op2, op3, op4, op5, op6, op7, op8, op9)
 		},
 	)
 }

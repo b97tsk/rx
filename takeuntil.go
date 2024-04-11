@@ -20,7 +20,7 @@ type takeUntilObservable[T, U any] struct {
 	Notifier Observable[U]
 }
 
-func (obs takeUntilObservable[T, U]) Subscribe(c Context, o Observer[T]) {
+func (ob takeUntilObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 	c, cancel := c.WithCancel()
 	o = o.DoOnTermination(cancel)
 
@@ -41,7 +41,7 @@ func (obs takeUntilObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 
 		Try3(
 			Observable[U].Subscribe,
-			obs.Notifier,
+			ob.Notifier,
 			w,
 			func(n Notification[U]) {
 				if noop {
@@ -103,7 +103,7 @@ func (obs takeUntilObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 		return
 	}
 
-	obs.Source.Subscribe(c, func(n Notification[T]) {
+	ob.Source.Subscribe(c, func(n Notification[T]) {
 		switch n.Kind {
 		case KindNext:
 			if x.Context.Load() == c.Context {

@@ -35,8 +35,8 @@ func (op TimeoutOperator[T]) WithFirst(d time.Duration) TimeoutOperator[T] {
 }
 
 // WithObservable sets With option to a given value.
-func (op TimeoutOperator[T]) WithObservable(obs Observable[T]) TimeoutOperator[T] {
-	op.ts.With = obs
+func (op TimeoutOperator[T]) WithObservable(ob Observable[T]) TimeoutOperator[T] {
+	op.ts.With = ob
 	return op
 }
 
@@ -50,14 +50,14 @@ type timeoutObservable[T any] struct {
 	timeoutConfig[T]
 }
 
-func (obs timeoutObservable[T]) Subscribe(parent Context, o Observer[T]) {
+func (ob timeoutObservable[T]) Subscribe(parent Context, o Observer[T]) {
 	c, cancel := parent.WithCancel()
 
 	q := make(chan Notification[T])
 	noop := make(chan struct{})
 
 	c.Go(func() {
-		tm := timerpool.Get(obs.First)
+		tm := timerpool.Get(ob.First)
 
 		for {
 			select {
@@ -77,7 +77,7 @@ func (obs timeoutObservable[T]) Subscribe(parent Context, o Observer[T]) {
 					return
 				}
 
-				tm.Reset(obs.Each)
+				tm.Reset(ob.Each)
 
 			case <-tm.C:
 				timerpool.PutExpired(tm)
@@ -85,8 +85,8 @@ func (obs timeoutObservable[T]) Subscribe(parent Context, o Observer[T]) {
 				cancel()
 				close(noop)
 
-				if obs.With != nil {
-					obs.With.Subscribe(parent, o)
+				if ob.With != nil {
+					ob.With.Subscribe(parent, o)
 					return
 				}
 
@@ -97,5 +97,5 @@ func (obs timeoutObservable[T]) Subscribe(parent Context, o Observer[T]) {
 		}
 	})
 
-	obs.Source.Subscribe(c, channelObserver(q, noop))
+	ob.Source.Subscribe(c, channelObserver(q, noop))
 }

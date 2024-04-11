@@ -10,11 +10,11 @@ import (
 
 func Example() {
 	// Create an Observable...
-	obs := rx.Range(1, 10)
+	ob := rx.Range(1, 10)
 
 	// ...and apply some Operators.
-	obs = rx.Pipe3(
-		obs,
+	ob = rx.Pipe3(
+		ob,
 		rx.Filter(
 			func(v int) bool {
 				return v%2 == 1
@@ -41,7 +41,7 @@ func Example() {
 
 	// To Subscribe to an Observable, you call its Subscribe method, which takes
 	// a Context and an Observer as arguments.
-	obs.Subscribe(rx.NewContext(context.TODO()), rx.Noop[int])
+	ob.Subscribe(rx.NewContext(context.TODO()), rx.Noop[int])
 
 	// Since this example has no other goroutines involved, it must have already done.
 	// You can also use BlockingSubscribe method instead. It blocks until done.
@@ -59,7 +59,7 @@ func Example_blocking() {
 	ctx, cancel := rx.NewContext(context.TODO()).WithTimeout(700 * time.Millisecond)
 	defer cancel()
 
-	obs := rx.Pipe4(
+	ob := rx.Pipe4(
 		rx.Concat(
 			rx.Timer(50*time.Millisecond),
 			rx.Ticker(100*time.Millisecond),
@@ -70,7 +70,7 @@ func Example_blocking() {
 		rx.DoOnNext(func(v int) { fmt.Println(v) }), // 10, 15, 21, ...
 	)
 
-	err := obs.BlockingSubscribe(ctx, rx.Noop[int])
+	err := ob.BlockingSubscribe(ctx, rx.Noop[int])
 	if err != nil {
 		fmt.Println(err)
 	}

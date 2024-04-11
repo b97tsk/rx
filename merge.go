@@ -33,12 +33,12 @@ type mergeWithObservable[T any] struct {
 	Others []Observable[T]
 }
 
-func (obs mergeWithObservable[T]) Subscribe(c Context, o Observer[T]) {
+func (ob mergeWithObservable[T]) Subscribe(c Context, o Observer[T]) {
 	c, o = Serialize(c, o)
 
 	var num atomic.Uint32
 
-	num.Store(uint32(obs.numObservables()))
+	num.Store(uint32(ob.numObservables()))
 
 	worker := func(n Notification[T]) {
 		if n.Kind != KindComplete || num.Add(^uint32(0)) == 0 {
@@ -48,8 +48,8 @@ func (obs mergeWithObservable[T]) Subscribe(c Context, o Observer[T]) {
 
 	done := c.Done()
 
-	if obs.Source != nil {
-		obs.Source.Subscribe(c, worker)
+	if ob.Source != nil {
+		ob.Source.Subscribe(c, worker)
 
 		select {
 		default:
@@ -59,8 +59,8 @@ func (obs mergeWithObservable[T]) Subscribe(c Context, o Observer[T]) {
 		}
 	}
 
-	for _, obs1 := range obs.Others {
-		obs1.Subscribe(c, worker)
+	for _, obs := range ob.Others {
+		obs.Subscribe(c, worker)
 
 		select {
 		default:
@@ -71,10 +71,10 @@ func (obs mergeWithObservable[T]) Subscribe(c Context, o Observer[T]) {
 	}
 }
 
-func (obs mergeWithObservable[T]) numObservables() int {
-	n := len(obs.Others)
+func (ob mergeWithObservable[T]) numObservables() int {
+	n := len(ob.Others)
 
-	if obs.Source != nil {
+	if ob.Source != nil {
 		n++
 	}
 
@@ -150,9 +150,9 @@ type mergeMapObservable[T, R any] struct {
 	mergeMapConfig[T, R]
 }
 
-func (obs mergeMapObservable[T, R]) Subscribe(c Context, o Observer[R]) {
-	if obs.UseBuffering {
-		obs.SubscribeWithBuffering(c, o)
+func (ob mergeMapObservable[T, R]) Subscribe(c Context, o Observer[R]) {
+	if ob.UseBuffering {
+		ob.SubscribeWithBuffering(c, o)
 		return
 	}
 
@@ -200,7 +200,7 @@ func (obs mergeMapObservable[T, R]) Subscribe(c Context, o Observer[R]) {
 
 	var noop bool
 
-	obs.Source.Subscribe(c, func(n Notification[T]) {
+	ob.Source.Subscribe(c, func(n Notification[T]) {
 		if noop {
 			return
 		}
@@ -209,7 +209,7 @@ func (obs mergeMapObservable[T, R]) Subscribe(c Context, o Observer[R]) {
 		case KindNext:
 			x.Lock()
 
-			for x.Workers == obs.Concurrency && !x.HasError {
+			for x.Workers == ob.Concurrency && !x.HasError {
 				x.Wait()
 			}
 
@@ -219,7 +219,7 @@ func (obs mergeMapObservable[T, R]) Subscribe(c Context, o Observer[R]) {
 				return
 			}
 
-			obs1 := Try11(obs.Mapping, n.Value, func() {
+			obs := Try11(ob.Mapping, n.Value, func() {
 				defer x.Unlock()
 				noop = true
 				x.HasError = true
@@ -229,7 +229,7 @@ func (obs mergeMapObservable[T, R]) Subscribe(c Context, o Observer[R]) {
 			x.Workers++
 			x.Unlock()
 
-			obs1.Subscribe(c, worker)
+			obs.Subscribe(c, worker)
 
 		case KindError:
 			o.Error(n.Error)
@@ -250,7 +250,7 @@ func (obs mergeMapObservable[T, R]) Subscribe(c Context, o Observer[R]) {
 	})
 }
 
-func (obs mergeMapObservable[T, R]) SubscribeWithBuffering(c Context, o Observer[R]) {
+func (ob mergeMapObservable[T, R]) SubscribeWithBuffering(c Context, o Observer[R]) {
 	c, o = Serialize(c, o)
 
 	var x struct {
@@ -309,7 +309,7 @@ func (obs mergeMapObservable[T, R]) SubscribeWithBuffering(c Context, o Observer
 		}
 
 		startWorker = resistReentrance(func() {
-			obs1 := Try11(obs.Mapping, x.Queue.Pop(), func() {
+			obs := Try11(ob.Mapping, x.Queue.Pop(), func() {
 				defer x.Unlock()
 				x.Queue.Init()
 				x.HasError = true
@@ -319,7 +319,7 @@ func (obs mergeMapObservable[T, R]) SubscribeWithBuffering(c Context, o Observer
 			x.Workers++
 			x.Unlock()
 
-			obs1.Subscribe(c, worker)
+			obs.Subscribe(c, worker)
 		})
 
 		startWorker()
@@ -327,7 +327,7 @@ func (obs mergeMapObservable[T, R]) SubscribeWithBuffering(c Context, o Observer
 
 	var noop bool
 
-	obs.Source.Subscribe(c, func(n Notification[T]) {
+	ob.Source.Subscribe(c, func(n Notification[T]) {
 		if noop {
 			return
 		}
@@ -344,7 +344,7 @@ func (obs mergeMapObservable[T, R]) SubscribeWithBuffering(c Context, o Observer
 
 			x.Queue.Push(n.Value)
 
-			if x.Workers != obs.Concurrency {
+			if x.Workers != ob.Concurrency {
 				startWorker()
 				return
 			}

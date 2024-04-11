@@ -6,11 +6,11 @@ package rx
 // Zip5 pulls values from each input Observable one by one, it does not
 // buffer any value.
 func Zip5[T1, T2, T3, T4, T5, R any](
-	obs1 Observable[T1],
-	obs2 Observable[T2],
-	obs3 Observable[T3],
-	obs4 Observable[T4],
-	obs5 Observable[T5],
+	ob1 Observable[T1],
+	ob2 Observable[T2],
+	ob3 Observable[T3],
+	ob4 Observable[T4],
+	ob5 Observable[T5],
 	mapping func(v1 T1, v2 T2, v3 T3, v4 T4, v5 T5) R,
 ) Observable[R] {
 	return func(c Context, o Observer[R]) {
@@ -100,10 +100,10 @@ func Zip5[T1, T2, T3, T4, T5, R any](
 			}
 		})
 
-		c.Go(func() { obs1.Subscribe(c, channelObserver(chan1, noop)) })
-		c.Go(func() { obs2.Subscribe(c, channelObserver(chan2, noop)) })
-		c.Go(func() { obs3.Subscribe(c, channelObserver(chan3, noop)) })
-		c.Go(func() { obs4.Subscribe(c, channelObserver(chan4, noop)) })
-		c.Go(func() { obs5.Subscribe(c, channelObserver(chan5, noop)) })
+		c.Go(func() { ob1.Subscribe(c, channelObserver(chan1, noop)) })
+		c.Go(func() { ob2.Subscribe(c, channelObserver(chan2, noop)) })
+		c.Go(func() { ob3.Subscribe(c, channelObserver(chan3, noop)) })
+		c.Go(func() { ob4.Subscribe(c, channelObserver(chan4, noop)) })
+		c.Go(func() { ob5.Subscribe(c, channelObserver(chan5, noop)) })
 	}
 }

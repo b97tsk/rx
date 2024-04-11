@@ -33,9 +33,9 @@ type Observable[T any] func(c Context, o Observer[T])
 
 // Subscribe invokes an execution of an Observable.
 //
-// If obs panics and c.PanicHandler is not nil, Subscribe calls c.PanicHandler
+// If ob panics and c.PanicHandler is not nil, Subscribe calls c.PanicHandler
 // with a value returned by the built-in recover function.
-func (obs Observable[T]) Subscribe(c Context, o Observer[T]) {
+func (ob Observable[T]) Subscribe(c Context, o Observer[T]) {
 	if c.PanicHandler != nil {
 		defer func() {
 			if v := recover(); v != nil {
@@ -44,13 +44,13 @@ func (obs Observable[T]) Subscribe(c Context, o Observer[T]) {
 		}()
 	}
 
-	if obs == nil {
+	if ob == nil {
 		defer o.Error(ErrOops)
 		panic("nil Observable")
 		return
 	}
 
-	obs(c, o)
+	ob(c, o)
 }
 
 // NewObservable creates an Observable from f.

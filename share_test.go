@@ -13,39 +13,39 @@ func TestShare(t *testing.T) {
 
 	NewTestSuite[int](t).Case(
 		func() rx.Observable[int] {
-			obs := rx.Pipe3(
+			ob := rx.Pipe3(
 				rx.Ticker(Step(3)),
 				rx.Scan(-1, func(i int, _ time.Time) int { return i + 1 }),
 				rx.Take[int](4),
 				rx.Share[int](),
 			)
 			return rx.Merge(
-				obs,
-				rx.Pipe1(obs, DelaySubscription[int](4)),
-				rx.Pipe1(obs, DelaySubscription[int](8)),
-				rx.Pipe1(obs, DelaySubscription[int](13)),
+				ob,
+				rx.Pipe1(ob, DelaySubscription[int](4)),
+				rx.Pipe1(ob, DelaySubscription[int](8)),
+				rx.Pipe1(ob, DelaySubscription[int](13)),
 			)
 		}(),
 		0, 1, 1, 2, 2, 2, 3, 3, 3, 0, 1, 2, 3, ErrComplete,
 	).Case(
 		func() rx.Observable[int] {
-			obs := rx.Pipe3(
+			ob := rx.Pipe3(
 				rx.Ticker(Step(3)),
 				rx.Scan(-1, func(i int, _ time.Time) int { return i + 1 }),
 				rx.Share[int](),
 				rx.Take[int](4),
 			)
 			return rx.Merge(
-				obs,
-				rx.Pipe1(obs, DelaySubscription[int](4)),
-				rx.Pipe1(obs, DelaySubscription[int](8)),
-				rx.Pipe1(obs, DelaySubscription[int](19)),
+				ob,
+				rx.Pipe1(ob, DelaySubscription[int](4)),
+				rx.Pipe1(ob, DelaySubscription[int](8)),
+				rx.Pipe1(ob, DelaySubscription[int](19)),
 			)
 		}(),
 		0, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 5, 0, 1, 2, 3, ErrComplete,
 	).Case(
 		func() rx.Observable[int] {
-			obs := rx.Pipe3(
+			ob := rx.Pipe3(
 				rx.Ticker(Step(3)),
 				rx.Scan(-1, func(i int, _ time.Time) int { return i + 1 }),
 				rx.Take[int](4),
@@ -56,16 +56,16 @@ func TestShare(t *testing.T) {
 				),
 			)
 			return rx.Merge(
-				obs,
-				rx.Pipe1(obs, DelaySubscription[int](4)),
-				rx.Pipe1(obs, DelaySubscription[int](8)),
-				rx.Pipe1(obs, DelaySubscription[int](13)),
+				ob,
+				rx.Pipe1(ob, DelaySubscription[int](4)),
+				rx.Pipe1(ob, DelaySubscription[int](8)),
+				rx.Pipe1(ob, DelaySubscription[int](13)),
 			)
 		}(),
 		0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 0, 1, 2, 3, ErrComplete,
 	).Case(
 		func() rx.Observable[int] {
-			obs := rx.Pipe3(
+			ob := rx.Pipe3(
 				rx.Ticker(Step(3)),
 				rx.Scan(-1, func(i int, _ time.Time) int { return i + 1 }),
 				rx.Share[int]().WithConnector(
@@ -76,10 +76,10 @@ func TestShare(t *testing.T) {
 				rx.Take[int](4),
 			)
 			return rx.Merge(
-				obs,
-				rx.Pipe1(obs, DelaySubscription[int](4)),
-				rx.Pipe1(obs, DelaySubscription[int](8)),
-				rx.Pipe1(obs, DelaySubscription[int](16)),
+				ob,
+				rx.Pipe1(ob, DelaySubscription[int](4)),
+				rx.Pipe1(ob, DelaySubscription[int](8)),
+				rx.Pipe1(ob, DelaySubscription[int](16)),
 			)
 		}(),
 		0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 0, 1, 2, 3, ErrComplete,

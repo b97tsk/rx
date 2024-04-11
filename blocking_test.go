@@ -12,7 +12,7 @@ func TestBlockingFirst(t *testing.T) {
 	t.Parallel()
 
 	testCases := [...]struct {
-		obs rx.Observable[string]
+		ob  rx.Observable[string]
 		val string
 		err error
 	}{
@@ -27,7 +27,7 @@ func TestBlockingFirst(t *testing.T) {
 	defer cancel()
 
 	for _, tc := range testCases {
-		v, err := tc.obs.BlockingFirst(ctx)
+		v, err := tc.ob.BlockingFirst(ctx)
 		if v != tc.val || err != tc.err {
 			t.Fail()
 		}
@@ -38,7 +38,7 @@ func TestBlockingFirstOrElse(t *testing.T) {
 	t.Parallel()
 
 	testCases := [...]struct {
-		obs rx.Observable[string]
+		ob  rx.Observable[string]
 		val string
 	}{
 		{rx.Empty[string](), "C"},
@@ -52,7 +52,7 @@ func TestBlockingFirstOrElse(t *testing.T) {
 	defer cancel()
 
 	for _, tc := range testCases {
-		v := tc.obs.BlockingFirstOrElse(ctx, "C")
+		v := tc.ob.BlockingFirstOrElse(ctx, "C")
 		if v != tc.val {
 			t.Fail()
 		}
@@ -63,7 +63,7 @@ func TestBlockingLast(t *testing.T) {
 	t.Parallel()
 
 	testCases := [...]struct {
-		obs rx.Observable[string]
+		ob  rx.Observable[string]
 		val string
 		err error
 	}{
@@ -78,7 +78,7 @@ func TestBlockingLast(t *testing.T) {
 	defer cancel()
 
 	for _, tc := range testCases {
-		v, err := tc.obs.BlockingLast(ctx)
+		v, err := tc.ob.BlockingLast(ctx)
 		if v != tc.val || err != tc.err {
 			t.Fail()
 		}
@@ -89,7 +89,7 @@ func TestBlockingLastOrElse(t *testing.T) {
 	t.Parallel()
 
 	testCases := [...]struct {
-		obs rx.Observable[string]
+		ob  rx.Observable[string]
 		val string
 	}{
 		{rx.Empty[string](), "C"},
@@ -103,7 +103,7 @@ func TestBlockingLastOrElse(t *testing.T) {
 	defer cancel()
 
 	for _, tc := range testCases {
-		v := tc.obs.BlockingLastOrElse(ctx, "C")
+		v := tc.ob.BlockingLastOrElse(ctx, "C")
 		if v != tc.val {
 			t.Fail()
 		}
@@ -114,7 +114,7 @@ func TestBlockingSingle(t *testing.T) {
 	t.Parallel()
 
 	testCases := [...]struct {
-		obs rx.Observable[string]
+		ob  rx.Observable[string]
 		val string
 		err error
 	}{
@@ -129,7 +129,7 @@ func TestBlockingSingle(t *testing.T) {
 	defer cancel()
 
 	for _, tc := range testCases {
-		v, err := tc.obs.BlockingSingle(ctx)
+		v, err := tc.ob.BlockingSingle(ctx)
 		if v != tc.val || err != tc.err {
 			t.Fail()
 		}
@@ -140,7 +140,7 @@ func TestBlockingSubscribe(t *testing.T) {
 	t.Parallel()
 
 	testCases := [...]struct {
-		obs rx.Observable[string]
+		ob  rx.Observable[string]
 		err error
 	}{
 		{rx.Empty[string](), nil},
@@ -154,7 +154,7 @@ func TestBlockingSubscribe(t *testing.T) {
 	defer cancel()
 
 	for _, tc := range testCases {
-		err := tc.obs.BlockingSubscribe(ctx, rx.Noop[string])
+		err := tc.ob.BlockingSubscribe(ctx, rx.Noop[string])
 		if err != tc.err {
 			t.Fail()
 		}

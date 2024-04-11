@@ -9,9 +9,8 @@ import (
 // DebounceTime emits a value from the source Observable only after
 // a particular time span has passed without another source emission.
 func DebounceTime[T any](d time.Duration) Operator[T, T] {
-	obsTimer := Timer(d)
-	durationSelector := func(T) Observable[time.Time] { return obsTimer }
-	return Debounce(durationSelector)
+	ob := Timer(d)
+	return Debounce(func(T) Observable[time.Time] { return ob })
 }
 
 // Debounce emits a value from the source Observable only after a particular
@@ -33,7 +32,7 @@ type debounceObservable[T, U any] struct {
 	DurationSelector func(T) Observable[U]
 }
 
-func (obs debounceObservable[T, U]) Subscribe(c Context, o Observer[T]) {
+func (ob debounceObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 	c, cancel := c.WithCancel()
 	o = o.DoOnTermination(cancel)
 
@@ -53,7 +52,7 @@ func (obs debounceObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 	x.Context.Store(c.Context)
 
 	startWorker := func(v T) {
-		obs1 := obs.DurationSelector(v)
+		obs := ob.DurationSelector(v)
 		w, cancelw := c.WithCancel()
 
 		x.Context.Store(w.Context)
@@ -62,7 +61,7 @@ func (obs debounceObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 
 		var noop bool
 
-		obs1.Subscribe(w, func(n Notification[U]) {
+		obs.Subscribe(w, func(n Notification[U]) {
 			if noop {
 				return
 			}
@@ -97,7 +96,7 @@ func (obs debounceObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 		})
 	}
 
-	obs.Source.Subscribe(c, func(n Notification[T]) {
+	ob.Source.Subscribe(c, func(n Notification[T]) {
 		switch n.Kind {
 		case KindNext:
 			x.Latest.Lock()

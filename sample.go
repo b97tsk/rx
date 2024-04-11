@@ -27,7 +27,7 @@ type sampleObservable[T, U any] struct {
 	Notifier Observable[U]
 }
 
-func (obs sampleObservable[T, U]) Subscribe(c Context, o Observer[T]) {
+func (ob sampleObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 	c, cancel := c.WithCancel()
 	o = o.DoOnTermination(cancel)
 
@@ -44,7 +44,7 @@ func (obs sampleObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 		}
 	}
 
-	obs.Source.Subscribe(c, func(n Notification[T]) {
+	ob.Source.Subscribe(c, func(n Notification[T]) {
 		switch n.Kind {
 		case KindNext:
 			x.Latest.Lock()
@@ -78,7 +78,7 @@ func (obs sampleObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 	x.Worker.Add(1)
 	x.Worker.Unlock()
 
-	obs.Notifier.Subscribe(w, func(n Notification[U]) {
+	ob.Notifier.Subscribe(w, func(n Notification[U]) {
 		switch n.Kind {
 		case KindNext:
 			if x.Latest.HasValue.Load() {

@@ -12,9 +12,8 @@ import (
 // When it sees a source value, it ignores that plus the next ones for a
 // duration, and then it emits the most recent value from the source.
 func AuditTime[T any](d time.Duration) Operator[T, T] {
-	obsTimer := Timer(d)
-	durationSelector := func(T) Observable[time.Time] { return obsTimer }
-	return Audit(durationSelector)
+	ob := Timer(d)
+	return Audit(func(T) Observable[time.Time] { return ob })
 }
 
 // Audit ignores source values for a duration determined by another Observable,
@@ -36,7 +35,7 @@ type auditObservable[T, U any] struct {
 	DurationSelector func(T) Observable[U]
 }
 
-func (obs auditObservable[T, U]) Subscribe(c Context, o Observer[T]) {
+func (ob auditObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 	c, cancel := c.WithCancel()
 	o = o.DoOnTermination(cancel)
 
@@ -55,7 +54,7 @@ func (obs auditObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 	x.Context.Store(c.Context)
 
 	startWorker := func(v T) {
-		obs1 := obs.DurationSelector(v)
+		obs := ob.DurationSelector(v)
 		w, cancelw := c.WithCancel()
 
 		x.Context.Store(w.Context)
@@ -63,7 +62,7 @@ func (obs auditObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 
 		var noop bool
 
-		obs1.Subscribe(w, func(n Notification[U]) {
+		obs.Subscribe(w, func(n Notification[U]) {
 			if noop {
 				return
 			}
@@ -102,7 +101,7 @@ func (obs auditObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 		})
 	}
 
-	obs.Source.Subscribe(c, func(n Notification[T]) {
+	ob.Source.Subscribe(c, func(n Notification[T]) {
 		switch n.Kind {
 		case KindNext:
 			x.Latest.Lock()

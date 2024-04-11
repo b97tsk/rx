@@ -37,11 +37,11 @@ type connectObservable[T, R any] struct {
 	connectConfig[T, R]
 }
 
-func (obs connectObservable[T, R]) Subscribe(c Context, o Observer[R]) {
+func (ob connectObservable[T, R]) Subscribe(c Context, o Observer[R]) {
 	c, cancel := c.WithCancel()
 	o = o.DoOnTermination(cancel)
 	oops := func() { o.Error(ErrOops) }
-	subject := Try01(obs.Connector, oops)
-	Try11(obs.Selector, subject.Observable, oops).Subscribe(c, o)
-	obs.Source.Subscribe(c, subject.Observer)
+	subject := Try01(ob.Connector, oops)
+	Try11(ob.Selector, subject.Observable, oops).Subscribe(c, o)
+	ob.Source.Subscribe(c, subject.Observer)
 }

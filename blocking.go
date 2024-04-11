@@ -1,19 +1,19 @@
 package rx
 
-// BlockingFirst subscribes to obs, returning the first emitted value.
-// If obs emits no values, it returns the zero value of T and ErrEmpty;
-// if obs emits a notification of error, it returns the zero value of T and
+// BlockingFirst subscribes to ob, returning the first emitted value.
+// If ob emits no values, it returns the zero value of T and ErrEmpty;
+// if ob emits a notification of error, it returns the zero value of T and
 // the error.
 //
 // The cancellation of parent will cause BlockingFirst to immediately return
 // the zero value of T and parent.Err().
-func (obs Observable[T]) BlockingFirst(parent Context) (v T, err error) {
+func (ob Observable[T]) BlockingFirst(parent Context) (v T, err error) {
 	res := Error[T](ErrEmpty)
 	c, cancel := parent.WithCancel()
 
 	var noop bool
 
-	obs.Subscribe(c, func(n Notification[T]) {
+	ob.Subscribe(c, func(n Notification[T]) {
 		if noop {
 			return
 		}
@@ -49,13 +49,13 @@ func (obs Observable[T]) BlockingFirst(parent Context) (v T, err error) {
 	}
 }
 
-// BlockingFirstOrElse subscribes to obs, returning the first emitted value or
-// def if obs emits no values or emits a notification of error.
+// BlockingFirstOrElse subscribes to ob, returning the first emitted value or
+// def if ob emits no values or emits a notification of error.
 //
 // The cancellation of parent will cause BlockingFirstOrElse to immediately
 // return def.
-func (obs Observable[T]) BlockingFirstOrElse(parent Context, def T) T {
-	v, err := obs.BlockingFirst(parent)
+func (ob Observable[T]) BlockingFirstOrElse(parent Context, def T) T {
+	v, err := ob.BlockingFirst(parent)
 	if err != nil {
 		return def
 	}
@@ -63,18 +63,18 @@ func (obs Observable[T]) BlockingFirstOrElse(parent Context, def T) T {
 	return v
 }
 
-// BlockingLast subscribes to obs, returning the last emitted value.
-// If obs emits no values, it returns the zero value of T and ErrEmpty;
-// if obs emits a notification of error, it returns the zero value of T and
+// BlockingLast subscribes to ob, returning the last emitted value.
+// If ob emits no values, it returns the zero value of T and ErrEmpty;
+// if ob emits a notification of error, it returns the zero value of T and
 // the error.
 //
 // The cancellation of parent will cause BlockingLast to immediately return
 // the zero value of T and parent.Err().
-func (obs Observable[T]) BlockingLast(parent Context) (v T, err error) {
+func (ob Observable[T]) BlockingLast(parent Context) (v T, err error) {
 	res := Error[T](ErrEmpty)
 	c, cancel := parent.WithCancel()
 
-	obs.Subscribe(c, func(n Notification[T]) {
+	ob.Subscribe(c, func(n Notification[T]) {
 		switch n.Kind {
 		case KindNext, KindError:
 			res = n
@@ -104,13 +104,13 @@ func (obs Observable[T]) BlockingLast(parent Context) (v T, err error) {
 	}
 }
 
-// BlockingLastOrElse subscribes to obs, returning the last emitted value or
-// def if obs emits no values or emits a notification of error.
+// BlockingLastOrElse subscribes to ob, returning the last emitted value or
+// def if ob emits no values or emits a notification of error.
 //
 // The cancellation of parent will cause BlockingLastOrElse to immediately
 // return def.
-func (obs Observable[T]) BlockingLastOrElse(parent Context, def T) T {
-	v, err := obs.BlockingLast(parent)
+func (ob Observable[T]) BlockingLastOrElse(parent Context, def T) T {
+	v, err := ob.BlockingLast(parent)
 	if err != nil {
 		return def
 	}
@@ -118,20 +118,20 @@ func (obs Observable[T]) BlockingLastOrElse(parent Context, def T) T {
 	return v
 }
 
-// BlockingSingle subscribes to obs, returning the single emitted value.
-// If obs emits more than one value or no values, it returns the zero value of
-// T and ErrNotSingle or ErrEmpty respectively; if obs emits a notification of
+// BlockingSingle subscribes to ob, returning the single emitted value.
+// If ob emits more than one value or no values, it returns the zero value of
+// T and ErrNotSingle or ErrEmpty respectively; if ob emits a notification of
 // error, it returns the zero value of T and the error.
 //
 // The cancellation of parent will cause BlockingSingle to immediately return
 // the zero value of T and parent.Err().
-func (obs Observable[T]) BlockingSingle(parent Context) (v T, err error) {
+func (ob Observable[T]) BlockingSingle(parent Context) (v T, err error) {
 	res := Error[T](ErrEmpty)
 	c, cancel := parent.WithCancel()
 
 	var noop bool
 
-	obs.Subscribe(c, func(n Notification[T]) {
+	ob.Subscribe(c, func(n Notification[T]) {
 		if noop {
 			return
 		}
@@ -172,18 +172,18 @@ func (obs Observable[T]) BlockingSingle(parent Context) (v T, err error) {
 	}
 }
 
-// BlockingSubscribe subscribes to obs and waits for it to complete.
-// If obs completes without an error, BlockingSubscribe returns nil;
+// BlockingSubscribe subscribes to ob and waits for it to complete.
+// If ob completes without an error, BlockingSubscribe returns nil;
 // otherwise, it returns the emitted error.
 //
 // The cancellation of parent will cause BlockingSubscribe to immediately
 // return parent.Err().
-func (obs Observable[T]) BlockingSubscribe(parent Context, o Observer[T]) error {
+func (ob Observable[T]) BlockingSubscribe(parent Context, o Observer[T]) error {
 	var res Notification[T]
 
 	c, cancel := parent.WithCancel()
 
-	obs.Subscribe(c, func(n Notification[T]) {
+	ob.Subscribe(c, func(n Notification[T]) {
 		res = n
 		o.Emit(n)
 		switch n.Kind {

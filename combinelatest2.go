@@ -4,8 +4,8 @@ package rx
 // that emits mappings of the latest values emitted by each of its input
 // Observables.
 func CombineLatest2[T1, T2, R any](
-	obs1 Observable[T1],
-	obs2 Observable[T2],
+	ob1 Observable[T1],
+	ob2 Observable[T2],
 	mapping func(v1 T1, v2 T2) R,
 ) Observable[R] {
 	return func(c Context, o Observer[R]) {
@@ -35,8 +35,8 @@ func CombineLatest2[T1, T2, R any](
 		})
 
 		_ = true &&
-			subscribeChannel(c, obs1, chan1, noop) &&
-			subscribeChannel(c, obs2, chan2, noop)
+			subscribeChannel(c, ob1, chan1, noop) &&
+			subscribeChannel(c, ob2, chan2, noop)
 	}
 }
 

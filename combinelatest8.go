@@ -4,14 +4,14 @@ package rx
 // that emits mappings of the latest values emitted by each of its input
 // Observables.
 func CombineLatest8[T1, T2, T3, T4, T5, T6, T7, T8, R any](
-	obs1 Observable[T1],
-	obs2 Observable[T2],
-	obs3 Observable[T3],
-	obs4 Observable[T4],
-	obs5 Observable[T5],
-	obs6 Observable[T6],
-	obs7 Observable[T7],
-	obs8 Observable[T8],
+	ob1 Observable[T1],
+	ob2 Observable[T2],
+	ob3 Observable[T3],
+	ob4 Observable[T4],
+	ob5 Observable[T5],
+	ob6 Observable[T6],
+	ob7 Observable[T7],
+	ob8 Observable[T8],
 	mapping func(v1 T1, v2 T2, v3 T3, v4 T4, v5 T5, v6 T6, v7 T7, v8 T8) R,
 ) Observable[R] {
 	return func(c Context, o Observer[R]) {
@@ -59,14 +59,14 @@ func CombineLatest8[T1, T2, T3, T4, T5, T6, T7, T8, R any](
 		})
 
 		_ = true &&
-			subscribeChannel(c, obs1, chan1, noop) &&
-			subscribeChannel(c, obs2, chan2, noop) &&
-			subscribeChannel(c, obs3, chan3, noop) &&
-			subscribeChannel(c, obs4, chan4, noop) &&
-			subscribeChannel(c, obs5, chan5, noop) &&
-			subscribeChannel(c, obs6, chan6, noop) &&
-			subscribeChannel(c, obs7, chan7, noop) &&
-			subscribeChannel(c, obs8, chan8, noop)
+			subscribeChannel(c, ob1, chan1, noop) &&
+			subscribeChannel(c, ob2, chan2, noop) &&
+			subscribeChannel(c, ob3, chan3, noop) &&
+			subscribeChannel(c, ob4, chan4, noop) &&
+			subscribeChannel(c, ob5, chan5, noop) &&
+			subscribeChannel(c, ob6, chan6, noop) &&
+			subscribeChannel(c, ob7, chan7, noop) &&
+			subscribeChannel(c, ob8, chan8, noop)
 	}
 }
 

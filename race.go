@@ -27,8 +27,8 @@ type raceWithObservable[T any] struct {
 	Others []Observable[T]
 }
 
-func (obs raceWithObservable[T]) Subscribe(c Context, o Observer[T]) {
-	subs := make([]Pair[Context, CancelFunc], obs.numObservables())
+func (ob raceWithObservable[T]) Subscribe(c Context, o Observer[T]) {
+	subs := make([]Pair[Context, CancelFunc], ob.numObservables())
 
 	for i := range subs {
 		subs[i] = NewPair(c.WithCancel())
@@ -36,10 +36,10 @@ func (obs raceWithObservable[T]) Subscribe(c Context, o Observer[T]) {
 
 	var race atomic.Uint32
 
-	subscribe := func(i int, obs Observable[T]) {
+	subscribe := func(i int, ob Observable[T]) {
 		var won, lost bool
 
-		obs.Subscribe(subs[i].Left(), func(n Notification[T]) {
+		ob.Subscribe(subs[i].Left(), func(n Notification[T]) {
 			switch {
 			case won:
 				o.Emit(n)
@@ -70,8 +70,8 @@ func (obs raceWithObservable[T]) Subscribe(c Context, o Observer[T]) {
 
 	var off int
 
-	if obs.Source != nil {
-		subscribe(0, obs.Source)
+	if ob.Source != nil {
+		subscribe(0, ob.Source)
 
 		if race.Load() != 0 {
 			return
@@ -80,8 +80,8 @@ func (obs raceWithObservable[T]) Subscribe(c Context, o Observer[T]) {
 		off = 1
 	}
 
-	for i, obs1 := range obs.Others {
-		subscribe(i+off, obs1)
+	for i, obs := range ob.Others {
+		subscribe(i+off, obs)
 
 		if race.Load() != 0 {
 			return
@@ -89,10 +89,10 @@ func (obs raceWithObservable[T]) Subscribe(c Context, o Observer[T]) {
 	}
 }
 
-func (obs raceWithObservable[T]) numObservables() int {
-	n := len(obs.Others)
+func (ob raceWithObservable[T]) numObservables() int {
+	n := len(ob.Others)
 
-	if obs.Source != nil {
+	if ob.Source != nil {
 		n++
 	}
 

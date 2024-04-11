@@ -86,14 +86,14 @@ func (s *TestSuite[T]) WithContext(c rx.Context) *TestSuite[T] {
 	return &TestSuite[T]{s.tb, c}
 }
 
-func (s *TestSuite[T]) Case(obs rx.Observable[T], output ...any) *TestSuite[T] {
+func (s *TestSuite[T]) Case(ob rx.Observable[T], output ...any) *TestSuite[T] {
 	var wg sync.WaitGroup
 
 	var p atomic.Pointer[any]
 
 	f := func(v any) { p.Store(&v) }
 
-	_ = obs.BlockingSubscribe(s.c.WithWaitGroup(&wg).WithPanicHandler(f), func(n rx.Notification[T]) {
+	_ = ob.BlockingSubscribe(s.c.WithWaitGroup(&wg).WithPanicHandler(f), func(n rx.Notification[T]) {
 		if len(output) == 0 {
 			switch n.Kind {
 			case rx.KindNext:

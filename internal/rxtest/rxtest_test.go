@@ -45,12 +45,12 @@ func TestFailure(t *testing.T) {
 	}, ErrComplete)
 }
 
-func failtest[T any](tb testing.TB, obs rx.Observable[T], output ...any) {
+func failtest[T any](tb testing.TB, ob rx.Observable[T], output ...any) {
 	tb.Helper()
 
 	fs := &failsafe{TB: tb}
 
-	NewTestSuite[T](fs).Case(obs, output...)
+	NewTestSuite[T](fs).Case(ob, output...)
 
 	if !fs.failed {
 		tb.FailNow()

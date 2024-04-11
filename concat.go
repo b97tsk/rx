@@ -34,14 +34,14 @@ type concatWithObservable[T any] struct {
 	Others []Observable[T]
 }
 
-func (obs concatWithObservable[T]) Subscribe(c Context, o Observer[T]) {
+func (ob concatWithObservable[T]) Subscribe(c Context, o Observer[T]) {
 	var observer Observer[T]
 
 	done := c.Done()
 
 	next := resistReentrance(func() {
-		if source := obs.Source; source != nil {
-			obs.Source = nil
+		if source := ob.Source; source != nil {
+			ob.Source = nil
 			source.Subscribe(c, observer)
 			return
 		}
@@ -53,14 +53,14 @@ func (obs concatWithObservable[T]) Subscribe(c Context, o Observer[T]) {
 			return
 		}
 
-		if len(obs.Others) == 0 {
+		if len(ob.Others) == 0 {
 			o.Complete()
 			return
 		}
 
-		obs1 := obs.Others[0]
-		obs.Others = obs.Others[1:]
-		obs1.Subscribe(c, observer)
+		obs := ob.Others[0]
+		ob.Others = ob.Others[1:]
+		obs.Subscribe(c, observer)
 	})
 
 	observer = func(n Notification[T]) {
@@ -130,9 +130,9 @@ type concatMapObservable[T, R any] struct {
 	concatMapConfig[T, R]
 }
 
-func (obs concatMapObservable[T, R]) Subscribe(c Context, o Observer[R]) {
-	if obs.UseBuffering {
-		obs.SubscribeWithBuffering(c, o)
+func (ob concatMapObservable[T, R]) Subscribe(c Context, o Observer[R]) {
+	if ob.UseBuffering {
+		ob.SubscribeWithBuffering(c, o)
 		return
 	}
 
@@ -141,14 +141,14 @@ func (obs concatMapObservable[T, R]) Subscribe(c Context, o Observer[R]) {
 
 	var noop bool
 
-	obs.Source.Subscribe(c, func(n Notification[T]) {
+	ob.Source.Subscribe(c, func(n Notification[T]) {
 		if noop {
 			return
 		}
 
 		switch n.Kind {
 		case KindNext:
-			if err := obs.Mapping(n.Value).BlockingSubscribe(c, o.ElementsOnly); err != nil {
+			if err := ob.Mapping(n.Value).BlockingSubscribe(c, o.ElementsOnly); err != nil {
 				noop = true
 				o.Error(err)
 			}
@@ -160,7 +160,7 @@ func (obs concatMapObservable[T, R]) Subscribe(c Context, o Observer[R]) {
 	})
 }
 
-func (obs concatMapObservable[T, R]) SubscribeWithBuffering(c Context, o Observer[R]) {
+func (ob concatMapObservable[T, R]) SubscribeWithBuffering(c Context, o Observer[R]) {
 	c, cancel := c.WithCancel()
 	o = o.DoOnTermination(cancel)
 
@@ -185,7 +185,7 @@ func (obs concatMapObservable[T, R]) SubscribeWithBuffering(c Context, o Observe
 
 		x.Queue.Unlock()
 
-		obs1 := obs.Mapping(v)
+		obs := ob.Mapping(v)
 		w, cancelw := c.WithCancel()
 
 		if !x.Context.CompareAndSwap(c.Context, w.Context) { // This fails if x.Context was swapped to sentinel.
@@ -195,7 +195,7 @@ func (obs concatMapObservable[T, R]) SubscribeWithBuffering(c Context, o Observe
 
 		x.Worker.Add(1)
 
-		obs1.Subscribe(w, func(n Notification[R]) {
+		obs.Subscribe(w, func(n Notification[R]) {
 			switch n.Kind {
 			case KindNext:
 				o.Emit(n)
@@ -243,7 +243,7 @@ func (obs concatMapObservable[T, R]) SubscribeWithBuffering(c Context, o Observe
 		})
 	})
 
-	obs.Source.Subscribe(c, func(n Notification[T]) {
+	ob.Source.Subscribe(c, func(n Notification[T]) {
 		switch n.Kind {
 		case KindNext:
 			x.Queue.Lock()

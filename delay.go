@@ -23,7 +23,7 @@ type delayObservable[T any] struct {
 	Duration time.Duration
 }
 
-func (obs delayObservable[T]) Subscribe(c Context, o Observer[T]) {
+func (ob delayObservable[T]) Subscribe(c Context, o Observer[T]) {
 	c, cancel := c.WithCancel()
 	o = o.DoOnTermination(cancel)
 
@@ -120,20 +120,20 @@ func (obs delayObservable[T]) Subscribe(c Context, o Observer[T]) {
 		})
 	}
 
-	obs.Source.Subscribe(c, func(n Notification[T]) {
+	ob.Source.Subscribe(c, func(n Notification[T]) {
 		switch n.Kind {
 		case KindNext:
 			x.Queue.Lock()
 
 			ctx := x.Context.Load()
 			if ctx != sentinel {
-				x.Queue.Push(NewPair(time.Now().Add(obs.Duration), n.Value))
+				x.Queue.Push(NewPair(time.Now().Add(ob.Duration), n.Value))
 			}
 
 			x.Queue.Unlock()
 
 			if ctx == c.Context {
-				startWorker(obs.Duration)
+				startWorker(ob.Duration)
 			}
 
 		case KindError:

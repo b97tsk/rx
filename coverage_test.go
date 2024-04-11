@@ -12,16 +12,16 @@ func TestAdditionalCoverage(t *testing.T) {
 	t.Parallel()
 
 	t.Run("ComposeFuncs", func(t *testing.T) {
-		obs := rx.Empty[int]()
+		ob := rx.Empty[int]()
 		op := rx.Discard[int]()
-		_ = rx.Compose2(op, op).Apply(obs)
-		_ = rx.Compose3(op, op, op).Apply(obs)
-		_ = rx.Compose4(op, op, op, op).Apply(obs)
-		_ = rx.Compose5(op, op, op, op, op).Apply(obs)
-		_ = rx.Compose6(op, op, op, op, op, op).Apply(obs)
-		_ = rx.Compose7(op, op, op, op, op, op, op).Apply(obs)
-		_ = rx.Compose8(op, op, op, op, op, op, op, op).Apply(obs)
-		_ = rx.Compose9(op, op, op, op, op, op, op, op, op).Apply(obs)
+		_ = rx.Compose2(op, op).Apply(ob)
+		_ = rx.Compose3(op, op, op).Apply(ob)
+		_ = rx.Compose4(op, op, op, op).Apply(ob)
+		_ = rx.Compose5(op, op, op, op, op).Apply(ob)
+		_ = rx.Compose6(op, op, op, op, op, op).Apply(ob)
+		_ = rx.Compose7(op, op, op, op, op, op, op).Apply(ob)
+		_ = rx.Compose8(op, op, op, op, op, op, op, op).Apply(ob)
+		_ = rx.Compose9(op, op, op, op, op, op, op, op, op).Apply(ob)
 	})
 
 	t.Run("Context.WithCancelCause", func(t *testing.T) {

@@ -21,8 +21,8 @@ func Catch[T any](selector func(err error) Observable[T]) Operator[T, T] {
 							return
 						}
 
-						obs := Try11(selector, n.Error, func() { o.Error(ErrOops) })
-						obs.Subscribe(c, o)
+						ob := Try11(selector, n.Error, func() { o.Error(ErrOops) })
+						ob.Subscribe(c, o)
 
 					case KindComplete:
 						o.Emit(n)
@@ -37,7 +37,7 @@ func Catch[T any](selector func(err error) Observable[T]) Operator[T, T] {
 // emits a notification of error.
 //
 // OnErrorResumeWith does not resume after context cancellation.
-func OnErrorResumeWith[T any](obs Observable[T]) Operator[T, T] {
+func OnErrorResumeWith[T any](ob Observable[T]) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
 			return func(c Context, o Observer[T]) {
@@ -54,7 +54,7 @@ func OnErrorResumeWith[T any](obs Observable[T]) Operator[T, T] {
 							return
 						}
 
-						obs.Subscribe(c, o)
+						ob.Subscribe(c, o)
 
 					case KindComplete:
 						o.Emit(n)
