@@ -29,11 +29,11 @@ func CombineLatest3[T1, T2, T3, R any](
 			for cont {
 				select {
 				case n := <-chan1:
-					cont = combineLatestTry3(o, n, mapping, &s, &s.V1, 1)
+					cont = combineLatestEmit3(o, n, mapping, &s, &s.V1, 1)
 				case n := <-chan2:
-					cont = combineLatestTry3(o, n, mapping, &s, &s.V2, 2)
+					cont = combineLatestEmit3(o, n, mapping, &s, &s.V2, 2)
 				case n := <-chan3:
-					cont = combineLatestTry3(o, n, mapping, &s, &s.V3, 4)
+					cont = combineLatestEmit3(o, n, mapping, &s, &s.V3, 4)
 				}
 			}
 		})
@@ -53,7 +53,7 @@ type combineLatestState3[T1, T2, T3 any] struct {
 	V3 T3
 }
 
-func combineLatestTry3[T1, T2, T3, R, X any](
+func combineLatestEmit3[T1, T2, T3, R, X any](
 	o Observer[R],
 	n Notification[X],
 	mapping func(T1, T2, T3) R,

@@ -53,19 +53,19 @@ func withLatestFrom7[T1, T2, T3, T4, T5, T6, T7, R any](
 			for cont {
 				select {
 				case n := <-chan1:
-					cont = withLatestFromTry7(o, n, mapping, &s, &s.V1, 1)
+					cont = withLatestFromEmit7(o, n, mapping, &s, &s.V1, 1)
 				case n := <-chan2:
-					cont = withLatestFromTry7(o, n, mapping, &s, &s.V2, 2)
+					cont = withLatestFromEmit7(o, n, mapping, &s, &s.V2, 2)
 				case n := <-chan3:
-					cont = withLatestFromTry7(o, n, mapping, &s, &s.V3, 4)
+					cont = withLatestFromEmit7(o, n, mapping, &s, &s.V3, 4)
 				case n := <-chan4:
-					cont = withLatestFromTry7(o, n, mapping, &s, &s.V4, 8)
+					cont = withLatestFromEmit7(o, n, mapping, &s, &s.V4, 8)
 				case n := <-chan5:
-					cont = withLatestFromTry7(o, n, mapping, &s, &s.V5, 16)
+					cont = withLatestFromEmit7(o, n, mapping, &s, &s.V5, 16)
 				case n := <-chan6:
-					cont = withLatestFromTry7(o, n, mapping, &s, &s.V6, 32)
+					cont = withLatestFromEmit7(o, n, mapping, &s, &s.V6, 32)
 				case n := <-chan7:
-					cont = withLatestFromTry7(o, n, mapping, &s, &s.V7, 64)
+					cont = withLatestFromEmit7(o, n, mapping, &s, &s.V7, 64)
 				}
 			}
 		})
@@ -93,7 +93,7 @@ type withLatestFromState7[T1, T2, T3, T4, T5, T6, T7 any] struct {
 	V7 T7
 }
 
-func withLatestFromTry7[T1, T2, T3, T4, T5, T6, T7, R, X any](
+func withLatestFromEmit7[T1, T2, T3, T4, T5, T6, T7, R, X any](
 	o Observer[R],
 	n Notification[X],
 	mapping func(T1, T2, T3, T4, T5, T6, T7) R,

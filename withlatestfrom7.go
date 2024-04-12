@@ -56,21 +56,21 @@ func withLatestFrom8[T1, T2, T3, T4, T5, T6, T7, T8, R any](
 			for cont {
 				select {
 				case n := <-chan1:
-					cont = withLatestFromTry8(o, n, mapping, &s, &s.V1, 1)
+					cont = withLatestFromEmit8(o, n, mapping, &s, &s.V1, 1)
 				case n := <-chan2:
-					cont = withLatestFromTry8(o, n, mapping, &s, &s.V2, 2)
+					cont = withLatestFromEmit8(o, n, mapping, &s, &s.V2, 2)
 				case n := <-chan3:
-					cont = withLatestFromTry8(o, n, mapping, &s, &s.V3, 4)
+					cont = withLatestFromEmit8(o, n, mapping, &s, &s.V3, 4)
 				case n := <-chan4:
-					cont = withLatestFromTry8(o, n, mapping, &s, &s.V4, 8)
+					cont = withLatestFromEmit8(o, n, mapping, &s, &s.V4, 8)
 				case n := <-chan5:
-					cont = withLatestFromTry8(o, n, mapping, &s, &s.V5, 16)
+					cont = withLatestFromEmit8(o, n, mapping, &s, &s.V5, 16)
 				case n := <-chan6:
-					cont = withLatestFromTry8(o, n, mapping, &s, &s.V6, 32)
+					cont = withLatestFromEmit8(o, n, mapping, &s, &s.V6, 32)
 				case n := <-chan7:
-					cont = withLatestFromTry8(o, n, mapping, &s, &s.V7, 64)
+					cont = withLatestFromEmit8(o, n, mapping, &s, &s.V7, 64)
 				case n := <-chan8:
-					cont = withLatestFromTry8(o, n, mapping, &s, &s.V8, 128)
+					cont = withLatestFromEmit8(o, n, mapping, &s, &s.V8, 128)
 				}
 			}
 		})
@@ -100,7 +100,7 @@ type withLatestFromState8[T1, T2, T3, T4, T5, T6, T7, T8 any] struct {
 	V8 T8
 }
 
-func withLatestFromTry8[T1, T2, T3, T4, T5, T6, T7, T8, R, X any](
+func withLatestFromEmit8[T1, T2, T3, T4, T5, T6, T7, T8, R, X any](
 	o Observer[R],
 	n Notification[X],
 	mapping func(T1, T2, T3, T4, T5, T6, T7, T8) R,

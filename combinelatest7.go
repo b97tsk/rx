@@ -37,19 +37,19 @@ func CombineLatest7[T1, T2, T3, T4, T5, T6, T7, R any](
 			for cont {
 				select {
 				case n := <-chan1:
-					cont = combineLatestTry7(o, n, mapping, &s, &s.V1, 1)
+					cont = combineLatestEmit7(o, n, mapping, &s, &s.V1, 1)
 				case n := <-chan2:
-					cont = combineLatestTry7(o, n, mapping, &s, &s.V2, 2)
+					cont = combineLatestEmit7(o, n, mapping, &s, &s.V2, 2)
 				case n := <-chan3:
-					cont = combineLatestTry7(o, n, mapping, &s, &s.V3, 4)
+					cont = combineLatestEmit7(o, n, mapping, &s, &s.V3, 4)
 				case n := <-chan4:
-					cont = combineLatestTry7(o, n, mapping, &s, &s.V4, 8)
+					cont = combineLatestEmit7(o, n, mapping, &s, &s.V4, 8)
 				case n := <-chan5:
-					cont = combineLatestTry7(o, n, mapping, &s, &s.V5, 16)
+					cont = combineLatestEmit7(o, n, mapping, &s, &s.V5, 16)
 				case n := <-chan6:
-					cont = combineLatestTry7(o, n, mapping, &s, &s.V6, 32)
+					cont = combineLatestEmit7(o, n, mapping, &s, &s.V6, 32)
 				case n := <-chan7:
-					cont = combineLatestTry7(o, n, mapping, &s, &s.V7, 64)
+					cont = combineLatestEmit7(o, n, mapping, &s, &s.V7, 64)
 				}
 			}
 		})
@@ -77,7 +77,7 @@ type combineLatestState7[T1, T2, T3, T4, T5, T6, T7 any] struct {
 	V7 T7
 }
 
-func combineLatestTry7[T1, T2, T3, T4, T5, T6, T7, R, X any](
+func combineLatestEmit7[T1, T2, T3, T4, T5, T6, T7, R, X any](
 	o Observer[R],
 	n Notification[X],
 	mapping func(T1, T2, T3, T4, T5, T6, T7) R,

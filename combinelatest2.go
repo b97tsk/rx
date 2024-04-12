@@ -27,9 +27,9 @@ func CombineLatest2[T1, T2, R any](
 			for cont {
 				select {
 				case n := <-chan1:
-					cont = combineLatestTry2(o, n, mapping, &s, &s.V1, 1)
+					cont = combineLatestEmit2(o, n, mapping, &s, &s.V1, 1)
 				case n := <-chan2:
-					cont = combineLatestTry2(o, n, mapping, &s, &s.V2, 2)
+					cont = combineLatestEmit2(o, n, mapping, &s, &s.V2, 2)
 				}
 			}
 		})
@@ -47,7 +47,7 @@ type combineLatestState2[T1, T2 any] struct {
 	V2 T2
 }
 
-func combineLatestTry2[T1, T2, R, X any](
+func combineLatestEmit2[T1, T2, R, X any](
 	o Observer[R],
 	n Notification[X],
 	mapping func(T1, T2) R,

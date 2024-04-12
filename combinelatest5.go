@@ -33,15 +33,15 @@ func CombineLatest5[T1, T2, T3, T4, T5, R any](
 			for cont {
 				select {
 				case n := <-chan1:
-					cont = combineLatestTry5(o, n, mapping, &s, &s.V1, 1)
+					cont = combineLatestEmit5(o, n, mapping, &s, &s.V1, 1)
 				case n := <-chan2:
-					cont = combineLatestTry5(o, n, mapping, &s, &s.V2, 2)
+					cont = combineLatestEmit5(o, n, mapping, &s, &s.V2, 2)
 				case n := <-chan3:
-					cont = combineLatestTry5(o, n, mapping, &s, &s.V3, 4)
+					cont = combineLatestEmit5(o, n, mapping, &s, &s.V3, 4)
 				case n := <-chan4:
-					cont = combineLatestTry5(o, n, mapping, &s, &s.V4, 8)
+					cont = combineLatestEmit5(o, n, mapping, &s, &s.V4, 8)
 				case n := <-chan5:
-					cont = combineLatestTry5(o, n, mapping, &s, &s.V5, 16)
+					cont = combineLatestEmit5(o, n, mapping, &s, &s.V5, 16)
 				}
 			}
 		})
@@ -65,7 +65,7 @@ type combineLatestState5[T1, T2, T3, T4, T5 any] struct {
 	V5 T5
 }
 
-func combineLatestTry5[T1, T2, T3, T4, T5, R, X any](
+func combineLatestEmit5[T1, T2, T3, T4, T5, R, X any](
 	o Observer[R],
 	n Notification[X],
 	mapping func(T1, T2, T3, T4, T5) R,

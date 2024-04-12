@@ -46,23 +46,23 @@ func ZipWithBuffering9[T1, T2, T3, T4, T5, T6, T7, T8, T9, R any](
 			for cont {
 				select {
 				case n := <-chan1:
-					cont = zipTry9(o, n, mapping, &s, &s.Q1, 1)
+					cont = zipEmit9(o, n, mapping, &s, &s.Q1, 1)
 				case n := <-chan2:
-					cont = zipTry9(o, n, mapping, &s, &s.Q2, 2)
+					cont = zipEmit9(o, n, mapping, &s, &s.Q2, 2)
 				case n := <-chan3:
-					cont = zipTry9(o, n, mapping, &s, &s.Q3, 4)
+					cont = zipEmit9(o, n, mapping, &s, &s.Q3, 4)
 				case n := <-chan4:
-					cont = zipTry9(o, n, mapping, &s, &s.Q4, 8)
+					cont = zipEmit9(o, n, mapping, &s, &s.Q4, 8)
 				case n := <-chan5:
-					cont = zipTry9(o, n, mapping, &s, &s.Q5, 16)
+					cont = zipEmit9(o, n, mapping, &s, &s.Q5, 16)
 				case n := <-chan6:
-					cont = zipTry9(o, n, mapping, &s, &s.Q6, 32)
+					cont = zipEmit9(o, n, mapping, &s, &s.Q6, 32)
 				case n := <-chan7:
-					cont = zipTry9(o, n, mapping, &s, &s.Q7, 64)
+					cont = zipEmit9(o, n, mapping, &s, &s.Q7, 64)
 				case n := <-chan8:
-					cont = zipTry9(o, n, mapping, &s, &s.Q8, 128)
+					cont = zipEmit9(o, n, mapping, &s, &s.Q8, 128)
 				case n := <-chan9:
-					cont = zipTry9(o, n, mapping, &s, &s.Q9, 256)
+					cont = zipEmit9(o, n, mapping, &s, &s.Q9, 256)
 				}
 			}
 		})
@@ -94,7 +94,7 @@ type zipState9[T1, T2, T3, T4, T5, T6, T7, T8, T9 any] struct {
 	Q9 queue.Queue[T9]
 }
 
-func zipTry9[T1, T2, T3, T4, T5, T6, T7, T8, T9, R, X any](
+func zipEmit9[T1, T2, T3, T4, T5, T6, T7, T8, T9, R, X any](
 	o Observer[R],
 	n Notification[X],
 	mapping func(T1, T2, T3, T4, T5, T6, T7, T8, T9) R,

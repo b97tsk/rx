@@ -38,9 +38,9 @@ func withLatestFrom2[T1, T2, R any](
 			for cont {
 				select {
 				case n := <-chan1:
-					cont = withLatestFromTry2(o, n, mapping, &s, &s.V1, 1)
+					cont = withLatestFromEmit2(o, n, mapping, &s, &s.V1, 1)
 				case n := <-chan2:
-					cont = withLatestFromTry2(o, n, mapping, &s, &s.V2, 2)
+					cont = withLatestFromEmit2(o, n, mapping, &s, &s.V2, 2)
 				}
 			}
 		})
@@ -58,7 +58,7 @@ type withLatestFromState2[T1, T2 any] struct {
 	V2 T2
 }
 
-func withLatestFromTry2[T1, T2, R, X any](
+func withLatestFromEmit2[T1, T2, R, X any](
 	o Observer[R],
 	n Notification[X],
 	mapping func(T1, T2) R,

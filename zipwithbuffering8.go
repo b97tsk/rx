@@ -44,21 +44,21 @@ func ZipWithBuffering8[T1, T2, T3, T4, T5, T6, T7, T8, R any](
 			for cont {
 				select {
 				case n := <-chan1:
-					cont = zipTry8(o, n, mapping, &s, &s.Q1, 1)
+					cont = zipEmit8(o, n, mapping, &s, &s.Q1, 1)
 				case n := <-chan2:
-					cont = zipTry8(o, n, mapping, &s, &s.Q2, 2)
+					cont = zipEmit8(o, n, mapping, &s, &s.Q2, 2)
 				case n := <-chan3:
-					cont = zipTry8(o, n, mapping, &s, &s.Q3, 4)
+					cont = zipEmit8(o, n, mapping, &s, &s.Q3, 4)
 				case n := <-chan4:
-					cont = zipTry8(o, n, mapping, &s, &s.Q4, 8)
+					cont = zipEmit8(o, n, mapping, &s, &s.Q4, 8)
 				case n := <-chan5:
-					cont = zipTry8(o, n, mapping, &s, &s.Q5, 16)
+					cont = zipEmit8(o, n, mapping, &s, &s.Q5, 16)
 				case n := <-chan6:
-					cont = zipTry8(o, n, mapping, &s, &s.Q6, 32)
+					cont = zipEmit8(o, n, mapping, &s, &s.Q6, 32)
 				case n := <-chan7:
-					cont = zipTry8(o, n, mapping, &s, &s.Q7, 64)
+					cont = zipEmit8(o, n, mapping, &s, &s.Q7, 64)
 				case n := <-chan8:
-					cont = zipTry8(o, n, mapping, &s, &s.Q8, 128)
+					cont = zipEmit8(o, n, mapping, &s, &s.Q8, 128)
 				}
 			}
 		})
@@ -88,7 +88,7 @@ type zipState8[T1, T2, T3, T4, T5, T6, T7, T8 any] struct {
 	Q8 queue.Queue[T8]
 }
 
-func zipTry8[T1, T2, T3, T4, T5, T6, T7, T8, R, X any](
+func zipEmit8[T1, T2, T3, T4, T5, T6, T7, T8, R, X any](
 	o Observer[R],
 	n Notification[X],
 	mapping func(T1, T2, T3, T4, T5, T6, T7, T8) R,

@@ -32,9 +32,9 @@ func ZipWithBuffering2[T1, T2, R any](
 			for cont {
 				select {
 				case n := <-chan1:
-					cont = zipTry2(o, n, mapping, &s, &s.Q1, 1)
+					cont = zipEmit2(o, n, mapping, &s, &s.Q1, 1)
 				case n := <-chan2:
-					cont = zipTry2(o, n, mapping, &s, &s.Q2, 2)
+					cont = zipEmit2(o, n, mapping, &s, &s.Q2, 2)
 				}
 			}
 		})
@@ -52,7 +52,7 @@ type zipState2[T1, T2 any] struct {
 	Q2 queue.Queue[T2]
 }
 
-func zipTry2[T1, T2, R, X any](
+func zipEmit2[T1, T2, R, X any](
 	o Observer[R],
 	n Notification[X],
 	mapping func(T1, T2) R,

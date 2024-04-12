@@ -38,15 +38,15 @@ func ZipWithBuffering5[T1, T2, T3, T4, T5, R any](
 			for cont {
 				select {
 				case n := <-chan1:
-					cont = zipTry5(o, n, mapping, &s, &s.Q1, 1)
+					cont = zipEmit5(o, n, mapping, &s, &s.Q1, 1)
 				case n := <-chan2:
-					cont = zipTry5(o, n, mapping, &s, &s.Q2, 2)
+					cont = zipEmit5(o, n, mapping, &s, &s.Q2, 2)
 				case n := <-chan3:
-					cont = zipTry5(o, n, mapping, &s, &s.Q3, 4)
+					cont = zipEmit5(o, n, mapping, &s, &s.Q3, 4)
 				case n := <-chan4:
-					cont = zipTry5(o, n, mapping, &s, &s.Q4, 8)
+					cont = zipEmit5(o, n, mapping, &s, &s.Q4, 8)
 				case n := <-chan5:
-					cont = zipTry5(o, n, mapping, &s, &s.Q5, 16)
+					cont = zipEmit5(o, n, mapping, &s, &s.Q5, 16)
 				}
 			}
 		})
@@ -70,7 +70,7 @@ type zipState5[T1, T2, T3, T4, T5 any] struct {
 	Q5 queue.Queue[T5]
 }
 
-func zipTry5[T1, T2, T3, T4, T5, R, X any](
+func zipEmit5[T1, T2, T3, T4, T5, R, X any](
 	o Observer[R],
 	n Notification[X],
 	mapping func(T1, T2, T3, T4, T5) R,

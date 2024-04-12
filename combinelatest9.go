@@ -41,23 +41,23 @@ func CombineLatest9[T1, T2, T3, T4, T5, T6, T7, T8, T9, R any](
 			for cont {
 				select {
 				case n := <-chan1:
-					cont = combineLatestTry9(o, n, mapping, &s, &s.V1, 1)
+					cont = combineLatestEmit9(o, n, mapping, &s, &s.V1, 1)
 				case n := <-chan2:
-					cont = combineLatestTry9(o, n, mapping, &s, &s.V2, 2)
+					cont = combineLatestEmit9(o, n, mapping, &s, &s.V2, 2)
 				case n := <-chan3:
-					cont = combineLatestTry9(o, n, mapping, &s, &s.V3, 4)
+					cont = combineLatestEmit9(o, n, mapping, &s, &s.V3, 4)
 				case n := <-chan4:
-					cont = combineLatestTry9(o, n, mapping, &s, &s.V4, 8)
+					cont = combineLatestEmit9(o, n, mapping, &s, &s.V4, 8)
 				case n := <-chan5:
-					cont = combineLatestTry9(o, n, mapping, &s, &s.V5, 16)
+					cont = combineLatestEmit9(o, n, mapping, &s, &s.V5, 16)
 				case n := <-chan6:
-					cont = combineLatestTry9(o, n, mapping, &s, &s.V6, 32)
+					cont = combineLatestEmit9(o, n, mapping, &s, &s.V6, 32)
 				case n := <-chan7:
-					cont = combineLatestTry9(o, n, mapping, &s, &s.V7, 64)
+					cont = combineLatestEmit9(o, n, mapping, &s, &s.V7, 64)
 				case n := <-chan8:
-					cont = combineLatestTry9(o, n, mapping, &s, &s.V8, 128)
+					cont = combineLatestEmit9(o, n, mapping, &s, &s.V8, 128)
 				case n := <-chan9:
-					cont = combineLatestTry9(o, n, mapping, &s, &s.V9, 256)
+					cont = combineLatestEmit9(o, n, mapping, &s, &s.V9, 256)
 				}
 			}
 		})
@@ -89,7 +89,7 @@ type combineLatestState9[T1, T2, T3, T4, T5, T6, T7, T8, T9 any] struct {
 	V9 T9
 }
 
-func combineLatestTry9[T1, T2, T3, T4, T5, T6, T7, T8, T9, R, X any](
+func combineLatestEmit9[T1, T2, T3, T4, T5, T6, T7, T8, T9, R, X any](
 	o Observer[R],
 	n Notification[X],
 	mapping func(T1, T2, T3, T4, T5, T6, T7, T8, T9) R,

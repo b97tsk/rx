@@ -47,15 +47,15 @@ func withLatestFrom5[T1, T2, T3, T4, T5, R any](
 			for cont {
 				select {
 				case n := <-chan1:
-					cont = withLatestFromTry5(o, n, mapping, &s, &s.V1, 1)
+					cont = withLatestFromEmit5(o, n, mapping, &s, &s.V1, 1)
 				case n := <-chan2:
-					cont = withLatestFromTry5(o, n, mapping, &s, &s.V2, 2)
+					cont = withLatestFromEmit5(o, n, mapping, &s, &s.V2, 2)
 				case n := <-chan3:
-					cont = withLatestFromTry5(o, n, mapping, &s, &s.V3, 4)
+					cont = withLatestFromEmit5(o, n, mapping, &s, &s.V3, 4)
 				case n := <-chan4:
-					cont = withLatestFromTry5(o, n, mapping, &s, &s.V4, 8)
+					cont = withLatestFromEmit5(o, n, mapping, &s, &s.V4, 8)
 				case n := <-chan5:
-					cont = withLatestFromTry5(o, n, mapping, &s, &s.V5, 16)
+					cont = withLatestFromEmit5(o, n, mapping, &s, &s.V5, 16)
 				}
 			}
 		})
@@ -79,7 +79,7 @@ type withLatestFromState5[T1, T2, T3, T4, T5 any] struct {
 	V5 T5
 }
 
-func withLatestFromTry5[T1, T2, T3, T4, T5, R, X any](
+func withLatestFromEmit5[T1, T2, T3, T4, T5, R, X any](
 	o Observer[R],
 	n Notification[X],
 	mapping func(T1, T2, T3, T4, T5) R,

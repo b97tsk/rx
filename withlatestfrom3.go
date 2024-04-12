@@ -44,13 +44,13 @@ func withLatestFrom4[T1, T2, T3, T4, R any](
 			for cont {
 				select {
 				case n := <-chan1:
-					cont = withLatestFromTry4(o, n, mapping, &s, &s.V1, 1)
+					cont = withLatestFromEmit4(o, n, mapping, &s, &s.V1, 1)
 				case n := <-chan2:
-					cont = withLatestFromTry4(o, n, mapping, &s, &s.V2, 2)
+					cont = withLatestFromEmit4(o, n, mapping, &s, &s.V2, 2)
 				case n := <-chan3:
-					cont = withLatestFromTry4(o, n, mapping, &s, &s.V3, 4)
+					cont = withLatestFromEmit4(o, n, mapping, &s, &s.V3, 4)
 				case n := <-chan4:
-					cont = withLatestFromTry4(o, n, mapping, &s, &s.V4, 8)
+					cont = withLatestFromEmit4(o, n, mapping, &s, &s.V4, 8)
 				}
 			}
 		})
@@ -72,7 +72,7 @@ type withLatestFromState4[T1, T2, T3, T4 any] struct {
 	V4 T4
 }
 
-func withLatestFromTry4[T1, T2, T3, T4, R, X any](
+func withLatestFromEmit4[T1, T2, T3, T4, R, X any](
 	o Observer[R],
 	n Notification[X],
 	mapping func(T1, T2, T3, T4) R,

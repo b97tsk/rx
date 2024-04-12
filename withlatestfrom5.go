@@ -50,17 +50,17 @@ func withLatestFrom6[T1, T2, T3, T4, T5, T6, R any](
 			for cont {
 				select {
 				case n := <-chan1:
-					cont = withLatestFromTry6(o, n, mapping, &s, &s.V1, 1)
+					cont = withLatestFromEmit6(o, n, mapping, &s, &s.V1, 1)
 				case n := <-chan2:
-					cont = withLatestFromTry6(o, n, mapping, &s, &s.V2, 2)
+					cont = withLatestFromEmit6(o, n, mapping, &s, &s.V2, 2)
 				case n := <-chan3:
-					cont = withLatestFromTry6(o, n, mapping, &s, &s.V3, 4)
+					cont = withLatestFromEmit6(o, n, mapping, &s, &s.V3, 4)
 				case n := <-chan4:
-					cont = withLatestFromTry6(o, n, mapping, &s, &s.V4, 8)
+					cont = withLatestFromEmit6(o, n, mapping, &s, &s.V4, 8)
 				case n := <-chan5:
-					cont = withLatestFromTry6(o, n, mapping, &s, &s.V5, 16)
+					cont = withLatestFromEmit6(o, n, mapping, &s, &s.V5, 16)
 				case n := <-chan6:
-					cont = withLatestFromTry6(o, n, mapping, &s, &s.V6, 32)
+					cont = withLatestFromEmit6(o, n, mapping, &s, &s.V6, 32)
 				}
 			}
 		})
@@ -86,7 +86,7 @@ type withLatestFromState6[T1, T2, T3, T4, T5, T6 any] struct {
 	V6 T6
 }
 
-func withLatestFromTry6[T1, T2, T3, T4, T5, T6, R, X any](
+func withLatestFromEmit6[T1, T2, T3, T4, T5, T6, R, X any](
 	o Observer[R],
 	n Notification[X],
 	mapping func(T1, T2, T3, T4, T5, T6) R,
