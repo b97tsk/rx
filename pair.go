@@ -27,7 +27,7 @@ func FromMap[M ~map[K]V, K comparable, V any](m M) Observable[Pair[K, V]] {
 			select {
 			default:
 			case <-done:
-				o.Error(c.Err())
+				o.Error(c.Cause())
 				return
 			}
 

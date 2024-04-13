@@ -24,7 +24,7 @@ func Ticker(d time.Duration) Observable[time.Time] {
 			for {
 				select {
 				case <-done:
-					o.Error(c.Err())
+					o.Error(c.Cause())
 					return
 				case t := <-tk.C:
 					Try1(o, Next(t), func() { o.Error(ErrOops) })
@@ -44,7 +44,7 @@ func Timer(d time.Duration) Observable[time.Time] {
 			select {
 			case <-c.Done():
 				timerpool.Put(tm)
-				o.Error(c.Err())
+				o.Error(c.Cause())
 			case t := <-tm.C:
 				timerpool.PutExpired(tm)
 				Try1(o, Next(t), func() { o.Error(ErrOops) })

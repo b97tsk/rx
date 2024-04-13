@@ -12,7 +12,7 @@ func Range[T constraints.Integer](low, high T) Observable[T] {
 			select {
 			default:
 			case <-done:
-				o.Error(c.Err())
+				o.Error(c.Cause())
 				return
 			}
 
@@ -33,7 +33,7 @@ func Iota[T constraints.Integer](init T) Observable[T] {
 			select {
 			default:
 			case <-done:
-				o.Error(c.Err())
+				o.Error(c.Cause())
 				return
 			}
 

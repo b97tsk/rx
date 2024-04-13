@@ -66,7 +66,7 @@ func (ob delayObservable[T]) Subscribe(c Context, o Observer[T]) {
 						x.Queue.Unlock()
 
 						if old != sentinel {
-							o.Error(w.Err())
+							o.Error(w.Cause())
 						}
 
 						return

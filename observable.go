@@ -17,8 +17,8 @@ package rx
 //
 // An Observable must honor the cancellation of the given [Context].
 // When the cancellation of the given [Context] is detected, an Observable
-// must emit a notification of error (as a termination) to the given [Observer]
-// as soon as possible.
+// must emit an error notification of whatever [Context.Cause] returns, as
+// a termination, to the given [Observer] as soon as possible.
 //
 // If an Observable needs to start goroutines, it must use [Context.Go] to do
 // so; if an Observable needs to start an asynchronous operation other than

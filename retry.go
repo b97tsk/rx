@@ -41,7 +41,7 @@ func (ob retryObservable[T]) Subscribe(c Context, o Observer[T]) {
 		select {
 		default:
 		case <-done:
-			o.Error(c.Err())
+			o.Error(c.Cause())
 			return
 		}
 

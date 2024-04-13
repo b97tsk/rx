@@ -10,7 +10,7 @@ func FromSlice[S ~[]T, T any](s S) Observable[T] {
 			select {
 			default:
 			case <-done:
-				o.Error(c.Err())
+				o.Error(c.Cause())
 				return
 			}
 

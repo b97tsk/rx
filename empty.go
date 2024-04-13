@@ -9,12 +9,12 @@ func Empty[T any]() Observable[T] {
 
 // Never returns an Observable that never emits anything, except
 // when a context cancellation is detected, emits an error notification
-// of whatever that context reports.
+// of whatever [Context.Cause] returns.
 func Never[T any]() Observable[T] {
 	return func(c Context, o Observer[T]) {
 		if c.Done() != nil {
 			c.AfterFunc(func() {
-				o.Error(c.Err())
+				o.Error(c.Cause())
 			})
 		}
 	}

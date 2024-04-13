@@ -17,7 +17,7 @@ func Catch[T any](selector func(err error) Observable[T]) Operator[T, T] {
 						select {
 						default:
 						case <-c.Done():
-							o.Error(c.Err())
+							o.Error(c.Cause())
 							return
 						}
 
@@ -50,7 +50,7 @@ func OnErrorResumeWith[T any](ob Observable[T]) Operator[T, T] {
 						select {
 						default:
 						case <-c.Done():
-							o.Error(c.Err())
+							o.Error(c.Cause())
 							return
 						}
 
@@ -82,7 +82,7 @@ func OnErrorComplete[T any]() Operator[T, T] {
 						select {
 						default:
 						case <-c.Done():
-							o.Error(c.Err())
+							o.Error(c.Cause())
 							return
 						}
 

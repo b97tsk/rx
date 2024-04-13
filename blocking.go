@@ -6,7 +6,7 @@ package rx
 // the error.
 //
 // The cancellation of parent will cause BlockingFirst to immediately return
-// the zero value of T and parent.Err().
+// the zero value of T and parent.Cause().
 func (ob Observable[T]) BlockingFirst(parent Context) (v T, err error) {
 	res := Error[T](ErrEmpty)
 	c, cancel := parent.WithCancel()
@@ -36,7 +36,7 @@ func (ob Observable[T]) BlockingFirst(parent Context) (v T, err error) {
 	select {
 	default:
 	case <-parent.Done():
-		return v, parent.Err()
+		return v, parent.Cause()
 	}
 
 	switch res.Kind {
@@ -69,7 +69,7 @@ func (ob Observable[T]) BlockingFirstOrElse(parent Context, def T) T {
 // the error.
 //
 // The cancellation of parent will cause BlockingLast to immediately return
-// the zero value of T and parent.Err().
+// the zero value of T and parent.Cause().
 func (ob Observable[T]) BlockingLast(parent Context) (v T, err error) {
 	res := Error[T](ErrEmpty)
 	c, cancel := parent.WithCancel()
@@ -91,7 +91,7 @@ func (ob Observable[T]) BlockingLast(parent Context) (v T, err error) {
 	select {
 	default:
 	case <-parent.Done():
-		return v, parent.Err()
+		return v, parent.Cause()
 	}
 
 	switch res.Kind {
@@ -124,7 +124,7 @@ func (ob Observable[T]) BlockingLastOrElse(parent Context, def T) T {
 // error, it returns the zero value of T and the error.
 //
 // The cancellation of parent will cause BlockingSingle to immediately return
-// the zero value of T and parent.Err().
+// the zero value of T and parent.Cause().
 func (ob Observable[T]) BlockingSingle(parent Context) (v T, err error) {
 	res := Error[T](ErrEmpty)
 	c, cancel := parent.WithCancel()
@@ -159,7 +159,7 @@ func (ob Observable[T]) BlockingSingle(parent Context) (v T, err error) {
 	select {
 	default:
 	case <-parent.Done():
-		return v, parent.Err()
+		return v, parent.Cause()
 	}
 
 	switch res.Kind {
@@ -177,7 +177,7 @@ func (ob Observable[T]) BlockingSingle(parent Context) (v T, err error) {
 // otherwise, it returns the emitted error.
 //
 // The cancellation of parent will cause BlockingSubscribe to immediately
-// return parent.Err().
+// return parent.Cause().
 func (ob Observable[T]) BlockingSubscribe(parent Context, o Observer[T]) error {
 	var res Notification[T]
 
@@ -197,7 +197,7 @@ func (ob Observable[T]) BlockingSubscribe(parent Context, o Observer[T]) error {
 	select {
 	default:
 	case <-parent.Done():
-		return parent.Err()
+		return parent.Cause()
 	}
 
 	switch res.Kind {

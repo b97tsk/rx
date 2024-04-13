@@ -78,7 +78,7 @@ func (u *unicast[T]) startEmitting(n Notification[T]) {
 		select {
 		default:
 		case <-u.DoneChan:
-			throw(u.Context.Err())
+			throw(context.Cause(u.Context))
 			return
 		}
 
@@ -118,7 +118,7 @@ func (u *unicast[T]) startEmitting(n Notification[T]) {
 			select {
 			default:
 			case <-u.DoneChan:
-				throw(u.Context.Err())
+				throw(context.Cause(u.Context))
 				return
 			}
 
@@ -180,7 +180,7 @@ func (u *unicast[T]) Subscribe(c Context, o Observer[T]) {
 
 	done := c.Done()
 	if done != nil {
-		stop := c.AfterFunc(func() { u.Emit(Error[T](c.Err())) })
+		stop := c.AfterFunc(func() { u.Emit(Error[T](c.Cause())) })
 		o = o.DoOnTermination(func() { stop() })
 	}
 

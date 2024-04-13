@@ -126,7 +126,7 @@ func (m *multicast[T]) Subscribe(c Context, o Observer[T]) {
 			m.Mu.Lock()
 			m.Mobs.Delete(&o)
 			m.Mu.Unlock()
-			o.Error(c.Err())
+			o.Error(c.Cause())
 		})
 	}
 
@@ -146,7 +146,7 @@ func (m *multicast[T]) Subscribe(c Context, o Observer[T]) {
 			select {
 			default:
 			case <-done:
-				o.Error(c.Err())
+				o.Error(c.Cause())
 				return
 			}
 

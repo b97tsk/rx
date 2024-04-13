@@ -49,7 +49,7 @@ func (ob concatWithObservable[T]) Subscribe(c Context, o Observer[T]) {
 		select {
 		default:
 		case <-done:
-			o.Error(c.Err())
+			o.Error(c.Cause())
 			return
 		}
 
@@ -209,7 +209,7 @@ func (ob concatMapObservable[T, R]) SubscribeWithBuffering(c Context, o Observer
 					select {
 					default:
 					case <-w.Done():
-						n = Error[R](w.Err())
+						n = Error[R](w.Cause())
 					}
 				}
 

@@ -41,11 +41,6 @@ func (c Context) Done() <-chan struct{} {
 	return c.Context.Done()
 }
 
-// Err returns c.Context.Err().
-func (c Context) Err() error {
-	return c.Context.Err()
-}
-
 // Wait runs c.WaitGroup.Wait().
 // If c.WaitGroup is not set, Wait panics.
 func (c Context) Wait() {

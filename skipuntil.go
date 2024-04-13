@@ -78,7 +78,7 @@ func (ob skipUntilObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 	select {
 	default:
 	case <-c.Done():
-		terminate(Error[T](c.Err()))
+		terminate(Error[T](c.Cause()))
 		return
 	}
 
