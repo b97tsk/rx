@@ -1,7 +1,8 @@
 package rx
 
 import (
-	"sync"
+	"context"
+	"errors"
 	"sync/atomic"
 )
 
@@ -21,18 +22,16 @@ type takeUntilObservable[T, U any] struct {
 }
 
 func (ob takeUntilObservable[T, U]) Subscribe(c Context, o Observer[T]) {
-	c, cancel := c.WithCancel()
-	o = o.DoOnTermination(cancel)
+	c, cancel := c.WithCancelCause()
+	o = o.DoOnTermination(func() { cancel(nil) })
 
 	var x struct {
 		Context atomic.Value
-		Source  struct {
-			sync.Mutex
-			sync.WaitGroup
-		}
 	}
 
 	x.Context.Store(c.Context)
+
+	complete := errors.Join(context.Canceled)
 
 	{
 		w, cancelw := c.WithCancel()
@@ -52,48 +51,29 @@ func (ob takeUntilObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 				cancelw()
 
 				switch n.Kind {
-				case KindNext, KindError:
-					if x.Context.Swap(sentinel) != sentinel {
-						cancel()
-
-						x.Source.Lock()
-						x.Source.Wait()
-						x.Source.Unlock()
-
-						switch n.Kind {
-						case KindNext:
-							o.Complete()
-						case KindError:
-							o.Error(n.Error)
-						}
+				case KindNext:
+					if x.Context.CompareAndSwap(c.Context, w.Context) {
+						cancel(complete)
 					}
-
+				case KindError:
+					if x.Context.CompareAndSwap(c.Context, w.Context) {
+						cancel(n.Error)
+					}
 				case KindComplete:
 					return
 				}
 			},
-			func() {
-				if x.Context.Swap(sentinel) != sentinel {
-					o.Error(ErrOops)
-				}
-			},
+			func() { o.Error(ErrOops) },
 		)
 	}
 
-	x.Source.Lock()
-	x.Source.Add(1)
-	x.Source.Unlock()
-
 	terminate := func(n Notification[T]) {
-		defer x.Source.Done()
-
-		old := x.Context.Swap(sentinel)
-
-		cancel()
-
-		if old != sentinel {
-			o.Emit(n)
+		if n.Kind == KindError && errors.Is(n.Error, complete) {
+			o.Complete()
+			return
 		}
+
+		o.Emit(n)
 	}
 
 	select {
