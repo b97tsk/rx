@@ -9,15 +9,17 @@ import (
 // Observable. When subscribed multiple times, it guarantees that only one
 // subscription is made to the source at the same time. When all subscribers
 // have unsubscribed it will unsubscribe from the source.
-func Share[T any]() ShareOperator[T] {
+func Share[T any](c Context) ShareOperator[T] {
 	return ShareOperator[T]{
 		ts: shareConfig[T]{
+			Context:   c,
 			Connector: Multicast[T],
 		},
 	}
 }
 
 type shareConfig[T any] struct {
+	Context   Context
 	Connector func() Subject[T]
 }
 
@@ -34,18 +36,19 @@ func (op ShareOperator[T]) WithConnector(connector func() Subject[T]) ShareOpera
 
 // Apply implements the Operator interface.
 func (op ShareOperator[T]) Apply(source Observable[T]) Observable[T] {
-	ob := shareObservable[T]{
-		Source:    source,
-		Connector: op.ts.Connector,
+	ob := &shareObservable[T]{
+		Source:      source,
+		shareConfig: op.ts,
 	}
-
 	return ob.Subscribe
 }
 
 type shareObservable[T any] struct {
-	Mu         sync.Mutex
-	Source     Observable[T]
-	Connector  func() Subject[T]
+	Mu sync.Mutex
+
+	Source Observable[T]
+	shareConfig[T]
+
 	Subject    Subject[T]
 	Connection context.Context
 	Disconnect CancelFunc
@@ -83,7 +86,7 @@ func (ob *shareObservable[T]) Subscribe(c Context, o Observer[T]) {
 	ob.ShareCount++
 
 	if connection == nil {
-		w, cancelw := NewBackgroundContext().WithCancel()
+		w, cancelw := ob.Context.WithCancel()
 
 		connection = w.Context
 		ob.Connection = w.Context

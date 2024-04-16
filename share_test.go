@@ -11,13 +11,15 @@ import (
 func TestShare(t *testing.T) {
 	t.Parallel()
 
+	ctx := rx.NewBackgroundContext()
+
 	NewTestSuite[int](t).Case(
 		func() rx.Observable[int] {
 			ob := rx.Pipe3(
 				rx.Ticker(Step(3)),
 				rx.Scan(-1, func(i int, _ time.Time) int { return i + 1 }),
 				rx.Take[int](4),
-				rx.Share[int](),
+				rx.Share[int](ctx),
 			)
 			return rx.Merge(
 				ob,
@@ -32,7 +34,7 @@ func TestShare(t *testing.T) {
 			ob := rx.Pipe3(
 				rx.Ticker(Step(3)),
 				rx.Scan(-1, func(i int, _ time.Time) int { return i + 1 }),
-				rx.Share[int](),
+				rx.Share[int](ctx),
 				rx.Take[int](4),
 			)
 			return rx.Merge(
@@ -49,7 +51,7 @@ func TestShare(t *testing.T) {
 				rx.Ticker(Step(3)),
 				rx.Scan(-1, func(i int, _ time.Time) int { return i + 1 }),
 				rx.Take[int](4),
-				rx.Share[int]().WithConnector(
+				rx.Share[int](ctx).WithConnector(
 					func() rx.Subject[int] {
 						return rx.MulticastBuffer[int](1)
 					},
@@ -68,7 +70,7 @@ func TestShare(t *testing.T) {
 			ob := rx.Pipe3(
 				rx.Ticker(Step(3)),
 				rx.Scan(-1, func(i int, _ time.Time) int { return i + 1 }),
-				rx.Share[int]().WithConnector(
+				rx.Share[int](ctx).WithConnector(
 					func() rx.Subject[int] {
 						return rx.MulticastBuffer[int](1)
 					},
@@ -86,7 +88,7 @@ func TestShare(t *testing.T) {
 	).Case(
 		rx.Pipe1(
 			rx.Oops[int]("should not happen"),
-			rx.Share[int]().WithConnector(
+			rx.Share[int](ctx).WithConnector(
 				func() rx.Subject[int] {
 					return rx.Subject[int]{
 						Observable: rx.Throw[int](ErrTest),
@@ -99,7 +101,7 @@ func TestShare(t *testing.T) {
 	).Case(
 		rx.Pipe1(
 			rx.Oops[int]("should not happen"),
-			rx.Share[int]().WithConnector(func() rx.Subject[int] { panic(ErrTest) }),
+			rx.Share[int](ctx).WithConnector(func() rx.Subject[int] { panic(ErrTest) }),
 		),
 		rx.ErrOops, ErrTest,
 	)
