@@ -108,7 +108,7 @@ func TestWithIndex(t *testing.T) {
 	NewTestSuite[string](t).Case(
 		rx.Pipe3(
 			rx.Just("A", "B", "C"),
-			rx.WithIndex[string](1),
+			rx.Enumerate[string](1),
 			rx.Reduce(make(map[int]string), add),
 			ToString[map[int]string](),
 		),
@@ -116,7 +116,7 @@ func TestWithIndex(t *testing.T) {
 	).Case(
 		rx.Pipe3(
 			rx.Throw[string](ErrTest),
-			rx.WithIndex[string](1),
+			rx.Enumerate[string](1),
 			rx.Reduce(make(map[int]string), add),
 			ToString[map[int]string](),
 		),
