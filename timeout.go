@@ -1,9 +1,9 @@
 package rx
 
 import (
+	"context"
+	"errors"
 	"time"
-
-	"github.com/b97tsk/rx/internal/timerpool"
 )
 
 // Timeout mirrors the source Observable, or emits a notification of ErrTimeout
@@ -51,40 +51,24 @@ type timeoutObservable[T any] struct {
 }
 
 func (ob timeoutObservable[T]) Subscribe(parent Context, o Observer[T]) {
-	c, cancel := parent.WithCancel()
+	c, cancel := parent.WithCancelCause()
+	o = o.DoOnTermination(func() { cancel(nil) })
 
-	q := make(chan Notification[T])
-	noop := make(chan struct{})
+	timeout := errors.Join(context.Canceled)
+	tm := time.AfterFunc(ob.First, func() { cancel(timeout) })
 
-	c.Go(func() {
-		tm := timerpool.Get(ob.First)
-
-		for {
-			select {
-			case n := <-q:
-				switch n.Kind {
-				case KindNext:
-					Try1(o, n, func() {
-						cancel()
-						close(noop)
-						o.Error(ErrOops)
-					})
-				case KindError, KindComplete:
-					timerpool.Put(tm)
-					cancel()
-					close(noop)
-					o.Emit(n)
-					return
-				}
-
+	ob.Source.Subscribe(c, func(n Notification[T]) {
+		switch n.Kind {
+		case KindNext:
+			if tm.Stop() {
+				o.Emit(n)
 				tm.Reset(ob.Each)
+			}
 
-			case <-tm.C:
-				timerpool.PutExpired(tm)
+		case KindError:
+			tm.Stop()
 
-				cancel()
-				close(noop)
-
+			if errors.Is(n.Error, timeout) {
 				if ob.With != nil {
 					ob.With.Subscribe(parent, o)
 					return
@@ -94,8 +78,12 @@ func (ob timeoutObservable[T]) Subscribe(parent Context, o Observer[T]) {
 
 				return
 			}
+
+			o.Emit(n)
+
+		case KindComplete:
+			tm.Stop()
+			o.Emit(n)
 		}
 	})
-
-	ob.Source.Subscribe(c, channelObserver(q, noop))
 }
