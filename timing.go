@@ -1,10 +1,6 @@
 package rx
 
-import (
-	"time"
-
-	"github.com/b97tsk/rx/internal/timerpool"
-)
+import "time"
 
 // Ticker creates an Observable that emits [time.Time] values
 // every specified interval of time.
@@ -15,12 +11,9 @@ func Ticker(d time.Duration) Observable[time.Time] {
 
 	return func(c Context, o Observer[time.Time]) {
 		tk := time.NewTicker(d)
-
 		c.Go(func() {
 			defer tk.Stop()
-
 			done := c.Done()
-
 			for {
 				select {
 				case <-done:
@@ -38,15 +31,13 @@ func Ticker(d time.Duration) Observable[time.Time] {
 // after a particular time span has passed, and then completes.
 func Timer(d time.Duration) Observable[time.Time] {
 	return func(c Context, o Observer[time.Time]) {
-		tm := timerpool.Get(d)
-
+		tm := time.NewTimer(d)
 		c.Go(func() {
 			select {
 			case <-c.Done():
-				timerpool.Put(tm)
+				tm.Stop()
 				o.Error(c.Cause())
 			case t := <-tm.C:
-				timerpool.PutExpired(tm)
 				Try1(o, Next(t), func() { o.Error(ErrOops) })
 				o.Complete()
 			}
