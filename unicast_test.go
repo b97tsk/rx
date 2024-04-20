@@ -3,6 +3,7 @@ package rx_test
 import (
 	"context"
 	"runtime"
+	"sync"
 	"testing"
 	"time"
 
@@ -184,5 +185,46 @@ func TestUnicast(t *testing.T) {
 		case <-time.After(5 * time.Second):
 			t.Fatal("timeout waiting for running finalizer")
 		}
+	})
+
+	t.Run("Race", func(t *testing.T) {
+		t.Parallel()
+
+		u := rx.UnicastBufferAll[int]()
+
+		go func() {
+			const N = 5
+
+			var wg sync.WaitGroup
+
+			wg.Add(N)
+
+			for range N {
+				go func() {
+					defer wg.Done()
+					for i := 1; i <= 100; i++ {
+						u.Next(i)
+						runtime.Gosched()
+					}
+				}()
+			}
+
+			wg.Wait()
+			u.Complete()
+		}()
+
+		tk := time.NewTicker(10 * time.Millisecond)
+		defer tk.Stop()
+
+		NewTestSuite[int](t).Case(
+			rx.Pipe1(
+				u.Observable,
+				rx.Reduce(0, func(a, b int) int {
+					<-tk.C
+					return a + b
+				}),
+			),
+			25250, ErrComplete,
+		)
 	})
 }

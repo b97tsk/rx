@@ -47,7 +47,9 @@ func UnicastBuffer[T any](n int) Subject[T] {
 
 type unicast[T any] struct {
 	Mu       sync.Mutex
+	Cond     sync.Cond
 	Cap      int
+	Waiters  int
 	Emitting bool
 	LastN    Notification[struct{}]
 	Buf      queue.Queue[T]
@@ -66,6 +68,7 @@ func (u *unicast[T]) startEmitting(n Notification[T]) {
 		u.LastN = Error[struct{}](err)
 		u.Buf.Init()
 		u.Mu.Unlock()
+		u.Cond.Broadcast()
 		u.Observer.Error(err)
 	}
 
@@ -89,7 +92,7 @@ func (u *unicast[T]) startEmitting(n Notification[T]) {
 		return
 	}
 
-	for {
+	for first := true; ; first = false {
 		u.Mu.Lock()
 
 		if u.Buf.Len() == 0 {
@@ -108,11 +111,19 @@ func (u *unicast[T]) startEmitting(n Notification[T]) {
 			return
 		}
 
+		if !first && u.Waiters != 0 {
+			u.Emitting = false
+			u.Mu.Unlock()
+			u.Cond.Broadcast()
+			return
+		}
+
 		var buf queue.Queue[T]
 
 		u.Buf, buf = buf, u.Buf
 
 		u.Mu.Unlock()
+		u.Cond.Broadcast()
 
 		for i, j := 0, buf.Len(); i < j; i++ {
 			select {
@@ -156,9 +167,43 @@ func (u *unicast[T]) Emit(n Notification[T]) {
 		return
 	}
 
-	if u.Emitting {
+	if u.Emitting || u.Waiters != 0 {
 		if n.Kind == KindNext {
-			u.Buf.Push(n.Value)
+			const bufLimit = 32 // Only up to this number of values can fill into u.Buf.
+		Again:
+			for u.Buf.Len() >= max(u.Buf.Cap(), bufLimit) {
+				if n.Kind == 0 && u.Waiters != 0 {
+					break
+				}
+
+				if !u.Emitting {
+					if n.Kind == KindNext {
+						v := u.Buf.Pop()
+						u.Buf.Push(n.Value)
+						n.Value = v
+					}
+
+					u.startEmitting(n)
+
+					return
+				}
+
+				if u.Cond.L == nil {
+					u.Cond.L = &u.Mu
+				}
+
+				u.Waiters++
+				u.Cond.Wait()
+				u.Waiters--
+			}
+
+			if n.Kind == KindNext && u.LastN.Kind == 0 {
+				u.Buf.Push(n.Value)
+				if u.Waiters == 0 {
+					n = Notification[T]{}
+					goto Again
+				}
+			}
 		}
 
 		u.Mu.Unlock()
