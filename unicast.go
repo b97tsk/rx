@@ -58,12 +58,27 @@ type unicast[T any] struct {
 	Observer Observer[T]
 }
 
-func (u *unicast[T]) startEmitting(n Notification[T]) {
+func (u *unicast[T]) startEmitting(n Notification[T], unlockEarly bool) {
+	var deferUnlock bool
+
 	u.Emitting = true
-	u.Mu.Unlock()
+
+	if unlockEarly {
+		u.Mu.Unlock()
+	} else {
+		deferUnlock = true
+		defer func() {
+			if deferUnlock {
+				u.Mu.Unlock()
+			}
+		}()
+	}
 
 	throw := func(err error) {
-		u.Mu.Lock()
+		if !deferUnlock {
+			u.Mu.Lock()
+		}
+		deferUnlock = false
 		u.Emitting = false
 		u.LastN = Error[struct{}](err)
 		u.Buf.Init()
@@ -93,11 +108,14 @@ func (u *unicast[T]) startEmitting(n Notification[T]) {
 	}
 
 	for first := true; ; first = false {
-		u.Mu.Lock()
+		if !deferUnlock {
+			u.Mu.Lock()
+		}
 
 		if u.Buf.Len() == 0 {
 			lastn := u.LastN
 
+			deferUnlock = false
 			u.Emitting = false
 			u.Mu.Unlock()
 
@@ -112,6 +130,7 @@ func (u *unicast[T]) startEmitting(n Notification[T]) {
 		}
 
 		if !first && u.Waiters != 0 {
+			deferUnlock = false
 			u.Emitting = false
 			u.Mu.Unlock()
 			u.Cond.Broadcast()
@@ -122,6 +141,7 @@ func (u *unicast[T]) startEmitting(n Notification[T]) {
 
 		u.Buf, buf = buf, u.Buf
 
+		deferUnlock = false
 		u.Mu.Unlock()
 		u.Cond.Broadcast()
 
@@ -183,7 +203,7 @@ func (u *unicast[T]) Emit(n Notification[T]) {
 						n.Value = v
 					}
 
-					u.startEmitting(n)
+					u.startEmitting(n, false)
 
 					return
 				}
@@ -211,7 +231,7 @@ func (u *unicast[T]) Emit(n Notification[T]) {
 		return
 	}
 
-	u.startEmitting(n)
+	u.startEmitting(n, true)
 }
 
 func (u *unicast[T]) Subscribe(c Context, o Observer[T]) {
@@ -238,5 +258,5 @@ func (u *unicast[T]) Subscribe(c Context, o Observer[T]) {
 		return
 	}
 
-	u.startEmitting(Notification[T]{})
+	u.startEmitting(Notification[T]{}, false)
 }
