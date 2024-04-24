@@ -115,6 +115,37 @@ func (m *multicast[T]) Emit(n Notification[T]) {
 func (m *multicast[T]) Subscribe(c Context, o Observer[T]) {
 	m.Mu.Lock()
 
+	if buf := m.Buf; buf != nil {
+		buf.RefCount.Add(1)
+		decrease := true
+		defer func() {
+			if decrease {
+				buf.RefCount.Add(^uint32(0))
+			}
+		}()
+
+		m.Mu.Unlock()
+
+		q := buf.Queue
+		done := c.Done()
+
+		for i, j := 0, q.Len(); i < j; i++ {
+			select {
+			default:
+			case <-done:
+				o.Error(c.Cause())
+				return
+			}
+
+			Try1(o, Next(q.At(i)), func() { o.Error(ErrOops) })
+		}
+
+		buf.RefCount.Add(^uint32(0))
+		decrease = false
+
+		m.Mu.Lock()
+	}
+
 	lastn := m.LastN
 	if lastn.Kind == 0 {
 		c, o = Serialize(c, o)
@@ -130,29 +161,7 @@ func (m *multicast[T]) Subscribe(c Context, o Observer[T]) {
 		})
 	}
 
-	buf := m.Buf
-	if buf != nil {
-		buf.RefCount.Add(1)
-		defer buf.RefCount.Add(^uint32(0))
-	}
-
 	m.Mu.Unlock()
-
-	if buf != nil {
-		q := buf.Queue
-		done := c.Done()
-
-		for i, j := 0, q.Len(); i < j; i++ {
-			select {
-			default:
-			case <-done:
-				o.Error(c.Cause())
-				return
-			}
-
-			Try1(o, Next(q.At(i)), func() { o.Error(ErrOops) })
-		}
-	}
 
 	switch lastn.Kind {
 	case KindError:
