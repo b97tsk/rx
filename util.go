@@ -43,14 +43,3 @@ func channelObserver[T any](ch chan<- Notification[T], noop <-chan struct{}) Obs
 		}
 	}
 }
-
-func subscribeChannel[T any](c Context, ob Observable[T], ch chan<- Notification[T], noop <-chan struct{}) bool {
-	ob.Subscribe(c, channelObserver(ch, noop))
-
-	select {
-	case <-noop:
-		return false
-	default:
-		return true
-	}
-}

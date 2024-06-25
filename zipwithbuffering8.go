@@ -1,6 +1,10 @@
 package rx
 
-import "github.com/b97tsk/rx/internal/queue"
+import (
+	"sync"
+
+	"github.com/b97tsk/rx/internal/queue"
+)
 
 // ZipWithBuffering8 combines multiple Observables to create an Observable that
 // emits mappings of the values emitted by each of its input Observables.
@@ -20,62 +24,25 @@ func ZipWithBuffering8[T1, T2, T3, T4, T5, T6, T7, T8, R any](
 	mapping func(v1 T1, v2 T2, v3 T3, v4 T4, v5 T5, v6 T6, v7 T7, v8 T8) R,
 ) Observable[R] {
 	return func(c Context, o Observer[R]) {
-		c, cancel := c.WithCancel()
-		noop := make(chan struct{})
-		o = o.DoOnTermination(func() {
-			cancel()
-			close(noop)
-		})
+		c, o = Serialize(c, o)
 
-		chan1 := make(chan Notification[T1])
-		chan2 := make(chan Notification[T2])
-		chan3 := make(chan Notification[T3])
-		chan4 := make(chan Notification[T4])
-		chan5 := make(chan Notification[T5])
-		chan6 := make(chan Notification[T6])
-		chan7 := make(chan Notification[T7])
-		chan8 := make(chan Notification[T8])
-
-		c.Go(func() {
-			var s zipState8[T1, T2, T3, T4, T5, T6, T7, T8]
-
-			cont := true
-
-			for cont {
-				select {
-				case n := <-chan1:
-					cont = zipEmit8(o, n, mapping, &s, &s.Q1, 1)
-				case n := <-chan2:
-					cont = zipEmit8(o, n, mapping, &s, &s.Q2, 2)
-				case n := <-chan3:
-					cont = zipEmit8(o, n, mapping, &s, &s.Q3, 4)
-				case n := <-chan4:
-					cont = zipEmit8(o, n, mapping, &s, &s.Q4, 8)
-				case n := <-chan5:
-					cont = zipEmit8(o, n, mapping, &s, &s.Q5, 16)
-				case n := <-chan6:
-					cont = zipEmit8(o, n, mapping, &s, &s.Q6, 32)
-				case n := <-chan7:
-					cont = zipEmit8(o, n, mapping, &s, &s.Q7, 64)
-				case n := <-chan8:
-					cont = zipEmit8(o, n, mapping, &s, &s.Q8, 128)
-				}
-			}
-		})
+		var s zipState8[T1, T2, T3, T4, T5, T6, T7, T8]
 
 		_ = true &&
-			subscribeChannel(c, ob1, chan1, noop) &&
-			subscribeChannel(c, ob2, chan2, noop) &&
-			subscribeChannel(c, ob3, chan3, noop) &&
-			subscribeChannel(c, ob4, chan4, noop) &&
-			subscribeChannel(c, ob5, chan5, noop) &&
-			subscribeChannel(c, ob6, chan6, noop) &&
-			subscribeChannel(c, ob7, chan7, noop) &&
-			subscribeChannel(c, ob8, chan8, noop)
+			ob1.satcc(c, func(n Notification[T1]) { zipEmit8(o, n, mapping, &s, &s.Q1, 1) }) &&
+			ob2.satcc(c, func(n Notification[T2]) { zipEmit8(o, n, mapping, &s, &s.Q2, 2) }) &&
+			ob3.satcc(c, func(n Notification[T3]) { zipEmit8(o, n, mapping, &s, &s.Q3, 4) }) &&
+			ob4.satcc(c, func(n Notification[T4]) { zipEmit8(o, n, mapping, &s, &s.Q4, 8) }) &&
+			ob5.satcc(c, func(n Notification[T5]) { zipEmit8(o, n, mapping, &s, &s.Q5, 16) }) &&
+			ob6.satcc(c, func(n Notification[T6]) { zipEmit8(o, n, mapping, &s, &s.Q6, 32) }) &&
+			ob7.satcc(c, func(n Notification[T7]) { zipEmit8(o, n, mapping, &s, &s.Q7, 64) }) &&
+			ob8.satcc(c, func(n Notification[T8]) { zipEmit8(o, n, mapping, &s, &s.Q8, 128) })
 	}
 }
 
 type zipState8[T1, T2, T3, T4, T5, T6, T7, T8 any] struct {
+	sync.Mutex
+
 	NBits, CBits uint8
 
 	Q1 queue.Queue[T1]
@@ -95,17 +62,21 @@ func zipEmit8[T1, T2, T3, T4, T5, T6, T7, T8, R, X any](
 	s *zipState8[T1, T2, T3, T4, T5, T6, T7, T8],
 	q *queue.Queue[X],
 	bit uint8,
-) bool {
+) {
 	const FullBits = 255
 
 	switch n.Kind {
 	case KindNext:
+		s.Lock()
 		q.Push(n.Value)
 
-		if s.NBits |= bit; s.NBits == FullBits {
+		nbits := s.NBits
+		nbits |= bit
+		s.NBits = nbits
+
+		if nbits == FullBits {
 			var complete bool
 
-			oops := func() { o.Error(ErrOops) }
 			v := Try81(
 				mapping,
 				zipPop8(s, &s.Q1, 1, &complete),
@@ -116,30 +87,33 @@ func zipEmit8[T1, T2, T3, T4, T5, T6, T7, T8, R, X any](
 				zipPop8(s, &s.Q6, 32, &complete),
 				zipPop8(s, &s.Q7, 64, &complete),
 				zipPop8(s, &s.Q8, 128, &complete),
-				oops,
+				s.Unlock,
 			)
-			Try1(o, Next(v), oops)
+			s.Unlock()
+			o.Next(v)
 
 			if complete {
 				o.Complete()
-				return false
 			}
+
+			return
 		}
+
+		s.Unlock()
 
 	case KindError:
 		o.Error(n.Error)
-		return false
 
 	case KindComplete:
+		s.Lock()
 		s.CBits |= bit
+		complete := q.Len() == 0
+		s.Unlock()
 
-		if q.Len() == 0 {
+		if complete {
 			o.Complete()
-			return false
 		}
 	}
-
-	return true
 }
 
 func zipPop8[T1, T2, T3, T4, T5, T6, T7, T8, X any](

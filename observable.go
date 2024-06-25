@@ -31,6 +31,9 @@ package rx
 // multiple Observables, most of them can do things concurrently.
 type Observable[T any] func(c Context, o Observer[T])
 
+// NewObservable creates an Observable from f.
+func NewObservable[T any](f func(c Context, o Observer[T])) Observable[T] { return f }
+
 // Subscribe invokes an execution of an Observable.
 //
 // If ob panics and c.PanicHandler is not nil, Subscribe calls c.PanicHandler
@@ -53,7 +56,15 @@ func (ob Observable[T]) Subscribe(c Context, o Observer[T]) {
 	ob(c, o)
 }
 
-// NewObservable creates an Observable from f.
-func NewObservable[T any](f func(c Context, o Observer[T])) Observable[T] {
-	return f
+// satcc is short for Subscribe and Test Context Cancellation.
+func (ob Observable[T]) satcc(c Context, o Observer[T]) bool {
+	ob.Subscribe(c, o)
+
+	select {
+	default:
+	case <-c.Done():
+		return false
+	}
+
+	return true
 }

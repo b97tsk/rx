@@ -1,6 +1,10 @@
 package rx
 
-import "github.com/b97tsk/rx/internal/queue"
+import (
+	"sync"
+
+	"github.com/b97tsk/rx/internal/queue"
+)
 
 // ZipWithBuffering6 combines multiple Observables to create an Observable that
 // emits mappings of the values emitted by each of its input Observables.
@@ -18,54 +22,23 @@ func ZipWithBuffering6[T1, T2, T3, T4, T5, T6, R any](
 	mapping func(v1 T1, v2 T2, v3 T3, v4 T4, v5 T5, v6 T6) R,
 ) Observable[R] {
 	return func(c Context, o Observer[R]) {
-		c, cancel := c.WithCancel()
-		noop := make(chan struct{})
-		o = o.DoOnTermination(func() {
-			cancel()
-			close(noop)
-		})
+		c, o = Serialize(c, o)
 
-		chan1 := make(chan Notification[T1])
-		chan2 := make(chan Notification[T2])
-		chan3 := make(chan Notification[T3])
-		chan4 := make(chan Notification[T4])
-		chan5 := make(chan Notification[T5])
-		chan6 := make(chan Notification[T6])
-
-		c.Go(func() {
-			var s zipState6[T1, T2, T3, T4, T5, T6]
-
-			cont := true
-
-			for cont {
-				select {
-				case n := <-chan1:
-					cont = zipEmit6(o, n, mapping, &s, &s.Q1, 1)
-				case n := <-chan2:
-					cont = zipEmit6(o, n, mapping, &s, &s.Q2, 2)
-				case n := <-chan3:
-					cont = zipEmit6(o, n, mapping, &s, &s.Q3, 4)
-				case n := <-chan4:
-					cont = zipEmit6(o, n, mapping, &s, &s.Q4, 8)
-				case n := <-chan5:
-					cont = zipEmit6(o, n, mapping, &s, &s.Q5, 16)
-				case n := <-chan6:
-					cont = zipEmit6(o, n, mapping, &s, &s.Q6, 32)
-				}
-			}
-		})
+		var s zipState6[T1, T2, T3, T4, T5, T6]
 
 		_ = true &&
-			subscribeChannel(c, ob1, chan1, noop) &&
-			subscribeChannel(c, ob2, chan2, noop) &&
-			subscribeChannel(c, ob3, chan3, noop) &&
-			subscribeChannel(c, ob4, chan4, noop) &&
-			subscribeChannel(c, ob5, chan5, noop) &&
-			subscribeChannel(c, ob6, chan6, noop)
+			ob1.satcc(c, func(n Notification[T1]) { zipEmit6(o, n, mapping, &s, &s.Q1, 1) }) &&
+			ob2.satcc(c, func(n Notification[T2]) { zipEmit6(o, n, mapping, &s, &s.Q2, 2) }) &&
+			ob3.satcc(c, func(n Notification[T3]) { zipEmit6(o, n, mapping, &s, &s.Q3, 4) }) &&
+			ob4.satcc(c, func(n Notification[T4]) { zipEmit6(o, n, mapping, &s, &s.Q4, 8) }) &&
+			ob5.satcc(c, func(n Notification[T5]) { zipEmit6(o, n, mapping, &s, &s.Q5, 16) }) &&
+			ob6.satcc(c, func(n Notification[T6]) { zipEmit6(o, n, mapping, &s, &s.Q6, 32) })
 	}
 }
 
 type zipState6[T1, T2, T3, T4, T5, T6 any] struct {
+	sync.Mutex
+
 	NBits, CBits uint8
 
 	Q1 queue.Queue[T1]
@@ -83,17 +56,21 @@ func zipEmit6[T1, T2, T3, T4, T5, T6, R, X any](
 	s *zipState6[T1, T2, T3, T4, T5, T6],
 	q *queue.Queue[X],
 	bit uint8,
-) bool {
+) {
 	const FullBits = 63
 
 	switch n.Kind {
 	case KindNext:
+		s.Lock()
 		q.Push(n.Value)
 
-		if s.NBits |= bit; s.NBits == FullBits {
+		nbits := s.NBits
+		nbits |= bit
+		s.NBits = nbits
+
+		if nbits == FullBits {
 			var complete bool
 
-			oops := func() { o.Error(ErrOops) }
 			v := Try61(
 				mapping,
 				zipPop6(s, &s.Q1, 1, &complete),
@@ -102,30 +79,33 @@ func zipEmit6[T1, T2, T3, T4, T5, T6, R, X any](
 				zipPop6(s, &s.Q4, 8, &complete),
 				zipPop6(s, &s.Q5, 16, &complete),
 				zipPop6(s, &s.Q6, 32, &complete),
-				oops,
+				s.Unlock,
 			)
-			Try1(o, Next(v), oops)
+			s.Unlock()
+			o.Next(v)
 
 			if complete {
 				o.Complete()
-				return false
 			}
+
+			return
 		}
+
+		s.Unlock()
 
 	case KindError:
 		o.Error(n.Error)
-		return false
 
 	case KindComplete:
+		s.Lock()
 		s.CBits |= bit
+		complete := q.Len() == 0
+		s.Unlock()
 
-		if q.Len() == 0 {
+		if complete {
 			o.Complete()
-			return false
 		}
 	}
-
-	return true
 }
 
 func zipPop6[T1, T2, T3, T4, T5, T6, X any](

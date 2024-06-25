@@ -1,5 +1,7 @@
 package rx
 
+import "sync"
+
 // WithLatestFrom8 combines the source with 8 other Observables to create
 // an Observable that emits mappings of the latest values emitted by each
 // Observable, only when the source emits.
@@ -34,66 +36,26 @@ func withLatestFrom9[T1, T2, T3, T4, T5, T6, T7, T8, T9, R any](
 	mapping func(v1 T1, v2 T2, v3 T3, v4 T4, v5 T5, v6 T6, v7 T7, v8 T8, v9 T9) R,
 ) Observable[R] {
 	return func(c Context, o Observer[R]) {
-		c, cancel := c.WithCancel()
-		noop := make(chan struct{})
-		o = o.DoOnTermination(func() {
-			cancel()
-			close(noop)
-		})
+		c, o = Serialize(c, o)
 
-		chan1 := make(chan Notification[T1])
-		chan2 := make(chan Notification[T2])
-		chan3 := make(chan Notification[T3])
-		chan4 := make(chan Notification[T4])
-		chan5 := make(chan Notification[T5])
-		chan6 := make(chan Notification[T6])
-		chan7 := make(chan Notification[T7])
-		chan8 := make(chan Notification[T8])
-		chan9 := make(chan Notification[T9])
-
-		c.Go(func() {
-			var s withLatestFromState9[T1, T2, T3, T4, T5, T6, T7, T8, T9]
-
-			cont := true
-
-			for cont {
-				select {
-				case n := <-chan1:
-					cont = withLatestFromEmit9(o, n, mapping, &s, &s.V1, 1)
-				case n := <-chan2:
-					cont = withLatestFromEmit9(o, n, mapping, &s, &s.V2, 2)
-				case n := <-chan3:
-					cont = withLatestFromEmit9(o, n, mapping, &s, &s.V3, 4)
-				case n := <-chan4:
-					cont = withLatestFromEmit9(o, n, mapping, &s, &s.V4, 8)
-				case n := <-chan5:
-					cont = withLatestFromEmit9(o, n, mapping, &s, &s.V5, 16)
-				case n := <-chan6:
-					cont = withLatestFromEmit9(o, n, mapping, &s, &s.V6, 32)
-				case n := <-chan7:
-					cont = withLatestFromEmit9(o, n, mapping, &s, &s.V7, 64)
-				case n := <-chan8:
-					cont = withLatestFromEmit9(o, n, mapping, &s, &s.V8, 128)
-				case n := <-chan9:
-					cont = withLatestFromEmit9(o, n, mapping, &s, &s.V9, 256)
-				}
-			}
-		})
+		var s withLatestFromState9[T1, T2, T3, T4, T5, T6, T7, T8, T9]
 
 		_ = true &&
-			subscribeChannel(c, ob1, chan1, noop) &&
-			subscribeChannel(c, ob2, chan2, noop) &&
-			subscribeChannel(c, ob3, chan3, noop) &&
-			subscribeChannel(c, ob4, chan4, noop) &&
-			subscribeChannel(c, ob5, chan5, noop) &&
-			subscribeChannel(c, ob6, chan6, noop) &&
-			subscribeChannel(c, ob7, chan7, noop) &&
-			subscribeChannel(c, ob8, chan8, noop) &&
-			subscribeChannel(c, ob9, chan9, noop)
+			ob1.satcc(c, func(n Notification[T1]) { withLatestFromEmit9(o, n, mapping, &s, &s.V1, 1) }) &&
+			ob2.satcc(c, func(n Notification[T2]) { withLatestFromEmit9(o, n, mapping, &s, &s.V2, 2) }) &&
+			ob3.satcc(c, func(n Notification[T3]) { withLatestFromEmit9(o, n, mapping, &s, &s.V3, 4) }) &&
+			ob4.satcc(c, func(n Notification[T4]) { withLatestFromEmit9(o, n, mapping, &s, &s.V4, 8) }) &&
+			ob5.satcc(c, func(n Notification[T5]) { withLatestFromEmit9(o, n, mapping, &s, &s.V5, 16) }) &&
+			ob6.satcc(c, func(n Notification[T6]) { withLatestFromEmit9(o, n, mapping, &s, &s.V6, 32) }) &&
+			ob7.satcc(c, func(n Notification[T7]) { withLatestFromEmit9(o, n, mapping, &s, &s.V7, 64) }) &&
+			ob8.satcc(c, func(n Notification[T8]) { withLatestFromEmit9(o, n, mapping, &s, &s.V8, 128) }) &&
+			ob9.satcc(c, func(n Notification[T9]) { withLatestFromEmit9(o, n, mapping, &s, &s.V9, 256) })
 	}
 }
 
 type withLatestFromState9[T1, T2, T3, T4, T5, T6, T7, T8, T9 any] struct {
+	sync.Mutex
+
 	NBits uint16
 
 	V1 T1
@@ -114,29 +76,32 @@ func withLatestFromEmit9[T1, T2, T3, T4, T5, T6, T7, T8, T9, R, X any](
 	s *withLatestFromState9[T1, T2, T3, T4, T5, T6, T7, T8, T9],
 	v *X,
 	bit uint16,
-) bool {
+) {
 	const FullBits = 511
 
 	switch n.Kind {
 	case KindNext:
+		s.Lock()
 		*v = n.Value
+		nbits := s.NBits
+		nbits |= bit
+		s.NBits = nbits
 
-		if s.NBits |= bit; s.NBits == FullBits && bit == 1 {
-			oops := func() { o.Error(ErrOops) }
-			v := Try91(mapping, s.V1, s.V2, s.V3, s.V4, s.V5, s.V6, s.V7, s.V8, s.V9, oops)
-			Try1(o, Next(v), oops)
+		if nbits == FullBits && bit == 1 {
+			v := Try91(mapping, s.V1, s.V2, s.V3, s.V4, s.V5, s.V6, s.V7, s.V8, s.V9, s.Unlock)
+			s.Unlock()
+			o.Next(v)
+			return
 		}
+
+		s.Unlock()
 
 	case KindError:
 		o.Error(n.Error)
-		return false
 
 	case KindComplete:
 		if bit == 1 {
 			o.Complete()
-			return false
 		}
 	}
-
-	return true
 }

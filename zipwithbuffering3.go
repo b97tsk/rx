@@ -1,6 +1,10 @@
 package rx
 
-import "github.com/b97tsk/rx/internal/queue"
+import (
+	"sync"
+
+	"github.com/b97tsk/rx/internal/queue"
+)
 
 // ZipWithBuffering3 combines multiple Observables to create an Observable that
 // emits mappings of the values emitted by each of its input Observables.
@@ -15,42 +19,20 @@ func ZipWithBuffering3[T1, T2, T3, R any](
 	mapping func(v1 T1, v2 T2, v3 T3) R,
 ) Observable[R] {
 	return func(c Context, o Observer[R]) {
-		c, cancel := c.WithCancel()
-		noop := make(chan struct{})
-		o = o.DoOnTermination(func() {
-			cancel()
-			close(noop)
-		})
+		c, o = Serialize(c, o)
 
-		chan1 := make(chan Notification[T1])
-		chan2 := make(chan Notification[T2])
-		chan3 := make(chan Notification[T3])
-
-		c.Go(func() {
-			var s zipState3[T1, T2, T3]
-
-			cont := true
-
-			for cont {
-				select {
-				case n := <-chan1:
-					cont = zipEmit3(o, n, mapping, &s, &s.Q1, 1)
-				case n := <-chan2:
-					cont = zipEmit3(o, n, mapping, &s, &s.Q2, 2)
-				case n := <-chan3:
-					cont = zipEmit3(o, n, mapping, &s, &s.Q3, 4)
-				}
-			}
-		})
+		var s zipState3[T1, T2, T3]
 
 		_ = true &&
-			subscribeChannel(c, ob1, chan1, noop) &&
-			subscribeChannel(c, ob2, chan2, noop) &&
-			subscribeChannel(c, ob3, chan3, noop)
+			ob1.satcc(c, func(n Notification[T1]) { zipEmit3(o, n, mapping, &s, &s.Q1, 1) }) &&
+			ob2.satcc(c, func(n Notification[T2]) { zipEmit3(o, n, mapping, &s, &s.Q2, 2) }) &&
+			ob3.satcc(c, func(n Notification[T3]) { zipEmit3(o, n, mapping, &s, &s.Q3, 4) })
 	}
 }
 
 type zipState3[T1, T2, T3 any] struct {
+	sync.Mutex
+
 	NBits, CBits uint8
 
 	Q1 queue.Queue[T1]
@@ -65,46 +47,53 @@ func zipEmit3[T1, T2, T3, R, X any](
 	s *zipState3[T1, T2, T3],
 	q *queue.Queue[X],
 	bit uint8,
-) bool {
+) {
 	const FullBits = 7
 
 	switch n.Kind {
 	case KindNext:
+		s.Lock()
 		q.Push(n.Value)
 
-		if s.NBits |= bit; s.NBits == FullBits {
+		nbits := s.NBits
+		nbits |= bit
+		s.NBits = nbits
+
+		if nbits == FullBits {
 			var complete bool
 
-			oops := func() { o.Error(ErrOops) }
 			v := Try31(
 				mapping,
 				zipPop3(s, &s.Q1, 1, &complete),
 				zipPop3(s, &s.Q2, 2, &complete),
 				zipPop3(s, &s.Q3, 4, &complete),
-				oops,
+				s.Unlock,
 			)
-			Try1(o, Next(v), oops)
+			s.Unlock()
+			o.Next(v)
 
 			if complete {
 				o.Complete()
-				return false
 			}
+
+			return
 		}
+
+		s.Unlock()
 
 	case KindError:
 		o.Error(n.Error)
-		return false
 
 	case KindComplete:
+		s.Lock()
 		s.CBits |= bit
+		complete := q.Len() == 0
+		s.Unlock()
 
-		if q.Len() == 0 {
+		if complete {
 			o.Complete()
-			return false
 		}
 	}
-
-	return true
 }
 
 func zipPop3[T1, T2, T3, X any](
