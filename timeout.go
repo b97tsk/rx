@@ -1,8 +1,7 @@
 package rx
 
 import (
-	"context"
-	"errors"
+	"sync/atomic"
 	"time"
 )
 
@@ -51,39 +50,58 @@ type timeoutObservable[T any] struct {
 }
 
 func (ob timeoutObservable[T]) Subscribe(parent Context, o Observer[T]) {
-	c, cancel := parent.WithCancelCause()
-	o = o.DoOnTermination(func() { cancel(nil) })
+	c, cancel := parent.WithCancel()
 
-	timeout := errors.Join(context.Canceled)
-	tm := time.AfterFunc(ob.First, func() { cancel(timeout) })
+	var x struct {
+		Context atomic.Value
+	}
+
+	x.Context.Store(c.Context)
+
+	if c.WaitGroup != nil {
+		c.WaitGroup.Add(1)
+	}
+
+	tm := time.AfterFunc(ob.First, func() {
+		if c.WaitGroup != nil {
+			defer c.WaitGroup.Done()
+		}
+
+		if x.Context.Swap(sentinel) != sentinel {
+			cancel()
+
+			if ob.With != nil {
+				ob.With.Subscribe(parent, o)
+				return
+			}
+
+			o.Error(ErrTimeout)
+		}
+	})
 
 	ob.Source.Subscribe(c, func(n Notification[T]) {
 		switch n.Kind {
 		case KindNext:
 			if tm.Stop() {
-				o.Emit(n)
+				Try1(o, n, func() {
+					if c.WaitGroup != nil {
+						c.WaitGroup.Done()
+					}
+				})
 				tm.Reset(ob.Each)
 			}
 
-		case KindError:
-			tm.Stop()
-
-			if errors.Is(n.Error, timeout) {
-				if ob.With != nil {
-					ob.With.Subscribe(parent, o)
-					return
+		case KindError, KindComplete:
+			if tm.Stop() {
+				if c.WaitGroup != nil {
+					c.WaitGroup.Done()
 				}
-
-				o.Error(ErrTimeout)
-
-				return
 			}
 
-			o.Emit(n)
-
-		case KindComplete:
-			tm.Stop()
-			o.Emit(n)
+			if x.Context.Swap(sentinel) != sentinel {
+				cancel()
+				o.Emit(n)
+			}
 		}
 	})
 }
