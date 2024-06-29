@@ -50,7 +50,6 @@ func (ob Observable[T]) Subscribe(c Context, o Observer[T]) {
 	if ob == nil {
 		defer o.Error(ErrOops)
 		panic("nil Observable")
-		return
 	}
 
 	ob(c, o)
