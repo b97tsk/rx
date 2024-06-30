@@ -238,7 +238,7 @@ func (u *unicast[T]) Subscribe(c Context, o Observer[T]) {
 	u.Mu.Lock()
 
 	if u.Observer != nil {
-		defer u.Mu.Unlock()
+		u.Mu.Unlock()
 		o.Error(ErrUnicast)
 		return
 	}
