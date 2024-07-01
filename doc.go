@@ -50,7 +50,8 @@
 // For example, [MergeMap] has two extra options:
 // [MergeMapOperator.WithBuffering] and [MergeMapOperator.WithConcurrency],
 // and this is how they are specified when using a [MergeMap]:
-// MergeMap(f).WithBuffering().WithConcurrency(3).
+//
+//	op := MergeMap(f).WithBuffering().WithConcurrency(3)
 //
 // # Chaining Multiple Operators
 //
@@ -99,16 +100,52 @@
 // Race conditions could also happen for any two Observables, however, not
 // every [Operator] or [Observable] has concurrency behavior.
 //
+// The following operations may cause concurrency behavior:
+//   - [Context] cancellation (due to use of [Context.AfterFunc]);
+//   - [AuditTime], [DebounceTime] and [ThrottleTime] (due to use of [Timer]);
+//   - [Channelize] (due to use of [Context.Go]);
+//   - [Delay] (due to use of [Timer]);
+//   - [Go] (due to use of [Context.Go]);
+//   - OnBackpressure operators (due to use of [Channelize]);
+//   - [SampleTime] (due to use of [Ticker]);
+//   - [Ticker] and [Timer] (due to use of [Context.Go]);
+//   - [Timeout] (due to use of [time.AfterFunc]);
+//   - [Zip2] to [Zip9] (due to use of [Context.Go]).
+//
+// The following operations may cause concurrency behavior due to [Context]
+// cancellation:
+//   - CombineLatest operators (due to use of [Serialize]);
+//   - [Connect] (due to use of [Multicast]);
+//   - Merge operators (due to use of [Serialize]);
+//   - [Multicast] and other relatives (due to use of [Context.AfterFunc] and
+//     [Serialize]);
+//   - [Never] (due to use of [Context.AfterFunc]);
+//   - [Serialize] (due to use of [Context.AfterFunc]);
+//   - [Share] (due to use of [Context.AfterFunc] and [Multicast]);
+//   - [Unicast] and other relatives (due to use of [Context.AfterFunc]);
+//   - WithLatestFrom operators (due to use of [Serialize]);
+//   - ZipWithBuffering operators (due to use of [Serialize]).
+//
+// Since [Context] cancellations are very common in this library, and that
+// [Context] cancellation usually results in an error notification, emitted
+// in a goroutine started by [Context.AfterFunc], handling errors must take
+// extra precaution. The fact is that, no matter how careful one is, errors
+// may just come from random goroutines!
+//
 // It's very common that an [Observable], when subscribed, also subscribes to
 // other Observables.
 // In this library, inner Observables are usually subscribed in the same
 // goroutine where the outer one is being subscribed. However,
-//   - Observables returned by [Go] always subscribe to their source
-//     [Observable] in a separate goroutine;
-//   - Observables returned by Merge(All|Map|MapTo), with source buffering on,
-//     may or may not subscribe to inner Observables in separate goroutines;
-//   - Observables returned by Zip[2-9] always subscribe to input Observables
-//     in separate goroutines (this one might change in the future).
+//   - Observables created by Concat(All|Map|MapTo|With)? may or may not
+//     subscribe to inner Observables in separate goroutines, depending on
+//     whether inner Observables cause concurrency behavior;
+//   - Observables created by [Go] always subscribe to their source
+//     Observables in their own goroutines;
+//   - Observables created by Merge(All|Map|MapTo) with source buffering on,
+//     may or may not subscribe to inner Observables in separate goroutines,
+//     depending on whether inner Observables cause concurrency behavior;
+//   - Observables created by Zip[2-9] always subscribe to inner Observables
+//     in their own goroutines.
 //
 // When in doubt, read the code.
 package rx
