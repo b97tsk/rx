@@ -58,15 +58,7 @@ func (ob timeoutObservable[T]) Subscribe(parent Context, o Observer[T]) {
 
 	x.Context.Store(c.Context)
 
-	if c.WaitGroup != nil {
-		c.WaitGroup.Add(1)
-	}
-
-	tm := time.AfterFunc(ob.First, func() {
-		if c.WaitGroup != nil {
-			defer c.WaitGroup.Done()
-		}
-
+	tm := time.AfterFunc(ob.First, c.PreAsyncCall(func() {
 		if x.Context.Swap(sentinel) != sentinel {
 			cancel()
 
@@ -77,7 +69,7 @@ func (ob timeoutObservable[T]) Subscribe(parent Context, o Observer[T]) {
 
 			o.Error(ErrTimeout)
 		}
-	})
+	}))
 
 	ob.Source.Subscribe(c, func(n Notification[T]) {
 		switch n.Kind {
