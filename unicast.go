@@ -87,44 +87,43 @@ func (u *unicast[T]) Emit(n Notification[T]) {
 		return
 	}
 
-	if u.Emitting || u.Waiters != 0 {
-		if n.Kind == KindNext {
-			const bufLimit = 32 // Only up to this number of values can fill into u.Buf.
-		Again:
-			for u.Buf.Len() >= max(u.Buf.Cap(), bufLimit) {
-				if n.Kind == 0 && u.Waiters != 0 {
-					break
-				}
-
-				if !u.Emitting {
-					u.startEmitting(n)
-					return
-				}
-
-				if u.Cond.L == nil {
-					u.Cond.L = &u.Mu
-				}
-
-				u.Waiters++
-				u.Cond.Wait()
-				u.Waiters--
-			}
-
-			if n.Kind == KindNext && u.LastN.Kind == 0 {
-				u.Buf.Push(n.Value)
-				if u.Waiters == 0 {
-					n = Notification[T]{}
-					goto Again
-				}
-			}
-		}
-
-		u.Mu.Unlock()
-
+	if !u.Emitting {
+		u.startEmitting(n)
 		return
 	}
 
-	u.startEmitting(n)
+	if n.Kind == KindNext {
+		const bufLimit = 32 // Only up to this number of values can fill into u.Buf.
+	Again:
+		for u.Buf.Len() >= max(u.Buf.Cap(), bufLimit) {
+			if n.Kind == 0 && u.Waiters != 0 {
+				break
+			}
+
+			if !u.Emitting {
+				u.startEmitting(n)
+				return
+			}
+
+			if u.Cond.L == nil {
+				u.Cond.L = &u.Mu
+			}
+
+			u.Waiters++
+			u.Cond.Wait()
+			u.Waiters--
+		}
+
+		if n.Kind == KindNext && u.LastN.Kind == 0 {
+			u.Buf.Push(n.Value)
+			if u.Waiters == 0 {
+				n = Notification[T]{}
+				goto Again
+			}
+		}
+	}
+
+	u.Mu.Unlock()
 }
 
 func (u *unicast[T]) Subscribe(c Context, o Observer[T]) {
