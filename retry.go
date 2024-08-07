@@ -28,8 +28,8 @@ func Retry[T any](count int) Operator[T, T] {
 }
 
 type retryObservable[T any] struct {
-	Source Observable[T]
-	Count  int
+	source Observable[T]
+	count  int
 }
 
 func (ob retryObservable[T]) Subscribe(c Context, o Observer[T]) {
@@ -45,10 +45,10 @@ func (ob retryObservable[T]) Subscribe(c Context, o Observer[T]) {
 			return
 		}
 
-		ob.Source.Subscribe(c, observer)
+		ob.source.Subscribe(c, observer)
 	})
 
-	count := ob.Count
+	count := ob.count
 
 	observer = func(n Notification[T]) {
 		if n.Kind != KindError || count == 0 {

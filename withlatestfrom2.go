@@ -29,20 +29,20 @@ func withLatestFrom3[T1, T2, T3, R any](
 		var s withLatestFromState3[T1, T2, T3]
 
 		_ = true &&
-			ob1.satcc(c, func(n Notification[T1]) { withLatestFromEmit3(o, n, mapping, &s, &s.V1, 1) }) &&
-			ob2.satcc(c, func(n Notification[T2]) { withLatestFromEmit3(o, n, mapping, &s, &s.V2, 2) }) &&
-			ob3.satcc(c, func(n Notification[T3]) { withLatestFromEmit3(o, n, mapping, &s, &s.V3, 4) })
+			ob1.satcc(c, func(n Notification[T1]) { withLatestFromEmit3(o, n, mapping, &s, &s.v1, 1) }) &&
+			ob2.satcc(c, func(n Notification[T2]) { withLatestFromEmit3(o, n, mapping, &s, &s.v2, 2) }) &&
+			ob3.satcc(c, func(n Notification[T3]) { withLatestFromEmit3(o, n, mapping, &s, &s.v3, 4) })
 	}
 }
 
 type withLatestFromState3[T1, T2, T3 any] struct {
-	sync.Mutex
+	mu sync.Mutex
 
-	NBits uint8
+	nbits uint8
 
-	V1 T1
-	V2 T2
-	V3 T3
+	v1 T1
+	v2 T2
+	v3 T3
 }
 
 func withLatestFromEmit3[T1, T2, T3, R, X any](
@@ -57,20 +57,20 @@ func withLatestFromEmit3[T1, T2, T3, R, X any](
 
 	switch n.Kind {
 	case KindNext:
-		s.Lock()
+		s.mu.Lock()
 		*v = n.Value
-		nbits := s.NBits
+		nbits := s.nbits
 		nbits |= bit
-		s.NBits = nbits
+		s.nbits = nbits
 
 		if nbits == FullBits && bit == 1 {
-			v := Try31(mapping, s.V1, s.V2, s.V3, s.Unlock)
-			s.Unlock()
+			v := Try31(mapping, s.v1, s.v2, s.v3, s.mu.Unlock)
+			s.mu.Unlock()
 			o.Next(v)
 			return
 		}
 
-		s.Unlock()
+		s.mu.Unlock()
 
 	case KindError:
 		o.Error(n.Error)

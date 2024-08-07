@@ -15,7 +15,7 @@ func Concat[T any](some ...Observable[T]) Observable[T] {
 		return Empty[T]()
 	}
 
-	return concatWithObservable[T]{Others: some}.Subscribe
+	return concatWithObservable[T]{others: some}.Subscribe
 }
 
 // ConcatWith concatenates the source Observable and some other Observables
@@ -30,8 +30,8 @@ func ConcatWith[T any](some ...Observable[T]) Operator[T, T] {
 }
 
 type concatWithObservable[T any] struct {
-	Source Observable[T]
-	Others []Observable[T]
+	source Observable[T]
+	others []Observable[T]
 }
 
 func (ob concatWithObservable[T]) Subscribe(c Context, o Observer[T]) {
@@ -40,8 +40,8 @@ func (ob concatWithObservable[T]) Subscribe(c Context, o Observer[T]) {
 	done := c.Done()
 
 	next := resistReentrance(func() {
-		if source := ob.Source; source != nil {
-			ob.Source = nil
+		if source := ob.source; source != nil {
+			ob.source = nil
 			source.Subscribe(c, observer)
 			return
 		}
@@ -53,13 +53,13 @@ func (ob concatWithObservable[T]) Subscribe(c Context, o Observer[T]) {
 			return
 		}
 
-		if len(ob.Others) == 0 {
+		if len(ob.others) == 0 {
 			o.Complete()
 			return
 		}
 
-		obs := ob.Others[0]
-		ob.Others = ob.Others[1:]
+		obs := ob.others[0]
+		ob.others = ob.others[1:]
 		obs.Subscribe(c, observer)
 	})
 
@@ -94,15 +94,15 @@ func ConcatMapTo[T, R any](inner Observable[R]) ConcatMapOperator[T, R] {
 func ConcatMap[T, R any](mapping func(v T) Observable[R]) ConcatMapOperator[T, R] {
 	return ConcatMapOperator[T, R]{
 		ts: concatMapConfig[T, R]{
-			Mapping:      mapping,
-			UseBuffering: false,
+			mapping:      mapping,
+			useBuffering: false,
 		},
 	}
 }
 
 type concatMapConfig[T, R any] struct {
-	Mapping      func(T) Observable[R]
-	UseBuffering bool
+	mapping      func(T) Observable[R]
+	useBuffering bool
 }
 
 // ConcatMapOperator is an [Operator] type for [ConcatMap].
@@ -116,7 +116,7 @@ type ConcatMapOperator[T, R any] struct {
 // might consume a lot of memory over time if the source has lots of values
 // emitting faster than concatenating.
 func (op ConcatMapOperator[T, R]) WithBuffering() ConcatMapOperator[T, R] {
-	op.ts.UseBuffering = true
+	op.ts.useBuffering = true
 	return op
 }
 
@@ -126,12 +126,12 @@ func (op ConcatMapOperator[T, R]) Apply(source Observable[T]) Observable[R] {
 }
 
 type concatMapObservable[T, R any] struct {
-	Source Observable[T]
+	source Observable[T]
 	concatMapConfig[T, R]
 }
 
 func (ob concatMapObservable[T, R]) Subscribe(c Context, o Observer[R]) {
-	if ob.UseBuffering {
+	if ob.useBuffering {
 		ob.SubscribeWithBuffering(c, o)
 		return
 	}
@@ -141,14 +141,14 @@ func (ob concatMapObservable[T, R]) Subscribe(c Context, o Observer[R]) {
 
 	var noop bool
 
-	ob.Source.Subscribe(c, func(n Notification[T]) {
+	ob.source.Subscribe(c, func(n Notification[T]) {
 		if noop {
 			return
 		}
 
 		switch n.Kind {
 		case KindNext:
-			if err := ob.Mapping(n.Value).BlockingSubscribe(c, o.ElementsOnly); err != nil {
+			if err := ob.mapping(n.Value).BlockingSubscribe(c, o.ElementsOnly); err != nil {
 				noop = true
 				o.Error(err)
 			}
@@ -165,35 +165,35 @@ func (ob concatMapObservable[T, R]) SubscribeWithBuffering(c Context, o Observer
 	o = o.DoOnTermination(cancel)
 
 	var x struct {
-		Context  atomic.Value
-		Complete atomic.Bool
-		Queue    struct {
+		context  atomic.Value
+		complete atomic.Bool
+		buffer   struct {
 			sync.Mutex
 			queue.Queue[T]
 		}
-		Worker struct {
+		worker struct {
 			sync.WaitGroup
 		}
 	}
 
-	x.Context.Store(c.Context)
+	x.context.Store(c.Context)
 
 	var startWorker func()
 
 	startWorker = resistReentrance(func() {
-		v := x.Queue.Pop()
+		v := x.buffer.Pop()
 
-		x.Queue.Unlock()
+		x.buffer.Unlock()
 
-		obs := ob.Mapping(v)
+		obs := ob.mapping(v)
 		w, cancelw := c.WithCancel()
 
-		if !x.Context.CompareAndSwap(c.Context, w.Context) { // This fails if x.Context was swapped to sentinel.
+		if !x.context.CompareAndSwap(c.Context, w.Context) { // This fails if x.Context was swapped to sentinel.
 			cancelw()
 			return
 		}
 
-		x.Worker.Add(1)
+		x.worker.Add(1)
 
 		obs.Subscribe(w, func(n Notification[R]) {
 			switch n.Kind {
@@ -201,9 +201,9 @@ func (ob concatMapObservable[T, R]) SubscribeWithBuffering(c Context, o Observer
 				o.Emit(n)
 
 			case KindError, KindComplete:
-				defer x.Worker.Done()
+				defer x.worker.Done()
 
-				x.Queue.Lock()
+				x.buffer.Lock()
 
 				if n.Kind == KindComplete {
 					select {
@@ -217,25 +217,25 @@ func (ob concatMapObservable[T, R]) SubscribeWithBuffering(c Context, o Observer
 
 				switch n.Kind {
 				case KindError:
-					old := x.Context.Swap(sentinel)
+					old := x.context.Swap(sentinel)
 
-					x.Queue.Init()
-					x.Queue.Unlock()
+					x.buffer.Init()
+					x.buffer.Unlock()
 
 					if old != sentinel {
 						o.Emit(n)
 					}
 
 				case KindComplete:
-					swapped := x.Context.CompareAndSwap(w.Context, c.Context)
-					if swapped && x.Queue.Len() != 0 {
+					swapped := x.context.CompareAndSwap(w.Context, c.Context)
+					if swapped && x.buffer.Len() != 0 {
 						startWorker()
 						return
 					}
 
-					x.Queue.Unlock()
+					x.buffer.Unlock()
 
-					if swapped && x.Complete.Load() && x.Context.CompareAndSwap(c.Context, sentinel) {
+					if swapped && x.complete.Load() && x.context.CompareAndSwap(c.Context, sentinel) {
 						o.Complete()
 					}
 				}
@@ -243,14 +243,14 @@ func (ob concatMapObservable[T, R]) SubscribeWithBuffering(c Context, o Observer
 		})
 	})
 
-	ob.Source.Subscribe(c, func(n Notification[T]) {
+	ob.source.Subscribe(c, func(n Notification[T]) {
 		switch n.Kind {
 		case KindNext:
-			x.Queue.Lock()
+			x.buffer.Lock()
 
-			ctx := x.Context.Load()
+			ctx := x.context.Load()
 			if ctx != sentinel {
-				x.Queue.Push(n.Value)
+				x.buffer.Push(n.Value)
 			}
 
 			if ctx == c.Context {
@@ -258,23 +258,23 @@ func (ob concatMapObservable[T, R]) SubscribeWithBuffering(c Context, o Observer
 				return
 			}
 
-			x.Queue.Unlock()
+			x.buffer.Unlock()
 
 		case KindError:
-			old := x.Context.Swap(sentinel)
+			old := x.context.Swap(sentinel)
 
 			cancel()
-			x.Worker.Wait()
-			x.Queue.Init()
+			x.worker.Wait()
+			x.buffer.Init()
 
 			if old != sentinel {
 				o.Error(n.Error)
 			}
 
 		case KindComplete:
-			x.Complete.Store(true)
+			x.complete.Store(true)
 
-			if x.Context.CompareAndSwap(c.Context, sentinel) {
+			if x.context.CompareAndSwap(c.Context, sentinel) {
 				o.Complete()
 			}
 		}

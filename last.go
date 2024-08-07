@@ -7,20 +7,20 @@ func Last[T any]() Operator[T, T] {
 		func(source Observable[T]) Observable[T] {
 			return func(c Context, o Observer[T]) {
 				var last struct {
-					Value    T
-					HasValue bool
+					value    T
+					hasValue bool
 				}
 
 				source.Subscribe(c, func(n Notification[T]) {
 					switch n.Kind {
 					case KindNext:
-						last.Value = n.Value
-						last.HasValue = true
+						last.value = n.Value
+						last.hasValue = true
 					case KindError:
 						o.Emit(n)
 					case KindComplete:
-						if last.HasValue {
-							Try1(o, Next(last.Value), func() { o.Error(ErrOops) })
+						if last.hasValue {
+							Try1(o, Next(last.value), func() { o.Error(ErrOops) })
 							o.Complete()
 						} else {
 							o.Error(ErrEmpty)
@@ -40,22 +40,22 @@ func LastOrElse[T any](def T) Operator[T, T] {
 		func(source Observable[T]) Observable[T] {
 			return func(c Context, o Observer[T]) {
 				var last struct {
-					Value    T
-					HasValue bool
+					value    T
+					hasValue bool
 				}
 
 				source.Subscribe(c, func(n Notification[T]) {
 					switch n.Kind {
 					case KindNext:
-						last.Value = n.Value
-						last.HasValue = true
+						last.value = n.Value
+						last.hasValue = true
 					case KindError:
 						o.Emit(n)
 					case KindComplete:
 						v := def
 
-						if last.HasValue {
-							v = last.Value
+						if last.hasValue {
+							v = last.value
 						}
 
 						Try1(o, Next(v), func() { o.Error(ErrOops) })

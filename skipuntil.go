@@ -13,8 +13,8 @@ func SkipUntil[T, U any](notifier Observable[U]) Operator[T, T] {
 }
 
 type skipUntilObservable[T, U any] struct {
-	Source   Observable[T]
-	Notifier Observable[U]
+	source   Observable[T]
+	notifier Observable[U]
 }
 
 func (ob skipUntilObservable[T, U]) Subscribe(c Context, o Observer[T]) {
@@ -22,19 +22,19 @@ func (ob skipUntilObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 	o = o.DoOnTermination(cancel)
 
 	var x struct {
-		Context atomic.Value
+		context atomic.Value
 	}
 
 	{
 		w, cancelw := c.WithCancel()
 
-		x.Context.Store(w.Context)
+		x.context.Store(w.Context)
 
 		var noop bool
 
 		Try3(
 			Observable[U].Subscribe,
-			ob.Notifier,
+			ob.notifier,
 			w,
 			func(n Notification[U]) {
 				if noop {
@@ -46,10 +46,10 @@ func (ob skipUntilObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 
 				switch n.Kind {
 				case KindNext:
-					x.Context.CompareAndSwap(w.Context, c.Context)
+					x.context.CompareAndSwap(w.Context, c.Context)
 
 				case KindError:
-					if x.Context.CompareAndSwap(w.Context, sentinel) {
+					if x.context.CompareAndSwap(w.Context, sentinel) {
 						o.Error(n.Error)
 					}
 
@@ -58,7 +58,7 @@ func (ob skipUntilObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 				}
 			},
 			func() {
-				if x.Context.Swap(sentinel) != sentinel {
+				if x.context.Swap(sentinel) != sentinel {
 					o.Error(ErrOops)
 				}
 			},
@@ -66,7 +66,7 @@ func (ob skipUntilObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 	}
 
 	terminate := func(n Notification[T]) {
-		old := x.Context.Swap(sentinel)
+		old := x.context.Swap(sentinel)
 
 		cancel()
 
@@ -82,15 +82,15 @@ func (ob skipUntilObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 		return
 	}
 
-	if x.Context.Load() == c.Context {
-		ob.Source.Subscribe(c, o)
+	if x.context.Load() == c.Context {
+		ob.source.Subscribe(c, o)
 		return
 	}
 
-	ob.Source.Subscribe(c, func(n Notification[T]) {
+	ob.source.Subscribe(c, func(n Notification[T]) {
 		switch n.Kind {
 		case KindNext:
-			if x.Context.Load() == c.Context {
+			if x.context.Load() == c.Context {
 				o.Emit(n)
 			}
 		case KindError, KindComplete:

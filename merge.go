@@ -14,7 +14,7 @@ func Merge[T any](some ...Observable[T]) Observable[T] {
 		return Empty[T]()
 	}
 
-	return mergeWithObservable[T]{Others: some}.Subscribe
+	return mergeWithObservable[T]{others: some}.Subscribe
 }
 
 // MergeWith merges the source Observable and some other Observables together
@@ -29,8 +29,8 @@ func MergeWith[T any](some ...Observable[T]) Operator[T, T] {
 }
 
 type mergeWithObservable[T any] struct {
-	Source Observable[T]
-	Others []Observable[T]
+	source Observable[T]
+	others []Observable[T]
 }
 
 func (ob mergeWithObservable[T]) Subscribe(c Context, o Observer[T]) {
@@ -48,8 +48,8 @@ func (ob mergeWithObservable[T]) Subscribe(c Context, o Observer[T]) {
 
 	done := c.Done()
 
-	if ob.Source != nil {
-		ob.Source.Subscribe(c, worker)
+	if ob.source != nil {
+		ob.source.Subscribe(c, worker)
 
 		select {
 		default:
@@ -59,7 +59,7 @@ func (ob mergeWithObservable[T]) Subscribe(c Context, o Observer[T]) {
 		}
 	}
 
-	for _, obs := range ob.Others {
+	for _, obs := range ob.others {
 		obs.Subscribe(c, worker)
 
 		select {
@@ -72,9 +72,9 @@ func (ob mergeWithObservable[T]) Subscribe(c Context, o Observer[T]) {
 }
 
 func (ob mergeWithObservable[T]) numObservables() int {
-	n := len(ob.Others)
+	n := len(ob.others)
 
-	if ob.Source != nil {
+	if ob.source != nil {
 		n++
 	}
 
@@ -101,17 +101,17 @@ func MergeMapTo[T, R any](inner Observable[R]) MergeMapOperator[T, R] {
 func MergeMap[T, R any](mapping func(v T) Observable[R]) MergeMapOperator[T, R] {
 	return MergeMapOperator[T, R]{
 		ts: mergeMapConfig[T, R]{
-			Mapping:      mapping,
-			Concurrency:  -1,
-			UseBuffering: false,
+			mapping:      mapping,
+			concurrency:  -1,
+			useBuffering: false,
 		},
 	}
 }
 
 type mergeMapConfig[T, R any] struct {
-	Mapping      func(T) Observable[R]
-	Concurrency  int
-	UseBuffering bool
+	mapping      func(T) Observable[R]
+	concurrency  int
+	useBuffering bool
 }
 
 // MergeMapOperator is an [Operator] type for [MergeMap].
@@ -125,20 +125,20 @@ type MergeMapOperator[T, R any] struct {
 // might consume a lot of memory over time if the source has lots of values
 // emitting faster than merging.
 func (op MergeMapOperator[T, R]) WithBuffering() MergeMapOperator[T, R] {
-	op.ts.UseBuffering = true
+	op.ts.useBuffering = true
 	return op
 }
 
 // WithConcurrency sets Concurrency option to a given value.
 // It must not be zero. The default value is -1 (unlimited).
 func (op MergeMapOperator[T, R]) WithConcurrency(n int) MergeMapOperator[T, R] {
-	op.ts.Concurrency = n
+	op.ts.concurrency = n
 	return op
 }
 
 // Apply implements the Operator interface.
 func (op MergeMapOperator[T, R]) Apply(source Observable[T]) Observable[R] {
-	if op.ts.Concurrency == 0 {
+	if op.ts.concurrency == 0 {
 		return Oops[R]("MergeMap: Concurrency == 0")
 	}
 
@@ -146,12 +146,12 @@ func (op MergeMapOperator[T, R]) Apply(source Observable[T]) Observable[R] {
 }
 
 type mergeMapObservable[T, R any] struct {
-	Source Observable[T]
+	source Observable[T]
 	mergeMapConfig[T, R]
 }
 
 func (ob mergeMapObservable[T, R]) Subscribe(c Context, o Observer[R]) {
-	if ob.UseBuffering {
+	if ob.useBuffering {
 		ob.SubscribeWithBuffering(c, o)
 		return
 	}
@@ -159,14 +159,15 @@ func (ob mergeMapObservable[T, R]) Subscribe(c Context, o Observer[R]) {
 	c, o = Serialize(c, o)
 
 	var x struct {
-		sync.Mutex
-		sync.Cond
-		Workers  int
-		Complete bool
-		HasError bool
+		mu sync.Mutex
+		co sync.Cond
+
+		workers  int
+		complete bool
+		hasError bool
 	}
 
-	x.Cond.L = &x.Mutex
+	x.co.L = &x.mu
 
 	worker := func(n Notification[R]) {
 		switch n.Kind {
@@ -174,60 +175,60 @@ func (ob mergeMapObservable[T, R]) Subscribe(c Context, o Observer[R]) {
 			o.Emit(n)
 
 		case KindError:
-			x.Lock()
-			x.Workers--
-			x.HasError = true
-			x.Unlock()
-			x.Signal()
+			x.mu.Lock()
+			x.workers--
+			x.hasError = true
+			x.mu.Unlock()
+			x.co.Signal()
 
 			o.Emit(n)
 
 		case KindComplete:
-			x.Lock()
+			x.mu.Lock()
 
-			x.Workers--
+			x.workers--
 
-			if x.Workers == 0 && x.Complete && !x.HasError {
-				x.Unlock()
+			if x.workers == 0 && x.complete && !x.hasError {
+				x.mu.Unlock()
 				o.Emit(n)
 				return
 			}
 
-			x.Unlock()
-			x.Signal()
+			x.mu.Unlock()
+			x.co.Signal()
 		}
 	}
 
 	var noop bool
 
-	ob.Source.Subscribe(c, func(n Notification[T]) {
+	ob.source.Subscribe(c, func(n Notification[T]) {
 		if noop {
 			return
 		}
 
 		switch n.Kind {
 		case KindNext:
-			x.Lock()
+			x.mu.Lock()
 
-			for x.Workers == ob.Concurrency && !x.HasError {
-				x.Wait()
+			for x.workers == ob.concurrency && !x.hasError {
+				x.co.Wait()
 			}
 
-			if x.HasError {
+			if x.hasError {
 				noop = true
-				x.Unlock()
+				x.mu.Unlock()
 				return
 			}
 
-			obs := Try11(ob.Mapping, n.Value, func() {
-				defer x.Unlock()
+			obs := Try11(ob.mapping, n.Value, func() {
+				defer x.mu.Unlock()
 				noop = true
-				x.HasError = true
+				x.hasError = true
 				o.Error(ErrOops)
 			})
 
-			x.Workers++
-			x.Unlock()
+			x.workers++
+			x.mu.Unlock()
 
 			obs.Subscribe(c, worker)
 
@@ -235,17 +236,17 @@ func (ob mergeMapObservable[T, R]) Subscribe(c Context, o Observer[R]) {
 			o.Error(n.Error)
 
 		case KindComplete:
-			x.Lock()
+			x.mu.Lock()
 
-			x.Complete = true
+			x.complete = true
 
-			if x.Workers == 0 && !x.HasError {
-				x.Unlock()
+			if x.workers == 0 && !x.hasError {
+				x.mu.Unlock()
 				o.Complete()
 				return
 			}
 
-			x.Unlock()
+			x.mu.Unlock()
 		}
 	})
 }
@@ -254,18 +255,18 @@ func (ob mergeMapObservable[T, R]) SubscribeWithBuffering(c Context, o Observer[
 	c, o = Serialize(c, o)
 
 	var x struct {
-		sync.Mutex
+		mu sync.Mutex
 
-		Queue    queue.Queue[T]
-		Workers  int
-		Complete bool
-		HasError bool
+		buffer   queue.Queue[T]
+		workers  int
+		complete bool
+		hasError bool
 
-		StartWorkerPool sync.Pool
+		startWorkerPool sync.Pool
 	}
 
 	startWorker := func() {
-		if v := x.StartWorkerPool.Get(); v != nil {
+		if v := x.startWorkerPool.Get(); v != nil {
 			(*v.(*func()))()
 			return
 		}
@@ -278,46 +279,46 @@ func (ob mergeMapObservable[T, R]) SubscribeWithBuffering(c Context, o Observer[
 				o.Emit(n)
 
 			case KindError:
-				x.Lock()
-				x.Queue.Init()
-				x.Workers--
-				x.HasError = true
-				x.Unlock()
+				x.mu.Lock()
+				x.buffer.Init()
+				x.workers--
+				x.hasError = true
+				x.mu.Unlock()
 
 				o.Emit(n)
 
 			case KindComplete:
-				x.Lock()
+				x.mu.Lock()
 
-				x.Workers--
+				x.workers--
 
-				if x.Queue.Len() != 0 {
+				if x.buffer.Len() != 0 {
 					startWorker()
 					return
 				}
 
-				if x.Workers == 0 && x.Complete && !x.HasError {
-					x.Unlock()
+				if x.workers == 0 && x.complete && !x.hasError {
+					x.mu.Unlock()
 					o.Emit(n)
 					return
 				}
 
-				x.StartWorkerPool.Put(&startWorker)
+				x.startWorkerPool.Put(&startWorker)
 
-				x.Unlock()
+				x.mu.Unlock()
 			}
 		}
 
 		startWorker = resistReentrance(func() {
-			obs := Try11(ob.Mapping, x.Queue.Pop(), func() {
-				defer x.Unlock()
-				x.Queue.Init()
-				x.HasError = true
+			obs := Try11(ob.mapping, x.buffer.Pop(), func() {
+				defer x.mu.Unlock()
+				x.buffer.Init()
+				x.hasError = true
 				o.Error(ErrOops)
 			})
 
-			x.Workers++
-			x.Unlock()
+			x.workers++
+			x.mu.Unlock()
 
 			obs.Subscribe(c, worker)
 		})
@@ -327,45 +328,45 @@ func (ob mergeMapObservable[T, R]) SubscribeWithBuffering(c Context, o Observer[
 
 	var noop bool
 
-	ob.Source.Subscribe(c, func(n Notification[T]) {
+	ob.source.Subscribe(c, func(n Notification[T]) {
 		if noop {
 			return
 		}
 
 		switch n.Kind {
 		case KindNext:
-			x.Lock()
+			x.mu.Lock()
 
-			if x.HasError {
+			if x.hasError {
 				noop = true
-				x.Unlock()
+				x.mu.Unlock()
 				return
 			}
 
-			x.Queue.Push(n.Value)
+			x.buffer.Push(n.Value)
 
-			if x.Workers != ob.Concurrency {
+			if x.workers != ob.concurrency {
 				startWorker()
 				return
 			}
 
-			x.Unlock()
+			x.mu.Unlock()
 
 		case KindError:
 			o.Error(n.Error)
 
 		case KindComplete:
-			x.Lock()
+			x.mu.Lock()
 
-			x.Complete = true
+			x.complete = true
 
-			if x.Workers == 0 && !x.HasError {
-				x.Unlock()
+			if x.workers == 0 && !x.hasError {
+				x.mu.Unlock()
 				o.Complete()
 				return
 			}
 
-			x.Unlock()
+			x.mu.Unlock()
 		}
 	})
 }

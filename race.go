@@ -9,7 +9,7 @@ func Race[T any](some ...Observable[T]) Observable[T] {
 		return Empty[T]()
 	}
 
-	return raceWithObservable[T]{Others: some}.Subscribe
+	return raceWithObservable[T]{others: some}.Subscribe
 }
 
 // RaceWith mirrors the first Observable to emit a value, from the source
@@ -23,8 +23,8 @@ func RaceWith[T any](some ...Observable[T]) Operator[T, T] {
 }
 
 type raceWithObservable[T any] struct {
-	Source Observable[T]
-	Others []Observable[T]
+	source Observable[T]
+	others []Observable[T]
 }
 
 func (ob raceWithObservable[T]) Subscribe(c Context, o Observer[T]) {
@@ -70,8 +70,8 @@ func (ob raceWithObservable[T]) Subscribe(c Context, o Observer[T]) {
 
 	var off int
 
-	if ob.Source != nil {
-		subscribe(0, ob.Source)
+	if ob.source != nil {
+		subscribe(0, ob.source)
 
 		if race.Load() != 0 {
 			return
@@ -80,7 +80,7 @@ func (ob raceWithObservable[T]) Subscribe(c Context, o Observer[T]) {
 		off = 1
 	}
 
-	for i, obs := range ob.Others {
+	for i, obs := range ob.others {
 		subscribe(i+off, obs)
 
 		if race.Load() != 0 {
@@ -90,9 +90,9 @@ func (ob raceWithObservable[T]) Subscribe(c Context, o Observer[T]) {
 }
 
 func (ob raceWithObservable[T]) numObservables() int {
-	n := len(ob.Others)
+	n := len(ob.others)
 
-	if ob.Source != nil {
+	if ob.source != nil {
 		n++
 	}
 

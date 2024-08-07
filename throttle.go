@@ -26,17 +26,17 @@ func ThrottleTime[T any](d time.Duration) ThrottleOperator[T, time.Time] {
 func Throttle[T, U any](durationSelector func(v T) Observable[U]) ThrottleOperator[T, U] {
 	return ThrottleOperator[T, U]{
 		ts: throttleConfig[T, U]{
-			DurationSelector: durationSelector,
-			Leading:          true,
-			Trailing:         false,
+			durationSelector: durationSelector,
+			leading:          true,
+			trailing:         false,
 		},
 	}
 }
 
 type throttleConfig[T, U any] struct {
-	DurationSelector func(T) Observable[U]
-	Leading          bool
-	Trailing         bool
+	durationSelector func(T) Observable[U]
+	leading          bool
+	trailing         bool
 }
 
 // ThrottleOperator is an [Operator] type for [Throttle].
@@ -46,13 +46,13 @@ type ThrottleOperator[T, U any] struct {
 
 // WithLeading sets Leading option to a given value.
 func (op ThrottleOperator[T, U]) WithLeading(v bool) ThrottleOperator[T, U] {
-	op.ts.Leading = v
+	op.ts.leading = v
 	return op
 }
 
 // WithTrailing sets Trailing option to a given value.
 func (op ThrottleOperator[T, U]) WithTrailing(v bool) ThrottleOperator[T, U] {
-	op.ts.Trailing = v
+	op.ts.trailing = v
 	return op
 }
 
@@ -62,7 +62,7 @@ func (op ThrottleOperator[T, U]) Apply(source Observable[T]) Observable[T] {
 }
 
 type throttleObservable[T, U any] struct {
-	Source Observable[T]
+	source Observable[T]
 	throttleConfig[T, U]
 }
 
@@ -71,28 +71,28 @@ func (ob throttleObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 	o = o.DoOnTermination(cancel)
 
 	var x struct {
-		Context  atomic.Value
-		Complete atomic.Bool
-		Trailing struct {
+		context  atomic.Value
+		complete atomic.Bool
+		trailing struct {
 			sync.Mutex
-			Value    T
-			HasValue atomic.Bool
+			value    T
+			hasValue atomic.Bool
 		}
-		Worker struct {
+		worker struct {
 			sync.WaitGroup
 		}
 	}
 
-	x.Context.Store(c.Context)
+	x.context.Store(c.Context)
 
 	var doThrottle func(T)
 
 	doThrottle = func(v T) {
-		obs := ob.DurationSelector(v)
+		obs := ob.durationSelector(v)
 		w, cancelw := c.WithCancel()
 
-		x.Context.Store(w.Context)
-		x.Worker.Add(1)
+		x.context.Store(w.Context)
+		x.worker.Add(1)
 
 		var noop bool
 
@@ -101,60 +101,60 @@ func (ob throttleObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 				return
 			}
 
-			defer x.Worker.Done()
+			defer x.worker.Done()
 
 			noop = true
 			cancelw()
 
 			switch n.Kind {
 			case KindNext:
-				if ob.Trailing && x.Trailing.HasValue.Load() {
-					x.Trailing.Lock()
-					value := x.Trailing.Value
-					x.Trailing.HasValue.Store(false)
-					x.Trailing.Unlock()
+				if ob.trailing && x.trailing.hasValue.Load() {
+					x.trailing.Lock()
+					value := x.trailing.value
+					x.trailing.hasValue.Store(false)
+					x.trailing.Unlock()
 
 					oops := func() {
-						if x.Context.Swap(sentinel) != sentinel {
+						if x.context.Swap(sentinel) != sentinel {
 							o.Error(ErrOops)
 						}
 					}
 
 					Try1(o, Next(value), oops)
 
-					if !x.Complete.Load() {
+					if !x.complete.Load() {
 						Try1(doThrottle, value, oops)
 					}
 				}
 
-				if x.Context.CompareAndSwap(w.Context, c.Context) && x.Complete.Load() && x.Context.CompareAndSwap(c.Context, sentinel) {
+				if x.context.CompareAndSwap(w.Context, c.Context) && x.complete.Load() && x.context.CompareAndSwap(c.Context, sentinel) {
 					o.Complete()
 				}
 
 			case KindError:
-				if x.Context.Swap(sentinel) != sentinel {
+				if x.context.Swap(sentinel) != sentinel {
 					o.Error(n.Error)
 				}
 
 			case KindComplete:
-				if x.Context.CompareAndSwap(w.Context, c.Context) && x.Complete.Load() && x.Context.CompareAndSwap(c.Context, sentinel) {
+				if x.context.CompareAndSwap(w.Context, c.Context) && x.complete.Load() && x.context.CompareAndSwap(c.Context, sentinel) {
 					o.Complete()
 				}
 			}
 		})
 	}
 
-	ob.Source.Subscribe(c, func(n Notification[T]) {
+	ob.source.Subscribe(c, func(n Notification[T]) {
 		switch n.Kind {
 		case KindNext:
-			x.Trailing.Lock()
-			x.Trailing.Value = n.Value
-			x.Trailing.HasValue.Store(true)
-			x.Trailing.Unlock()
+			x.trailing.Lock()
+			x.trailing.value = n.Value
+			x.trailing.hasValue.Store(true)
+			x.trailing.Unlock()
 
-			if x.Context.Load() == c.Context {
-				if ob.Leading {
-					x.Trailing.HasValue.Store(false)
+			if x.context.Load() == c.Context {
+				if ob.leading {
+					x.trailing.hasValue.Store(false)
 					o.Emit(n)
 				}
 
@@ -162,19 +162,19 @@ func (ob throttleObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 			}
 
 		case KindError:
-			old := x.Context.Swap(sentinel)
+			old := x.context.Swap(sentinel)
 
 			cancel()
-			x.Worker.Wait()
+			x.worker.Wait()
 
 			if old != sentinel {
 				o.Emit(n)
 			}
 
 		case KindComplete:
-			x.Complete.Store(true)
+			x.complete.Store(true)
 
-			if x.Context.CompareAndSwap(c.Context, sentinel) {
+			if x.context.CompareAndSwap(c.Context, sentinel) {
 				o.Emit(n)
 			}
 		}

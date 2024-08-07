@@ -31,8 +31,8 @@ func Audit[T, U any](durationSelector func(v T) Observable[U]) Operator[T, T] {
 }
 
 type auditObservable[T, U any] struct {
-	Source           Observable[T]
-	DurationSelector func(T) Observable[U]
+	source           Observable[T]
+	durationSelector func(T) Observable[U]
 }
 
 func (ob auditObservable[T, U]) Subscribe(c Context, o Observer[T]) {
@@ -40,25 +40,25 @@ func (ob auditObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 	o = o.DoOnTermination(cancel)
 
 	var x struct {
-		Context  atomic.Value
-		Complete atomic.Bool
-		Latest   struct {
+		context  atomic.Value
+		complete atomic.Bool
+		latest   struct {
 			sync.Mutex
-			Value T
+			value T
 		}
-		Worker struct {
+		worker struct {
 			sync.WaitGroup
 		}
 	}
 
-	x.Context.Store(c.Context)
+	x.context.Store(c.Context)
 
 	startWorker := func(v T) {
-		obs := ob.DurationSelector(v)
+		obs := ob.durationSelector(v)
 		w, cancelw := c.WithCancel()
 
-		x.Context.Store(w.Context)
-		x.Worker.Add(1)
+		x.context.Store(w.Context)
+		x.worker.Add(1)
 
 		var noop bool
 
@@ -67,65 +67,65 @@ func (ob auditObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 				return
 			}
 
-			defer x.Worker.Done()
+			defer x.worker.Done()
 
 			noop = true
 			cancelw()
 
 			switch n.Kind {
 			case KindNext:
-				x.Latest.Lock()
-				value := x.Latest.Value
-				x.Latest.Unlock()
+				x.latest.Lock()
+				value := x.latest.value
+				x.latest.Unlock()
 
 				Try1(o, Next(value), func() {
-					if x.Context.Swap(sentinel) != sentinel {
+					if x.context.Swap(sentinel) != sentinel {
 						o.Error(ErrOops)
 					}
 				})
 
-				if x.Context.CompareAndSwap(w.Context, c.Context) && x.Complete.Load() && x.Context.CompareAndSwap(c.Context, sentinel) {
+				if x.context.CompareAndSwap(w.Context, c.Context) && x.complete.Load() && x.context.CompareAndSwap(c.Context, sentinel) {
 					o.Complete()
 				}
 
 			case KindError:
-				if x.Context.Swap(sentinel) != sentinel {
+				if x.context.Swap(sentinel) != sentinel {
 					o.Error(n.Error)
 				}
 
 			case KindComplete:
-				if x.Context.CompareAndSwap(w.Context, c.Context) && x.Complete.Load() && x.Context.CompareAndSwap(c.Context, sentinel) {
+				if x.context.CompareAndSwap(w.Context, c.Context) && x.complete.Load() && x.context.CompareAndSwap(c.Context, sentinel) {
 					o.Complete()
 				}
 			}
 		})
 	}
 
-	ob.Source.Subscribe(c, func(n Notification[T]) {
+	ob.source.Subscribe(c, func(n Notification[T]) {
 		switch n.Kind {
 		case KindNext:
-			x.Latest.Lock()
-			x.Latest.Value = n.Value
-			x.Latest.Unlock()
+			x.latest.Lock()
+			x.latest.value = n.Value
+			x.latest.Unlock()
 
-			if x.Context.Load() == c.Context {
+			if x.context.Load() == c.Context {
 				startWorker(n.Value)
 			}
 
 		case KindError:
-			old := x.Context.Swap(sentinel)
+			old := x.context.Swap(sentinel)
 
 			cancel()
-			x.Worker.Wait()
+			x.worker.Wait()
 
 			if old != sentinel {
 				o.Emit(n)
 			}
 
 		case KindComplete:
-			x.Complete.Store(true)
+			x.complete.Store(true)
 
-			if x.Context.CompareAndSwap(c.Context, sentinel) {
+			if x.context.CompareAndSwap(c.Context, sentinel) {
 				o.Emit(n)
 			}
 		}

@@ -5,15 +5,15 @@ package rx
 func Connect[T, R any](selector func(source Observable[T]) Observable[R]) ConnectOperator[T, R] {
 	return ConnectOperator[T, R]{
 		ts: connectConfig[T, R]{
-			Connector: Multicast[T],
-			Selector:  selector,
+			connector: Multicast[T],
+			selector:  selector,
 		},
 	}
 }
 
 type connectConfig[T, R any] struct {
-	Connector func() Subject[T]
-	Selector  func(Observable[T]) Observable[R]
+	connector func() Subject[T]
+	selector  func(Observable[T]) Observable[R]
 }
 
 // ConnectOperator is an [Operator] type for [Connect].
@@ -23,7 +23,7 @@ type ConnectOperator[T, R any] struct {
 
 // WithConnector sets Connector option to a given value.
 func (op ConnectOperator[T, R]) WithConnector(connector func() Subject[T]) ConnectOperator[T, R] {
-	op.ts.Connector = connector
+	op.ts.connector = connector
 	return op
 }
 
@@ -33,7 +33,7 @@ func (op ConnectOperator[T, R]) Apply(source Observable[T]) Observable[R] {
 }
 
 type connectObservable[T, R any] struct {
-	Source Observable[T]
+	source Observable[T]
 	connectConfig[T, R]
 }
 
@@ -41,7 +41,7 @@ func (ob connectObservable[T, R]) Subscribe(c Context, o Observer[R]) {
 	c, cancel := c.WithCancel()
 	o = o.DoOnTermination(cancel)
 	oops := func() { o.Error(ErrOops) }
-	subject := Try01(ob.Connector, oops)
-	Try11(ob.Selector, subject.Observable, oops).Subscribe(c, o)
-	ob.Source.Subscribe(c, subject.Observer)
+	subject := Try01(ob.connector, oops)
+	Try11(ob.selector, subject.Observable, oops).Subscribe(c, o)
+	ob.source.Subscribe(c, subject.Observer)
 }

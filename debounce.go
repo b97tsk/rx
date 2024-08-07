@@ -28,8 +28,8 @@ func Debounce[T, U any](durationSelector func(v T) Observable[U]) Operator[T, T]
 }
 
 type debounceObservable[T, U any] struct {
-	Source           Observable[T]
-	DurationSelector func(T) Observable[U]
+	source           Observable[T]
+	durationSelector func(T) Observable[U]
 }
 
 func (ob debounceObservable[T, U]) Subscribe(c Context, o Observer[T]) {
@@ -37,27 +37,27 @@ func (ob debounceObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 	o = o.DoOnTermination(cancel)
 
 	var x struct {
-		Context atomic.Value
-		Latest  struct {
+		context atomic.Value
+		latest  struct {
 			sync.Mutex
-			Value    T
-			HasValue atomic.Bool
+			value    T
+			hasValue atomic.Bool
 		}
-		Worker struct {
+		worker struct {
 			sync.WaitGroup
-			Cancel CancelFunc
+			cancel CancelFunc
 		}
 	}
 
-	x.Context.Store(c.Context)
+	x.context.Store(c.Context)
 
 	startWorker := func(v T) {
-		obs := ob.DurationSelector(v)
+		obs := ob.durationSelector(v)
 		w, cancelw := c.WithCancel()
 
-		x.Context.Store(w.Context)
-		x.Worker.Add(1)
-		x.Worker.Cancel = cancelw
+		x.context.Store(w.Context)
+		x.worker.Add(1)
+		x.worker.cancel = cancelw
 
 		var noop bool
 
@@ -66,27 +66,27 @@ func (ob debounceObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 				return
 			}
 
-			defer x.Worker.Done()
+			defer x.worker.Done()
 
 			noop = true
 			cancelw()
 
 			switch n.Kind {
 			case KindNext:
-				if x.Latest.HasValue.Load() {
-					x.Latest.Lock()
-					value := x.Latest.Value
-					x.Latest.HasValue.Store(false)
-					x.Latest.Unlock()
+				if x.latest.hasValue.Load() {
+					x.latest.Lock()
+					value := x.latest.value
+					x.latest.hasValue.Store(false)
+					x.latest.Unlock()
 					Try1(o, Next(value), func() {
-						if x.Context.CompareAndSwap(w.Context, sentinel) {
+						if x.context.CompareAndSwap(w.Context, sentinel) {
 							o.Error(ErrOops)
 						}
 					})
 				}
 
 			case KindError:
-				if x.Context.CompareAndSwap(w.Context, sentinel) {
+				if x.context.CompareAndSwap(w.Context, sentinel) {
 					o.Error(n.Error)
 				}
 
@@ -96,35 +96,35 @@ func (ob debounceObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 		})
 	}
 
-	ob.Source.Subscribe(c, func(n Notification[T]) {
+	ob.source.Subscribe(c, func(n Notification[T]) {
 		switch n.Kind {
 		case KindNext:
-			x.Latest.Lock()
-			x.Latest.Value = n.Value
-			x.Latest.HasValue.Store(true)
-			x.Latest.Unlock()
+			x.latest.Lock()
+			x.latest.value = n.Value
+			x.latest.hasValue.Store(true)
+			x.latest.Unlock()
 
-			if x.Context.Swap(c.Context) == sentinel {
-				x.Context.Store(sentinel)
+			if x.context.Swap(c.Context) == sentinel {
+				x.context.Store(sentinel)
 				return
 			}
 
-			if x.Worker.Cancel != nil {
-				x.Worker.Cancel()
-				x.Worker.Wait()
+			if x.worker.cancel != nil {
+				x.worker.cancel()
+				x.worker.Wait()
 			}
 
 			startWorker(n.Value)
 
 		case KindError, KindComplete:
-			old := x.Context.Swap(sentinel)
+			old := x.context.Swap(sentinel)
 
 			cancel()
-			x.Worker.Wait()
+			x.worker.Wait()
 
 			if old != sentinel {
-				if n.Kind == KindComplete && x.Latest.HasValue.Load() {
-					Try1(o, Next(x.Latest.Value), func() { o.Error(ErrOops) })
+				if n.Kind == KindComplete && x.latest.hasValue.Load() {
+					Try1(o, Next(x.latest.value), func() { o.Error(ErrOops) })
 				}
 
 				o.Emit(n)

@@ -7,18 +7,18 @@ func CompactComparable[T comparable]() Operator[T, T] {
 		func(source Observable[T]) Observable[T] {
 			return func(c Context, o Observer[T]) {
 				var last struct {
-					Value    T
-					HasValue bool
+					value    T
+					hasValue bool
 				}
 
 				source.Subscribe(c, func(n Notification[T]) {
 					if n.Kind == KindNext {
-						if last.HasValue && last.Value == n.Value {
+						if last.hasValue && last.value == n.Value {
 							return
 						}
 
-						last.Value = n.Value
-						last.HasValue = true
+						last.value = n.Value
+						last.hasValue = true
 					}
 
 					o.Emit(n)
@@ -35,18 +35,18 @@ func Compact[T any](eq func(v1, v2 T) bool) Operator[T, T] {
 		func(source Observable[T]) Observable[T] {
 			return func(c Context, o Observer[T]) {
 				var last struct {
-					Value    T
-					HasValue bool
+					value    T
+					hasValue bool
 				}
 
 				source.Subscribe(c, func(n Notification[T]) {
 					if n.Kind == KindNext {
-						if last.HasValue && eq(last.Value, n.Value) {
+						if last.hasValue && eq(last.value, n.Value) {
 							return
 						}
 
-						last.Value = n.Value
-						last.HasValue = true
+						last.value = n.Value
+						last.hasValue = true
 					}
 
 					o.Emit(n)
@@ -63,20 +63,20 @@ func CompactComparableKey[T any, K comparable](mapping func(v T) K) Operator[T, 
 		func(source Observable[T]) Observable[T] {
 			return func(c Context, o Observer[T]) {
 				var last struct {
-					Value    K
-					HasValue bool
+					value    K
+					hasValue bool
 				}
 
 				source.Subscribe(c, func(n Notification[T]) {
 					if n.Kind == KindNext {
 						keyValue := mapping(n.Value)
 
-						if last.HasValue && last.Value == keyValue {
+						if last.hasValue && last.value == keyValue {
 							return
 						}
 
-						last.Value = keyValue
-						last.HasValue = true
+						last.value = keyValue
+						last.hasValue = true
 					}
 
 					o.Emit(n)
@@ -93,20 +93,20 @@ func CompactKey[T, K any](mapping func(v T) K, eq func(v1, v2 K) bool) Operator[
 		func(source Observable[T]) Observable[T] {
 			return func(c Context, o Observer[T]) {
 				var last struct {
-					Value    K
-					HasValue bool
+					value    K
+					hasValue bool
 				}
 
 				source.Subscribe(c, func(n Notification[T]) {
 					if n.Kind == KindNext {
 						keyValue := mapping(n.Value)
 
-						if last.HasValue && eq(last.Value, keyValue) {
+						if last.hasValue && eq(last.value, keyValue) {
 							return
 						}
 
-						last.Value = keyValue
-						last.HasValue = true
+						last.value = keyValue
+						last.hasValue = true
 					}
 
 					o.Emit(n)

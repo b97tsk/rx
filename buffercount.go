@@ -10,15 +10,15 @@ package rx
 func BufferCount[T any](bufferSize int) BufferCountOperator[T] {
 	return BufferCountOperator[T]{
 		ts: bufferCountConfig{
-			BufferSize:       bufferSize,
-			StartBufferEvery: bufferSize,
+			bufferSize:       bufferSize,
+			startBufferEvery: bufferSize,
 		},
 	}
 }
 
 type bufferCountConfig struct {
-	BufferSize       int
-	StartBufferEvery int
+	bufferSize       int
+	startBufferEvery int
 }
 
 // BufferCountOperator is an [Operator] type for [BufferCount].
@@ -28,17 +28,17 @@ type BufferCountOperator[T any] struct {
 
 // WithStartBufferEvery sets StartBufferEvery option to a given value.
 func (op BufferCountOperator[T]) WithStartBufferEvery(n int) BufferCountOperator[T] {
-	op.ts.StartBufferEvery = n
+	op.ts.startBufferEvery = n
 	return op
 }
 
 // Apply implements the Operator interface.
 func (op BufferCountOperator[T]) Apply(source Observable[T]) Observable[[]T] {
-	if op.ts.BufferSize <= 0 {
+	if op.ts.bufferSize <= 0 {
 		return Oops[[]T]("BufferCount: BufferSize <= 0")
 	}
 
-	if op.ts.StartBufferEvery <= 0 {
+	if op.ts.startBufferEvery <= 0 {
 		return Oops[[]T]("BufferCount: StartBufferEvery <= 0")
 	}
 
@@ -46,15 +46,15 @@ func (op BufferCountOperator[T]) Apply(source Observable[T]) Observable[[]T] {
 }
 
 type bufferCountObservable[T any] struct {
-	Source Observable[T]
+	source Observable[T]
 	bufferCountConfig
 }
 
 func (ob bufferCountObservable[T]) Subscribe(c Context, o Observer[[]T]) {
-	s := make([]T, 0, ob.BufferSize)
+	s := make([]T, 0, ob.bufferSize)
 	skip := 0
 
-	ob.Source.Subscribe(c, func(n Notification[T]) {
+	ob.source.Subscribe(c, func(n Notification[T]) {
 		switch n.Kind {
 		case KindNext:
 			if skip > 0 {
@@ -64,17 +64,17 @@ func (ob bufferCountObservable[T]) Subscribe(c Context, o Observer[[]T]) {
 
 			s = append(s, n.Value)
 
-			if len(s) < ob.BufferSize {
+			if len(s) < ob.bufferSize {
 				return
 			}
 
 			o.Next(s)
 
-			if ob.StartBufferEvery < ob.BufferSize {
-				s = append(s[:0], s[ob.StartBufferEvery:]...)
+			if ob.startBufferEvery < ob.bufferSize {
+				s = append(s[:0], s[ob.startBufferEvery:]...)
 			} else {
 				s = s[:0]
-				skip = ob.StartBufferEvery - ob.BufferSize
+				skip = ob.startBufferEvery - ob.bufferSize
 			}
 
 		case KindError:
@@ -85,11 +85,11 @@ func (ob bufferCountObservable[T]) Subscribe(c Context, o Observer[[]T]) {
 				for {
 					Try1(o, Next(s), func() { o.Error(ErrOops) })
 
-					if len(s) <= ob.StartBufferEvery {
+					if len(s) <= ob.startBufferEvery {
 						break
 					}
 
-					s = s[ob.StartBufferEvery:]
+					s = s[ob.startBufferEvery:]
 				}
 			}
 

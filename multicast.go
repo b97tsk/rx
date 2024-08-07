@@ -31,7 +31,7 @@ func MulticastBufferAll[T any]() Subject[T] {
 // if n == 0, MulticastBuffer doesn't keep track of any value it receives
 // at all.
 func MulticastBuffer[T any](n int) Subject[T] {
-	m := &multicast[T]{Cap: n}
+	m := &multicast[T]{cap: n}
 	return Subject[T]{
 		Observable: NewObservable(m.Subscribe),
 		Observer:   WithRuntimeFinalizer(m.Emit),
@@ -39,92 +39,92 @@ func MulticastBuffer[T any](n int) Subject[T] {
 }
 
 type multicast[T any] struct {
-	Mu    sync.Mutex
-	Cap   int
-	Mobs  multiObserver[T]
-	LastN Notification[struct{}]
-	Buf   *struct {
-		Queue    queue.Queue[T]
-		RefCount atomic.Uint32
+	mu    sync.Mutex
+	cap   int
+	mobs  multiObserver[T]
+	lastn Notification[struct{}]
+	buf   *struct {
+		queue.Queue[T]
+		refcount atomic.Uint32
 	}
 }
 
 func pnew[T any](*T) *T { return new(T) }
 
 func (m *multicast[T]) Emit(n Notification[T]) {
-	m.Mu.Lock()
+	m.mu.Lock()
 
-	if m.LastN.Kind != 0 {
-		m.Mu.Unlock()
+	if m.lastn.Kind != 0 {
+		m.mu.Unlock()
 		return
 	}
 
 	switch n.Kind {
 	case KindNext:
-		mobs := m.Mobs.Clone()
+		mobs := m.mobs.Clone()
 		defer mobs.Release()
 
-		if m.Cap != 0 {
-			buf := m.Buf
+		if m.cap != 0 {
+			buf := m.buf
 
 			switch {
 			case buf == nil:
 				buf = pnew(buf)
-				m.Buf = buf
-			case buf.RefCount.Load() != 0:
+				m.buf = buf
+			case buf.refcount.Load() != 0:
 				q := buf.Queue.Clone()
 				buf = pnew(buf)
 				buf.Queue = q
-				m.Buf = buf
+				m.buf = buf
 			}
 
 			q := &buf.Queue
 
-			if q.Len() == m.Cap {
+			if q.Len() == m.cap {
 				q.Pop()
 			}
 
 			q.Push(n.Value)
 		}
 
-		m.Mu.Unlock()
+		m.mu.Unlock()
 
 		mobs.Emit(n)
 
 	case KindError, KindComplete:
 		var mobs multiObserver[T]
 
-		m.Mobs, mobs = mobs, m.Mobs
+		m.mobs, mobs = mobs, m.mobs
 
 		switch n.Kind {
 		case KindError:
-			m.LastN = Error[struct{}](n.Error)
+			m.lastn = Error[struct{}](n.Error)
 		case KindComplete:
-			m.LastN = Complete[struct{}]()
+			m.lastn = Complete[struct{}]()
 		}
 
-		m.Mu.Unlock()
+		m.mu.Unlock()
 
 		mobs.Emit(n)
 
 	default: // Unknown kind.
-		m.Mu.Unlock()
+		m.mu.Unlock()
 	}
 }
 
 func (m *multicast[T]) Subscribe(c Context, o Observer[T]) {
-	m.Mu.Lock()
+	m.mu.Lock()
 
-	if buf := m.Buf; buf != nil {
-		buf.RefCount.Add(1)
+	if buf := m.buf; buf != nil {
+		buf.refcount.Add(1)
 		decrease := true
 		defer func() {
 			if decrease {
-				buf.RefCount.Add(^uint32(0))
+				buf.refcount.Add(^uint32(0))
 			}
 		}()
 
-		m.Mu.Unlock()
+		m.mu.Unlock()
 
 		q := buf.Queue
 		done := c.Done()
@@ -140,28 +140,28 @@ func (m *multicast[T]) Subscribe(c Context, o Observer[T]) {
 			Try1(o, Next(q.At(i)), func() { o.Error(ErrOops) })
 		}
 
-		buf.RefCount.Add(^uint32(0))
+		buf.refcount.Add(^uint32(0))
 		decrease = false
 
-		m.Mu.Lock()
+		m.mu.Lock()
 	}
 
-	lastn := m.LastN
+	lastn := m.lastn
 	if lastn.Kind == 0 {
 		c, o = Serialize(c, o)
 
 		o := o
-		m.Mobs.Add(&o)
+		m.mobs.Add(&o)
 
 		c.AfterFunc(func() {
-			m.Mu.Lock()
-			m.Mobs.Delete(&o)
-			m.Mu.Unlock()
+			m.mu.Lock()
+			m.mobs.Delete(&o)
+			m.mu.Unlock()
 			o.Error(c.Cause())
 		})
 	}
 
-	m.Mu.Unlock()
+	m.mu.Unlock()
 
 	switch lastn.Kind {
 	case KindError:

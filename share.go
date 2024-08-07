@@ -12,15 +12,15 @@ import (
 func Share[T any](c Context) ShareOperator[T] {
 	return ShareOperator[T]{
 		ts: shareConfig[T]{
-			Context:   c,
-			Connector: Multicast[T],
+			context:   c,
+			connector: Multicast[T],
 		},
 	}
 }
 
 type shareConfig[T any] struct {
-	Context   Context
-	Connector func() Subject[T]
+	context   Context
+	connector func() Subject[T]
 }
 
 // ShareOperator is an [Operator] type for [Share].
@@ -30,50 +30,50 @@ type ShareOperator[T any] struct {
 
 // WithConnector sets Connector option to a given value.
 func (op ShareOperator[T]) WithConnector(connector func() Subject[T]) ShareOperator[T] {
-	op.ts.Connector = connector
+	op.ts.connector = connector
 	return op
 }
 
 // Apply implements the Operator interface.
 func (op ShareOperator[T]) Apply(source Observable[T]) Observable[T] {
 	ob := &shareObservable[T]{
-		Source:      source,
+		source:      source,
 		shareConfig: op.ts,
 	}
 	return ob.Subscribe
 }
 
 type shareObservable[T any] struct {
-	Mu sync.Mutex
+	mu sync.Mutex
 
-	Source Observable[T]
+	source Observable[T]
 	shareConfig[T]
 
-	Subject    Subject[T]
-	Connection context.Context
-	Disconnect CancelFunc
-	ShareCount int
+	subject    Subject[T]
+	connection context.Context
+	disconnect CancelFunc
+	shareCount int
 }
 
 func (ob *shareObservable[T]) Subscribe(c Context, o Observer[T]) {
-	ob.Mu.Lock()
+	ob.mu.Lock()
 
 	var unlocked bool
 
 	defer func() {
 		if !unlocked {
-			ob.Mu.Unlock()
+			ob.mu.Unlock()
 		}
 	}()
 
-	if ob.Subject.Observable == nil {
-		ob.Subject = Try01(ob.Connector, func() { o.Error(ErrOops) })
+	if ob.subject.Observable == nil {
+		ob.subject = Try01(ob.connector, func() { o.Error(ErrOops) })
 	}
 
 	c, cancel := c.WithCancel()
 	o = o.DoOnTermination(cancel)
 
-	ob.Subject.Subscribe(c, o)
+	ob.subject.Subscribe(c, o)
 
 	select {
 	default:
@@ -81,39 +81,39 @@ func (ob *shareObservable[T]) Subscribe(c Context, o Observer[T]) {
 		return
 	}
 
-	connection := ob.Connection
+	connection := ob.connection
 
-	ob.ShareCount++
+	ob.shareCount++
 
 	if connection == nil {
-		w, cancelw := ob.Context.WithCancel()
+		w, cancelw := ob.context.WithCancel()
 
 		connection = w.Context
-		ob.Connection = w.Context
-		ob.Disconnect = cancelw
+		ob.connection = w.Context
+		ob.disconnect = cancelw
 
-		o := ob.Subject.Observer
+		o := ob.subject.Observer
 
-		ob.Mu.Unlock()
+		ob.mu.Unlock()
 		unlocked = true
 
-		ob.Source.Subscribe(w, func(n Notification[T]) {
+		ob.source.Subscribe(w, func(n Notification[T]) {
 			switch n.Kind {
 			case KindNext:
 				o.Emit(n)
 			case KindError, KindComplete:
 				cancelw()
 
-				ob.Mu.Lock()
+				ob.mu.Lock()
 
-				if connection == ob.Connection {
-					ob.Subject = Subject[T]{}
-					ob.Connection = nil
-					ob.Disconnect = nil
-					ob.ShareCount = 0
+				if connection == ob.connection {
+					ob.subject = Subject[T]{}
+					ob.connection = nil
+					ob.disconnect = nil
+					ob.shareCount = 0
 				}
 
-				ob.Mu.Unlock()
+				ob.mu.Unlock()
 
 				o.Emit(n)
 			}
@@ -121,20 +121,20 @@ func (ob *shareObservable[T]) Subscribe(c Context, o Observer[T]) {
 	}
 
 	c.AfterFunc(func() {
-		ob.Mu.Lock()
+		ob.mu.Lock()
 
-		if connection == ob.Connection {
-			ob.ShareCount--
+		if connection == ob.connection {
+			ob.shareCount--
 
-			if ob.ShareCount == 0 {
-				ob.Disconnect()
+			if ob.shareCount == 0 {
+				ob.disconnect()
 
-				ob.Subject = Subject[T]{}
-				ob.Connection = nil
-				ob.Disconnect = nil
+				ob.subject = Subject[T]{}
+				ob.connection = nil
+				ob.disconnect = nil
 			}
 		}
 
-		ob.Mu.Unlock()
+		ob.mu.Unlock()
 	})
 }

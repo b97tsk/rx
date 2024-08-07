@@ -10,16 +10,16 @@ import (
 func Timeout[T any](d time.Duration) TimeoutOperator[T] {
 	return TimeoutOperator[T]{
 		ts: timeoutConfig[T]{
-			First: d,
-			Each:  d,
+			first: d,
+			each:  d,
 		},
 	}
 }
 
 type timeoutConfig[T any] struct {
-	First time.Duration
-	Each  time.Duration
-	With  Observable[T]
+	first time.Duration
+	each  time.Duration
+	with  Observable[T]
 }
 
 // TimeoutOperator is an [Operator] type for [Timeout].
@@ -29,13 +29,13 @@ type TimeoutOperator[T any] struct {
 
 // WithFirst sets First option to a given value.
 func (op TimeoutOperator[T]) WithFirst(d time.Duration) TimeoutOperator[T] {
-	op.ts.First = d
+	op.ts.first = d
 	return op
 }
 
 // WithObservable sets With option to a given value.
 func (op TimeoutOperator[T]) WithObservable(ob Observable[T]) TimeoutOperator[T] {
-	op.ts.With = ob
+	op.ts.with = ob
 	return op
 }
 
@@ -45,7 +45,7 @@ func (op TimeoutOperator[T]) Apply(source Observable[T]) Observable[T] {
 }
 
 type timeoutObservable[T any] struct {
-	Source Observable[T]
+	source Observable[T]
 	timeoutConfig[T]
 }
 
@@ -53,17 +53,17 @@ func (ob timeoutObservable[T]) Subscribe(parent Context, o Observer[T]) {
 	c, cancel := parent.WithCancel()
 
 	var x struct {
-		Context atomic.Value
+		context atomic.Value
 	}
 
-	x.Context.Store(c.Context)
+	x.context.Store(c.Context)
 
-	tm := time.AfterFunc(ob.First, c.PreAsyncCall(func() {
-		if x.Context.Swap(sentinel) != sentinel {
+	tm := time.AfterFunc(ob.first, c.PreAsyncCall(func() {
+		if x.context.Swap(sentinel) != sentinel {
 			cancel()
 
-			if ob.With != nil {
-				ob.With.Subscribe(parent, o)
+			if ob.with != nil {
+				ob.with.Subscribe(parent, o)
 				return
 			}
 
@@ -71,7 +71,7 @@ func (ob timeoutObservable[T]) Subscribe(parent Context, o Observer[T]) {
 		}
 	}))
 
-	ob.Source.Subscribe(c, func(n Notification[T]) {
+	ob.source.Subscribe(c, func(n Notification[T]) {
 		switch n.Kind {
 		case KindNext:
 			if tm.Stop() {
@@ -80,7 +80,7 @@ func (ob timeoutObservable[T]) Subscribe(parent Context, o Observer[T]) {
 						c.WaitGroup.Done()
 					}
 				})
-				tm.Reset(ob.Each)
+				tm.Reset(ob.each)
 			}
 
 		case KindError, KindComplete:
@@ -90,7 +90,7 @@ func (ob timeoutObservable[T]) Subscribe(parent Context, o Observer[T]) {
 				}
 			}
 
-			if x.Context.Swap(sentinel) != sentinel {
+			if x.context.Swap(sentinel) != sentinel {
 				cancel()
 				o.Emit(n)
 			}

@@ -38,7 +38,7 @@ func UnicastBufferAll[T any]() Subject[T] {
 // the first subscriber;
 // if n == 0, UnicastBuffer doesn't keep track of any value it receives at all.
 func UnicastBuffer[T any](n int) Subject[T] {
-	u := &unicast[T]{Cap: n}
+	u := &unicast[T]{cap: n}
 	return Subject[T]{
 		Observable: NewObservable(u.Subscribe),
 		Observer:   WithRuntimeFinalizer(u.Emit),
@@ -46,48 +46,48 @@ func UnicastBuffer[T any](n int) Subject[T] {
 }
 
 type unicast[T any] struct {
-	Mu       sync.Mutex
-	Cond     sync.Cond
-	Cap      int
-	Waiters  int
-	Emitting bool
-	LastN    Notification[struct{}]
-	Buf      queue.Queue[T]
-	Context  context.Context
-	DoneChan <-chan struct{}
-	Observer Observer[T]
+	mu       sync.Mutex
+	co       sync.Cond
+	cap      int
+	waiters  int
+	emitting bool
+	lastn    Notification[struct{}]
+	buf      queue.Queue[T]
+	context  context.Context
+	done     <-chan struct{}
+	observer Observer[T]
 }
 
 func (u *unicast[T]) Emit(n Notification[T]) {
-	u.Mu.Lock()
+	u.mu.Lock()
 
-	if u.LastN.Kind != 0 {
-		u.Mu.Unlock()
+	if u.lastn.Kind != 0 {
+		u.mu.Unlock()
 		return
 	}
 
 	switch n.Kind {
 	case KindError:
-		u.LastN = Error[struct{}](n.Error)
+		u.lastn = Error[struct{}](n.Error)
 	case KindComplete:
-		u.LastN = Complete[struct{}]()
+		u.lastn = Complete[struct{}]()
 	}
 
-	if u.Observer == nil {
-		if n.Kind == KindNext && u.Cap != 0 {
-			if u.Cap == u.Buf.Len() {
-				u.Buf.Pop()
+	if u.observer == nil {
+		if n.Kind == KindNext && u.cap != 0 {
+			if u.cap == u.buf.Len() {
+				u.buf.Pop()
 			}
 
-			u.Buf.Push(n.Value)
+			u.buf.Push(n.Value)
 		}
 
-		u.Mu.Unlock()
+		u.mu.Unlock()
 
 		return
 	}
 
-	if !u.Emitting {
+	if !u.emitting {
 		u.startEmitting(n)
 		return
 	}
@@ -95,42 +95,42 @@ func (u *unicast[T]) Emit(n Notification[T]) {
 	if n.Kind == KindNext {
 		const bufLimit = 32 // Only up to this number of values can fill into u.Buf.
 	Again:
-		for u.Buf.Len() >= max(u.Buf.Cap(), bufLimit) {
-			if n.Kind == 0 && u.Waiters != 0 {
+		for u.buf.Len() >= max(u.buf.Cap(), bufLimit) {
+			if n.Kind == 0 && u.waiters != 0 {
 				break
 			}
 
-			if !u.Emitting {
+			if !u.emitting {
 				u.startEmitting(n)
 				return
 			}
 
-			if u.Cond.L == nil {
-				u.Cond.L = &u.Mu
+			if u.co.L == nil {
+				u.co.L = &u.mu
 			}
 
-			u.Waiters++
-			u.Cond.Wait()
-			u.Waiters--
+			u.waiters++
+			u.co.Wait()
+			u.waiters--
 		}
 
-		if n.Kind == KindNext && u.LastN.Kind == 0 {
-			u.Buf.Push(n.Value)
-			if u.Waiters == 0 {
+		if n.Kind == KindNext && u.lastn.Kind == 0 {
+			u.buf.Push(n.Value)
+			if u.waiters == 0 {
 				n = Notification[T]{}
 				goto Again
 			}
 		}
 	}
 
-	u.Mu.Unlock()
+	u.mu.Unlock()
 }
 
 func (u *unicast[T]) Subscribe(c Context, o Observer[T]) {
-	u.Mu.Lock()
+	u.mu.Lock()
 
-	if u.Observer != nil {
-		u.Mu.Unlock()
+	if u.observer != nil {
+		u.mu.Unlock()
 		o.Error(ErrUnicast)
 		return
 	}
@@ -141,12 +141,12 @@ func (u *unicast[T]) Subscribe(c Context, o Observer[T]) {
 		o = o.DoOnTermination(func() { stop() })
 	}
 
-	u.Context = c.Context
-	u.DoneChan = done
-	u.Observer = o
+	u.context = c.Context
+	u.done = done
+	u.observer = o
 
-	if u.LastN.Kind == 0 && u.Buf.Len() == 0 {
-		u.Mu.Unlock()
+	if u.lastn.Kind == 0 && u.buf.Len() == 0 {
+		u.mu.Unlock()
 		return
 	}
 
@@ -155,34 +155,34 @@ func (u *unicast[T]) Subscribe(c Context, o Observer[T]) {
 
 func (u *unicast[T]) startEmitting(n Notification[T]) {
 	throw := func(err error) {
-		u.Mu.Lock()
-		u.Emitting = false
-		u.LastN = Error[struct{}](err)
-		u.Buf.Init()
-		u.Mu.Unlock()
-		u.Cond.Broadcast()
-		u.Observer.Error(err)
+		u.mu.Lock()
+		u.emitting = false
+		u.lastn = Error[struct{}](err)
+		u.buf.Init()
+		u.mu.Unlock()
+		u.co.Broadcast()
+		u.observer.Error(err)
 	}
 
 	oops := func() { throw(ErrOops) }
 
-	o := u.Observer
+	o := u.observer
 
-	u.Emitting = true
+	u.emitting = true
 
 	for {
 		var buf queue.Queue[T]
 
-		u.Buf, buf = buf, u.Buf
+		u.buf, buf = buf, u.buf
 
-		u.Mu.Unlock()
-		u.Cond.Broadcast()
+		u.mu.Unlock()
+		u.co.Broadcast()
 
 		for i, j := 0, buf.Len(); i < j; i++ {
 			select {
 			default:
-			case <-u.DoneChan:
-				throw(context.Cause(u.Context))
+			case <-u.done:
+				throw(context.Cause(u.context))
 				return
 			}
 
@@ -194,8 +194,8 @@ func (u *unicast[T]) startEmitting(n Notification[T]) {
 		case KindNext:
 			select {
 			default:
-			case <-u.DoneChan:
-				throw(context.Cause(u.Context))
+			case <-u.done:
+				throw(context.Cause(u.context))
 				return
 			}
 
@@ -207,13 +207,13 @@ func (u *unicast[T]) startEmitting(n Notification[T]) {
 			return
 		}
 
-		u.Mu.Lock()
+		u.mu.Lock()
 
-		if u.Buf.Len() == 0 {
-			lastn := u.LastN
+		if u.buf.Len() == 0 {
+			lastn := u.lastn
 
-			u.Emitting = false
-			u.Mu.Unlock()
+			u.emitting = false
+			u.mu.Unlock()
 
 			switch lastn.Kind {
 			case KindError:
@@ -225,10 +225,10 @@ func (u *unicast[T]) startEmitting(n Notification[T]) {
 			return
 		}
 
-		if u.Waiters != 0 {
-			u.Emitting = false
-			u.Mu.Unlock()
-			u.Cond.Broadcast()
+		if u.waiters != 0 {
+			u.emitting = false
+			u.mu.Unlock()
+			u.co.Broadcast()
 			return
 		}
 	}

@@ -35,8 +35,8 @@ func Repeat[T any](count int) Operator[T, T] {
 }
 
 type repeatObservable[T any] struct {
-	Source Observable[T]
-	Count  int
+	source Observable[T]
+	count  int
 }
 
 func (ob repeatObservable[T]) Subscribe(c Context, o Observer[T]) {
@@ -52,10 +52,10 @@ func (ob repeatObservable[T]) Subscribe(c Context, o Observer[T]) {
 			return
 		}
 
-		ob.Source.Subscribe(c, observer)
+		ob.source.Subscribe(c, observer)
 	})
 
-	count := ob.Count
+	count := ob.count
 
 	observer = func(n Notification[T]) {
 		if n.Kind != KindComplete || count == 0 {

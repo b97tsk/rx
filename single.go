@@ -11,8 +11,8 @@ func Single[T any]() Operator[T, T] {
 				o = o.DoOnTermination(cancel)
 
 				var first struct {
-					Value    T
-					HasValue bool
+					value    T
+					hasValue bool
 				}
 
 				var noop bool
@@ -24,9 +24,9 @@ func Single[T any]() Operator[T, T] {
 
 					switch n.Kind {
 					case KindNext:
-						if !first.HasValue {
-							first.Value = n.Value
-							first.HasValue = true
+						if !first.hasValue {
+							first.value = n.Value
+							first.hasValue = true
 							return
 						}
 
@@ -37,8 +37,8 @@ func Single[T any]() Operator[T, T] {
 						o.Emit(n)
 
 					case KindComplete:
-						if first.HasValue {
-							Try1(o, Next(first.Value), func() { o.Error(ErrOops) })
+						if first.hasValue {
+							Try1(o, Next(first.value), func() { o.Error(ErrOops) })
 							o.Complete()
 						} else {
 							o.Error(ErrEmpty)

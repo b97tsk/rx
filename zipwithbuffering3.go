@@ -24,20 +24,20 @@ func ZipWithBuffering3[T1, T2, T3, R any](
 		var s zipState3[T1, T2, T3]
 
 		_ = true &&
-			ob1.satcc(c, func(n Notification[T1]) { zipEmit3(o, n, mapping, &s, &s.Q1, 1) }) &&
-			ob2.satcc(c, func(n Notification[T2]) { zipEmit3(o, n, mapping, &s, &s.Q2, 2) }) &&
-			ob3.satcc(c, func(n Notification[T3]) { zipEmit3(o, n, mapping, &s, &s.Q3, 4) })
+			ob1.satcc(c, func(n Notification[T1]) { zipEmit3(o, n, mapping, &s, &s.q1, 1) }) &&
+			ob2.satcc(c, func(n Notification[T2]) { zipEmit3(o, n, mapping, &s, &s.q2, 2) }) &&
+			ob3.satcc(c, func(n Notification[T3]) { zipEmit3(o, n, mapping, &s, &s.q3, 4) })
 	}
 }
 
 type zipState3[T1, T2, T3 any] struct {
-	sync.Mutex
+	mu sync.Mutex
 
-	NBits, CBits uint8
+	nbits, cbits uint8
 
-	Q1 queue.Queue[T1]
-	Q2 queue.Queue[T2]
-	Q3 queue.Queue[T3]
+	q1 queue.Queue[T1]
+	q2 queue.Queue[T2]
+	q3 queue.Queue[T3]
 }
 
 func zipEmit3[T1, T2, T3, R, X any](
@@ -52,24 +52,24 @@ func zipEmit3[T1, T2, T3, R, X any](
 
 	switch n.Kind {
 	case KindNext:
-		s.Lock()
+		s.mu.Lock()
 		q.Push(n.Value)
 
-		nbits := s.NBits
+		nbits := s.nbits
 		nbits |= bit
-		s.NBits = nbits
+		s.nbits = nbits
 
 		if nbits == FullBits {
 			var complete bool
 
 			v := Try31(
 				mapping,
-				zipPop3(s, &s.Q1, 1, &complete),
-				zipPop3(s, &s.Q2, 2, &complete),
-				zipPop3(s, &s.Q3, 4, &complete),
-				s.Unlock,
+				zipPop3(s, &s.q1, 1, &complete),
+				zipPop3(s, &s.q2, 2, &complete),
+				zipPop3(s, &s.q3, 4, &complete),
+				s.mu.Unlock,
 			)
-			s.Unlock()
+			s.mu.Unlock()
 			o.Next(v)
 
 			if complete {
@@ -79,16 +79,16 @@ func zipEmit3[T1, T2, T3, R, X any](
 			return
 		}
 
-		s.Unlock()
+		s.mu.Unlock()
 
 	case KindError:
 		o.Error(n.Error)
 
 	case KindComplete:
-		s.Lock()
-		s.CBits |= bit
+		s.mu.Lock()
+		s.cbits |= bit
 		complete := q.Len() == 0
-		s.Unlock()
+		s.mu.Unlock()
 
 		if complete {
 			o.Complete()
@@ -105,9 +105,9 @@ func zipPop3[T1, T2, T3, X any](
 	v := q.Pop()
 
 	if q.Len() == 0 {
-		s.NBits &^= bit
+		s.nbits &^= bit
 
-		if s.CBits&bit != 0 {
+		if s.cbits&bit != 0 {
 			*complete = true
 		}
 	}

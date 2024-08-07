@@ -16,8 +16,8 @@ func TakeUntil[T, U any](notifier Observable[U]) Operator[T, T] {
 }
 
 type takeUntilObservable[T, U any] struct {
-	Source   Observable[T]
-	Notifier Observable[U]
+	source   Observable[T]
+	notifier Observable[U]
 }
 
 func (ob takeUntilObservable[T, U]) Subscribe(c Context, o Observer[T]) {
@@ -25,14 +25,14 @@ func (ob takeUntilObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 	o = o.DoOnTermination(cancel)
 
 	var x struct {
-		Context atomic.Value
-		Source  struct {
+		context atomic.Value
+		source  struct {
 			sync.Mutex
 			sync.WaitGroup
 		}
 	}
 
-	x.Context.Store(c.Context)
+	x.context.Store(c.Context)
 
 	{
 		w, cancelw := c.WithCancel()
@@ -41,7 +41,7 @@ func (ob takeUntilObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 
 		Try3(
 			Observable[U].Subscribe,
-			ob.Notifier,
+			ob.notifier,
 			w,
 			func(n Notification[U]) {
 				if noop {
@@ -53,12 +53,12 @@ func (ob takeUntilObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 
 				switch n.Kind {
 				case KindNext, KindError:
-					if x.Context.Swap(sentinel) != sentinel {
+					if x.context.Swap(sentinel) != sentinel {
 						cancel()
 
-						x.Source.Lock()
-						x.Source.Wait()
-						x.Source.Unlock()
+						x.source.Lock()
+						x.source.Wait()
+						x.source.Unlock()
 
 						switch n.Kind {
 						case KindNext:
@@ -73,21 +73,21 @@ func (ob takeUntilObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 				}
 			},
 			func() {
-				if x.Context.Swap(sentinel) != sentinel {
+				if x.context.Swap(sentinel) != sentinel {
 					o.Error(ErrOops)
 				}
 			},
 		)
 	}
 
-	x.Source.Lock()
-	x.Source.Add(1)
-	x.Source.Unlock()
+	x.source.Lock()
+	x.source.Add(1)
+	x.source.Unlock()
 
 	terminate := func(n Notification[T]) {
-		defer x.Source.Done()
+		defer x.source.Done()
 
-		old := x.Context.Swap(sentinel)
+		old := x.context.Swap(sentinel)
 
 		cancel()
 
@@ -103,10 +103,10 @@ func (ob takeUntilObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 		return
 	}
 
-	ob.Source.Subscribe(c, func(n Notification[T]) {
+	ob.source.Subscribe(c, func(n Notification[T]) {
 		switch n.Kind {
 		case KindNext:
-			if x.Context.Load() == c.Context {
+			if x.context.Load() == c.Context {
 				o.Emit(n)
 			}
 		case KindError, KindComplete:

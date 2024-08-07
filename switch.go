@@ -30,8 +30,8 @@ func SwitchMap[T, R any](mapping func(v T) Observable[R]) Operator[T, R] {
 }
 
 type switchMapObservable[T, R any] struct {
-	Source  Observable[T]
-	Mapping func(T) Observable[R]
+	source  Observable[T]
+	mapping func(T) Observable[R]
 }
 
 func (ob switchMapObservable[T, R]) Subscribe(c Context, o Observer[R]) {
@@ -39,23 +39,23 @@ func (ob switchMapObservable[T, R]) Subscribe(c Context, o Observer[R]) {
 	o = o.DoOnTermination(cancel)
 
 	var x struct {
-		Context  atomic.Value
-		Complete atomic.Bool
-		Worker   struct {
+		context  atomic.Value
+		complete atomic.Bool
+		worker   struct {
 			sync.WaitGroup
-			Cancel CancelFunc
+			cancel CancelFunc
 		}
 	}
 
-	x.Context.Store(c.Context)
+	x.context.Store(c.Context)
 
 	startWorker := func(v T) {
-		obs := ob.Mapping(v)
+		obs := ob.mapping(v)
 		w, cancelw := c.WithCancel()
 
-		x.Context.Store(w.Context)
-		x.Worker.Add(1)
-		x.Worker.Cancel = cancelw
+		x.context.Store(w.Context)
+		x.worker.Add(1)
+		x.worker.cancel = cancelw
 
 		obs.Subscribe(w, func(n Notification[R]) {
 			switch n.Kind {
@@ -63,17 +63,17 @@ func (ob switchMapObservable[T, R]) Subscribe(c Context, o Observer[R]) {
 				o.Emit(n)
 
 			case KindError, KindComplete:
-				defer x.Worker.Done()
+				defer x.worker.Done()
 
 				cancelw()
 
 				switch n.Kind {
 				case KindError:
-					if x.Context.CompareAndSwap(w.Context, sentinel) {
+					if x.context.CompareAndSwap(w.Context, sentinel) {
 						o.Emit(n)
 					}
 				case KindComplete:
-					if x.Context.CompareAndSwap(w.Context, c.Context) && x.Complete.Load() && x.Context.CompareAndSwap(c.Context, sentinel) {
+					if x.context.CompareAndSwap(w.Context, c.Context) && x.complete.Load() && x.context.CompareAndSwap(c.Context, sentinel) {
 						o.Emit(n)
 					}
 				}
@@ -81,35 +81,35 @@ func (ob switchMapObservable[T, R]) Subscribe(c Context, o Observer[R]) {
 		})
 	}
 
-	ob.Source.Subscribe(c, func(n Notification[T]) {
+	ob.source.Subscribe(c, func(n Notification[T]) {
 		switch n.Kind {
 		case KindNext:
-			if x.Context.Swap(c.Context) == sentinel {
-				x.Context.Store(sentinel)
+			if x.context.Swap(c.Context) == sentinel {
+				x.context.Store(sentinel)
 				return
 			}
 
-			if x.Worker.Cancel != nil {
-				x.Worker.Cancel()
-				x.Worker.Wait()
+			if x.worker.cancel != nil {
+				x.worker.cancel()
+				x.worker.Wait()
 			}
 
 			startWorker(n.Value)
 
 		case KindError:
-			old := x.Context.Swap(sentinel)
+			old := x.context.Swap(sentinel)
 
 			cancel()
-			x.Worker.Wait()
+			x.worker.Wait()
 
 			if old != sentinel {
 				o.Error(n.Error)
 			}
 
 		case KindComplete:
-			x.Complete.Store(true)
+			x.complete.Store(true)
 
-			if x.Context.CompareAndSwap(c.Context, sentinel) {
+			if x.context.CompareAndSwap(c.Context, sentinel) {
 				o.Complete()
 			}
 		}

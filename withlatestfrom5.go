@@ -35,26 +35,26 @@ func withLatestFrom6[T1, T2, T3, T4, T5, T6, R any](
 		var s withLatestFromState6[T1, T2, T3, T4, T5, T6]
 
 		_ = true &&
-			ob1.satcc(c, func(n Notification[T1]) { withLatestFromEmit6(o, n, mapping, &s, &s.V1, 1) }) &&
-			ob2.satcc(c, func(n Notification[T2]) { withLatestFromEmit6(o, n, mapping, &s, &s.V2, 2) }) &&
-			ob3.satcc(c, func(n Notification[T3]) { withLatestFromEmit6(o, n, mapping, &s, &s.V3, 4) }) &&
-			ob4.satcc(c, func(n Notification[T4]) { withLatestFromEmit6(o, n, mapping, &s, &s.V4, 8) }) &&
-			ob5.satcc(c, func(n Notification[T5]) { withLatestFromEmit6(o, n, mapping, &s, &s.V5, 16) }) &&
-			ob6.satcc(c, func(n Notification[T6]) { withLatestFromEmit6(o, n, mapping, &s, &s.V6, 32) })
+			ob1.satcc(c, func(n Notification[T1]) { withLatestFromEmit6(o, n, mapping, &s, &s.v1, 1) }) &&
+			ob2.satcc(c, func(n Notification[T2]) { withLatestFromEmit6(o, n, mapping, &s, &s.v2, 2) }) &&
+			ob3.satcc(c, func(n Notification[T3]) { withLatestFromEmit6(o, n, mapping, &s, &s.v3, 4) }) &&
+			ob4.satcc(c, func(n Notification[T4]) { withLatestFromEmit6(o, n, mapping, &s, &s.v4, 8) }) &&
+			ob5.satcc(c, func(n Notification[T5]) { withLatestFromEmit6(o, n, mapping, &s, &s.v5, 16) }) &&
+			ob6.satcc(c, func(n Notification[T6]) { withLatestFromEmit6(o, n, mapping, &s, &s.v6, 32) })
 	}
 }
 
 type withLatestFromState6[T1, T2, T3, T4, T5, T6 any] struct {
-	sync.Mutex
+	mu sync.Mutex
 
-	NBits uint8
+	nbits uint8
 
-	V1 T1
-	V2 T2
-	V3 T3
-	V4 T4
-	V5 T5
-	V6 T6
+	v1 T1
+	v2 T2
+	v3 T3
+	v4 T4
+	v5 T5
+	v6 T6
 }
 
 func withLatestFromEmit6[T1, T2, T3, T4, T5, T6, R, X any](
@@ -69,20 +69,20 @@ func withLatestFromEmit6[T1, T2, T3, T4, T5, T6, R, X any](
 
 	switch n.Kind {
 	case KindNext:
-		s.Lock()
+		s.mu.Lock()
 		*v = n.Value
-		nbits := s.NBits
+		nbits := s.nbits
 		nbits |= bit
-		s.NBits = nbits
+		s.nbits = nbits
 
 		if nbits == FullBits && bit == 1 {
-			v := Try61(mapping, s.V1, s.V2, s.V3, s.V4, s.V5, s.V6, s.Unlock)
-			s.Unlock()
+			v := Try61(mapping, s.v1, s.v2, s.v3, s.v4, s.v5, s.v6, s.mu.Unlock)
+			s.mu.Unlock()
 			o.Next(v)
 			return
 		}
 
-		s.Unlock()
+		s.mu.Unlock()
 
 	case KindError:
 		o.Error(n.Error)

@@ -15,22 +15,22 @@ func GroupBy[T any, K comparable](
 }
 
 type groupByObservable[T any, K comparable] struct {
-	Source       Observable[T]
-	KeySelector  func(T) K
-	GroupFactory func() Subject[T]
+	source       Observable[T]
+	keySelector  func(T) K
+	groupFactory func() Subject[T]
 }
 
 func (ob groupByObservable[T, K]) Subscribe(c Context, o Observer[Pair[K, Observable[T]]]) {
 	groups := make(map[K]Observer[T])
 
-	ob.Source.Subscribe(c, func(n Notification[T]) {
+	ob.source.Subscribe(c, func(n Notification[T]) {
 		switch n.Kind {
 		case KindNext:
-			key := ob.KeySelector(n.Value)
+			key := ob.keySelector(n.Value)
 			group, exists := groups[key]
 
 			if !exists {
-				g := ob.GroupFactory()
+				g := ob.groupFactory()
 				group = g.Observer
 				groups[key] = group
 				o.Next(NewPair(key, g.Observable))

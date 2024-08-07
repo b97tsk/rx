@@ -23,8 +23,8 @@ func Sample[T, U any](notifier Observable[U]) Operator[T, T] {
 }
 
 type sampleObservable[T, U any] struct {
-	Source   Observable[T]
-	Notifier Observable[U]
+	source   Observable[T]
+	notifier Observable[U]
 }
 
 func (ob sampleObservable[T, U]) Subscribe(c Context, o Observer[T]) {
@@ -32,33 +32,33 @@ func (ob sampleObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 	o = o.DoOnTermination(cancel)
 
 	var x struct {
-		Context atomic.Value
-		Latest  struct {
+		context atomic.Value
+		latest  struct {
 			sync.Mutex
-			Value    T
-			HasValue atomic.Bool
+			value    T
+			hasValue atomic.Bool
 		}
-		Worker struct {
+		worker struct {
 			sync.Mutex
 			sync.WaitGroup
 		}
 	}
 
-	ob.Source.Subscribe(c, func(n Notification[T]) {
+	ob.source.Subscribe(c, func(n Notification[T]) {
 		switch n.Kind {
 		case KindNext:
-			x.Latest.Lock()
-			x.Latest.Value = n.Value
-			x.Latest.HasValue.Store(true)
-			x.Latest.Unlock()
+			x.latest.Lock()
+			x.latest.value = n.Value
+			x.latest.hasValue.Store(true)
+			x.latest.Unlock()
 		case KindError, KindComplete:
-			old := x.Context.Swap(sentinel)
+			old := x.context.Swap(sentinel)
 
 			cancel()
 
-			x.Worker.Lock()
-			x.Worker.Wait()
-			x.Worker.Unlock()
+			x.worker.Lock()
+			x.worker.Wait()
+			x.worker.Unlock()
 
 			if old != sentinel {
 				o.Emit(n)
@@ -74,33 +74,33 @@ func (ob sampleObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 
 	w, cancelw := c.WithCancel()
 
-	x.Worker.Lock()
-	x.Worker.Add(1)
-	x.Worker.Unlock()
+	x.worker.Lock()
+	x.worker.Add(1)
+	x.worker.Unlock()
 
-	ob.Notifier.Subscribe(w, func(n Notification[U]) {
+	ob.notifier.Subscribe(w, func(n Notification[U]) {
 		switch n.Kind {
 		case KindNext:
-			if x.Latest.HasValue.Load() {
-				x.Latest.Lock()
-				value := x.Latest.Value
-				x.Latest.HasValue.Store(false)
-				x.Latest.Unlock()
+			if x.latest.hasValue.Load() {
+				x.latest.Lock()
+				value := x.latest.value
+				x.latest.hasValue.Store(false)
+				x.latest.Unlock()
 				o.Next(value)
 			}
 
 		case KindError:
-			defer x.Worker.Done()
+			defer x.worker.Done()
 
 			cancelw()
 
-			if x.Context.Swap(sentinel) != sentinel {
+			if x.context.Swap(sentinel) != sentinel {
 				o.Error(n.Error)
 			}
 
 		case KindComplete:
 			cancelw()
-			x.Worker.Done()
+			x.worker.Done()
 		}
 	})
 }

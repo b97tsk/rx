@@ -19,8 +19,8 @@ func Delay[T any](d time.Duration) Operator[T, T] {
 }
 
 type delayObservable[T any] struct {
-	Source   Observable[T]
-	Duration time.Duration
+	source   Observable[T]
+	duration time.Duration
 }
 
 func (ob delayObservable[T]) Subscribe(c Context, o Observer[T]) {
@@ -28,31 +28,31 @@ func (ob delayObservable[T]) Subscribe(c Context, o Observer[T]) {
 	o = o.DoOnTermination(cancel)
 
 	var x struct {
-		Context  atomic.Value
-		Complete atomic.Bool
-		Queue    struct {
+		context  atomic.Value
+		complete atomic.Bool
+		buffer   struct {
 			sync.Mutex
 			queue.Queue[Pair[time.Time, T]]
 		}
-		Worker struct {
+		worker struct {
 			sync.WaitGroup
 		}
 	}
 
-	x.Context.Store(c.Context)
+	x.context.Store(c.Context)
 
 	var startWorker func(time.Duration)
 
 	startWorker = func(timeout time.Duration) {
 		w, cancelw := c.WithCancel()
 
-		x.Context.Store(w.Context)
-		x.Worker.Add(1)
+		x.context.Store(w.Context)
+		x.worker.Add(1)
 
 		Timer(timeout).Subscribe(w, func(n Notification[time.Time]) {
 			switch n.Kind {
 			case KindNext:
-				x.Queue.Lock()
+				x.buffer.Lock()
 
 				done := w.Done()
 
@@ -60,10 +60,10 @@ func (ob delayObservable[T]) Subscribe(c Context, o Observer[T]) {
 					select {
 					default:
 					case <-done:
-						old := x.Context.Swap(sentinel)
+						old := x.context.Swap(sentinel)
 
-						x.Queue.Init()
-						x.Queue.Unlock()
+						x.buffer.Init()
+						x.buffer.Unlock()
 
 						if old != sentinel {
 							o.Error(w.Cause())
@@ -72,26 +72,26 @@ func (ob delayObservable[T]) Subscribe(c Context, o Observer[T]) {
 						return
 					}
 
-					n := x.Queue.Front()
+					n := x.buffer.Front()
 
 					if d := time.Until(n.Key); d > 0 {
-						x.Queue.Unlock()
+						x.buffer.Unlock()
 						startWorker(d)
 						return
 					}
 
-					x.Queue.Pop()
+					x.buffer.Pop()
 
-					x.Queue.Unlock()
+					x.buffer.Unlock()
 					o.Next(n.Value)
-					x.Queue.Lock()
+					x.buffer.Lock()
 
-					if x.Queue.Len() == 0 {
-						swapped := x.Context.CompareAndSwap(w.Context, c.Context)
+					if x.buffer.Len() == 0 {
+						swapped := x.context.CompareAndSwap(w.Context, c.Context)
 
-						x.Queue.Unlock()
+						x.buffer.Unlock()
 
-						if swapped && x.Complete.Load() && x.Context.CompareAndSwap(c.Context, sentinel) {
+						if swapped && x.complete.Load() && x.context.CompareAndSwap(c.Context, sentinel) {
 							o.Complete()
 						}
 
@@ -100,14 +100,14 @@ func (ob delayObservable[T]) Subscribe(c Context, o Observer[T]) {
 				}
 
 			case KindError:
-				defer x.Worker.Done()
+				defer x.worker.Done()
 
 				cancelw()
 
-				x.Queue.Lock()
-				old := x.Context.Swap(sentinel)
-				x.Queue.Init()
-				x.Queue.Unlock()
+				x.buffer.Lock()
+				old := x.context.Swap(sentinel)
+				x.buffer.Init()
+				x.buffer.Unlock()
 
 				if old != sentinel {
 					o.Error(n.Error)
@@ -115,42 +115,42 @@ func (ob delayObservable[T]) Subscribe(c Context, o Observer[T]) {
 
 			case KindComplete:
 				cancelw()
-				x.Worker.Done()
+				x.worker.Done()
 			}
 		})
 	}
 
-	ob.Source.Subscribe(c, func(n Notification[T]) {
+	ob.source.Subscribe(c, func(n Notification[T]) {
 		switch n.Kind {
 		case KindNext:
-			x.Queue.Lock()
+			x.buffer.Lock()
 
-			ctx := x.Context.Load()
+			ctx := x.context.Load()
 			if ctx != sentinel {
-				x.Queue.Push(NewPair(time.Now().Add(ob.Duration), n.Value))
+				x.buffer.Push(NewPair(time.Now().Add(ob.duration), n.Value))
 			}
 
-			x.Queue.Unlock()
+			x.buffer.Unlock()
 
 			if ctx == c.Context {
-				startWorker(ob.Duration)
+				startWorker(ob.duration)
 			}
 
 		case KindError:
-			old := x.Context.Swap(sentinel)
+			old := x.context.Swap(sentinel)
 
 			cancel()
-			x.Worker.Wait()
-			x.Queue.Init()
+			x.worker.Wait()
+			x.buffer.Init()
 
 			if old != sentinel {
 				o.Emit(n)
 			}
 
 		case KindComplete:
-			x.Complete.Store(true)
+			x.complete.Store(true)
 
-			if x.Context.CompareAndSwap(c.Context, sentinel) {
+			if x.context.CompareAndSwap(c.Context, sentinel) {
 				o.Emit(n)
 			}
 		}
