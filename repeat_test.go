@@ -1,7 +1,6 @@
 package rx_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -66,9 +65,45 @@ func TestRepeat(t *testing.T) {
 			rx.RepeatForever[string](),
 		),
 		"A", "B", "C", ErrTest,
+	).Case(
+		rx.Pipe1(
+			rx.Concat(
+				rx.Just("A", "B", "C"),
+				rx.Oops[string](ErrTest),
+			),
+			rx.Repeat[string](0),
+		),
+		ErrComplete,
+	).Case(
+		rx.Pipe1(
+			rx.Concat(
+				rx.Just("A", "B", "C"),
+				rx.Oops[string](ErrTest),
+			),
+			rx.Repeat[string](1),
+		),
+		"A", "B", "C", rx.ErrOops, ErrTest,
+	).Case(
+		rx.Pipe1(
+			rx.Concat(
+				rx.Just("A", "B", "C"),
+				rx.Oops[string](ErrTest),
+			),
+			rx.Repeat[string](2),
+		),
+		"A", "B", "C", rx.ErrOops, ErrTest,
+	).Case(
+		rx.Pipe1(
+			rx.Concat(
+				rx.Just("A", "B", "C"),
+				rx.Oops[string](ErrTest),
+			),
+			rx.RepeatForever[string](),
+		),
+		"A", "B", "C", rx.ErrOops, ErrTest,
 	)
 
-	ctx, cancel := rx.NewBackgroundContext().WithTimeout(Step(1))
+	ctx, cancel := rx.NewBackgroundContext().WithTimeoutCause(Step(1), ErrTest)
 	defer cancel()
 
 	NewTestSuite[string](t).WithContext(ctx).Case(
@@ -77,6 +112,6 @@ func TestRepeat(t *testing.T) {
 			rx.DoOnComplete[string](func() { time.Sleep(Step(2)) }),
 			rx.Repeat[string](2),
 		),
-		context.DeadlineExceeded,
+		ErrTest,
 	)
 }

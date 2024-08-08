@@ -5,7 +5,7 @@
 //
 //	type Observer[T any] func(n Notification[T])
 //
-// An [Observer] is a consumer of Notifications delivered by an [Observable].
+// An [Observer] is a consumer of notifications delivered by an [Observable].
 //
 // An [Observer] is usually created and passed to [Observable.Subscribe] method
 // when subscribing to an [Observable].
@@ -19,10 +19,27 @@
 // When an [Observable] is subscribed, its values, when available, are emitted
 // to a given [Observer].
 //
-// An [Observable] can only emit N+1 Notifications (N >= 0): either N values
-// and an error, or N values and a completion.
-// The last [Notification] emitted by an [Observable] must be an error
-// or a completion.
+// There are four kinds of notifications:
+//   - [Next]: value notifications.
+//     An [Observable] can emit zero or more value notifications before
+//     emitting one of the other kinds of notifications as a termination.
+//   - [Complete]: completion notifications.
+//     After emitting some value notifications, an [Observable] can emit one
+//     completion notification as a termination.
+//   - [Error]: error notifications.
+//     After emitting some value notifications, an [Observable] can emit one
+//     error notification as a termination.
+//   - [Stop]: stop notifications.
+//     After emitting some value notifications, an [Observable] can emit one
+//     stop notification as a termination.
+//
+// Both [Error] notifications and [Stop] notifications carry an error value.
+// The main differences between them are as follows:
+//   - [Error] notifications can be caught and replaced, whereas
+//     [Stop] notifications must not;
+//   - [Error] notifications can be as deterministic as [Next] or [Complete]
+//     notifications, whereas [Stop] notifications are not (continue reading
+//     for more about this).
 //
 // # Operators
 //
@@ -53,7 +70,7 @@
 //
 //	op := MergeMap(f).WithBuffering().WithConcurrency(3)
 //
-// # Chaining Multiple Operators
+// # Chaining Operators
 //
 // To chain multiple Operators, do either this:
 //
@@ -98,9 +115,9 @@
 // Race conditions could happen for any two of ob, op1, op2, op3 and o.
 //
 // Race conditions could also happen for any two Observables, however, not
-// every [Operator] or [Observable] has concurrency behavior.
+// every [Operator] or [Observable] has concurrent behavior.
 //
-// The following operations may cause concurrency behavior:
+// The following operations may cause concurrent behavior:
 //   - [Context] cancellation (due to use of [Context.AfterFunc]);
 //   - [AuditTime], [DebounceTime] and [ThrottleTime] (due to use of [Timer]);
 //   - [Channelize] (due to use of [Context.Go]);
@@ -112,7 +129,7 @@
 //   - [Timeout] (due to use of [time.AfterFunc]);
 //   - [Zip2] to [Zip9] (due to use of [Context.Go]).
 //
-// The following operations may cause concurrency behavior due to [Context]
+// The following operations may cause concurrent behavior due to [Context]
 // cancellation:
 //   - CombineLatest operators (due to use of [Serialize]);
 //   - [Connect] (due to use of [Multicast]);
@@ -127,23 +144,25 @@
 //   - ZipWithBuffering operators (due to use of [Serialize]).
 //
 // Since [Context] cancellations are very common in this library, and that
-// [Context] cancellation usually results in an error notification, emitted
-// in a goroutine started by [Context.AfterFunc], handling errors must take
-// extra precaution. The fact is that, no matter how careful one is, errors
-// may just come from random goroutines!
+// a [Context] cancellation usually results in a [Stop] notification, emitted
+// in a goroutine started by [Context.AfterFunc] or [Context.Go], handling
+// [Stop] notifications must take extra precaution. The problem is that,
+// [Stop] notifications are not deterministic. They may just come from random
+// goroutines. If that happens, one would have to deal with race conditions.
 //
 // It's very common that an [Observable], when subscribed, also subscribes to
 // other Observables.
 // In this library, inner Observables are usually subscribed in the same
 // goroutine where the outer one is being subscribed. However,
-//   - Observables created by Concat(All|Map|MapTo|With)? may or may not
-//     subscribe to inner Observables in separate goroutines, depending on
-//     whether inner Observables cause concurrency behavior;
+//   - Observables created by [Concat], [ConcatWith] or Concat(All|Map|MapTo)
+//     with source buffering on, may or may not subscribe to inner Observables
+//     (excluding the first one) in separate goroutines, depending on whether
+//     inner Observables cause concurrent behavior;
 //   - Observables created by [Go] always subscribe to their source
 //     Observables in their own goroutines;
 //   - Observables created by Merge(All|Map|MapTo) with source buffering on,
 //     may or may not subscribe to inner Observables in separate goroutines,
-//     depending on whether inner Observables cause concurrency behavior;
+//     depending on whether inner Observables cause concurrent behavior;
 //   - Observables created by Zip[2-9] always subscribe to inner Observables
 //     in their own goroutines.
 //

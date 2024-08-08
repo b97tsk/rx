@@ -1,7 +1,8 @@
 package rx
 
-// First emits only the first value emitted by the source Observable.
-// If the source turns out to be empty, First emits a notification of ErrEmpty.
+// First emits only the first value emitted by the source [Observable].
+// If the source turns out to be empty, First emits an [Error] notification
+// of [ErrEmpty].
 func First[T any]() Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
@@ -21,10 +22,10 @@ func First[T any]() Operator[T, T] {
 						o.Emit(n)
 						noop = true
 						o.Complete()
-					case KindError:
-						o.Emit(n)
 					case KindComplete:
 						o.Error(ErrEmpty)
+					case KindError, KindStop:
+						o.Emit(n)
 					}
 				})
 			}
@@ -32,7 +33,7 @@ func First[T any]() Operator[T, T] {
 	)
 }
 
-// FirstOrElse emits only the first value emitted by the source Observable.
+// FirstOrElse emits only the first value emitted by the source [Observable].
 // If the source turns out to be empty, FirstOrElse emits a specified default
 // value.
 func FirstOrElse[T any](def T) Operator[T, T] {
@@ -54,10 +55,10 @@ func FirstOrElse[T any](def T) Operator[T, T] {
 						o.Emit(n)
 						noop = true
 						o.Complete()
-					case KindError:
-						o.Emit(n)
 					case KindComplete:
-						Try1(o, Next(def), func() { o.Error(ErrOops) })
+						Try1(o, Next(def), func() { o.Stop(ErrOops) })
+						o.Emit(n)
+					case KindError, KindStop:
 						o.Emit(n)
 					}
 				})

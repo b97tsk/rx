@@ -1,7 +1,7 @@
 package rx
 
-// FromSlice creates an Observable that emits values from a slice, one after
-// the other, and then completes.
+// FromSlice creates an [Observable] that emits values from a slice,
+// one after the other, and then completes.
 func FromSlice[S ~[]T, T any](s S) Observable[T] {
 	return func(c Context, o Observer[T]) {
 		done := c.Done()
@@ -10,19 +10,19 @@ func FromSlice[S ~[]T, T any](s S) Observable[T] {
 			select {
 			default:
 			case <-done:
-				o.Error(c.Cause())
+				o.Stop(c.Cause())
 				return
 			}
 
-			Try1(o, Next(v), func() { o.Error(ErrOops) })
+			Try1(o, Next(v), func() { o.Stop(ErrOops) })
 		}
 
 		o.Complete()
 	}
 }
 
-// Just creates an Observable that emits some values you specify as arguments,
-// one after the other, and then completes.
+// Just creates an [Observable] that emits given values, one after the other,
+// and then completes.
 func Just[T any](s ...T) Observable[T] {
 	return FromSlice(s)
 }

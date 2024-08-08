@@ -6,10 +6,10 @@ import (
 	"github.com/b97tsk/rx/internal/queue"
 )
 
-// ZipWithBuffering9 combines multiple Observables to create an Observable that
-// emits mappings of the values emitted by each of its input Observables.
+// ZipWithBuffering9 combines multiple Observables to create an [Observable]
+// that emits mappings of the values emitted by each of the input Observables.
 //
-// ZipWithBuffering9 buffers every value from each input Observable, which
+// ZipWithBuffering9 buffers every value from each input [Observable], which
 // might consume a lot of memory over time if there are lots of values emitting
 // faster than zipping.
 func ZipWithBuffering9[T1, T2, T3, T4, T5, T6, T7, T8, T9, R any](
@@ -105,9 +105,6 @@ func zipEmit9[T1, T2, T3, T4, T5, T6, T7, T8, T9, R, X any](
 
 		s.mu.Unlock()
 
-	case KindError:
-		o.Error(n.Error)
-
 	case KindComplete:
 		s.mu.Lock()
 		s.cbits |= bit
@@ -117,6 +114,12 @@ func zipEmit9[T1, T2, T3, T4, T5, T6, T7, T8, T9, R, X any](
 		if complete {
 			o.Complete()
 		}
+
+	case KindError:
+		o.Error(n.Error)
+
+	case KindStop:
+		o.Stop(n.Error)
 	}
 }
 

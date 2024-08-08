@@ -39,6 +39,13 @@ func TestToSlice(t *testing.T) {
 		),
 		ErrTest,
 	).Case(
+		rx.Pipe2(
+			rx.Oops[string](ErrTest),
+			rx.ToSlice[string](),
+			ToString[[]string](),
+		),
+		rx.ErrOops, ErrTest,
+	).Case(
 		rx.Pipe3(
 			rx.Just("A", "B", "C"),
 			rx.ToSlice[string](),

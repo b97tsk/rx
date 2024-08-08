@@ -5,8 +5,8 @@ import (
 	"time"
 )
 
-// Timeout mirrors the source Observable, or emits a notification of ErrTimeout
-// if the source does not emit a value in given time span.
+// Timeout mirrors the source [Observable], or emits an [Error] notification
+// of [ErrTimeout] if the source does not emit a value in a given time span.
 func Timeout[T any](d time.Duration) TimeoutOperator[T] {
 	return TimeoutOperator[T]{
 		ts: timeoutConfig[T]{
@@ -39,7 +39,7 @@ func (op TimeoutOperator[T]) WithObservable(ob Observable[T]) TimeoutOperator[T]
 	return op
 }
 
-// Apply implements the Operator interface.
+// Apply implements the [Operator] interface.
 func (op TimeoutOperator[T]) Apply(source Observable[T]) Observable[T] {
 	return timeoutObservable[T]{source, op.ts}.Subscribe
 }
@@ -83,7 +83,7 @@ func (ob timeoutObservable[T]) Subscribe(parent Context, o Observer[T]) {
 				tm.Reset(ob.each)
 			}
 
-		case KindError, KindComplete:
+		case KindComplete, KindError, KindStop:
 			if tm.Stop() {
 				if c.WaitGroup != nil {
 					c.WaitGroup.Done()

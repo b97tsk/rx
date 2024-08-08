@@ -31,6 +31,15 @@ func TestDiscard(t *testing.T) {
 			rx.Discard[string](),
 		),
 		ErrTest,
+	).Case(
+		rx.Pipe1(
+			rx.Concat(
+				rx.Just("A", "B", "C"),
+				rx.Oops[string](ErrTest),
+			),
+			rx.Discard[string](),
+		),
+		rx.ErrOops, ErrTest,
 	)
 }
 
@@ -58,5 +67,14 @@ func TestIgnoreElements(t *testing.T) {
 			rx.IgnoreElements[string, string](),
 		),
 		ErrTest,
+	).Case(
+		rx.Pipe1(
+			rx.Concat(
+				rx.Just("A", "B", "C"),
+				rx.Oops[string](ErrTest),
+			),
+			rx.IgnoreElements[string, string](),
+		),
+		rx.ErrOops, ErrTest,
 	)
 }

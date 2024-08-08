@@ -1,6 +1,6 @@
 package rx
 
-// DistinctComparable emits all values emitted by the source Observable that
+// DistinctComparable emits all values emitted by the source [Observable] that
 // are distinct from each other.
 func DistinctComparable[T comparable]() Operator[T, T] {
 	return NewOperator(
@@ -26,7 +26,7 @@ func DistinctComparable[T comparable]() Operator[T, T] {
 	)
 }
 
-// Distinct emits all values emitted by the source Observable whose mappings
+// Distinct emits all values emitted by the source [Observable] whose mappings
 // are distinct from each other.
 func Distinct[T any, K comparable](mapping func(v T) K) Operator[T, T] {
 	return NewOperator(

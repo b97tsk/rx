@@ -2,8 +2,8 @@ package rx
 
 import "sync/atomic"
 
-// SkipUntil skips values emitted by the source Observable
-// until a second Observable emits an value.
+// SkipUntil skips values emitted by the source [Observable] until
+// a second [Observable] emits an value.
 func SkipUntil[T, U any](notifier Observable[U]) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
@@ -48,18 +48,23 @@ func (ob skipUntilObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 				case KindNext:
 					x.context.CompareAndSwap(w.Context, c.Context)
 
-				case KindError:
-					if x.context.CompareAndSwap(w.Context, sentinel) {
-						o.Error(n.Error)
-					}
-
 				case KindComplete:
 					return
+
+				case KindError, KindStop:
+					if x.context.CompareAndSwap(w.Context, sentinel) {
+						switch n.Kind {
+						case KindError:
+							o.Error(n.Error)
+						case KindStop:
+							o.Stop(n.Error)
+						}
+					}
 				}
 			},
 			func() {
 				if x.context.Swap(sentinel) != sentinel {
-					o.Error(ErrOops)
+					o.Stop(ErrOops)
 				}
 			},
 		)
@@ -78,7 +83,7 @@ func (ob skipUntilObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 	select {
 	default:
 	case <-c.Done():
-		terminate(Error[T](c.Cause()))
+		terminate(Stop[T](c.Cause()))
 		return
 	}
 
@@ -93,7 +98,7 @@ func (ob skipUntilObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 			if x.context.Load() == c.Context {
 				o.Emit(n)
 			}
-		case KindError, KindComplete:
+		case KindComplete, KindError, KindStop:
 			terminate(n)
 		}
 	})

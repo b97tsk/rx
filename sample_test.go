@@ -43,6 +43,13 @@ func TestSample(t *testing.T) {
 		rx.Pipe2(
 			rx.Just("A", "B", "C", "D", "E"),
 			AddLatencyToValues[string](1, 2),
+			rx.Sample[string](rx.Oops[int](ErrTest)),
+		),
+		rx.ErrOops, ErrTest,
+	).Case(
+		rx.Pipe2(
+			rx.Just("A", "B", "C", "D", "E"),
+			AddLatencyToValues[string](1, 2),
 			rx.Sample[string](
 				rx.Concat(
 					rx.Pipe1(

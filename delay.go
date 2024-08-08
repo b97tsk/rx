@@ -8,7 +8,7 @@ import (
 	"github.com/b97tsk/rx/internal/queue"
 )
 
-// Delay postpones each emission of values from the source Observable
+// Delay postpones each emission of values from the source [Observable]
 // by a given duration.
 func Delay[T any](d time.Duration) Operator[T, T] {
 	return NewOperator(
@@ -66,7 +66,7 @@ func (ob delayObservable[T]) Subscribe(c Context, o Observer[T]) {
 						x.buffer.Unlock()
 
 						if old != sentinel {
-							o.Error(w.Cause())
+							o.Stop(w.Cause())
 						}
 
 						return
@@ -99,7 +99,11 @@ func (ob delayObservable[T]) Subscribe(c Context, o Observer[T]) {
 					}
 				}
 
-			case KindError:
+			case KindComplete:
+				cancelw()
+				x.worker.Done()
+
+			case KindError, KindStop:
 				defer x.worker.Done()
 
 				cancelw()
@@ -110,12 +114,13 @@ func (ob delayObservable[T]) Subscribe(c Context, o Observer[T]) {
 				x.buffer.Unlock()
 
 				if old != sentinel {
-					o.Error(n.Error)
+					switch n.Kind {
+					case KindError:
+						o.Error(n.Error) // Unreachable.
+					case KindStop:
+						o.Stop(n.Error)
+					}
 				}
-
-			case KindComplete:
-				cancelw()
-				x.worker.Done()
 			}
 		})
 	}
@@ -136,7 +141,14 @@ func (ob delayObservable[T]) Subscribe(c Context, o Observer[T]) {
 				startWorker(ob.duration)
 			}
 
-		case KindError:
+		case KindComplete:
+			x.complete.Store(true)
+
+			if x.context.CompareAndSwap(c.Context, sentinel) {
+				o.Emit(n)
+			}
+
+		case KindError, KindStop:
 			old := x.context.Swap(sentinel)
 
 			cancel()
@@ -144,13 +156,6 @@ func (ob delayObservable[T]) Subscribe(c Context, o Observer[T]) {
 			x.buffer.Init()
 
 			if old != sentinel {
-				o.Emit(n)
-			}
-
-		case KindComplete:
-			x.complete.Store(true)
-
-			if x.context.CompareAndSwap(c.Context, sentinel) {
 				o.Emit(n)
 			}
 		}

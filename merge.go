@@ -7,8 +7,8 @@ import (
 	"github.com/b97tsk/rx/internal/queue"
 )
 
-// Merge creates an Observable that concurrently emits all values from every
-// given input Observable.
+// Merge creates an [Observable] that concurrently emits all values from
+// every given input [Observable].
 func Merge[T any](some ...Observable[T]) Observable[T] {
 	if len(some) == 0 {
 		return Empty[T]()
@@ -17,9 +17,9 @@ func Merge[T any](some ...Observable[T]) Observable[T] {
 	return mergeWithObservable[T]{others: some}.Subscribe
 }
 
-// MergeWith merges the source Observable and some other Observables together
-// to create an Observable that concurrently emits all values from the source
-// and every given input Observable.
+// MergeWith merges the source [Observable] and some other Observables
+// together to create an [Observable] that concurrently emits all values
+// from the source and every given input [Observable].
 func MergeWith[T any](some ...Observable[T]) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
@@ -54,7 +54,7 @@ func (ob mergeWithObservable[T]) Subscribe(c Context, o Observer[T]) {
 		select {
 		default:
 		case <-done:
-			o.Error(c.Cause())
+			o.Stop(c.Cause())
 			return
 		}
 	}
@@ -65,7 +65,7 @@ func (ob mergeWithObservable[T]) Subscribe(c Context, o Observer[T]) {
 		select {
 		default:
 		case <-done:
-			o.Error(c.Cause())
+			o.Stop(c.Cause())
 			return
 		}
 	}
@@ -81,23 +81,23 @@ func (ob mergeWithObservable[T]) numObservables() int {
 	return n
 }
 
-// MergeAll flattens a higher-order Observable into a first-order Observable
-// which concurrently delivers all values that are emitted on the inner
-// Observables.
+// MergeAll flattens a higher-order [Observable] into a first-order
+// [Observable] which concurrently delivers all values that are emitted
+// on the inner Observables.
 func MergeAll[_ Observable[T], T any]() MergeMapOperator[Observable[T], T] {
 	return MergeMap(identity[Observable[T]])
 }
 
-// MergeMapTo converts the source Observable into a higher-order Observable,
-// by mapping each source value to the same Observable, then flattens it into
-// a first-order Observable using MergeAll.
+// MergeMapTo converts the source [Observable] into a higher-order
+// [Observable], by mapping each source value to the same [Observable],
+// then flattens it into a first-order [Observable] using [MergeAll].
 func MergeMapTo[T, R any](inner Observable[R]) MergeMapOperator[T, R] {
 	return MergeMap(func(T) Observable[R] { return inner })
 }
 
-// MergeMap converts the source Observable into a higher-order Observable,
-// by mapping each source value to an Observable, then flattens it into
-// a first-order Observable using MergeAll.
+// MergeMap converts the source [Observable] into a higher-order [Observable],
+// by mapping each source value to an [Observable], then flattens it into
+// a first-order [Observable] using [MergeAll].
 func MergeMap[T, R any](mapping func(v T) Observable[R]) MergeMapOperator[T, R] {
 	return MergeMapOperator[T, R]{
 		ts: mergeMapConfig[T, R]{
@@ -136,7 +136,7 @@ func (op MergeMapOperator[T, R]) WithConcurrency(n int) MergeMapOperator[T, R] {
 	return op
 }
 
-// Apply implements the Operator interface.
+// Apply implements the [Operator] interface.
 func (op MergeMapOperator[T, R]) Apply(source Observable[T]) Observable[R] {
 	if op.ts.concurrency == 0 {
 		return Oops[R]("MergeMap: Concurrency == 0")
@@ -174,15 +174,6 @@ func (ob mergeMapObservable[T, R]) Subscribe(c Context, o Observer[R]) {
 		case KindNext:
 			o.Emit(n)
 
-		case KindError:
-			x.mu.Lock()
-			x.workers--
-			x.hasError = true
-			x.mu.Unlock()
-			x.co.Signal()
-
-			o.Emit(n)
-
 		case KindComplete:
 			x.mu.Lock()
 
@@ -196,6 +187,14 @@ func (ob mergeMapObservable[T, R]) Subscribe(c Context, o Observer[R]) {
 
 			x.mu.Unlock()
 			x.co.Signal()
+
+		case KindError, KindStop:
+			x.mu.Lock()
+			x.workers--
+			x.hasError = true
+			x.mu.Unlock()
+			x.co.Signal()
+			o.Emit(n)
 		}
 	}
 
@@ -221,19 +220,16 @@ func (ob mergeMapObservable[T, R]) Subscribe(c Context, o Observer[R]) {
 			}
 
 			obs := Try11(ob.mapping, n.Value, func() {
-				defer x.mu.Unlock()
 				noop = true
 				x.hasError = true
-				o.Error(ErrOops)
+				x.mu.Unlock()
+				o.Stop(ErrOops)
 			})
 
 			x.workers++
 			x.mu.Unlock()
 
 			obs.Subscribe(c, worker)
-
-		case KindError:
-			o.Error(n.Error)
 
 		case KindComplete:
 			x.mu.Lock()
@@ -247,6 +243,12 @@ func (ob mergeMapObservable[T, R]) Subscribe(c Context, o Observer[R]) {
 			}
 
 			x.mu.Unlock()
+
+		case KindError:
+			o.Error(n.Error)
+
+		case KindStop:
+			o.Stop(n.Error)
 		}
 	})
 }
@@ -267,7 +269,7 @@ func (ob mergeMapObservable[T, R]) SubscribeWithBuffering(c Context, o Observer[
 
 	startWorker := func() {
 		if v := x.startWorkerPool.Get(); v != nil {
-			(*v.(*func()))()
+			v.(func())()
 			return
 		}
 
@@ -276,15 +278,6 @@ func (ob mergeMapObservable[T, R]) SubscribeWithBuffering(c Context, o Observer[
 		worker := func(n Notification[R]) {
 			switch n.Kind {
 			case KindNext:
-				o.Emit(n)
-
-			case KindError:
-				x.mu.Lock()
-				x.buffer.Init()
-				x.workers--
-				x.hasError = true
-				x.mu.Unlock()
-
 				o.Emit(n)
 
 			case KindComplete:
@@ -303,18 +296,26 @@ func (ob mergeMapObservable[T, R]) SubscribeWithBuffering(c Context, o Observer[
 					return
 				}
 
-				x.startWorkerPool.Put(&startWorker)
+				x.startWorkerPool.Put(startWorker)
 
 				x.mu.Unlock()
+
+			case KindError, KindStop:
+				x.mu.Lock()
+				x.buffer.Init()
+				x.workers--
+				x.hasError = true
+				x.mu.Unlock()
+				o.Emit(n)
 			}
 		}
 
 		startWorker = resistReentrance(func() {
 			obs := Try11(ob.mapping, x.buffer.Pop(), func() {
-				defer x.mu.Unlock()
 				x.buffer.Init()
 				x.hasError = true
-				o.Error(ErrOops)
+				x.mu.Unlock()
+				o.Stop(ErrOops)
 			})
 
 			x.workers++
@@ -352,9 +353,6 @@ func (ob mergeMapObservable[T, R]) SubscribeWithBuffering(c Context, o Observer[
 
 			x.mu.Unlock()
 
-		case KindError:
-			o.Error(n.Error)
-
 		case KindComplete:
 			x.mu.Lock()
 
@@ -367,6 +365,12 @@ func (ob mergeMapObservable[T, R]) SubscribeWithBuffering(c Context, o Observer[
 			}
 
 			x.mu.Unlock()
+
+		case KindError:
+			o.Error(n.Error)
+
+		case KindStop:
+			o.Stop(n.Error)
 		}
 	})
 }

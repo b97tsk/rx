@@ -55,5 +55,15 @@ func TestPairwise(t *testing.T) {
 			ToString[rx.Pair[string, string]](),
 		),
 		"{A B}", "{B C}", "{C D}", ErrTest,
+	).Case(
+		rx.Pipe2(
+			rx.Concat(
+				rx.Just("A", "B", "C", "D"),
+				rx.Oops[string](ErrTest),
+			),
+			rx.Pairwise[string](),
+			ToString[rx.Pair[string, string]](),
+		),
+		"{A B}", "{B C}", "{C D}", rx.ErrOops, ErrTest,
 	)
 }

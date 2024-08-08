@@ -46,6 +46,16 @@ func TestDebounce(t *testing.T) {
 		"C", ErrComplete,
 	).Case(
 		rx.Pipe1(
+			rx.Just("A", "B", "C"),
+			rx.Debounce(
+				func(string) rx.Observable[int] {
+					return rx.Throw[int](ErrTest)
+				},
+			),
+		),
+		ErrTest,
+	).Case(
+		rx.Pipe1(
 			func(_ rx.Context, o rx.Observer[string]) {
 				o.Next("A")
 				time.Sleep(Step(1))
@@ -56,11 +66,11 @@ func TestDebounce(t *testing.T) {
 			},
 			rx.Debounce(
 				func(string) rx.Observable[int] {
-					return rx.Throw[int](ErrTest)
+					return rx.Oops[int](ErrTest)
 				},
 			),
 		),
-		ErrTest,
+		rx.ErrOops, ErrTest,
 	).Case(
 		rx.Pipe1(
 			rx.Throw[string](ErrTest),
@@ -71,6 +81,16 @@ func TestDebounce(t *testing.T) {
 			),
 		),
 		ErrTest,
+	).Case(
+		rx.Pipe1(
+			rx.Oops[string](ErrTest),
+			rx.Debounce(
+				func(string) rx.Observable[time.Time] {
+					return rx.Timer(Step(1))
+				},
+			),
+		),
+		rx.ErrOops, ErrTest,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B", "C"),

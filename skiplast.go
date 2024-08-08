@@ -1,6 +1,6 @@
 package rx
 
-// SkipLast skips the last count values emitted by the source Observable.
+// SkipLast skips the last count values emitted by the source [Observable].
 func SkipLast[T any](count int) Operator[T, T] {
 	if count <= 0 {
 		return NewOperator(identity[Observable[T]])
@@ -24,7 +24,7 @@ func SkipLast[T any](count int) Operator[T, T] {
 						buf[i] = n.Value
 						i = (i + 1) % cap(buf)
 
-					case KindError, KindComplete:
+					case KindComplete, KindError, KindStop:
 						o.Emit(n)
 					}
 				})

@@ -51,11 +51,29 @@ func TestAdditionalCoverage(t *testing.T) {
 	})
 
 	t.Run("Go", func(t *testing.T) {
-		v, err := rx.Pipe1(rx.Just(42), rx.Go[int]()).BlockingSingle(rx.NewBackgroundContext())
-		if err != nil {
-			t.Log(err)
+		n := rx.Pipe1(rx.Just(42), rx.Go[int]()).BlockingSingle(rx.NewBackgroundContext())
+		if n.Error != nil {
+			t.Log(n.Error)
 		}
-		if v != 42 {
+		if n.Value != 42 {
+			t.Fail()
+		}
+	})
+
+	t.Run("Notification.And", func(t *testing.T) {
+		if rx.Next(42).And(rx.Error[int](ErrTest)).Error != ErrTest {
+			t.Fail()
+		}
+		if rx.Error[int](ErrTest).And(rx.Next(42)).Error != ErrTest {
+			t.Fail()
+		}
+	})
+
+	t.Run("Notification.Or", func(t *testing.T) {
+		if rx.Error[int](ErrTest).Or(rx.Next(42)).Value != 42 {
+			t.Fail()
+		}
+		if rx.Next(42).Or(rx.Error[int](ErrTest)).Value != 42 {
 			t.Fail()
 		}
 	})
@@ -66,7 +84,7 @@ func TestAdditionalCoverage(t *testing.T) {
 
 	t.Run("NewObserver", func(t *testing.T) {
 		o := rx.NewObserver(rx.Noop[int])
-		o.Emit(rx.Next(0))
+		o.Unsubscribe()
 	})
 
 	t.Run("TryFuncs", func(t *testing.T) {

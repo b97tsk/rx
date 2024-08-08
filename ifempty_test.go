@@ -39,6 +39,15 @@ func TestDefaultIfEmpty(t *testing.T) {
 		),
 		1, 2, 3, ErrTest,
 	).Case(
+		rx.Pipe1(
+			rx.Concat(
+				rx.Range(1, 4),
+				rx.Oops[int](ErrTest),
+			),
+			rx.DefaultIfEmpty(4, 5, 6),
+		),
+		1, 2, 3, rx.ErrOops, ErrTest,
+	).Case(
 		rx.Pipe2(
 			rx.Empty[int](),
 			rx.DefaultIfEmpty(1, 2, 3),
@@ -72,6 +81,15 @@ func TestThrowIfEmpty(t *testing.T) {
 			rx.ThrowIfEmpty[int](),
 		),
 		1, 2, 3, ErrTest,
+	).Case(
+		rx.Pipe1(
+			rx.Concat(
+				rx.Range(1, 4),
+				rx.Oops[int](ErrTest),
+			),
+			rx.ThrowIfEmpty[int](),
+		),
+		1, 2, 3, rx.ErrOops, ErrTest,
 	)
 }
 
@@ -99,5 +117,14 @@ func TestSwitchIfEmpty(t *testing.T) {
 			rx.SwitchIfEmpty(rx.Just(4, 5, 6)),
 		),
 		1, 2, 3, ErrTest,
+	).Case(
+		rx.Pipe1(
+			rx.Concat(
+				rx.Range(1, 4),
+				rx.Oops[int](ErrTest),
+			),
+			rx.SwitchIfEmpty(rx.Just(4, 5, 6)),
+		),
+		1, 2, 3, rx.ErrOops, ErrTest,
 	)
 }

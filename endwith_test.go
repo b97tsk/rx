@@ -13,6 +13,12 @@ func TestEndWith(t *testing.T) {
 	NewTestSuite[string](t).Case(
 		rx.Pipe1(
 			rx.Just("A", "B", "C"),
+			rx.EndWith[string](),
+		),
+		"A", "B", "C", ErrComplete,
+	).Case(
+		rx.Pipe1(
+			rx.Just("A", "B", "C"),
 			rx.EndWith("D", "E"),
 		),
 		"A", "B", "C", "D", "E", ErrComplete,
@@ -30,9 +36,9 @@ func TestEndWith(t *testing.T) {
 		ErrTest,
 	).Case(
 		rx.Pipe1(
-			rx.Throw[string](ErrTest),
-			rx.EndWith[string](),
+			rx.Oops[string](ErrTest),
+			rx.EndWith("D", "E"),
 		),
-		ErrTest,
+		rx.ErrOops, ErrTest,
 	)
 }

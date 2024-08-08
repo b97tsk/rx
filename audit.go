@@ -7,7 +7,7 @@ import (
 )
 
 // AuditTime ignores source values for a duration, then emits the most recent
-// value from the source Observable, then repeats this process.
+// value from the source [Observable], then repeats this process.
 //
 // When it sees a source value, it ignores that plus the next ones for a
 // duration, and then it emits the most recent value from the source.
@@ -16,12 +16,12 @@ func AuditTime[T any](d time.Duration) Operator[T, T] {
 	return Audit(func(T) Observable[time.Time] { return ob })
 }
 
-// Audit ignores source values for a duration determined by another Observable,
-// then emits the most recent value from the source Observable, then repeats
-// this process.
+// Audit ignores source values for a duration determined by another
+// [Observable], then emits the most recent value from the source
+// [Observable], then repeats this process.
 //
-// It's like [AuditTime], but the silencing duration is determined by a second
-// Observable.
+// It's like [AuditTime], but the silencing duration is determined by
+// a second [Observable].
 func Audit[T, U any](durationSelector func(v T) Observable[U]) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
@@ -80,7 +80,7 @@ func (ob auditObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 
 				Try1(o, Next(value), func() {
 					if x.context.Swap(sentinel) != sentinel {
-						o.Error(ErrOops)
+						o.Stop(ErrOops)
 					}
 				})
 
@@ -88,14 +88,19 @@ func (ob auditObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 					o.Complete()
 				}
 
-			case KindError:
-				if x.context.Swap(sentinel) != sentinel {
-					o.Error(n.Error)
-				}
-
 			case KindComplete:
 				if x.context.CompareAndSwap(w.Context, c.Context) && x.complete.Load() && x.context.CompareAndSwap(c.Context, sentinel) {
 					o.Complete()
+				}
+
+			case KindError, KindStop:
+				if x.context.Swap(sentinel) != sentinel {
+					switch n.Kind {
+					case KindError:
+						o.Error(n.Error)
+					case KindStop:
+						o.Stop(n.Error)
+					}
 				}
 			}
 		})
@@ -112,20 +117,20 @@ func (ob auditObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 				startWorker(n.Value)
 			}
 
-		case KindError:
+		case KindComplete:
+			x.complete.Store(true)
+
+			if x.context.CompareAndSwap(c.Context, sentinel) {
+				o.Emit(n)
+			}
+
+		case KindError, KindStop:
 			old := x.context.Swap(sentinel)
 
 			cancel()
 			x.worker.Wait()
 
 			if old != sentinel {
-				o.Emit(n)
-			}
-
-		case KindComplete:
-			x.complete.Store(true)
-
-			if x.context.CompareAndSwap(c.Context, sentinel) {
 				o.Emit(n)
 			}
 		}

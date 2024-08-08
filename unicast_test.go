@@ -1,7 +1,6 @@
 package rx_test
 
 import (
-	"context"
 	"runtime"
 	"sync"
 	"testing"
@@ -95,12 +94,12 @@ func TestUnicast(t *testing.T) {
 		u.Next("B")
 		u.Next("C")
 
-		ctx, cancel := rx.NewBackgroundContext().WithTimeout(Step(1))
+		ctx, cancel := rx.NewBackgroundContext().WithTimeoutCause(Step(1), ErrTest)
 		defer cancel()
 
 		NewTestSuite[string](t).WithContext(ctx).Case(
 			u.Observable,
-			"A", "B", "C", context.DeadlineExceeded,
+			"A", "B", "C", ErrTest,
 		).Case(
 			u.Observable,
 			rx.ErrUnicast,

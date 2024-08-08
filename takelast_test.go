@@ -1,7 +1,6 @@
 package rx_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -73,6 +72,42 @@ func TestTakeLast(t *testing.T) {
 		),
 		ErrTest,
 	).Case(
+		rx.Pipe1(
+			rx.Concat(
+				rx.Range(1, 10),
+				rx.Oops[int](ErrTest),
+			),
+			rx.TakeLast[int](0),
+		),
+		ErrComplete,
+	).Case(
+		rx.Pipe1(
+			rx.Concat(
+				rx.Range(1, 10),
+				rx.Oops[int](ErrTest),
+			),
+			rx.TakeLast[int](3),
+		),
+		rx.ErrOops, ErrTest,
+	).Case(
+		rx.Pipe1(
+			rx.Concat(
+				rx.Just(1),
+				rx.Oops[int](ErrTest),
+			),
+			rx.TakeLast[int](3),
+		),
+		rx.ErrOops, ErrTest,
+	).Case(
+		rx.Pipe1(
+			rx.Concat(
+				rx.Empty[int](),
+				rx.Oops[int](ErrTest),
+			),
+			rx.TakeLast[int](3),
+		),
+		rx.ErrOops, ErrTest,
+	).Case(
 		rx.Pipe2(
 			rx.Range(1, 10),
 			rx.TakeLast[int](3),
@@ -81,7 +116,7 @@ func TestTakeLast(t *testing.T) {
 		rx.ErrOops, ErrTest,
 	)
 
-	ctx, cancel := rx.NewBackgroundContext().WithTimeout(Step(1))
+	ctx, cancel := rx.NewBackgroundContext().WithTimeoutCause(Step(1), ErrTest)
 	defer cancel()
 
 	NewTestSuite[int](t).WithContext(ctx).Case(
@@ -90,6 +125,6 @@ func TestTakeLast(t *testing.T) {
 			rx.TakeLast[int](3),
 			rx.DoOnNext(func(int) { time.Sleep(Step(2)) }),
 		),
-		7, context.DeadlineExceeded,
+		7, ErrTest,
 	)
 }

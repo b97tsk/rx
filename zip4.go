@@ -1,9 +1,9 @@
 package rx
 
-// Zip4 combines multiple Observables to create an Observable that emits
-// mappings of the values emitted by each of its input Observables.
+// Zip4 combines multiple Observables to create an [Observable] that emits
+// mappings of the values emitted by each of the input Observables.
 //
-// Zip4 pulls values from each input Observable one by one, it does not
+// Zip4 pulls values from each input [Observable] one by one, it does not
 // buffer any value.
 func Zip4[T1, T2, T3, T4, R any](
 	ob1 Observable[T1],
@@ -26,17 +26,20 @@ func Zip4[T1, T2, T3, T4, R any](
 		chan4 := make(chan Notification[T4])
 
 		c.Go(func() {
-			oops := func() { o.Error(ErrOops) }
+			oops := func() { o.Stop(ErrOops) }
 			for {
 			Again1:
 				n1 := <-chan1
 				switch n1.Kind {
 				case KindNext:
+				case KindComplete:
+					o.Complete()
+					return
 				case KindError:
 					o.Error(n1.Error)
 					return
-				case KindComplete:
-					o.Complete()
+				case KindStop:
+					o.Stop(n1.Error)
 					return
 				default:
 					goto Again1
@@ -45,11 +48,14 @@ func Zip4[T1, T2, T3, T4, R any](
 				n2 := <-chan2
 				switch n2.Kind {
 				case KindNext:
+				case KindComplete:
+					o.Complete()
+					return
 				case KindError:
 					o.Error(n2.Error)
 					return
-				case KindComplete:
-					o.Complete()
+				case KindStop:
+					o.Stop(n2.Error)
 					return
 				default:
 					goto Again2
@@ -58,11 +64,14 @@ func Zip4[T1, T2, T3, T4, R any](
 				n3 := <-chan3
 				switch n3.Kind {
 				case KindNext:
+				case KindComplete:
+					o.Complete()
+					return
 				case KindError:
 					o.Error(n3.Error)
 					return
-				case KindComplete:
-					o.Complete()
+				case KindStop:
+					o.Stop(n3.Error)
 					return
 				default:
 					goto Again3
@@ -71,11 +80,14 @@ func Zip4[T1, T2, T3, T4, R any](
 				n4 := <-chan4
 				switch n4.Kind {
 				case KindNext:
+				case KindComplete:
+					o.Complete()
+					return
 				case KindError:
 					o.Error(n4.Error)
 					return
-				case KindComplete:
-					o.Complete()
+				case KindStop:
+					o.Stop(n4.Error)
 					return
 				default:
 					goto Again4

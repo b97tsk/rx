@@ -5,22 +5,23 @@ import (
 	"sync/atomic"
 )
 
-// SwitchAll flattens a higher-order Observable into a first-order Observable
-// by subscribing to only the most recently emitted of those inner Observables.
+// SwitchAll flattens a higher-order [Observable] into a first-order
+// [Observable] by subscribing to only the most recently emitted of those
+// inner Observables.
 func SwitchAll[_ Observable[T], T any]() Operator[Observable[T], T] {
 	return SwitchMap(identity[Observable[T]])
 }
 
-// SwitchMapTo converts the source Observable into a higher-order Observable,
-// by mapping each source value to the same Observable, then flattens it into
-// a first-order Observable using SwitchAll.
+// SwitchMapTo converts the source [Observable] into a higher-order
+// [Observable], by mapping each source value to the same [Observable], then
+// flattens it into a first-order [Observable] using [SwitchAll].
 func SwitchMapTo[T, R any](inner Observable[R]) Operator[T, R] {
 	return SwitchMap(func(T) Observable[R] { return inner })
 }
 
-// SwitchMap converts the source Observable into a higher-order Observable,
-// by mapping each source value to an Observable, then flattens it into
-// a first-order Observable using SwitchAll.
+// SwitchMap converts the source [Observable] into a higher-order [Observable],
+// by mapping each source value to an [Observable], then flattens it into
+// a first-order [Observable] using [SwitchAll].
 func SwitchMap[T, R any](mapping func(v T) Observable[R]) Operator[T, R] {
 	return NewOperator(
 		func(source Observable[T]) Observable[R] {
@@ -62,18 +63,18 @@ func (ob switchMapObservable[T, R]) Subscribe(c Context, o Observer[R]) {
 			case KindNext:
 				o.Emit(n)
 
-			case KindError, KindComplete:
+			case KindComplete, KindError, KindStop:
 				defer x.worker.Done()
 
 				cancelw()
 
 				switch n.Kind {
-				case KindError:
-					if x.context.CompareAndSwap(w.Context, sentinel) {
-						o.Emit(n)
-					}
 				case KindComplete:
 					if x.context.CompareAndSwap(w.Context, c.Context) && x.complete.Load() && x.context.CompareAndSwap(c.Context, sentinel) {
+						o.Emit(n)
+					}
+				case KindError, KindStop:
+					if x.context.CompareAndSwap(w.Context, sentinel) {
 						o.Emit(n)
 					}
 				}
@@ -96,21 +97,26 @@ func (ob switchMapObservable[T, R]) Subscribe(c Context, o Observer[R]) {
 
 			startWorker(n.Value)
 
-		case KindError:
+		case KindComplete:
+			x.complete.Store(true)
+
+			if x.context.CompareAndSwap(c.Context, sentinel) {
+				o.Complete()
+			}
+
+		case KindError, KindStop:
 			old := x.context.Swap(sentinel)
 
 			cancel()
 			x.worker.Wait()
 
 			if old != sentinel {
-				o.Error(n.Error)
-			}
-
-		case KindComplete:
-			x.complete.Store(true)
-
-			if x.context.CompareAndSwap(c.Context, sentinel) {
-				o.Complete()
+				switch n.Kind {
+				case KindError:
+					o.Error(n.Error)
+				case KindStop:
+					o.Stop(n.Error)
+				}
 			}
 		}
 	})

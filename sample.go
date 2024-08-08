@@ -6,14 +6,14 @@ import (
 	"time"
 )
 
-// SampleTime emits the most recently emitted value from the source Observalbe
-// within periodic time intervals.
+// SampleTime emits the most recently emitted value from the source
+// [Observalbe] within periodic time intervals.
 func SampleTime[T any](d time.Duration) Operator[T, T] {
 	return Sample[T](Ticker(d))
 }
 
-// Sample emits the most recently emitted value from the source Observable
-// whenever notifier, another Observable, emits a value.
+// Sample emits the most recently emitted value from the source [Observable]
+// whenever notifier, another [Observable], emits a value.
 func Sample[T, U any](notifier Observable[U]) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
@@ -51,7 +51,7 @@ func (ob sampleObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 			x.latest.value = n.Value
 			x.latest.hasValue.Store(true)
 			x.latest.Unlock()
-		case KindError, KindComplete:
+		case KindComplete, KindError, KindStop:
 			old := x.context.Swap(sentinel)
 
 			cancel()
@@ -89,18 +89,23 @@ func (ob sampleObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 				o.Next(value)
 			}
 
-		case KindError:
+		case KindComplete:
+			cancelw()
+			x.worker.Done()
+
+		case KindError, KindStop:
 			defer x.worker.Done()
 
 			cancelw()
 
 			if x.context.Swap(sentinel) != sentinel {
-				o.Error(n.Error)
+				switch n.Kind {
+				case KindError:
+					o.Error(n.Error)
+				case KindStop:
+					o.Stop(n.Error)
+				}
 			}
-
-		case KindComplete:
-			cancelw()
-			x.worker.Done()
 		}
 	})
 }

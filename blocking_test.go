@@ -1,7 +1,6 @@
 package rx_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/b97tsk/rx"
@@ -13,47 +12,20 @@ func TestBlockingFirst(t *testing.T) {
 
 	testCases := [...]struct {
 		ob  rx.Observable[string]
-		val string
-		err error
+		res rx.Notification[string]
 	}{
-		{rx.Empty[string](), "", rx.ErrEmpty},
-		{rx.Throw[string](ErrTest), "", ErrTest},
-		{rx.Just("A"), "A", nil},
-		{rx.Just("A", "B"), "A", nil},
-		{rx.Never[string](), "", context.DeadlineExceeded},
+		{rx.Empty[string](), rx.Error[string](rx.ErrEmpty)},
+		{rx.Throw[string](ErrTest), rx.Error[string](ErrTest)},
+		{rx.Just("A"), rx.Next("A")},
+		{rx.Just("A", "B"), rx.Next("A")},
+		{rx.Never[string](), rx.Stop[string](ErrTest)},
 	}
 
-	ctx, cancel := rx.NewBackgroundContext().WithTimeout(Step(1))
+	ctx, cancel := rx.NewBackgroundContext().WithTimeoutCause(Step(1), ErrTest)
 	defer cancel()
 
 	for _, tc := range testCases {
-		v, err := tc.ob.BlockingFirst(ctx)
-		if v != tc.val || err != tc.err {
-			t.Fail()
-		}
-	}
-}
-
-func TestBlockingFirstOrElse(t *testing.T) {
-	t.Parallel()
-
-	testCases := [...]struct {
-		ob  rx.Observable[string]
-		val string
-	}{
-		{rx.Empty[string](), "C"},
-		{rx.Throw[string](ErrTest), "C"},
-		{rx.Just("A"), "A"},
-		{rx.Just("A", "B"), "A"},
-		{rx.Never[string](), "C"},
-	}
-
-	ctx, cancel := rx.NewBackgroundContext().WithTimeout(Step(1))
-	defer cancel()
-
-	for _, tc := range testCases {
-		v := tc.ob.BlockingFirstOrElse(ctx, "C")
-		if v != tc.val {
+		if tc.ob.BlockingFirst(ctx) != tc.res {
 			t.Fail()
 		}
 	}
@@ -64,47 +36,20 @@ func TestBlockingLast(t *testing.T) {
 
 	testCases := [...]struct {
 		ob  rx.Observable[string]
-		val string
-		err error
+		res rx.Notification[string]
 	}{
-		{rx.Empty[string](), "", rx.ErrEmpty},
-		{rx.Throw[string](ErrTest), "", ErrTest},
-		{rx.Just("A"), "A", nil},
-		{rx.Just("A", "B"), "B", nil},
-		{rx.Never[string](), "", context.DeadlineExceeded},
+		{rx.Empty[string](), rx.Error[string](rx.ErrEmpty)},
+		{rx.Throw[string](ErrTest), rx.Error[string](ErrTest)},
+		{rx.Just("A"), rx.Next("A")},
+		{rx.Just("A", "B"), rx.Next("B")},
+		{rx.Never[string](), rx.Stop[string](ErrTest)},
 	}
 
-	ctx, cancel := rx.NewBackgroundContext().WithTimeout(Step(1))
+	ctx, cancel := rx.NewBackgroundContext().WithTimeoutCause(Step(1), ErrTest)
 	defer cancel()
 
 	for _, tc := range testCases {
-		v, err := tc.ob.BlockingLast(ctx)
-		if v != tc.val || err != tc.err {
-			t.Fail()
-		}
-	}
-}
-
-func TestBlockingLastOrElse(t *testing.T) {
-	t.Parallel()
-
-	testCases := [...]struct {
-		ob  rx.Observable[string]
-		val string
-	}{
-		{rx.Empty[string](), "C"},
-		{rx.Throw[string](ErrTest), "C"},
-		{rx.Just("A"), "A"},
-		{rx.Just("A", "B"), "B"},
-		{rx.Never[string](), "C"},
-	}
-
-	ctx, cancel := rx.NewBackgroundContext().WithTimeout(Step(1))
-	defer cancel()
-
-	for _, tc := range testCases {
-		v := tc.ob.BlockingLastOrElse(ctx, "C")
-		if v != tc.val {
+		if tc.ob.BlockingLast(ctx) != tc.res {
 			t.Fail()
 		}
 	}
@@ -115,22 +60,20 @@ func TestBlockingSingle(t *testing.T) {
 
 	testCases := [...]struct {
 		ob  rx.Observable[string]
-		val string
-		err error
+		res rx.Notification[string]
 	}{
-		{rx.Empty[string](), "", rx.ErrEmpty},
-		{rx.Throw[string](ErrTest), "", ErrTest},
-		{rx.Just("A"), "A", nil},
-		{rx.Just("A", "B"), "", rx.ErrNotSingle},
-		{rx.Never[string](), "", context.DeadlineExceeded},
+		{rx.Empty[string](), rx.Error[string](rx.ErrEmpty)},
+		{rx.Throw[string](ErrTest), rx.Error[string](ErrTest)},
+		{rx.Just("A"), rx.Next("A")},
+		{rx.Just("A", "B"), rx.Error[string](rx.ErrNotSingle)},
+		{rx.Never[string](), rx.Stop[string](ErrTest)},
 	}
 
-	ctx, cancel := rx.NewBackgroundContext().WithTimeout(Step(1))
+	ctx, cancel := rx.NewBackgroundContext().WithTimeoutCause(Step(1), ErrTest)
 	defer cancel()
 
 	for _, tc := range testCases {
-		v, err := tc.ob.BlockingSingle(ctx)
-		if v != tc.val || err != tc.err {
+		if tc.ob.BlockingSingle(ctx) != tc.res {
 			t.Fail()
 		}
 	}
@@ -141,21 +84,20 @@ func TestBlockingSubscribe(t *testing.T) {
 
 	testCases := [...]struct {
 		ob  rx.Observable[string]
-		err error
+		res rx.Notification[string]
 	}{
-		{rx.Empty[string](), nil},
-		{rx.Throw[string](ErrTest), ErrTest},
-		{rx.Just("A"), nil},
-		{rx.Just("A", "B"), nil},
-		{rx.Never[string](), context.DeadlineExceeded},
+		{rx.Empty[string](), rx.Complete[string]()},
+		{rx.Throw[string](ErrTest), rx.Error[string](ErrTest)},
+		{rx.Just("A"), rx.Complete[string]()},
+		{rx.Just("A", "B"), rx.Complete[string]()},
+		{rx.Never[string](), rx.Stop[string](ErrTest)},
 	}
 
-	ctx, cancel := rx.NewBackgroundContext().WithTimeout(Step(1))
+	ctx, cancel := rx.NewBackgroundContext().WithTimeoutCause(Step(1), ErrTest)
 	defer cancel()
 
 	for _, tc := range testCases {
-		err := tc.ob.BlockingSubscribe(ctx, rx.Noop[string])
-		if err != tc.err {
+		if tc.ob.BlockingSubscribe(ctx, rx.Noop[string]) != tc.res {
 			t.Fail()
 		}
 	}

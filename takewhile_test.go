@@ -38,5 +38,14 @@ func TestTakeWhile(t *testing.T) {
 			rx.TakeWhile(lessThanFive),
 		),
 		1, 2, 3, 4, ErrTest,
+	).Case(
+		rx.Pipe1(
+			rx.Concat(
+				rx.Range(1, 5),
+				rx.Oops[int](ErrTest),
+			),
+			rx.TakeWhile(lessThanFive),
+		),
+		1, 2, 3, 4, rx.ErrOops, ErrTest,
 	)
 }

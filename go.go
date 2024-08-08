@@ -1,6 +1,6 @@
 package rx
 
-// Go mirrors the source Observable in a goroutine.
+// Go mirrors the source [Observable] in a goroutine.
 func Go[T any]() Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {

@@ -1,7 +1,7 @@
 package rx
 
-// GroupBy groups the values emitted by the source Observable according to
-// a specified criterion, and emits these grouped values as Pairs, one Pair
+// GroupBy groups the values emitted by the source [Observable] according to
+// a specified criterion, and emits these grouped values as Pairs, one [Pair]
 // per group.
 func GroupBy[T any, K comparable](
 	keySelector func(v T) K,
@@ -38,14 +38,16 @@ func (ob groupByObservable[T, K]) Subscribe(c Context, o Observer[Pair[K, Observ
 
 			group.Emit(n)
 
-		case KindError, KindComplete:
-			Try2(emitLastNotificationToGroups, groups, n, func() { o.Error(ErrOops) })
+		case KindComplete, KindError, KindStop:
+			Try2(emitLastNotificationToGroups, groups, n, func() { o.Stop(ErrOops) })
 
 			switch n.Kind {
-			case KindError:
-				o.Error(n.Error)
 			case KindComplete:
 				o.Complete()
+			case KindError:
+				o.Error(n.Error)
+			case KindStop:
+				o.Stop(n.Error)
 			}
 		}
 	})

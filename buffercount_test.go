@@ -54,6 +54,13 @@ func TestBufferCount(t *testing.T) {
 		ErrTest,
 	).Case(
 		rx.Pipe2(
+			rx.Oops[string](ErrTest),
+			rx.BufferCount[string](2),
+			ToString[[]string](),
+		),
+		rx.ErrOops, ErrTest,
+	).Case(
+		rx.Pipe2(
 			rx.Empty[string](),
 			rx.BufferCount[string](0),
 			ToString[[]string](),

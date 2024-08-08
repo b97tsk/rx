@@ -13,6 +13,12 @@ func TestStartWith(t *testing.T) {
 	NewTestSuite[string](t).Case(
 		rx.Pipe1(
 			rx.Just("D", "E"),
+			rx.StartWith[string](),
+		),
+		"D", "E", ErrComplete,
+	).Case(
+		rx.Pipe1(
+			rx.Just("D", "E"),
 			rx.StartWith("A", "B", "C"),
 		),
 		"A", "B", "C", "D", "E", ErrComplete,
@@ -30,9 +36,9 @@ func TestStartWith(t *testing.T) {
 		"A", "B", "C", ErrTest,
 	).Case(
 		rx.Pipe1(
-			rx.Throw[string](ErrTest),
-			rx.StartWith[string](),
+			rx.Oops[string](ErrTest),
+			rx.StartWith("A", "B", "C"),
 		),
-		ErrTest,
+		"A", "B", "C", rx.ErrOops, ErrTest,
 	)
 }

@@ -64,5 +64,11 @@ func TestScan(t *testing.T) {
 			rx.Scan(0, sum),
 		),
 		ErrTest,
+	).Case(
+		rx.Pipe1(
+			rx.Oops[int](ErrTest),
+			rx.Scan(0, sum),
+		),
+		rx.ErrOops, ErrTest,
 	)
 }

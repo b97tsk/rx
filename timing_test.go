@@ -1,7 +1,6 @@
 package rx_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -54,7 +53,7 @@ func TestTimer(t *testing.T) {
 		rx.ErrOops, ErrTest,
 	)
 
-	ctx, cancel := rx.NewBackgroundContext().WithTimeout(Step(1))
+	ctx, cancel := rx.NewBackgroundContext().WithTimeoutCause(Step(1), ErrTest)
 	defer cancel()
 
 	NewTestSuite[int](t).WithContext(ctx).Case(
@@ -62,6 +61,6 @@ func TestTimer(t *testing.T) {
 			rx.Timer(Step(2)),
 			rx.MapTo[time.Time](42),
 		),
-		context.DeadlineExceeded,
+		ErrTest,
 	)
 }

@@ -58,6 +58,16 @@ func TestThrottle(t *testing.T) {
 		),
 		ErrTest,
 	).Case(
+		rx.Pipe1(
+			rx.Oops[string](ErrTest),
+			rx.Throttle(
+				func(string) rx.Observable[int] {
+					return rx.Oops[int](ErrTest)
+				},
+			),
+		),
+		rx.ErrOops, ErrTest,
+	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B", "C", "D", "E"),
 			AddLatencyToValues[string](0, 2),
@@ -68,6 +78,17 @@ func TestThrottle(t *testing.T) {
 			),
 		),
 		"A", ErrTest,
+	).Case(
+		rx.Pipe2(
+			rx.Just("A", "B", "C", "D", "E"),
+			AddLatencyToValues[string](0, 2),
+			rx.Throttle(
+				func(string) rx.Observable[int] {
+					return rx.Oops[int](ErrTest)
+				},
+			),
+		),
+		"A", rx.ErrOops, ErrTest,
 	).Case(
 		rx.Pipe2(
 			rx.Just("A", "B", "C", "D", "E"),

@@ -10,4 +10,5 @@ var (
 	ErrOops           = errors.New("oops")
 	ErrTimeout        = errors.New("timeout")
 	ErrUnicast        = errors.New("unicast")
+	ErrUnsubscribed   = errors.New("unsubscribed")
 )

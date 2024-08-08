@@ -1,20 +1,20 @@
 package rx
 
-// RetryForever mirrors the source Observable, and resubscribes to the source
-// whenever the source emits a notification of error.
+// RetryForever mirrors the source [Observable], and resubscribes to
+// the source whenever the source emits an [Error] notification.
 //
-// RetryForever does not retry after context cancellation.
+// RetryForever does not retry after [Context] cancellation.
 func RetryForever[T any]() Operator[T, T] {
 	return Retry[T](-1)
 }
 
-// Retry mirrors the source Observable, and resubscribes to the source
-// when the source emits a notification of error, for a maximum of count
+// Retry mirrors the source [Observable], and resubscribes to the source
+// when the source emits an [Error] notification, for a maximum of count
 // resubscriptions.
 //
 // Retry(0) is a no-op.
 //
-// Retry does not retry after context cancellation.
+// Retry does not retry after [Context] cancellation.
 func Retry[T any](count int) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
@@ -41,7 +41,7 @@ func (ob retryObservable[T]) Subscribe(c Context, o Observer[T]) {
 		select {
 		default:
 		case <-done:
-			o.Error(c.Cause())
+			o.Stop(c.Cause())
 			return
 		}
 

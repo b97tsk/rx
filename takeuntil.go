@@ -5,7 +5,7 @@ import (
 	"sync/atomic"
 )
 
-// TakeUntil mirrors the source Observable until a second Observable emits
+// TakeUntil mirrors the source [Observable] until a second [Observable] emits
 // a value.
 func TakeUntil[T, U any](notifier Observable[U]) Operator[T, T] {
 	return NewOperator(
@@ -52,7 +52,7 @@ func (ob takeUntilObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 				cancelw()
 
 				switch n.Kind {
-				case KindNext, KindError:
+				case KindNext, KindError, KindStop:
 					if x.context.Swap(sentinel) != sentinel {
 						cancel()
 
@@ -65,6 +65,8 @@ func (ob takeUntilObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 							o.Complete()
 						case KindError:
 							o.Error(n.Error)
+						case KindStop:
+							o.Stop(n.Error)
 						}
 					}
 
@@ -74,7 +76,7 @@ func (ob takeUntilObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 			},
 			func() {
 				if x.context.Swap(sentinel) != sentinel {
-					o.Error(ErrOops)
+					o.Stop(ErrOops)
 				}
 			},
 		)
@@ -99,7 +101,7 @@ func (ob takeUntilObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 	select {
 	default:
 	case <-c.Done():
-		terminate(Error[T](c.Cause()))
+		terminate(Stop[T](c.Cause()))
 		return
 	}
 
@@ -109,7 +111,7 @@ func (ob takeUntilObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 			if x.context.Load() == c.Context {
 				o.Emit(n)
 			}
-		case KindError, KindComplete:
+		case KindComplete, KindError, KindStop:
 			terminate(n)
 		}
 	})

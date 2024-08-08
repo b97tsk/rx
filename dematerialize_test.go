@@ -26,6 +26,13 @@ func TestDematerialize(t *testing.T) {
 		ErrTest,
 	).Case(
 		rx.Pipe2(
+			rx.Oops[string](ErrTest),
+			rx.Materialize[string](),
+			rx.Dematerialize[rx.Notification[string]](),
+		),
+		rx.ErrOops, ErrTest,
+	).Case(
+		rx.Pipe2(
 			rx.Just("A", "B", "C"),
 			rx.Materialize[string](),
 			rx.Dematerialize[rx.Notification[string]](),
@@ -42,6 +49,16 @@ func TestDematerialize(t *testing.T) {
 		),
 		"A", "B", "C", ErrTest,
 	).Case(
+		rx.Pipe2(
+			rx.Concat(
+				rx.Just("A", "B", "C"),
+				rx.Oops[string](ErrTest),
+			),
+			rx.Materialize[string](),
+			rx.Dematerialize[rx.Notification[string]](),
+		),
+		"A", "B", "C", rx.ErrOops, ErrTest,
+	).Case(
 		rx.Pipe1(
 			rx.Empty[rx.Notification[string]](),
 			rx.Dematerialize[rx.Notification[string]](),
@@ -53,5 +70,11 @@ func TestDematerialize(t *testing.T) {
 			rx.Dematerialize[rx.Notification[string]](),
 		),
 		ErrTest,
+	).Case(
+		rx.Pipe1(
+			rx.Oops[rx.Notification[string]](ErrTest),
+			rx.Dematerialize[rx.Notification[string]](),
+		),
+		rx.ErrOops, ErrTest,
 	)
 }

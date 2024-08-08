@@ -1,7 +1,6 @@
 package rx_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -36,6 +35,16 @@ func TestDelay(t *testing.T) {
 		),
 		"A", "B", "C", "D", "E", ErrTest,
 	).Case(
+		rx.Pipe2(
+			rx.Concat(
+				rx.Just("A", "B", "C", "D", "E"),
+				rx.Oops[string](ErrTest),
+			),
+			AddLatencyToNotifications[string](0, 2),
+			rx.Delay[string](Step(1)),
+		),
+		"A", "B", "C", "D", rx.ErrOops, ErrTest,
+	).Case(
 		rx.Pipe1(
 			rx.Empty[string](),
 			rx.Delay[string](Step(1)),
@@ -44,7 +53,7 @@ func TestDelay(t *testing.T) {
 	)
 
 	{
-		ctx, cancel := rx.NewBackgroundContext().WithTimeout(Step(1))
+		ctx, cancel := rx.NewBackgroundContext().WithTimeoutCause(Step(1), ErrTest)
 		defer cancel()
 
 		NewTestSuite[string](t).WithContext(ctx).Case(
@@ -52,12 +61,12 @@ func TestDelay(t *testing.T) {
 				rx.Just("A", "B", "C", "D", "E"),
 				rx.Delay[string](Step(2)),
 			),
-			context.DeadlineExceeded,
+			ErrTest,
 		)
 	}
 
 	{
-		ctx, cancel := rx.NewBackgroundContext().WithTimeout(Step(2))
+		ctx, cancel := rx.NewBackgroundContext().WithTimeoutCause(Step(2), ErrTest)
 		defer cancel()
 
 		NewTestSuite[string](t).WithContext(ctx).Case(
@@ -66,7 +75,7 @@ func TestDelay(t *testing.T) {
 				rx.Delay[string](Step(1)),
 				rx.DoOnNext(func(string) { time.Sleep(Step(2)) }),
 			),
-			"A", context.DeadlineExceeded,
+			"A", ErrTest,
 		)
 	}
 }

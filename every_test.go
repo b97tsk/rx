@@ -45,6 +45,24 @@ func TestEvery(t *testing.T) {
 		),
 		ErrTest,
 	).Case(
+		rx.Pipe1(
+			rx.Concat(
+				rx.Range(1, 10),
+				rx.Oops[int](ErrTest),
+			),
+			rx.Every(lessThanFive),
+		),
+		false, ErrComplete,
+	).Case(
+		rx.Pipe1(
+			rx.Concat(
+				rx.Range(1, 5),
+				rx.Oops[int](ErrTest),
+			),
+			rx.Every(lessThanFive),
+		),
+		rx.ErrOops, ErrTest,
+	).Case(
 		rx.Pipe2(
 			rx.Range(1, 10),
 			rx.Every(lessThanFive),

@@ -2,7 +2,7 @@ package rx
 
 import "time"
 
-// Ticker creates an Observable that emits [time.Time] values
+// Ticker creates an [Observable] that emits [time.Time] values
 // every specified interval of time.
 func Ticker(d time.Duration) Observable[time.Time] {
 	if d <= 0 {
@@ -17,17 +17,17 @@ func Ticker(d time.Duration) Observable[time.Time] {
 			for {
 				select {
 				case <-done:
-					o.Error(c.Cause())
+					o.Stop(c.Cause())
 					return
 				case t := <-tk.C:
-					Try1(o, Next(t), func() { o.Error(ErrOops) })
+					Try1(o, Next(t), func() { o.Stop(ErrOops) })
 				}
 			}
 		})
 	}
 }
 
-// Timer creates an Observable that emits a [time.Time] value
+// Timer creates an [Observable] that emits a [time.Time] value
 // after a particular time span has passed, and then completes.
 func Timer(d time.Duration) Observable[time.Time] {
 	return func(c Context, o Observer[time.Time]) {
@@ -36,9 +36,9 @@ func Timer(d time.Duration) Observable[time.Time] {
 			select {
 			case <-c.Done():
 				tm.Stop()
-				o.Error(c.Cause())
+				o.Stop(c.Cause())
 			case t := <-tm.C:
-				Try1(o, Next(t), func() { o.Error(ErrOops) })
+				Try1(o, Next(t), func() { o.Stop(ErrOops) })
 				o.Complete()
 			}
 		})

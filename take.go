@@ -1,6 +1,6 @@
 package rx
 
-// Take emits only the first count values emitted by the source Observable.
+// Take emits only the first count values emitted by the source [Observable].
 func Take[T any](count int) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
@@ -12,22 +12,24 @@ func Take[T any](count int) Operator[T, T] {
 				c, cancel := c.WithCancel()
 				o = o.DoOnTermination(cancel)
 
-				var noop bool
+				var x struct {
+					count int
+					noop  bool
+				}
 
-				count := count
+				x.count = count
 
 				source.Subscribe(c, func(n Notification[T]) {
-					if noop {
+					if x.noop {
 						return
 					}
 
 					o.Emit(n)
 
 					if n.Kind == KindNext {
-						count--
-
-						if count == 0 {
-							noop = true
+						x.count--
+						if x.count == 0 {
+							x.noop = true
 							o.Complete()
 						}
 					}

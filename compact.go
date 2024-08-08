@@ -1,6 +1,6 @@
 package rx
 
-// CompactComparable emits all values emitted by the source Observable that
+// CompactComparable emits all values emitted by the source [Observable] that
 // are distinct from the previous.
 func CompactComparable[T comparable]() Operator[T, T] {
 	return NewOperator(
@@ -28,8 +28,8 @@ func CompactComparable[T comparable]() Operator[T, T] {
 	)
 }
 
-// Compact emits all values emitted by the source Observable that are distinct
-// from the previous, given a comparison function.
+// Compact emits all values emitted by the source [Observable] that are
+// distinct from the previous, given a comparison function.
 func Compact[T any](eq func(v1, v2 T) bool) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
@@ -56,8 +56,8 @@ func Compact[T any](eq func(v1, v2 T) bool) Operator[T, T] {
 	)
 }
 
-// CompactComparableKey emits all values emitted by the source Observable whose
-// mappings are distinct from the previous.
+// CompactComparableKey emits all values emitted by the source [Observable]
+// whose mappings are distinct from the previous.
 func CompactComparableKey[T any, K comparable](mapping func(v T) K) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
@@ -86,8 +86,8 @@ func CompactComparableKey[T any, K comparable](mapping func(v T) K) Operator[T, 
 	)
 }
 
-// CompactKey emits all values emitted by the source Observable whose mappings
-// are distinct from the previous, given a comparison function.
+// CompactKey emits all values emitted by the source [Observable] whose
+// mappings are distinct from the previous, given a comparison function.
 func CompactKey[T, K any](mapping func(v T) K, eq func(v1, v2 K) bool) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {

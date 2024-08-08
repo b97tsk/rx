@@ -1,6 +1,6 @@
 package rx
 
-// TakeWhile emits values emitted by the source Observable so long as
+// TakeWhile emits values emitted by the source [Observable] so long as
 // each value satisfies a given predicate function, and then completes
 // as soon as the predicate function returns false.
 func TakeWhile[T any](pred func(v T) bool) Operator[T, T] {
@@ -27,7 +27,7 @@ func TakeWhile[T any](pred func(v T) bool) Operator[T, T] {
 						noop = true
 						o.Complete()
 
-					case KindError, KindComplete:
+					case KindComplete, KindError, KindStop:
 						o.Emit(n)
 					}
 				})

@@ -42,6 +42,13 @@ func TestSkipUntil(t *testing.T) {
 		rx.Pipe2(
 			rx.Just("A", "B", "C"),
 			AddLatencyToValues[string](0, 2),
+			rx.SkipUntil[string](rx.Oops[int](ErrTest)),
+		),
+		rx.ErrOops, ErrTest,
+	).Case(
+		rx.Pipe2(
+			rx.Just("A", "B", "C"),
+			AddLatencyToValues[string](0, 2),
 			rx.SkipUntil[string](
 				rx.Pipe1(
 					rx.Just(42),
@@ -74,6 +81,18 @@ func TestSkipUntil(t *testing.T) {
 			),
 		),
 		ErrTest,
+	).Case(
+		rx.Pipe2(
+			rx.Just("A", "B", "C"),
+			AddLatencyToValues[string](0, 2),
+			rx.SkipUntil[string](
+				rx.Pipe1(
+					rx.Oops[int](ErrTest),
+					DelaySubscription[int](3),
+				),
+			),
+		),
+		rx.ErrOops, ErrTest,
 	)
 
 	t.Run("Oops", func(t *testing.T) {

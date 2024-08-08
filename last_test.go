@@ -10,53 +10,53 @@ import (
 func TestLast(t *testing.T) {
 	t.Parallel()
 
-	NewTestSuite[int](t).Case(
+	NewTestSuite[string](t).Case(
 		rx.Pipe1(
-			rx.Empty[int](),
-			rx.Last[int](),
+			rx.Empty[string](),
+			rx.Last[string](),
 		),
 		rx.ErrEmpty,
 	).Case(
 		rx.Pipe1(
-			rx.Throw[int](ErrTest),
-			rx.Last[int](),
+			rx.Throw[string](ErrTest),
+			rx.Last[string](),
 		),
 		ErrTest,
 	).Case(
 		rx.Pipe1(
-			rx.Just(1),
-			rx.Last[int](),
+			rx.Oops[string](ErrTest),
+			rx.Last[string](),
 		),
-		1, ErrComplete,
+		rx.ErrOops, ErrTest,
 	).Case(
 		rx.Pipe1(
-			rx.Just(1, 2),
-			rx.Last[int](),
+			rx.Just("A", "B", "C"),
+			rx.Last[string](),
 		),
-		2, ErrComplete,
+		"C", ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Concat(
-				rx.Just(1),
-				rx.Throw[int](ErrTest),
+				rx.Just("A", "B", "C"),
+				rx.Throw[string](ErrTest),
 			),
-			rx.Last[int](),
+			rx.Last[string](),
 		),
 		ErrTest,
 	).Case(
 		rx.Pipe1(
 			rx.Concat(
-				rx.Just(1, 2),
-				rx.Throw[int](ErrTest),
+				rx.Just("A", "B", "C"),
+				rx.Oops[string](ErrTest),
 			),
-			rx.Last[int](),
+			rx.Last[string](),
 		),
-		ErrTest,
+		rx.ErrOops, ErrTest,
 	).Case(
 		rx.Pipe2(
-			rx.Just(1, 2),
-			rx.Last[int](),
-			rx.DoOnNext(func(int) { panic(ErrTest) }),
+			rx.Just("A", "B", "C"),
+			rx.Last[string](),
+			rx.DoOnNext(func(string) { panic(ErrTest) }),
 		),
 		rx.ErrOops, ErrTest,
 	)
@@ -65,53 +65,53 @@ func TestLast(t *testing.T) {
 func TestLastOrElse(t *testing.T) {
 	t.Parallel()
 
-	NewTestSuite[int](t).Case(
+	NewTestSuite[string](t).Case(
 		rx.Pipe1(
-			rx.Empty[int](),
-			rx.LastOrElse(404),
+			rx.Empty[string](),
+			rx.LastOrElse("D"),
 		),
-		404, ErrComplete,
+		"D", ErrComplete,
 	).Case(
 		rx.Pipe1(
-			rx.Throw[int](ErrTest),
-			rx.LastOrElse(404),
+			rx.Throw[string](ErrTest),
+			rx.LastOrElse("D"),
 		),
 		ErrTest,
 	).Case(
 		rx.Pipe1(
-			rx.Just(1),
-			rx.LastOrElse(404),
+			rx.Oops[string](ErrTest),
+			rx.LastOrElse("D"),
 		),
-		1, ErrComplete,
+		rx.ErrOops, ErrTest,
 	).Case(
 		rx.Pipe1(
-			rx.Just(1, 2),
-			rx.LastOrElse(404),
+			rx.Just("A", "B", "C"),
+			rx.LastOrElse("D"),
 		),
-		2, ErrComplete,
+		"C", ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Concat(
-				rx.Just(1),
-				rx.Throw[int](ErrTest),
+				rx.Just("A", "B", "C"),
+				rx.Throw[string](ErrTest),
 			),
-			rx.LastOrElse(404),
+			rx.LastOrElse("D"),
 		),
 		ErrTest,
 	).Case(
 		rx.Pipe1(
 			rx.Concat(
-				rx.Just(1, 2),
-				rx.Throw[int](ErrTest),
+				rx.Just("A", "B", "C"),
+				rx.Oops[string](ErrTest),
 			),
-			rx.LastOrElse(404),
+			rx.LastOrElse("D"),
 		),
-		ErrTest,
+		rx.ErrOops, ErrTest,
 	).Case(
 		rx.Pipe2(
-			rx.Empty[int](),
-			rx.LastOrElse(404),
-			rx.DoOnNext(func(int) { panic(ErrTest) }),
+			rx.Empty[string](),
+			rx.LastOrElse("D"),
+			rx.DoOnNext(func(string) { panic(ErrTest) }),
 		),
 		rx.ErrOops, ErrTest,
 	)

@@ -29,6 +29,15 @@ func TestFilter(t *testing.T) {
 			rx.Filter(lessThanFive),
 		),
 		1, 2, 3, 4, ErrTest,
+	).Case(
+		rx.Pipe1(
+			rx.Concat(
+				rx.Range(1, 10),
+				rx.Oops[int](ErrTest),
+			),
+			rx.Filter(lessThanFive),
+		),
+		1, 2, 3, 4, rx.ErrOops, ErrTest,
 	)
 }
 
@@ -54,6 +63,15 @@ func TestFilterOut(t *testing.T) {
 			rx.FilterOut(lessThanFive),
 		),
 		5, 6, 7, 8, 9, ErrTest,
+	).Case(
+		rx.Pipe1(
+			rx.Concat(
+				rx.Range(1, 10),
+				rx.Oops[int](ErrTest),
+			),
+			rx.FilterOut(lessThanFive),
+		),
+		5, 6, 7, 8, 9, rx.ErrOops, ErrTest,
 	)
 }
 
@@ -79,5 +97,14 @@ func TestFilterMap(t *testing.T) {
 			rx.FilterMap(lessThanFive),
 		),
 		2, 4, 6, 8, ErrTest,
+	).Case(
+		rx.Pipe1(
+			rx.Concat(
+				rx.Range(1, 10),
+				rx.Oops[int](ErrTest),
+			),
+			rx.FilterMap(lessThanFive),
+		),
+		2, 4, 6, 8, rx.ErrOops, ErrTest,
 	)
 }

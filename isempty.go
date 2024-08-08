@@ -20,11 +20,13 @@ func IsEmpty[T any]() Operator[T, bool] {
 						o.Next(false)
 						noop = true
 						o.Complete()
+					case KindComplete:
+						Try1(o, Next(true), func() { o.Stop(ErrOops) })
+						o.Complete()
 					case KindError:
 						o.Error(n.Error)
-					case KindComplete:
-						Try1(o, Next(true), func() { o.Error(ErrOops) })
-						o.Complete()
+					case KindStop:
+						o.Stop(n.Error)
 					}
 				})
 			}

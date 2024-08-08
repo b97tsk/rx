@@ -127,6 +127,20 @@ func TestMulticast(t *testing.T) {
 		NewTestSuite[string](t).Case(m.Observable, ErrTest)
 	})
 
+	t.Run("AfterStop", func(t *testing.T) {
+		t.Parallel()
+
+		m := rx.Multicast[string]()
+
+		m.Stop(ErrTest)
+
+		NewTestSuite[string](t).Case(m.Observable, ErrTest)
+
+		m.Complete()
+
+		NewTestSuite[string](t).Case(m.Observable, ErrTest)
+	})
+
 	t.Run("Finalizer", func(t *testing.T) {
 		t.Parallel()
 

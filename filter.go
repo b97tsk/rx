@@ -1,6 +1,6 @@
 package rx
 
-// Filter filters values emitted by the source Observable by only emitting
+// Filter filters values emitted by the source [Observable] by only emitting
 // those that satisfy a given predicate function.
 func Filter[T any](pred func(v T) bool) Operator[T, T] {
 	return NewOperator(
@@ -12,7 +12,7 @@ func Filter[T any](pred func(v T) bool) Operator[T, T] {
 						if pred(n.Value) {
 							o.Emit(n)
 						}
-					case KindError, KindComplete:
+					case KindComplete, KindError, KindStop:
 						o.Emit(n)
 					}
 				})
@@ -21,7 +21,7 @@ func Filter[T any](pred func(v T) bool) Operator[T, T] {
 	)
 }
 
-// FilterOut filters out values emitted by the source Observable by only
+// FilterOut filters out values emitted by the source [Observable] by only
 // emitting those that do not satisfy a given predicate function.
 func FilterOut[T any](pred func(v T) bool) Operator[T, T] {
 	return NewOperator(
@@ -33,7 +33,7 @@ func FilterOut[T any](pred func(v T) bool) Operator[T, T] {
 						if !pred(n.Value) {
 							o.Emit(n)
 						}
-					case KindError, KindComplete:
+					case KindComplete, KindError, KindStop:
 						o.Emit(n)
 					}
 				})
@@ -42,7 +42,7 @@ func FilterOut[T any](pred func(v T) bool) Operator[T, T] {
 	)
 }
 
-// FilterMap passes each value emitted by the source Observable to a given
+// FilterMap passes each value emitted by the source [Observable] to a given
 // predicate function and emits their mapping, the first return value of
 // the predicate function, only if the second is true.
 func FilterMap[T, R any](pred func(v T) (R, bool)) Operator[T, R] {
@@ -55,10 +55,12 @@ func FilterMap[T, R any](pred func(v T) (R, bool)) Operator[T, R] {
 						if v, ok := pred(n.Value); ok {
 							o.Next(v)
 						}
-					case KindError:
-						o.Error(n.Error)
 					case KindComplete:
 						o.Complete()
+					case KindError:
+						o.Error(n.Error)
+					case KindStop:
+						o.Stop(n.Error)
 					}
 				})
 			}

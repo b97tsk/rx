@@ -45,6 +45,24 @@ func TestContains(t *testing.T) {
 		),
 		ErrTest,
 	).Case(
+		rx.Pipe1(
+			rx.Concat(
+				rx.Range(1, 10),
+				rx.Oops[int](ErrTest),
+			),
+			rx.Contains(greaterThanFour),
+		),
+		true, ErrComplete,
+	).Case(
+		rx.Pipe1(
+			rx.Concat(
+				rx.Range(1, 5),
+				rx.Oops[int](ErrTest),
+			),
+			rx.Contains(greaterThanFour),
+		),
+		rx.ErrOops, ErrTest,
+	).Case(
 		rx.Pipe2(
 			rx.Range(1, 10),
 			rx.Contains(greaterThanFour),
@@ -94,6 +112,24 @@ func TestContainsElement(t *testing.T) {
 			rx.ContainsElement(5),
 		),
 		ErrTest,
+	).Case(
+		rx.Pipe1(
+			rx.Concat(
+				rx.Range(1, 10),
+				rx.Oops[int](ErrTest),
+			),
+			rx.ContainsElement(5),
+		),
+		true, ErrComplete,
+	).Case(
+		rx.Pipe1(
+			rx.Concat(
+				rx.Range(1, 5),
+				rx.Oops[int](ErrTest),
+			),
+			rx.ContainsElement(5),
+		),
+		rx.ErrOops, ErrTest,
 	).Case(
 		rx.Pipe2(
 			rx.Range(1, 10),

@@ -1,7 +1,6 @@
 package rx_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -33,7 +32,7 @@ func TestConcat(t *testing.T) {
 		"A", "B", "C", "D", "E", "F", ErrComplete,
 	)
 
-	ctx, cancel := rx.NewBackgroundContext().WithTimeout(Step(1))
+	ctx, cancel := rx.NewBackgroundContext().WithTimeoutCause(Step(1), ErrTest)
 	defer cancel()
 
 	NewTestSuite[int](t).WithContext(ctx).Case(
@@ -44,7 +43,7 @@ func TestConcat(t *testing.T) {
 			},
 			rx.Oops[int]("should not happen"),
 		),
-		context.DeadlineExceeded,
+		ErrTest,
 	)
 }
 
@@ -83,6 +82,12 @@ func TestConcatMap(t *testing.T) {
 			rx.ConcatAll[rx.Observable[string]](),
 		),
 		ErrTest,
+	).Case(
+		rx.Pipe1(
+			rx.Oops[rx.Observable[string]](ErrTest),
+			rx.ConcatAll[rx.Observable[string]](),
+		),
+		rx.ErrOops, ErrTest,
 	).Case(
 		rx.Pipe1(
 			rx.NewObservable(
@@ -140,13 +145,19 @@ func TestConcatMapWithBuffering(t *testing.T) {
 		ErrTest,
 	).Case(
 		rx.Pipe1(
+			rx.Oops[rx.Observable[string]](ErrTest),
+			rx.ConcatAll[rx.Observable[string]]().WithBuffering(),
+		),
+		rx.ErrOops, ErrTest,
+	).Case(
+		rx.Pipe1(
 			rx.Timer(Step(1)),
 			rx.ConcatMap(func(time.Time) rx.Observable[string] { panic(ErrTest) }).WithBuffering(),
 		),
 		rx.ErrOops, ErrTest,
 	)
 
-	ctx, cancel := rx.NewBackgroundContext().WithTimeout(Step(1))
+	ctx, cancel := rx.NewBackgroundContext().WithTimeoutCause(Step(1), ErrTest)
 	defer cancel()
 
 	NewTestSuite[string](t).WithContext(ctx).Case(
@@ -160,6 +171,6 @@ func TestConcatMapWithBuffering(t *testing.T) {
 			),
 			rx.ConcatAll[rx.Observable[string]]().WithBuffering(),
 		),
-		context.DeadlineExceeded,
+		ErrTest,
 	)
 }

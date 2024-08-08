@@ -64,6 +64,13 @@ func TestKeyOf(t *testing.T) {
 			rx.Reduce(0, sum),
 		),
 		ErrTest,
+	).Case(
+		rx.Pipe2(
+			rx.Oops[rx.Pair[int, string]](ErrTest),
+			rx.KeyOf[rx.Pair[int, string]](),
+			rx.Reduce(0, sum),
+		),
+		rx.ErrOops, ErrTest,
 	)
 }
 
@@ -94,10 +101,17 @@ func TestValueOf(t *testing.T) {
 			rx.Reduce("", max),
 		),
 		ErrTest,
+	).Case(
+		rx.Pipe2(
+			rx.Oops[rx.Pair[int, string]](ErrTest),
+			rx.ValueOf[rx.Pair[int, string]](),
+			rx.Reduce("", max),
+		),
+		rx.ErrOops, ErrTest,
 	)
 }
 
-func TestWithIndex(t *testing.T) {
+func TestEnumerate(t *testing.T) {
 	t.Parallel()
 
 	add := func(m map[int]string, p rx.Pair[int, string]) map[int]string {
@@ -121,5 +135,13 @@ func TestWithIndex(t *testing.T) {
 			ToString[map[int]string](),
 		),
 		ErrTest,
+	).Case(
+		rx.Pipe3(
+			rx.Oops[string](ErrTest),
+			rx.Enumerate[string](1),
+			rx.Reduce(make(map[int]string), add),
+			ToString[map[int]string](),
+		),
+		rx.ErrOops, ErrTest,
 	)
 }

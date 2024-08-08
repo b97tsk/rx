@@ -1,8 +1,8 @@
 package rx
 
-// Single emits the single value emitted by the source Observable.
+// Single emits the single value emitted by the source [Observable].
 // If the source emits more than one value or no values, it emits
-// a notification of ErrNotSingle or ErrEmpty respectively.
+// an [Error] notification of [ErrNotSingle] or [ErrEmpty] respectively.
 func Single[T any]() Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
@@ -10,39 +10,40 @@ func Single[T any]() Operator[T, T] {
 				c, cancel := c.WithCancel()
 				o = o.DoOnTermination(cancel)
 
-				var first struct {
-					value    T
-					hasValue bool
+				var x struct {
+					first struct {
+						value    T
+						hasValue bool
+					}
+					noop bool
 				}
 
-				var noop bool
-
 				source.Subscribe(c, func(n Notification[T]) {
-					if noop {
+					if x.noop {
 						return
 					}
 
 					switch n.Kind {
 					case KindNext:
-						if !first.hasValue {
-							first.value = n.Value
-							first.hasValue = true
+						if !x.first.hasValue {
+							x.first.value = n.Value
+							x.first.hasValue = true
 							return
 						}
 
-						noop = true
+						x.noop = true
 						o.Error(ErrNotSingle)
 
-					case KindError:
-						o.Emit(n)
-
 					case KindComplete:
-						if first.hasValue {
-							Try1(o, Next(first.value), func() { o.Error(ErrOops) })
+						if x.first.hasValue {
+							Try1(o, Next(x.first.value), func() { o.Stop(ErrOops) })
 							o.Complete()
 						} else {
 							o.Error(ErrEmpty)
 						}
+
+					case KindError, KindStop:
+						o.Emit(n)
 					}
 				})
 			}

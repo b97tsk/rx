@@ -1,211 +1,157 @@
 package rx
 
-// BlockingFirst subscribes to ob, returning the first emitted value.
-// If ob emits no values, it returns the zero value of T and ErrEmpty;
-// if ob emits a notification of error, it returns the zero value of T and
-// the error.
-//
-// The cancellation of parent will cause BlockingFirst to immediately return
-// the zero value of T and parent.Cause().
-func (ob Observable[T]) BlockingFirst(parent Context) (v T, err error) {
-	res := Error[T](ErrEmpty)
+import "sync"
+
+// BlockingFirst subscribes to ob, returning the first value notification.
+// If ob completes without emitting any value, BlockingFirst returns
+// an [Error] notification of [ErrEmpty];
+// if ob emits no values but a notification of [Error] or [Stop],
+// BlockingFirst returns that notification.
+func (ob Observable[T]) BlockingFirst(parent Context) Notification[T] {
 	c, cancel := parent.WithCancel()
 
-	var noop bool
+	var x struct {
+		wg   sync.WaitGroup
+		res  Notification[T]
+		noop bool
+	}
+
+	x.wg.Add(1)
 
 	ob.Subscribe(c, func(n Notification[T]) {
-		if noop {
+		if x.noop {
 			return
 		}
 
 		switch n.Kind {
-		case KindNext, KindError, KindComplete:
-			noop = true
+		case KindNext:
+			x.noop = true
+			x.res = n
+			cancel()
+			x.wg.Done()
+		case KindComplete:
+			x.res = Error[T](ErrEmpty)
+			cancel()
+			x.wg.Done()
+		case KindError, KindStop:
+			x.res = n
+			cancel()
+			x.wg.Done()
+		}
+	})
 
-			switch n.Kind {
-			case KindNext, KindError:
-				res = n
+	x.wg.Wait()
+
+	return x.res
+}
+
+// BlockingLast subscribes to ob, returning the last value notification.
+// If ob completes without emitting any value, BlockingLast returns
+// an [Error] notification of [ErrEmpty];
+// if ob emits a notification of [Error] or [Stop], BlockingLast returns
+// that notification.
+func (ob Observable[T]) BlockingLast(c Context) Notification[T] {
+	var x struct {
+		wg  sync.WaitGroup
+		res Notification[T]
+	}
+
+	x.wg.Add(1)
+
+	ob.Subscribe(c, func(n Notification[T]) {
+		switch n.Kind {
+		case KindNext:
+			x.res = n
+		case KindComplete:
+			if x.res.Kind == 0 {
+				x.res = Error[T](ErrEmpty)
 			}
-
-			cancel()
+			x.wg.Done()
+		case KindError, KindStop:
+			x.res = n
+			x.wg.Done()
 		}
 	})
 
-	<-c.Done()
+	x.wg.Wait()
 
-	select {
-	default:
-	case <-parent.Done():
-		return v, parent.Cause()
-	}
-
-	switch res.Kind {
-	case KindNext:
-		return res.Value, nil
-	case KindError:
-		return v, res.Error
-	default:
-		panic("unreachable")
-	}
+	return x.res
 }
 
-// BlockingFirstOrElse subscribes to ob, returning the first emitted value or
-// def if ob emits no values or emits a notification of error.
-//
-// The cancellation of parent will cause BlockingFirstOrElse to immediately
-// return def.
-func (ob Observable[T]) BlockingFirstOrElse(parent Context, def T) T {
-	v, err := ob.BlockingFirst(parent)
-	if err != nil {
-		return def
-	}
-
-	return v
-}
-
-// BlockingLast subscribes to ob, returning the last emitted value.
-// If ob emits no values, it returns the zero value of T and ErrEmpty;
-// if ob emits a notification of error, it returns the zero value of T and
-// the error.
-//
-// The cancellation of parent will cause BlockingLast to immediately return
-// the zero value of T and parent.Cause().
-func (ob Observable[T]) BlockingLast(parent Context) (v T, err error) {
-	res := Error[T](ErrEmpty)
+// BlockingSingle subscribes to ob, returning the single value notification.
+// If ob emits more than one value, BlockingSingle returns an [Error]
+// notification of [ErrNotSingle];
+// if ob completes without emitting any value, BlockingSingle returns
+// an [Error] notification of [ErrEmpty];
+// if ob emits a notification of [Error] or [Stop], BlockingSingle returns
+// that notification.
+func (ob Observable[T]) BlockingSingle(parent Context) Notification[T] {
 	c, cancel := parent.WithCancel()
 
-	ob.Subscribe(c, func(n Notification[T]) {
-		switch n.Kind {
-		case KindNext, KindError:
-			res = n
-		}
-
-		switch n.Kind {
-		case KindError, KindComplete:
-			cancel()
-		}
-	})
-
-	<-c.Done()
-
-	select {
-	default:
-	case <-parent.Done():
-		return v, parent.Cause()
+	var x struct {
+		wg   sync.WaitGroup
+		res  Notification[T]
+		noop bool
 	}
 
-	switch res.Kind {
-	case KindNext:
-		return res.Value, nil
-	case KindError:
-		return v, res.Error
-	default:
-		panic("unreachable")
-	}
-}
-
-// BlockingLastOrElse subscribes to ob, returning the last emitted value or
-// def if ob emits no values or emits a notification of error.
-//
-// The cancellation of parent will cause BlockingLastOrElse to immediately
-// return def.
-func (ob Observable[T]) BlockingLastOrElse(parent Context, def T) T {
-	v, err := ob.BlockingLast(parent)
-	if err != nil {
-		return def
-	}
-
-	return v
-}
-
-// BlockingSingle subscribes to ob, returning the single emitted value.
-// If ob emits more than one value or no values, it returns the zero value of
-// T and ErrNotSingle or ErrEmpty respectively; if ob emits a notification of
-// error, it returns the zero value of T and the error.
-//
-// The cancellation of parent will cause BlockingSingle to immediately return
-// the zero value of T and parent.Cause().
-func (ob Observable[T]) BlockingSingle(parent Context) (v T, err error) {
-	res := Error[T](ErrEmpty)
-	c, cancel := parent.WithCancel()
-
-	var noop bool
+	x.wg.Add(1)
 
 	ob.Subscribe(c, func(n Notification[T]) {
-		if noop {
+		if x.noop {
 			return
 		}
 
-		if n.Kind == KindNext && res.Kind == KindNext {
-			res = Error[T](ErrNotSingle)
-			noop = true
+		if n.Kind == KindNext && x.res.Kind == KindNext {
+			x.res = Error[T](ErrNotSingle)
+			x.noop = true
 			cancel()
+			x.wg.Done()
 			return
 		}
 
 		switch n.Kind {
-		case KindNext, KindError:
-			res = n
-		}
-
-		switch n.Kind {
-		case KindError, KindComplete:
+		case KindNext:
+			x.res = n
+		case KindComplete:
+			if x.res.Kind == 0 {
+				x.res = Error[T](ErrEmpty)
+			}
 			cancel()
+			x.wg.Done()
+		case KindError, KindStop:
+			x.res = n
+			cancel()
+			x.wg.Done()
 		}
 	})
 
-	<-c.Done()
+	x.wg.Wait()
 
-	select {
-	default:
-	case <-parent.Done():
-		return v, parent.Cause()
-	}
-
-	switch res.Kind {
-	case KindNext:
-		return res.Value, nil
-	case KindError:
-		return v, res.Error
-	default:
-		panic("unreachable")
-	}
+	return x.res
 }
 
-// BlockingSubscribe subscribes to ob and waits for it to complete.
-// If ob completes without an error, BlockingSubscribe returns nil;
-// otherwise, it returns the emitted error.
-//
-// The cancellation of parent will cause BlockingSubscribe to immediately
-// return parent.Cause().
-func (ob Observable[T]) BlockingSubscribe(parent Context, o Observer[T]) error {
-	var res Notification[T]
+// BlockingSubscribe subscribes to ob and waits for it to complete,
+// returning the last notification which must be one of [Complete], [Error]
+// or [Stop].
+func (ob Observable[T]) BlockingSubscribe(c Context, o Observer[T]) Notification[T] {
+	var x struct {
+		wg  sync.WaitGroup
+		res Notification[T]
+	}
 
-	c, cancel := parent.WithCancel()
+	x.wg.Add(1)
 
 	ob.Subscribe(c, func(n Notification[T]) {
-		res = n
+		switch n.Kind {
+		case KindNext:
+		case KindComplete, KindError, KindStop:
+			defer x.wg.Done()
+		}
+		x.res = n
 		o.Emit(n)
-		switch n.Kind {
-		case KindError, KindComplete:
-			cancel()
-		}
 	})
 
-	<-c.Done()
+	x.wg.Wait()
 
-	select {
-	default:
-	case <-parent.Done():
-		return parent.Cause()
-	}
-
-	switch res.Kind {
-	case KindError:
-		return res.Error
-	case KindComplete:
-		return nil
-	default:
-		panic("unreachable")
-	}
+	return x.res
 }

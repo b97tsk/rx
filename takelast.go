@@ -2,7 +2,7 @@ package rx
 
 import "github.com/b97tsk/rx/internal/queue"
 
-// TakeLast emits only the last count values emitted by the source Observable.
+// TakeLast emits only the last count values emitted by the source [Observable].
 func TakeLast[T any](count int) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
@@ -22,23 +22,23 @@ func TakeLast[T any](count int) Operator[T, T] {
 
 						q.Push(n.Value)
 
-					case KindError:
-						o.Emit(n)
-
 					case KindComplete:
 						done := c.Done()
 
-						for i, j := 0, q.Len(); i < j; i++ {
+						for i := range q.Len() {
 							select {
 							default:
 							case <-done:
-								o.Error(c.Cause())
+								o.Stop(c.Cause())
 								return
 							}
 
-							Try1(o, Next(q.At(i)), func() { o.Error(ErrOops) })
+							Try1(o, Next(q.At(i)), func() { o.Stop(ErrOops) })
 						}
 
+						o.Emit(n)
+
+					case KindError, KindStop:
 						o.Emit(n)
 					}
 				})

@@ -10,101 +10,101 @@ import (
 func TestFirst(t *testing.T) {
 	t.Parallel()
 
-	NewTestSuite[int](t).Case(
+	NewTestSuite[string](t).Case(
 		rx.Pipe1(
-			rx.Empty[int](),
-			rx.First[int](),
+			rx.Empty[string](),
+			rx.First[string](),
 		),
 		rx.ErrEmpty,
 	).Case(
 		rx.Pipe1(
-			rx.Throw[int](ErrTest),
-			rx.First[int](),
+			rx.Throw[string](ErrTest),
+			rx.First[string](),
 		),
 		ErrTest,
 	).Case(
 		rx.Pipe1(
-			rx.Just(1),
-			rx.First[int](),
+			rx.Oops[string](ErrTest),
+			rx.First[string](),
 		),
-		1, ErrComplete,
+		rx.ErrOops, ErrTest,
 	).Case(
 		rx.Pipe1(
-			rx.Just(1, 2),
-			rx.First[int](),
+			rx.Just("A", "B", "C"),
+			rx.First[string](),
 		),
-		1, ErrComplete,
-	).Case(
-		rx.Pipe1(
-			rx.Concat(
-				rx.Just(1),
-				rx.Throw[int](ErrTest),
-			),
-			rx.First[int](),
-		),
-		1, ErrComplete,
+		"A", ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Concat(
-				rx.Just(1, 2),
-				rx.Throw[int](ErrTest),
+				rx.Just("A", "B", "C"),
+				rx.Throw[string](ErrTest),
 			),
-			rx.First[int](),
+			rx.First[string](),
 		),
-		1, ErrComplete,
+		"A", ErrComplete,
+	).Case(
+		rx.Pipe1(
+			rx.Concat(
+				rx.Just("A", "B", "C"),
+				rx.Oops[string](ErrTest),
+			),
+			rx.First[string](),
+		),
+		"A", ErrComplete,
 	)
 }
 
 func TestFirstOrElse(t *testing.T) {
 	t.Parallel()
 
-	NewTestSuite[int](t).Case(
+	NewTestSuite[string](t).Case(
 		rx.Pipe1(
-			rx.Empty[int](),
-			rx.FirstOrElse(404),
+			rx.Empty[string](),
+			rx.FirstOrElse("D"),
 		),
-		404, ErrComplete,
+		"D", ErrComplete,
 	).Case(
 		rx.Pipe1(
-			rx.Throw[int](ErrTest),
-			rx.FirstOrElse(404),
+			rx.Throw[string](ErrTest),
+			rx.FirstOrElse("D"),
 		),
 		ErrTest,
 	).Case(
 		rx.Pipe1(
-			rx.Just(1),
-			rx.FirstOrElse(404),
+			rx.Oops[string](ErrTest),
+			rx.FirstOrElse("D"),
 		),
-		1, ErrComplete,
+		rx.ErrOops, ErrTest,
 	).Case(
 		rx.Pipe1(
-			rx.Just(1, 2),
-			rx.FirstOrElse(404),
+			rx.Just("A", "B", "C"),
+			rx.FirstOrElse("D"),
 		),
-		1, ErrComplete,
-	).Case(
-		rx.Pipe1(
-			rx.Concat(
-				rx.Just(1),
-				rx.Throw[int](ErrTest),
-			),
-			rx.FirstOrElse(404),
-		),
-		1, ErrComplete,
+		"A", ErrComplete,
 	).Case(
 		rx.Pipe1(
 			rx.Concat(
-				rx.Just(1, 2),
-				rx.Throw[int](ErrTest),
+				rx.Just("A", "B", "C"),
+				rx.Throw[string](ErrTest),
 			),
-			rx.FirstOrElse(404),
+			rx.FirstOrElse("D"),
 		),
-		1, ErrComplete,
+		"A", ErrComplete,
+	).Case(
+		rx.Pipe1(
+			rx.Concat(
+				rx.Just("A", "B", "C"),
+				rx.Oops[string](ErrTest),
+			),
+			rx.FirstOrElse("D"),
+		),
+		"A", ErrComplete,
 	).Case(
 		rx.Pipe2(
-			rx.Empty[int](),
-			rx.FirstOrElse(404),
-			rx.DoOnNext(func(int) { panic(ErrTest) }),
+			rx.Empty[string](),
+			rx.FirstOrElse("D"),
+			rx.DoOnNext(func(string) { panic(ErrTest) }),
 		),
 		rx.ErrOops, ErrTest,
 	)

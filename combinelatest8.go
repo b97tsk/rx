@@ -2,8 +2,8 @@ package rx
 
 import "sync"
 
-// CombineLatest8 combines multiple Observables to create an Observable
-// that emits mappings of the latest values emitted by each of its input
+// CombineLatest8 combines multiple Observables to create an [Observable]
+// that emits mappings of the latest values emitted by each of the input
 // Observables.
 func CombineLatest8[T1, T2, T3, T4, T5, T6, T7, T8, R any](
 	ob1 Observable[T1],
@@ -75,9 +75,6 @@ func combineLatestEmit8[T1, T2, T3, T4, T5, T6, T7, T8, R, X any](
 
 		s.mu.Unlock()
 
-	case KindError:
-		o.Error(n.Error)
-
 	case KindComplete:
 		s.mu.Lock()
 		cbits := s.cbits
@@ -88,5 +85,11 @@ func combineLatestEmit8[T1, T2, T3, T4, T5, T6, T7, T8, R, X any](
 		if cbits == FullBits {
 			o.Complete()
 		}
+
+	case KindError:
+		o.Error(n.Error)
+
+	case KindStop:
+		o.Stop(n.Error)
 	}
 }

@@ -35,6 +35,12 @@ func TestIsEmpty(t *testing.T) {
 		),
 		ErrTest,
 	).Case(
+		rx.Pipe1(
+			rx.Oops[string](ErrTest),
+			rx.IsEmpty[string](),
+		),
+		rx.ErrOops, ErrTest,
+	).Case(
 		rx.Pipe2(
 			rx.Empty[string](),
 			rx.IsEmpty[string](),

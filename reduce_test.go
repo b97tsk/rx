@@ -65,6 +65,12 @@ func TestReduce(t *testing.T) {
 		),
 		ErrTest,
 	).Case(
+		rx.Pipe1(
+			rx.Oops[int](ErrTest),
+			rx.Reduce(0, sum),
+		),
+		rx.ErrOops, ErrTest,
+	).Case(
 		rx.Pipe2(
 			rx.Range(1, 7),
 			rx.Reduce(0, sum),

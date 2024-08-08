@@ -7,8 +7,8 @@ import (
 	"github.com/b97tsk/rx/internal/queue"
 )
 
-// Concat creates an Observable that concatenates multiple Observables
-// together by sequentially emitting their values, one Observable after
+// Concat creates an [Observable] that concatenates multiple Observables
+// together by sequentially emitting their values, one [Observable] after
 // the other.
 func Concat[T any](some ...Observable[T]) Observable[T] {
 	if len(some) == 0 {
@@ -18,9 +18,9 @@ func Concat[T any](some ...Observable[T]) Observable[T] {
 	return concatWithObservable[T]{others: some}.Subscribe
 }
 
-// ConcatWith concatenates the source Observable and some other Observables
-// together to create an Observable that sequentially emits their values,
-// one Observable after the other.
+// ConcatWith concatenates the source [Observable] and some other Observables
+// together to create an [Observable] that sequentially emits their values,
+// one [Observable] after the other.
 func ConcatWith[T any](some ...Observable[T]) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
@@ -49,7 +49,7 @@ func (ob concatWithObservable[T]) Subscribe(c Context, o Observer[T]) {
 		select {
 		default:
 		case <-done:
-			o.Error(c.Cause())
+			o.Stop(c.Cause())
 			return
 		}
 
@@ -75,22 +75,22 @@ func (ob concatWithObservable[T]) Subscribe(c Context, o Observer[T]) {
 	next()
 }
 
-// ConcatAll flattens a higher-order Observable into a first-order Observable
-// by concatenating the inner Observables in order.
+// ConcatAll flattens a higher-order [Observable] into a first-order
+// [Observable] by concatenating the inner Observables in order.
 func ConcatAll[_ Observable[T], T any]() ConcatMapOperator[Observable[T], T] {
 	return ConcatMap(identity[Observable[T]])
 }
 
-// ConcatMapTo converts the source Observable into a higher-order Observable,
-// by mapping each source value to the same Observable, then flattens it into
-// a first-order Observable using ConcatAll.
+// ConcatMapTo converts the source [Observable] into a higher-order
+// [Observable], by mapping each source value to the same [Observable],
+// then flattens it into a first-order [Observable] using [ConcatAll].
 func ConcatMapTo[T, R any](inner Observable[R]) ConcatMapOperator[T, R] {
 	return ConcatMap(func(T) Observable[R] { return inner })
 }
 
-// ConcatMap converts the source Observable into a higher-order Observable,
-// by mapping each source value to an Observable, then flattens it into
-// a first-order Observable using ConcatAll.
+// ConcatMap converts the source [Observable] into a higher-order [Observable],
+// by mapping each source value to an [Observable], then flattens it into
+// a first-order [Observable] using [ConcatAll].
 func ConcatMap[T, R any](mapping func(v T) Observable[R]) ConcatMapOperator[T, R] {
 	return ConcatMapOperator[T, R]{
 		ts: concatMapConfig[T, R]{
@@ -120,7 +120,7 @@ func (op ConcatMapOperator[T, R]) WithBuffering() ConcatMapOperator[T, R] {
 	return op
 }
 
-// Apply implements the Operator interface.
+// Apply implements the [Operator] interface.
 func (op ConcatMapOperator[T, R]) Apply(source Observable[T]) Observable[R] {
 	return concatMapObservable[T, R]{source, op.ts}.Subscribe
 }
@@ -148,14 +148,17 @@ func (ob concatMapObservable[T, R]) Subscribe(c Context, o Observer[R]) {
 
 		switch n.Kind {
 		case KindNext:
-			if err := ob.mapping(n.Value).BlockingSubscribe(c, o.ElementsOnly); err != nil {
+			switch n := ob.mapping(n.Value).BlockingSubscribe(c, o.ElementsOnly); n.Kind {
+			case KindError, KindStop:
 				noop = true
-				o.Error(err)
+				o.Emit(n)
 			}
-		case KindError:
-			o.Error(n.Error)
 		case KindComplete:
 			o.Complete()
+		case KindError:
+			o.Error(n.Error)
+		case KindStop:
+			o.Stop(n.Error)
 		}
 	})
 }
@@ -200,7 +203,7 @@ func (ob concatMapObservable[T, R]) SubscribeWithBuffering(c Context, o Observer
 			case KindNext:
 				o.Emit(n)
 
-			case KindError, KindComplete:
+			case KindComplete, KindError, KindStop:
 				defer x.worker.Done()
 
 				x.buffer.Lock()
@@ -209,23 +212,13 @@ func (ob concatMapObservable[T, R]) SubscribeWithBuffering(c Context, o Observer
 					select {
 					default:
 					case <-w.Done():
-						n = Error[R](w.Cause())
+						n = Stop[R](w.Cause())
 					}
 				}
 
 				cancelw()
 
 				switch n.Kind {
-				case KindError:
-					old := x.context.Swap(sentinel)
-
-					x.buffer.Init()
-					x.buffer.Unlock()
-
-					if old != sentinel {
-						o.Emit(n)
-					}
-
 				case KindComplete:
 					swapped := x.context.CompareAndSwap(w.Context, c.Context)
 					if swapped && x.buffer.Len() != 0 {
@@ -237,6 +230,16 @@ func (ob concatMapObservable[T, R]) SubscribeWithBuffering(c Context, o Observer
 
 					if swapped && x.complete.Load() && x.context.CompareAndSwap(c.Context, sentinel) {
 						o.Complete()
+					}
+
+				case KindError, KindStop:
+					old := x.context.Swap(sentinel)
+
+					x.buffer.Init()
+					x.buffer.Unlock()
+
+					if old != sentinel {
+						o.Emit(n)
 					}
 				}
 			}
@@ -260,7 +263,14 @@ func (ob concatMapObservable[T, R]) SubscribeWithBuffering(c Context, o Observer
 
 			x.buffer.Unlock()
 
-		case KindError:
+		case KindComplete:
+			x.complete.Store(true)
+
+			if x.context.CompareAndSwap(c.Context, sentinel) {
+				o.Complete()
+			}
+
+		case KindError, KindStop:
 			old := x.context.Swap(sentinel)
 
 			cancel()
@@ -268,14 +278,12 @@ func (ob concatMapObservable[T, R]) SubscribeWithBuffering(c Context, o Observer
 			x.buffer.Init()
 
 			if old != sentinel {
-				o.Error(n.Error)
-			}
-
-		case KindComplete:
-			x.complete.Store(true)
-
-			if x.context.CompareAndSwap(c.Context, sentinel) {
-				o.Complete()
+				switch n.Kind {
+				case KindError:
+					o.Error(n.Error)
+				case KindStop:
+					o.Stop(n.Error)
+				}
 			}
 		}
 	})

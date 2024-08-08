@@ -101,6 +101,19 @@ func TestShare(t *testing.T) {
 	).Case(
 		rx.Pipe1(
 			rx.Oops[int]("should not happen"),
+			rx.Share[int](ctx).WithConnector(
+				func() rx.Subject[int] {
+					return rx.Subject[int]{
+						Observable: rx.Oops[int](ErrTest),
+						Observer:   rx.Noop[int],
+					}
+				},
+			),
+		),
+		rx.ErrOops, ErrTest,
+	).Case(
+		rx.Pipe1(
+			rx.Oops[int]("should not happen"),
 			rx.Share[int](ctx).WithConnector(func() rx.Subject[int] { panic(ErrTest) }),
 		),
 		rx.ErrOops, ErrTest,

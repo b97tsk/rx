@@ -7,14 +7,14 @@ import (
 	"github.com/b97tsk/rx/internal/queue"
 )
 
-// Multicast returns a Subject that forwards every value it receives to
+// Multicast returns a [Subject] that forwards every value it receives to
 // all its subscribers.
 // Values emitted to a Multicast before the first subscriber are lost.
 func Multicast[T any]() Subject[T] {
 	return MulticastBuffer[T](0)
 }
 
-// MulticastBufferAll returns a Subject that keeps track of every value
+// MulticastBufferAll returns a [Subject] that keeps track of every value
 // it receives.
 // Each subscriber will then receive all tracked values as well as future
 // values.
@@ -22,8 +22,8 @@ func MulticastBufferAll[T any]() Subject[T] {
 	return MulticastBuffer[T](-1)
 }
 
-// MulticastBuffer returns a Subject that keeps track of a certain number of
-// recent values it receive.
+// MulticastBuffer returns a [Subject] that keeps track of a certain number
+// of recent values it receive.
 // Each subscriber will then receive all tracked values as well as future
 // values.
 //
@@ -91,16 +91,18 @@ func (m *multicast[T]) Emit(n Notification[T]) {
 
 		mobs.Emit(n)
 
-	case KindError, KindComplete:
+	case KindComplete, KindError, KindStop:
 		var mobs multiObserver[T]
 
 		m.mobs, mobs = mobs, m.mobs
 
 		switch n.Kind {
-		case KindError:
-			m.lastn = Error[struct{}](n.Error)
 		case KindComplete:
 			m.lastn = Complete[struct{}]()
+		case KindError:
+			m.lastn = Error[struct{}](n.Error)
+		case KindStop:
+			m.lastn = Stop[struct{}](n.Error)
 		}
 
 		m.mu.Unlock()
@@ -129,15 +131,15 @@ func (m *multicast[T]) Subscribe(c Context, o Observer[T]) {
 		q := buf.Queue
 		done := c.Done()
 
-		for i, j := 0, q.Len(); i < j; i++ {
+		for i := range q.Len() {
 			select {
 			default:
 			case <-done:
-				o.Error(c.Cause())
+				o.Stop(c.Cause())
 				return
 			}
 
-			Try1(o, Next(q.At(i)), func() { o.Error(ErrOops) })
+			Try1(o, Next(q.At(i)), func() { o.Stop(ErrOops) })
 		}
 
 		buf.refcount.Add(^uint32(0))
@@ -157,16 +159,18 @@ func (m *multicast[T]) Subscribe(c Context, o Observer[T]) {
 			m.mu.Lock()
 			m.mobs.Delete(&o)
 			m.mu.Unlock()
-			o.Error(c.Cause())
+			o.Stop(c.Cause())
 		})
 	}
 
 	m.mu.Unlock()
 
 	switch lastn.Kind {
-	case KindError:
-		o.Error(lastn.Error)
 	case KindComplete:
 		o.Complete()
+	case KindError:
+		o.Error(lastn.Error)
+	case KindStop:
+		o.Stop(lastn.Error)
 	}
 }

@@ -1,6 +1,6 @@
 package rx
 
-// DefaultIfEmpty mirrors the source Observable, or emits given values
+// DefaultIfEmpty mirrors the source [Observable], or emits given values
 // if the source completes without emitting any value.
 func DefaultIfEmpty[T any](s ...T) Operator[T, T] {
 	return NewOperator(
@@ -12,7 +12,6 @@ func DefaultIfEmpty[T any](s ...T) Operator[T, T] {
 					switch n.Kind {
 					case KindNext:
 						haveValue = true
-					case KindError:
 					case KindComplete:
 						if !haveValue {
 							done := c.Done()
@@ -21,11 +20,11 @@ func DefaultIfEmpty[T any](s ...T) Operator[T, T] {
 								select {
 								default:
 								case <-done:
-									o.Error(c.Cause())
+									o.Stop(c.Cause())
 									return
 								}
 
-								Try1(o, Next(v), func() { o.Error(ErrOops) })
+								Try1(o, Next(v), func() { o.Stop(ErrOops) })
 							}
 						}
 					}
@@ -37,8 +36,9 @@ func DefaultIfEmpty[T any](s ...T) Operator[T, T] {
 	)
 }
 
-// ThrowIfEmpty mirrors the source Observable, or emits a notification of
-// ErrEmpty if the source completes without emitting any value.
+// ThrowIfEmpty mirrors the source [Observable], or emits an [Error]
+// notification of [ErrEmpty] if the source completes without emitting
+// any value.
 func ThrowIfEmpty[T any]() Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
@@ -49,7 +49,6 @@ func ThrowIfEmpty[T any]() Operator[T, T] {
 					switch n.Kind {
 					case KindNext:
 						haveValue = true
-					case KindError:
 					case KindComplete:
 						if !haveValue {
 							o.Error(ErrEmpty)
@@ -64,8 +63,8 @@ func ThrowIfEmpty[T any]() Operator[T, T] {
 	)
 }
 
-// SwitchIfEmpty mirrors the source or specified Observable if the source
-// completes without emitting any value.
+// SwitchIfEmpty mirrors the source or switches to specified [Observable]
+// if the source completes without emitting any value.
 func SwitchIfEmpty[T any](ob Observable[T]) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
@@ -76,7 +75,6 @@ func SwitchIfEmpty[T any](ob Observable[T]) Operator[T, T] {
 					switch n.Kind {
 					case KindNext:
 						haveValue = true
-					case KindError:
 					case KindComplete:
 						if !haveValue {
 							ob.Subscribe(c, o)

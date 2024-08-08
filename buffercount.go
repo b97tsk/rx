@@ -1,11 +1,11 @@
 package rx
 
-// BufferCount buffers a number of values from the source Observable as
+// BufferCount buffers a number of values from the source [Observable] as
 // a slice, and emits that slice when its size reaches given BufferSize;
 // then, BufferCount starts a new buffer by dropping a number of most dated
 // values specified by StartBufferEvery option (defaults to BufferSize).
 //
-// For reducing allocations, slices emitted by the output Observable share
+// For reducing allocations, slices emitted by the output [Observable] share
 // a same underlying array.
 func BufferCount[T any](bufferSize int) BufferCountOperator[T] {
 	return BufferCountOperator[T]{
@@ -32,7 +32,7 @@ func (op BufferCountOperator[T]) WithStartBufferEvery(n int) BufferCountOperator
 	return op
 }
 
-// Apply implements the Operator interface.
+// Apply implements the [Operator] interface.
 func (op BufferCountOperator[T]) Apply(source Observable[T]) Observable[[]T] {
 	if op.ts.bufferSize <= 0 {
 		return Oops[[]T]("BufferCount: BufferSize <= 0")
@@ -77,13 +77,10 @@ func (ob bufferCountObservable[T]) Subscribe(c Context, o Observer[[]T]) {
 				skip = ob.startBufferEvery - ob.bufferSize
 			}
 
-		case KindError:
-			o.Error(n.Error)
-
 		case KindComplete:
 			if len(s) != 0 {
 				for {
-					Try1(o, Next(s), func() { o.Error(ErrOops) })
+					Try1(o, Next(s), func() { o.Stop(ErrOops) })
 
 					if len(s) <= ob.startBufferEvery {
 						break
@@ -94,6 +91,12 @@ func (ob bufferCountObservable[T]) Subscribe(c Context, o Observer[[]T]) {
 			}
 
 			o.Complete()
+
+		case KindError:
+			o.Error(n.Error)
+
+		case KindStop:
+			o.Stop(n.Error)
 		}
 	})
 }

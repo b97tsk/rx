@@ -2,9 +2,9 @@ package rx
 
 import "github.com/b97tsk/rx/internal/queue"
 
-// OnBackpressureBuffer mirrors the source Observable, buffering emissions
+// OnBackpressureBuffer mirrors the source [Observable], buffering emissions
 // if the source emits too fast, and terminating the subscription with
-// a notification of ErrBufferOverflow if the buffer is full.
+// an [Error] notification of [ErrBufferOverflow] if the buffer is full.
 func OnBackpressureBuffer[T any](capacity int) Operator[T, T] {
 	return Channelize(
 		func(upstream <-chan Notification[T], downstream chan<- Notification[T]) {
@@ -37,9 +37,6 @@ func OnBackpressureBuffer[T any](capacity int) Operator[T, T] {
 						}
 
 						buf.Push(n)
-					case KindError:
-						downstream <- n
-						return
 					case KindComplete:
 						complete = true
 
@@ -47,6 +44,9 @@ func OnBackpressureBuffer[T any](capacity int) Operator[T, T] {
 							downstream <- n
 							return
 						}
+					case KindError, KindStop:
+						downstream <- n
+						return
 					}
 				case out <- outv:
 					buf.Pop()
@@ -61,9 +61,8 @@ func OnBackpressureBuffer[T any](capacity int) Operator[T, T] {
 	)
 }
 
-// OnBackpressureCongest mirrors the source Observable, buffering emissions
-// if the source emits too fast, and blocking the source if the buffer is
-// full.
+// OnBackpressureCongest mirrors the source [Observable], buffering emissions
+// if the source emits too fast, and blocking the source if the buffer is full.
 func OnBackpressureCongest[T any](capacity int) Operator[T, T] {
 	return Channelize(
 		func(upstream <-chan Notification[T], downstream chan<- Notification[T]) {
@@ -97,9 +96,6 @@ func OnBackpressureCongest[T any](capacity int) Operator[T, T] {
 					switch n.Kind {
 					case KindNext:
 						buf.Push(n)
-					case KindError:
-						downstream <- n
-						return
 					case KindComplete:
 						complete = true
 
@@ -107,6 +103,9 @@ func OnBackpressureCongest[T any](capacity int) Operator[T, T] {
 							downstream <- n
 							return
 						}
+					case KindError, KindStop:
+						downstream <- n
+						return
 					}
 				case out <- outv:
 					buf.Pop()
@@ -121,9 +120,8 @@ func OnBackpressureCongest[T any](capacity int) Operator[T, T] {
 	)
 }
 
-// OnBackpressureDrop mirrors the source Observable, buffering emissions
-// if the source emits too fast, and dropping emissions if the buffer is
-// full.
+// OnBackpressureDrop mirrors the source [Observable], buffering emissions
+// if the source emits too fast, and dropping emissions if the buffer is full.
 func OnBackpressureDrop[T any](capacity int) Operator[T, T] {
 	return Channelize(
 		func(upstream <-chan Notification[T], downstream chan<- Notification[T]) {
@@ -153,9 +151,6 @@ func OnBackpressureDrop[T any](capacity int) Operator[T, T] {
 						if buf.Len() < capacity {
 							buf.Push(n)
 						}
-					case KindError:
-						downstream <- n
-						return
 					case KindComplete:
 						complete = true
 
@@ -163,6 +158,9 @@ func OnBackpressureDrop[T any](capacity int) Operator[T, T] {
 							downstream <- n
 							return
 						}
+					case KindError, KindStop:
+						downstream <- n
+						return
 					}
 				case out <- outv:
 					buf.Pop()
@@ -177,9 +175,9 @@ func OnBackpressureDrop[T any](capacity int) Operator[T, T] {
 	)
 }
 
-// OnBackpressureLatest mirrors the source Observable, buffering emissions
-// if the source emits too fast, and dropping oldest emissions from
-// the buffer if it is full.
+// OnBackpressureLatest mirrors the source [Observable], buffering emissions
+// if the source emits too fast, and dropping oldest emissions from the buffer
+// if it is full.
 func OnBackpressureLatest[T any](capacity int) Operator[T, T] {
 	return Channelize(
 		func(upstream <-chan Notification[T], downstream chan<- Notification[T]) {
@@ -211,9 +209,6 @@ func OnBackpressureLatest[T any](capacity int) Operator[T, T] {
 						}
 
 						buf.Push(n)
-					case KindError:
-						downstream <- n
-						return
 					case KindComplete:
 						complete = true
 
@@ -221,6 +216,9 @@ func OnBackpressureLatest[T any](capacity int) Operator[T, T] {
 							downstream <- n
 							return
 						}
+					case KindError, KindStop:
+						downstream <- n
+						return
 					}
 				case out <- outv:
 					buf.Pop()

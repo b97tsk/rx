@@ -98,10 +98,10 @@ func (s *TestSuite[T]) Case(ob rx.Observable[T], output ...any) *TestSuite[T] {
 			switch n.Kind {
 			case rx.KindNext:
 				s.tb.Errorf("want (nothing), but got %v", tos(n.Value))
-			case rx.KindError:
-				s.tb.Errorf("want (nothing), but got %v", tos(n.Error))
 			case rx.KindComplete:
 				s.tb.Errorf("want (nothing), but got %v", tos(ErrComplete))
+			case rx.KindError, rx.KindStop:
+				s.tb.Errorf("want (nothing), but got %v", tos(n.Error))
 			}
 
 			return
@@ -117,17 +117,17 @@ func (s *TestSuite[T]) Case(ob rx.Observable[T], output ...any) *TestSuite[T] {
 			} else {
 				s.tb.Errorf("want %v, but got %v", tos(wanted), tos(n.Value))
 			}
-		case rx.KindError:
-			if wanted == n.Error {
-				s.tb.Logf("want %v", tos(wanted))
-			} else {
-				s.tb.Errorf("want %v, but got %v", tos(wanted), tos(n.Error))
-			}
 		case rx.KindComplete:
 			if wanted == ErrComplete {
 				s.tb.Logf("want %v", tos(ErrComplete))
 			} else {
 				s.tb.Errorf("want %v, but got %v", tos(wanted), tos(ErrComplete))
+			}
+		case rx.KindError, rx.KindStop:
+			if wanted == n.Error {
+				s.tb.Logf("want %v", tos(wanted))
+			} else {
+				s.tb.Errorf("want %v, but got %v", tos(wanted), tos(n.Error))
 			}
 		}
 	})

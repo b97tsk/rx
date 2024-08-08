@@ -3,8 +3,8 @@ package rx
 import "sync"
 
 // WithLatestFrom4 combines the source with 4 other Observables to create
-// an Observable that emits mappings of the latest values emitted by each
-// Observable, only when the source emits.
+// an [Observable] that emits mappings of the latest values emitted by each
+// [Observable], only when the source emits.
 func WithLatestFrom4[T0, T1, T2, T3, T4, R any](
 	ob1 Observable[T1],
 	ob2 Observable[T2],
@@ -80,12 +80,15 @@ func withLatestFromEmit5[T1, T2, T3, T4, T5, R, X any](
 
 		s.mu.Unlock()
 
-	case KindError:
-		o.Error(n.Error)
-
 	case KindComplete:
 		if bit == 1 {
 			o.Complete()
 		}
+
+	case KindError:
+		o.Error(n.Error)
+
+	case KindStop:
+		o.Stop(n.Error)
 	}
 }

@@ -47,6 +47,12 @@ func TestGroupBy(t *testing.T) {
 		ErrTest,
 	).Case(
 		rx.Pipe3(
+			rx.Oops[string](ErrTest),
+			group, count, tostring,
+		),
+		rx.ErrOops, ErrTest,
+	).Case(
+		rx.Pipe3(
 			source,
 			rx.GroupBy(
 				func(v string) string { panic(ErrTest) },

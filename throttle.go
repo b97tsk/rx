@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-// ThrottleTime emits a value from the source Observable, then ignores
+// ThrottleTime emits a value from the source [Observable], then ignores
 // subsequent source values for a duration, then repeats this process until
 // the source completes.
 //
@@ -17,12 +17,12 @@ func ThrottleTime[T any](d time.Duration) ThrottleOperator[T, time.Time] {
 	return Throttle(func(T) Observable[time.Time] { return ob })
 }
 
-// Throttle emits a value from the source Observable, then ignores
-// subsequent source values for a duration determined by another Observable,
+// Throttle emits a value from the source [Observable], then ignores
+// subsequent source values for a duration determined by another [Observable],
 // then repeats this process until the source completes.
 //
 // It's like [ThrottleTime], but the silencing duration is determined
-// by a second Observable.
+// by a second [Observable].
 func Throttle[T, U any](durationSelector func(v T) Observable[U]) ThrottleOperator[T, U] {
 	return ThrottleOperator[T, U]{
 		ts: throttleConfig[T, U]{
@@ -56,7 +56,7 @@ func (op ThrottleOperator[T, U]) WithTrailing(v bool) ThrottleOperator[T, U] {
 	return op
 }
 
-// Apply implements the Operator interface.
+// Apply implements the [Operator] interface.
 func (op ThrottleOperator[T, U]) Apply(source Observable[T]) Observable[T] {
 	return throttleObservable[T, U]{source, op.ts}.Subscribe
 }
@@ -116,7 +116,7 @@ func (ob throttleObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 
 					oops := func() {
 						if x.context.Swap(sentinel) != sentinel {
-							o.Error(ErrOops)
+							o.Stop(ErrOops)
 						}
 					}
 
@@ -131,14 +131,19 @@ func (ob throttleObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 					o.Complete()
 				}
 
-			case KindError:
-				if x.context.Swap(sentinel) != sentinel {
-					o.Error(n.Error)
-				}
-
 			case KindComplete:
 				if x.context.CompareAndSwap(w.Context, c.Context) && x.complete.Load() && x.context.CompareAndSwap(c.Context, sentinel) {
 					o.Complete()
+				}
+
+			case KindError, KindStop:
+				if x.context.Swap(sentinel) != sentinel {
+					switch n.Kind {
+					case KindError:
+						o.Error(n.Error)
+					case KindStop:
+						o.Stop(n.Error)
+					}
 				}
 			}
 		})
@@ -161,20 +166,20 @@ func (ob throttleObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 				doThrottle(n.Value)
 			}
 
-		case KindError:
+		case KindComplete:
+			x.complete.Store(true)
+
+			if x.context.CompareAndSwap(c.Context, sentinel) {
+				o.Emit(n)
+			}
+
+		case KindError, KindStop:
 			old := x.context.Swap(sentinel)
 
 			cancel()
 			x.worker.Wait()
 
 			if old != sentinel {
-				o.Emit(n)
-			}
-
-		case KindComplete:
-			x.complete.Store(true)
-
-			if x.context.CompareAndSwap(c.Context, sentinel) {
 				o.Emit(n)
 			}
 		}

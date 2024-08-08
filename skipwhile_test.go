@@ -38,5 +38,14 @@ func TestSkipWhile(t *testing.T) {
 			rx.SkipWhile(lessThanFive),
 		),
 		ErrTest,
+	).Case(
+		rx.Pipe1(
+			rx.Concat(
+				rx.Range(1, 5),
+				rx.Oops[int](ErrTest),
+			),
+			rx.SkipWhile(lessThanFive),
+		),
+		rx.ErrOops, ErrTest,
 	)
 }

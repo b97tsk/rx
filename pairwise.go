@@ -21,11 +21,14 @@ func Pairwise[T any]() Operator[T, Pair[T, T]] {
 						p.value = n.Value
 						p.hasValue = true
 
+					case KindComplete:
+						o.Complete()
+
 					case KindError:
 						o.Error(n.Error)
 
-					case KindComplete:
-						o.Complete()
+					case KindStop:
+						o.Stop(n.Error)
 					}
 				})
 			}

@@ -6,19 +6,19 @@ import (
 	"time"
 )
 
-// DebounceTime emits a value from the source Observable only after
+// DebounceTime emits a value from the source [Observable] only after
 // a particular time span has passed without another source emission.
 func DebounceTime[T any](d time.Duration) Operator[T, T] {
 	ob := Timer(d)
 	return Debounce(func(T) Observable[time.Time] { return ob })
 }
 
-// Debounce emits a value from the source Observable only after a particular
-// time span, determined by another Observable, has passed without another
+// Debounce emits a value from the source [Observable] only after a particular
+// time span, determined by another [Observable], has passed without another
 // source emission.
 //
 // It's like [DebounceTime], but the time span of emission silence is
-// determined by a second Observable.
+// determined by a second [Observable].
 func Debounce[T, U any](durationSelector func(v T) Observable[U]) Operator[T, T] {
 	return NewOperator(
 		func(source Observable[T]) Observable[T] {
@@ -80,18 +80,23 @@ func (ob debounceObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 					x.latest.Unlock()
 					Try1(o, Next(value), func() {
 						if x.context.CompareAndSwap(w.Context, sentinel) {
-							o.Error(ErrOops)
+							o.Stop(ErrOops)
 						}
 					})
 				}
 
-			case KindError:
-				if x.context.CompareAndSwap(w.Context, sentinel) {
-					o.Error(n.Error)
-				}
-
 			case KindComplete:
 				return
+
+			case KindError, KindStop:
+				if x.context.CompareAndSwap(w.Context, sentinel) {
+					switch n.Kind {
+					case KindError:
+						o.Error(n.Error)
+					case KindStop:
+						o.Stop(n.Error)
+					}
+				}
 			}
 		})
 	}
@@ -116,7 +121,7 @@ func (ob debounceObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 
 			startWorker(n.Value)
 
-		case KindError, KindComplete:
+		case KindComplete, KindError, KindStop:
 			old := x.context.Swap(sentinel)
 
 			cancel()
@@ -124,7 +129,7 @@ func (ob debounceObservable[T, U]) Subscribe(c Context, o Observer[T]) {
 
 			if old != sentinel {
 				if n.Kind == KindComplete && x.latest.hasValue.Load() {
-					Try1(o, Next(x.latest.value), func() { o.Error(ErrOops) })
+					Try1(o, Next(x.latest.value), func() { o.Stop(ErrOops) })
 				}
 
 				o.Emit(n)

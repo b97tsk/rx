@@ -1,7 +1,7 @@
 package rx
 
 // Every emits a boolean to indicate whether every value of the source
-// Observable satisfies a given predicate function.
+// [Observable] satisfies a given predicate function.
 func Every[T any](pred func(v T) bool) Operator[T, bool] {
 	return NewOperator(
 		func(source Observable[T]) Observable[bool] {
@@ -23,11 +23,13 @@ func Every[T any](pred func(v T) bool) Operator[T, bool] {
 							noop = true
 							o.Complete()
 						}
+					case KindComplete:
+						Try1(o, Next(true), func() { o.Stop(ErrOops) })
+						o.Complete()
 					case KindError:
 						o.Error(n.Error)
-					case KindComplete:
-						Try1(o, Next(true), func() { o.Error(ErrOops) })
-						o.Complete()
+					case KindStop:
+						o.Stop(n.Error)
 					}
 				})
 			}

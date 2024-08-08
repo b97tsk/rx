@@ -1,6 +1,6 @@
 package rx
 
-// Dematerialize converts an Observable of Notification values into
+// Dematerialize converts an [Observable] of [Notification] values into
 // the emissions that they represent. It's the opposite of [Materialize].
 func Dematerialize[_ Notification[T], T any]() Operator[Notification[T], T] {
 	return NewOperator(
@@ -21,15 +21,18 @@ func Dematerialize[_ Notification[T], T any]() Operator[Notification[T], T] {
 						n := n.Value
 
 						switch n.Kind {
-						case KindError, KindComplete:
+						case KindNext:
+						case KindComplete, KindError, KindStop:
 							noop = true
 						}
 
 						o.Emit(n)
-					case KindError:
-						o.Error(n.Error)
 					case KindComplete:
 						o.Complete()
+					case KindError:
+						o.Error(n.Error)
+					case KindStop:
+						o.Stop(n.Error)
 					}
 				})
 			}

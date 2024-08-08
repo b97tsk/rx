@@ -2,7 +2,7 @@ package rx
 
 import "sync/atomic"
 
-// Race creates an Observable that mirrors the first Observable to emit
+// Race creates an [Observable] that mirrors the first [Observable] to emit
 // a value, from given input Observables.
 func Race[T any](some ...Observable[T]) Observable[T] {
 	if len(some) == 0 {
@@ -12,7 +12,7 @@ func Race[T any](some ...Observable[T]) Observable[T] {
 	return raceWithObservable[T]{others: some}.Subscribe
 }
 
-// RaceWith mirrors the first Observable to emit a value, from the source
+// RaceWith mirrors the first [Observable] to emit a value, from the source
 // and given input Observables.
 func RaceWith[T any](some ...Observable[T]) Operator[T, T] {
 	return NewOperator(

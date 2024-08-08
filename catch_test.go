@@ -1,7 +1,6 @@
 package rx_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/b97tsk/rx"
@@ -32,21 +31,19 @@ func TestCatch(t *testing.T) {
 		"A", "B", "C", "D", "E", ErrComplete,
 	).Case(
 		rx.Pipe1(
+			rx.Concat(
+				rx.Just("A", "B", "C"),
+				rx.Oops[string](ErrTest),
+			),
+			rx.Catch(f),
+		),
+		"A", "B", "C", rx.ErrOops, ErrTest,
+	).Case(
+		rx.Pipe1(
 			rx.Throw[string](ErrTest),
 			rx.Catch[string](func(error) rx.Observable[string] { panic(ErrTest) }),
 		),
 		rx.ErrOops, ErrTest,
-	)
-
-	ctx, cancel := rx.NewBackgroundContext().WithTimeout(Step(1))
-	defer cancel()
-
-	NewTestSuite[string](t).WithContext(ctx).Case(
-		rx.Pipe1(
-			rx.Never[string](),
-			rx.Catch(f),
-		),
-		context.DeadlineExceeded,
 	)
 }
 
@@ -68,17 +65,15 @@ func TestOnErrorResumeWith(t *testing.T) {
 			rx.OnErrorResumeWith(rx.Just("D", "E")),
 		),
 		"A", "B", "C", "D", "E", ErrComplete,
-	)
-
-	ctx, cancel := rx.NewBackgroundContext().WithTimeout(Step(1))
-	defer cancel()
-
-	NewTestSuite[string](t).WithContext(ctx).Case(
+	).Case(
 		rx.Pipe1(
-			rx.Never[string](),
+			rx.Concat(
+				rx.Just("A", "B", "C"),
+				rx.Oops[string](ErrTest),
+			),
 			rx.OnErrorResumeWith(rx.Just("D", "E")),
 		),
-		context.DeadlineExceeded,
+		"A", "B", "C", rx.ErrOops, ErrTest,
 	)
 }
 
@@ -100,16 +95,14 @@ func TestOnErrorComplete(t *testing.T) {
 			rx.OnErrorComplete[string](),
 		),
 		"A", "B", "C", ErrComplete,
-	)
-
-	ctx, cancel := rx.NewBackgroundContext().WithTimeout(Step(1))
-	defer cancel()
-
-	NewTestSuite[string](t).WithContext(ctx).Case(
+	).Case(
 		rx.Pipe1(
-			rx.Never[string](),
+			rx.Concat(
+				rx.Just("A", "B", "C"),
+				rx.Oops[string](ErrTest),
+			),
 			rx.OnErrorComplete[string](),
 		),
-		context.DeadlineExceeded,
+		"A", "B", "C", rx.ErrOops, ErrTest,
 	)
 }

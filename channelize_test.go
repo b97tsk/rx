@@ -15,7 +15,7 @@ func TestChannelize(t *testing.T) {
 			switch n.Kind {
 			case rx.KindNext:
 				downstream <- n
-			case rx.KindError, rx.KindComplete:
+			case rx.KindComplete, rx.KindError, rx.KindStop:
 				downstream <- n
 				return
 			}
@@ -28,6 +28,15 @@ func TestChannelize(t *testing.T) {
 			rx.Channelize(join),
 		),
 		"A", "B", "C", ErrComplete,
+	).Case(
+		rx.Pipe1(
+			rx.Just("A", "B", "C"),
+			rx.Channelize(
+				func(upstream <-chan rx.Notification[string], downstream chan<- rx.Notification[string]) {
+				},
+			),
+		),
+		rx.ErrOops, "Channelize: no termination",
 	).Case(
 		rx.Pipe1(
 			rx.Just("A", "B", "C"),

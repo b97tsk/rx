@@ -30,10 +30,12 @@ func Example() {
 				switch n.Kind {
 				case rx.KindNext:
 					fmt.Println(n.Value)
-				case rx.KindError:
-					fmt.Println(n.Error)
 				case rx.KindComplete:
 					fmt.Println("Complete")
+				case rx.KindError:
+					fmt.Println("Error:", n.Error)
+				case rx.KindStop:
+					fmt.Println("Stop:", n.Error)
 				}
 			},
 		),
@@ -70,23 +72,27 @@ func Example_blocking() {
 		rx.DoOnNext(func(v int) { fmt.Println(v) }), // 10, 15, 21, ...
 	)
 
-	err := ob.BlockingSubscribe(ctx, rx.Noop[int])
-	if err != nil {
-		fmt.Println(err)
+	switch n := ob.BlockingSubscribe(ctx, rx.Noop[int]); n.Kind {
+	case rx.KindComplete:
+		fmt.Println("Complete")
+	case rx.KindError:
+		fmt.Println("Error:", n.Error)
+	case rx.KindStop:
+		fmt.Println("Stop:", n.Error)
 	}
 
 	// Output:
 	// 10
 	// 15
 	// 21
-	// context deadline exceeded
+	// Stop: context deadline exceeded
 }
 
 func Example_waitGroup() {
 	ctx := rx.NewContext(context.TODO()).WithNewWaitGroup()
 
 	ctx.Go(func() {
-		for n := 1; n < 4; n++ {
+		for n := 1; n <= 3; n++ {
 			rx.Pipe2(
 				rx.Timer(50*time.Millisecond*time.Duration(n)),
 				rx.MapTo[time.Time](n),
@@ -126,10 +132,12 @@ func Example_unicast() {
 					switch n.Kind {
 					case rx.KindNext:
 						fmt.Println(n.Value)
-					case rx.KindError:
-						fmt.Println(n.Error)
 					case rx.KindComplete:
 						fmt.Println("Complete")
+					case rx.KindError:
+						fmt.Println("Error:", n.Error)
+					case rx.KindStop:
+						fmt.Println("Stop:", n.Error)
 					}
 				},
 			),

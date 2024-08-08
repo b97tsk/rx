@@ -5,8 +5,8 @@ import (
 	"sync"
 )
 
-// Share returns a new Observable that multicasts (shares) the source
-// Observable. When subscribed multiple times, it guarantees that only one
+// Share creates an [Observable] that multicasts (shares) the source
+// [Observable]. When subscribed multiple times, it guarantees that only one
 // subscription is made to the source at the same time. When all subscribers
 // have unsubscribed it will unsubscribe from the source.
 func Share[T any](c Context) ShareOperator[T] {
@@ -34,7 +34,7 @@ func (op ShareOperator[T]) WithConnector(connector func() Subject[T]) ShareOpera
 	return op
 }
 
-// Apply implements the Operator interface.
+// Apply implements the [Operator] interface.
 func (op ShareOperator[T]) Apply(source Observable[T]) Observable[T] {
 	ob := &shareObservable[T]{
 		source:      source,
@@ -67,7 +67,7 @@ func (ob *shareObservable[T]) Subscribe(c Context, o Observer[T]) {
 	}()
 
 	if ob.subject.Observable == nil {
-		ob.subject = Try01(ob.connector, func() { o.Error(ErrOops) })
+		ob.subject = Try01(ob.connector, func() { o.Stop(ErrOops) })
 	}
 
 	c, cancel := c.WithCancel()
@@ -101,7 +101,7 @@ func (ob *shareObservable[T]) Subscribe(c Context, o Observer[T]) {
 			switch n.Kind {
 			case KindNext:
 				o.Emit(n)
-			case KindError, KindComplete:
+			case KindComplete, KindError, KindStop:
 				cancelw()
 
 				ob.mu.Lock()

@@ -1,9 +1,7 @@
 package rx
 
-// Channelize separates upstream and downstream with two channels, then uses
-// provided join function to connect them.
-//
-// Notifications sent to downstream must honor the [Observable] protocol.
+// Channelize splits upstream and downstream with two channels, then uses
+// a given join function to connect them.
 //
 // Channelize closes downstream channel after join returns.
 func Channelize[T any](join func(upstream <-chan Notification[T], downstream chan<- Notification[T])) Operator[T, T] {
@@ -13,16 +11,17 @@ func Channelize[T any](join func(upstream <-chan Notification[T], downstream cha
 				c, cancel := c.WithCancel()
 				o = o.DoOnTermination(cancel)
 
+				noop := make(chan struct{})
 				upstream := make(chan Notification[T])
 				downstream := make(chan Notification[T])
-				noop := make(chan struct{})
 
 				c.Go(func() {
 					defer func() {
-						close(downstream)
+						cancel()
 						close(noop)
+						close(downstream)
 					}()
-					Try2(join, upstream, downstream, func() { downstream <- Error[T](ErrOops) })
+					Try2(join, upstream, downstream, func() { downstream <- Stop[T](ErrOops) })
 				})
 
 				c.Go(func() {
@@ -31,14 +30,17 @@ func Channelize[T any](join func(upstream <-chan Notification[T], downstream cha
 						case KindNext:
 							Try1(o, n, func() {
 								c.Go(func() { drain(downstream) })
-								o.Error(ErrOops)
+								o.Stop(ErrOops)
 							})
-						case KindError, KindComplete:
-							defer drain(downstream)
+						case KindComplete, KindError, KindStop:
+							c.Go(func() { drain(downstream) })
 							o.Emit(n)
 							return
 						}
 					}
+
+					defer o.Stop(ErrOops)
+					panic("Channelize: no termination")
 				})
 
 				source.Subscribe(c, channelObserver(upstream, noop))

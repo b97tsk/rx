@@ -39,10 +39,17 @@ func TestTimeout(t *testing.T) {
 		),
 		"A", ErrTest,
 	).Case(
+		rx.Pipe2(
+			rx.Just("A", "B", "C"),
+			AddLatencyToValues[string](1, 3),
+			rx.Timeout[string](Step(2)).WithObservable(rx.Oops[string](ErrTest)),
+		),
+		"A", rx.ErrOops, ErrTest,
+	).Case(
 		rx.Pipe3(
 			rx.Just("A", "B", "C"),
 			AddLatencyToValues[string](1, 3),
-			rx.Timeout[string](Step(2)).WithObservable(rx.Throw[string](ErrTest)),
+			rx.Timeout[string](Step(2)).WithObservable(rx.Oops[string](ErrTest)),
 			rx.DoOnNext(func(string) { panic(ErrTest) }),
 		),
 		rx.ErrOops, ErrTest,

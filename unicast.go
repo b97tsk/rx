@@ -7,32 +7,32 @@ import (
 	"github.com/b97tsk/rx/internal/queue"
 )
 
-// Unicast returns a Subject that only forwards every value it receives to
+// Unicast returns a [Subject] that forwards every value it receives to
 // the first subscriber.
 // The first subscriber gets all future values.
-// Subsequent subscribers will immediately receive a notification of
-// ErrUnicast.
+// Subsequent subscribers will immediately receive a [Stop] notification of
+// [ErrUnicast].
 // Values emitted to a Unicast before the first subscriber are lost.
 func Unicast[T any]() Subject[T] {
 	return UnicastBuffer[T](0)
 }
 
-// UnicastBufferAll returns a Subject that keeps track of every value
+// UnicastBufferAll returns a [Subject] that keeps track of every value
 // it receives before the first subscriber.
 // The first subscriber will then receive all tracked values as well as
 // future values.
-// Subsequent subscribers will immediately receive a notification of
-// ErrUnicast.
+// Subsequent subscribers will immediately receive a [Stop] notification of
+// [ErrUnicast].
 func UnicastBufferAll[T any]() Subject[T] {
 	return UnicastBuffer[T](-1)
 }
 
-// UnicastBuffer returns a Subject that keeps track of a certain number of
+// UnicastBuffer returns a [Subject] that keeps track of a certain number of
 // recent values it receive before the first subscriber.
 // The first subscriber will then receive all tracked values as well as
 // future values.
-// Subsequent subscribers will immediately receive a notification of
-// ErrUnicast.
+// Subsequent subscribers will immediately receive a [Stop] notification of
+// [ErrUnicast].
 //
 // If n < 0, UnicastBuffer keeps track of every value it receives before
 // the first subscriber;
@@ -67,10 +67,13 @@ func (u *unicast[T]) Emit(n Notification[T]) {
 	}
 
 	switch n.Kind {
-	case KindError:
-		u.lastn = Error[struct{}](n.Error)
+	case KindNext:
 	case KindComplete:
 		u.lastn = Complete[struct{}]()
+	case KindError:
+		u.lastn = Error[struct{}](n.Error)
+	case KindStop:
+		u.lastn = Stop[struct{}](n.Error)
 	}
 
 	if u.observer == nil {
@@ -131,13 +134,13 @@ func (u *unicast[T]) Subscribe(c Context, o Observer[T]) {
 
 	if u.observer != nil {
 		u.mu.Unlock()
-		o.Error(ErrUnicast)
+		o.Stop(ErrUnicast)
 		return
 	}
 
 	done := c.Done()
 	if done != nil {
-		stop := c.AfterFunc(func() { u.Emit(Error[T](c.Cause())) })
+		stop := c.AfterFunc(func() { u.Emit(Stop[T](c.Cause())) })
 		o = o.DoOnTermination(func() { stop() })
 	}
 
@@ -154,17 +157,17 @@ func (u *unicast[T]) Subscribe(c Context, o Observer[T]) {
 }
 
 func (u *unicast[T]) startEmitting(n Notification[T]) {
-	throw := func(err error) {
+	stop := func(err error) {
 		u.mu.Lock()
 		u.emitting = false
-		u.lastn = Error[struct{}](err)
+		u.lastn = Stop[struct{}](err)
 		u.buf.Init()
 		u.mu.Unlock()
 		u.co.Broadcast()
-		u.observer.Error(err)
+		u.observer.Stop(err)
 	}
 
-	oops := func() { throw(ErrOops) }
+	oops := func() { stop(ErrOops) }
 
 	o := u.observer
 
@@ -178,11 +181,11 @@ func (u *unicast[T]) startEmitting(n Notification[T]) {
 		u.mu.Unlock()
 		u.co.Broadcast()
 
-		for i, j := 0, buf.Len(); i < j; i++ {
+		for i := range buf.Len() {
 			select {
 			default:
 			case <-u.done:
-				throw(context.Cause(u.context))
+				stop(context.Cause(u.context))
 				return
 			}
 
@@ -195,14 +198,14 @@ func (u *unicast[T]) startEmitting(n Notification[T]) {
 			select {
 			default:
 			case <-u.done:
-				throw(context.Cause(u.context))
+				stop(context.Cause(u.context))
 				return
 			}
 
 			Try1(o, n, oops)
 
 			n = Notification[T]{}
-		case KindError, KindComplete:
+		case KindComplete, KindError, KindStop:
 			o.Emit(n)
 			return
 		}
@@ -216,10 +219,12 @@ func (u *unicast[T]) startEmitting(n Notification[T]) {
 			u.mu.Unlock()
 
 			switch lastn.Kind {
-			case KindError:
-				o.Error(lastn.Error)
 			case KindComplete:
 				o.Complete()
+			case KindError:
+				o.Error(lastn.Error)
+			case KindStop:
+				o.Stop(lastn.Error)
 			}
 
 			return

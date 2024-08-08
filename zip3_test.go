@@ -11,13 +11,14 @@ import (
 func TestZip3(t *testing.T) {
 	t.Parallel()
 
+	testZip3(t, rx.ConcatWith(rx.Empty[string]()), ErrComplete)
+	testZip3(t, rx.ConcatWith(rx.Throw[string](ErrTest)), ErrTest)
 	testZip3(t, rx.ConcatWith(
 		func(_ rx.Context, o rx.Observer[string]) {
 			o.Emit(rx.Notification[string]{}) // For coverage.
-			o.Complete()
+			o.Stop(ErrTest)
 		},
-	), ErrComplete)
-	testZip3(t, rx.ConcatWith(rx.Throw[string](ErrTest)), ErrTest)
+	), ErrTest)
 }
 
 func testZip3(t *testing.T, op rx.Operator[string, string], err error) {

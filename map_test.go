@@ -35,6 +35,15 @@ func TestMap(t *testing.T) {
 			rx.Map(double),
 		),
 		2, 4, 6, 8, ErrTest,
+	).Case(
+		rx.Pipe1(
+			rx.Concat(
+				rx.Range(1, 5),
+				rx.Oops[int](ErrTest),
+			),
+			rx.Map(double),
+		),
+		2, 4, 6, 8, rx.ErrOops, ErrTest,
 	)
 }
 
@@ -62,5 +71,14 @@ func TestMapTo(t *testing.T) {
 			rx.MapTo[string](42),
 		),
 		42, 42, 42, ErrTest,
+	).Case(
+		rx.Pipe1(
+			rx.Concat(
+				rx.Just("A", "B", "C"),
+				rx.Oops[string](ErrTest),
+			),
+			rx.MapTo[string](42),
+		),
+		42, 42, 42, rx.ErrOops, ErrTest,
 	)
 }

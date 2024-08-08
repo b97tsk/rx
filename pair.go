@@ -17,7 +17,7 @@ func (p Pair[K, V]) Right() V { return p.Value }
 // NewPair creates a Pair of two elements.
 func NewPair[K, V any](k K, v V) Pair[K, V] { return Pair[K, V]{k, v} }
 
-// FromMap creates an Observable that emits Pairs from a map, one after
+// FromMap creates an [Observable] that emits Pairs from a map, one after
 // the other, and then completes. The order of those Pairs is not specified.
 func FromMap[M ~map[K]V, K comparable, V any](m M) Observable[Pair[K, V]] {
 	return func(c Context, o Observer[Pair[K, V]]) {
@@ -27,24 +27,24 @@ func FromMap[M ~map[K]V, K comparable, V any](m M) Observable[Pair[K, V]] {
 			select {
 			default:
 			case <-done:
-				o.Error(c.Cause())
+				o.Stop(c.Cause())
 				return
 			}
 
-			Try1(o, Next(NewPair(k, v)), func() { o.Error(ErrOops) })
+			Try1(o, Next(NewPair(k, v)), func() { o.Stop(ErrOops) })
 		}
 
 		o.Complete()
 	}
 }
 
-// KeyOf maps each Pair emitted by the source Observable to a value stored in
-// the Key field of that Pair.
+// KeyOf maps each [Pair] emitted by the source [Observable] to a value stored
+// in the Key field.
 func KeyOf[_ Pair[K, V], K, V any]() Operator[Pair[K, V], K] {
 	return LeftOf[Pair[K, V]]()
 }
 
-// LeftOf is an alias to KeyOf.
+// LeftOf is an alias for [KeyOf].
 func LeftOf[_ Pair[K, V], K, V any]() Operator[Pair[K, V], K] {
 	return NewOperator(
 		func(source Observable[Pair[K, V]]) Observable[K] {
@@ -53,10 +53,12 @@ func LeftOf[_ Pair[K, V], K, V any]() Operator[Pair[K, V], K] {
 					switch n.Kind {
 					case KindNext:
 						o.Next(n.Value.Left())
-					case KindError:
-						o.Error(n.Error)
 					case KindComplete:
 						o.Complete()
+					case KindError:
+						o.Error(n.Error)
+					case KindStop:
+						o.Stop(n.Error)
 					}
 				})
 			}
@@ -64,13 +66,13 @@ func LeftOf[_ Pair[K, V], K, V any]() Operator[Pair[K, V], K] {
 	)
 }
 
-// ValueOf maps each Pair emitted by the source Observable to a value stored in
-// the Value field of that Pair.
+// ValueOf maps each [Pair] emitted by the source [Observable] to a value
+// stored in the Value field.
 func ValueOf[_ Pair[K, V], K, V any]() Operator[Pair[K, V], V] {
 	return RightOf[Pair[K, V]]()
 }
 
-// RightOf is an alias to ValueOf.
+// RightOf is an alias for [ValueOf].
 func RightOf[_ Pair[K, V], K, V any]() Operator[Pair[K, V], V] {
 	return NewOperator(
 		func(source Observable[Pair[K, V]]) Observable[V] {
@@ -79,10 +81,12 @@ func RightOf[_ Pair[K, V], K, V any]() Operator[Pair[K, V], V] {
 					switch n.Kind {
 					case KindNext:
 						o.Next(n.Value.Right())
-					case KindError:
-						o.Error(n.Error)
 					case KindComplete:
 						o.Complete()
+					case KindError:
+						o.Error(n.Error)
+					case KindStop:
+						o.Stop(n.Error)
 					}
 				})
 			}
@@ -90,24 +94,25 @@ func RightOf[_ Pair[K, V], K, V any]() Operator[Pair[K, V], V] {
 	)
 }
 
-// Enumerate maps each value emitted by the source Observable to a Pair
+// Enumerate maps each value emitted by the source [Observable] to a [Pair]
 // where the Key field stores the index of each value starting from init
 // and the Value field stores each value.
 func Enumerate[V any, K constraints.Integer](init K) Operator[V, Pair[K, V]] {
 	return NewOperator(
 		func(source Observable[V]) Observable[Pair[K, V]] {
 			return func(c Context, o Observer[Pair[K, V]]) {
-				index := init
-
+				i := init
 				source.Subscribe(c, func(n Notification[V]) {
 					switch n.Kind {
 					case KindNext:
-						o.Next(NewPair(index, n.Value))
-						index++
-					case KindError:
-						o.Error(n.Error)
+						o.Next(NewPair(i, n.Value))
+						i++
 					case KindComplete:
 						o.Complete()
+					case KindError:
+						o.Error(n.Error)
+					case KindStop:
+						o.Stop(n.Error)
 					}
 				})
 			}

@@ -57,6 +57,12 @@ func TestOnBackpressure(t *testing.T) {
 			ErrTest,
 		).Case(
 			rx.Pipe1(
+				rx.Oops[int](ErrTest),
+				rx.OnBackpressureBuffer[int](3),
+			),
+			rx.ErrOops, ErrTest,
+		).Case(
+			rx.Pipe1(
 				rx.Empty[int](),
 				rx.OnBackpressureBuffer[int](0),
 			),
@@ -87,6 +93,12 @@ func TestOnBackpressure(t *testing.T) {
 				rx.OnBackpressureCongest[int](3),
 			),
 			ErrTest,
+		).Case(
+			rx.Pipe1(
+				rx.Oops[int](ErrTest),
+				rx.OnBackpressureCongest[int](3),
+			),
+			rx.ErrOops, ErrTest,
 		).Case(
 			rx.Pipe1(
 				rx.Empty[int](),
@@ -129,6 +141,12 @@ func TestOnBackpressure(t *testing.T) {
 			ErrTest,
 		).Case(
 			rx.Pipe1(
+				rx.Oops[int](ErrTest),
+				rx.OnBackpressureDrop[int](3),
+			),
+			rx.ErrOops, ErrTest,
+		).Case(
+			rx.Pipe1(
 				rx.Empty[int](),
 				rx.OnBackpressureDrop[int](0),
 			),
@@ -167,6 +185,12 @@ func TestOnBackpressure(t *testing.T) {
 				rx.OnBackpressureLatest[int](3),
 			),
 			ErrTest,
+		).Case(
+			rx.Pipe1(
+				rx.Oops[int](ErrTest),
+				rx.OnBackpressureLatest[int](3),
+			),
+			rx.ErrOops, ErrTest,
 		).Case(
 			rx.Pipe1(
 				rx.Empty[int](),

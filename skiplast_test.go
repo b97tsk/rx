@@ -70,5 +70,41 @@ func TestSkipLast(t *testing.T) {
 			rx.SkipLast[int](3),
 		),
 		ErrTest,
+	).Case(
+		rx.Pipe1(
+			rx.Concat(
+				rx.Range(1, 7),
+				rx.Oops[int](ErrTest),
+			),
+			rx.SkipLast[int](0),
+		),
+		1, 2, 3, 4, 5, 6, rx.ErrOops, ErrTest,
+	).Case(
+		rx.Pipe1(
+			rx.Concat(
+				rx.Range(1, 7),
+				rx.Oops[int](ErrTest),
+			),
+			rx.SkipLast[int](3),
+		),
+		1, 2, 3, rx.ErrOops, ErrTest,
+	).Case(
+		rx.Pipe1(
+			rx.Concat(
+				rx.Just(1),
+				rx.Oops[int](ErrTest),
+			),
+			rx.SkipLast[int](3),
+		),
+		rx.ErrOops, ErrTest,
+	).Case(
+		rx.Pipe1(
+			rx.Concat(
+				rx.Empty[int](),
+				rx.Oops[int](ErrTest),
+			),
+			rx.SkipLast[int](3),
+		),
+		rx.ErrOops, ErrTest,
 	)
 }
