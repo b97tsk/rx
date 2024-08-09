@@ -52,11 +52,13 @@ type unicast[T any] struct {
 	waiters  int
 	emitting bool
 	lastn    Notification[struct{}]
-	buf      queue.Queue[T]
+	buf, alt queue.Queue[T]
 	context  context.Context
 	done     <-chan struct{}
 	observer Observer[T]
 }
+
+const bufLimit = 32
 
 func (u *unicast[T]) Emit(n Notification[T]) {
 	u.mu.Lock()
@@ -96,7 +98,6 @@ func (u *unicast[T]) Emit(n Notification[T]) {
 	}
 
 	if n.Kind == KindNext {
-		const bufLimit = 32 // Only up to this number of values can fill into u.Buf.
 	Again:
 		for u.buf.Len() >= max(u.buf.Cap(), bufLimit) {
 			if n.Kind == 0 && u.waiters != 0 {
@@ -162,6 +163,7 @@ func (u *unicast[T]) startEmitting(n Notification[T]) {
 		u.emitting = false
 		u.lastn = Stop[struct{}](err)
 		u.buf.Init()
+		u.alt.Init()
 		u.mu.Unlock()
 		u.co.Broadcast()
 		u.observer.Stop(err)
@@ -176,7 +178,7 @@ func (u *unicast[T]) startEmitting(n Notification[T]) {
 	for {
 		var buf queue.Queue[T]
 
-		u.buf, buf = buf, u.buf
+		buf, u.buf, u.alt = u.buf, u.alt, buf
 
 		u.mu.Unlock()
 		u.co.Broadcast()
@@ -211,6 +213,15 @@ func (u *unicast[T]) startEmitting(n Notification[T]) {
 		}
 
 		u.mu.Lock()
+
+		if n := buf.Cap(); n != 0 && n <= bufLimit {
+			buf.Clear()
+			if u.buf.Cap() == 0 {
+				u.buf = buf
+			} else {
+				u.alt = buf
+			}
+		}
 
 		if u.buf.Len() == 0 {
 			lastn := u.lastn

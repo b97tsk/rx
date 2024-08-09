@@ -11,6 +11,8 @@ func TestQueue(t *testing.T) {
 
 	var q queue.Queue[string]
 
+	q.Init()
+
 	t.Logf("Len=%v Cap=%v", q.Len(), q.Cap())
 
 	if q.Len() != 0 {
@@ -67,10 +69,10 @@ func TestQueue(t *testing.T) {
 		t.FailNow()
 	}
 
-	cloned.Init()
+	cloned.Clear()
 
 	if cloned.Len() != 0 {
-		t.Logf("Init(): Len=%v Cap=%v", cloned.Len(), cloned.Cap())
+		t.Logf("Clear(): Len=%v Cap=%v", cloned.Len(), cloned.Cap())
 		t.FailNow()
 	}
 

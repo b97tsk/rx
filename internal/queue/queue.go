@@ -13,6 +13,14 @@ func (q *Queue[E]) Init() {
 	q.head, q.tail = nil, nil
 }
 
+// Clear clears q, preserving existing buffer.
+func (q *Queue[E]) Clear() {
+	clear(q.head)
+	clear(q.tail)
+	s := q.tail[:0]
+	q.head, q.tail = s, s
+}
+
 // Cap returns the capacity of the internal buffer. If Cap() equals to Len(),
 // new Push(x) causes the internal buffer to grow.
 func (q *Queue[E]) Cap() int {
@@ -27,9 +35,8 @@ func (q *Queue[E]) Len() int {
 // Push inserts an element at the end of q.
 func (q *Queue[E]) Push(x E) {
 	if q.Len() == q.Cap() { // Grow if full.
-		buf := append(append(q.head, q.tail...), x)
-		q.head, q.tail = buf, buf[:0]
-
+		s := append(append(q.head, q.tail...), x)
+		q.head, q.tail = s, s[:0]
 		return
 	}
 
@@ -42,7 +49,7 @@ func (q *Queue[E]) Push(x E) {
 
 // Pop removes and returns the first element. It panics if q is empty.
 func (q *Queue[E]) Pop() E {
-	if len(q.head) > 0 {
+	if len(q.head) != 0 {
 		x := q.head[0]
 
 		var zero E
@@ -55,8 +62,8 @@ func (q *Queue[E]) Pop() E {
 		}
 
 		if n, m := q.Len(), q.Cap(); n == m>>2 && m > smallSize { // Shrink if sparse.
-			buf := make([]E, n<<1)
-			q.head, q.tail = buf[:q.CopyTo(buf)], buf[:0]
+			s := make([]E, n<<1)
+			q.head, q.tail = s[:q.CopyTo(s)], s[:0]
 		}
 
 		return x
@@ -86,7 +93,7 @@ func (q *Queue[E]) At(i int) E {
 
 // Front returns the first element. It panics if q is empty.
 func (q *Queue[E]) Front() E {
-	if len(q.head) > 0 {
+	if len(q.head) != 0 {
 		return q.head[0]
 	}
 
@@ -95,11 +102,11 @@ func (q *Queue[E]) Front() E {
 
 // Back returns the last element. It panics if q is empty.
 func (q *Queue[E]) Back() E {
-	if n := len(q.tail); n > 0 {
+	if n := len(q.tail); n != 0 {
 		return q.tail[n-1]
 	}
 
-	if n := len(q.head); n > 0 {
+	if n := len(q.head); n != 0 {
 		return q.head[n-1]
 	}
 
@@ -116,12 +123,12 @@ func (q *Queue[E]) CopyTo(dst []E) int {
 
 // Clone clones q.
 func (q *Queue[E]) Clone() Queue[E] {
-	var buf []E
+	var s []E
 
 	if q.head != nil {
-		buf = make([]E, q.Len(), q.Cap())
-		q.CopyTo(buf)
+		s = make([]E, q.Len(), q.Cap())
+		q.CopyTo(s)
 	}
 
-	return Queue[E]{buf, buf[:0]}
+	return Queue[E]{s, s[:0]}
 }
