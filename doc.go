@@ -131,17 +131,17 @@
 //
 // The following operations may cause concurrent behavior due to [Context]
 // cancellation:
-//   - CombineLatest operators (due to use of [Serialize]);
+//   - CombineLatest operators (due to use of [Synchronize]);
 //   - [Connect] (due to use of [Multicast]);
-//   - Merge operators (due to use of [Serialize]);
+//   - Merge operators (due to use of [Synchronize]);
 //   - [Multicast] and other relatives (due to use of [Context.AfterFunc] and
-//     [Serialize]);
+//     [Synchronize]);
 //   - [Never] (due to use of [Context.AfterFunc]);
-//   - [Serialize] (due to use of [Context.AfterFunc]);
 //   - [Share] (due to use of [Context.AfterFunc] and [Multicast]);
+//   - [Synchronize] (due to use of [Context.AfterFunc]);
 //   - [Unicast] and other relatives (due to use of [Context.AfterFunc]);
-//   - WithLatestFrom operators (due to use of [Serialize]);
-//   - ZipWithBuffering operators (due to use of [Serialize]).
+//   - WithLatestFrom operators (due to use of [Synchronize]);
+//   - ZipWithBuffering operators (due to use of [Synchronize]).
 //
 // Since [Context] cancellations are very common in this library, and that
 // a [Context] cancellation usually results in a [Stop] notification, emitted

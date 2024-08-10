@@ -67,6 +67,17 @@ func (o Observer[T]) DoOnTermination(f func()) Observer[T] {
 	}
 }
 
+// Synchronize returns an [Observer] that passes incoming emissions to o
+// in a mutually exclusive way.
+// Synchronize also returns a copy of c that will be cancelled when o is
+// about to receive a notification of [Complete], [Error] or [Stop].
+func Synchronize[T any](c Context, o Observer[T]) (Context, Observer[T]) {
+	c, cancel := c.WithCancel()
+	u := new(unicast[T])
+	u.Subscribe(c, o.DoOnTermination(cancel))
+	return c, u.Emit
+}
+
 // WithRuntimeFinalizer creates an Observer with a runtime finalizer set to
 // run o.Stop(ErrFinalized) in a goroutine.
 // o must be safe for concurrent use.

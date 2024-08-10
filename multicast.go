@@ -150,7 +150,7 @@ func (m *multicast[T]) Subscribe(c Context, o Observer[T]) {
 
 	lastn := m.lastn
 	if lastn.Kind == 0 {
-		c, o = Serialize(c, o)
+		c, o = Synchronize(c, o)
 
 		o := o
 		m.mobs.Add(&o)

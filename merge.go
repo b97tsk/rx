@@ -34,7 +34,7 @@ type mergeWithObservable[T any] struct {
 }
 
 func (ob mergeWithObservable[T]) Subscribe(c Context, o Observer[T]) {
-	c, o = Serialize(c, o)
+	c, o = Synchronize(c, o)
 
 	var num atomic.Uint32
 
@@ -156,7 +156,7 @@ func (ob mergeMapObservable[T, R]) Subscribe(c Context, o Observer[R]) {
 		return
 	}
 
-	c, o = Serialize(c, o)
+	c, o = Synchronize(c, o)
 
 	var x struct {
 		mu sync.Mutex
@@ -254,7 +254,7 @@ func (ob mergeMapObservable[T, R]) Subscribe(c Context, o Observer[R]) {
 }
 
 func (ob mergeMapObservable[T, R]) SubscribeWithBuffering(c Context, o Observer[R]) {
-	c, o = Serialize(c, o)
+	c, o = Synchronize(c, o)
 
 	var x struct {
 		mu sync.Mutex

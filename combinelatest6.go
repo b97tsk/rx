@@ -15,7 +15,7 @@ func CombineLatest6[T1, T2, T3, T4, T5, T6, R any](
 	mapping func(v1 T1, v2 T2, v3 T3, v4 T4, v5 T5, v6 T6) R,
 ) Observable[R] {
 	return func(c Context, o Observer[R]) {
-		c, o = Serialize(c, o)
+		c, o = Synchronize(c, o)
 
 		var s combineLatestState6[T1, T2, T3, T4, T5, T6]
 

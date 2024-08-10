@@ -19,7 +19,7 @@ func TestMulticast(t *testing.T) {
 
 		subscribeThenComplete := rx.NewObservable(
 			func(c rx.Context, o rx.Observer[string]) {
-				c, o = rx.Serialize(c, o)
+				c, o = rx.Synchronize(c, o)
 				m.Subscribe(c, o)
 				o.Complete()
 			},

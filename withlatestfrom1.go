@@ -22,7 +22,7 @@ func withLatestFrom2[T1, T2, R any](
 	mapping func(v1 T1, v2 T2) R,
 ) Observable[R] {
 	return func(c Context, o Observer[R]) {
-		c, o = Serialize(c, o)
+		c, o = Synchronize(c, o)
 
 		var s withLatestFromState2[T1, T2]
 
