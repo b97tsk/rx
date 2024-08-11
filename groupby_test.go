@@ -17,8 +17,7 @@ func TestGroupBy(t *testing.T) {
 
 	group := rx.GroupBy(
 		func(v string) string { return v },
-		rx.MulticastBufferAll[string],
-	)
+	).WithGroupSupplier(rx.MulticastBufferAll[string])
 
 	count := rx.ConcatMap(
 		func(g rx.Pair[string, rx.Observable[string]]) rx.Observable[rx.Pair[string, int]] {
@@ -56,8 +55,7 @@ func TestGroupBy(t *testing.T) {
 			source,
 			rx.GroupBy(
 				func(v string) string { panic(ErrTest) },
-				rx.MulticastBufferAll[string],
-			),
+			).WithGroupSupplier(rx.MulticastBufferAll[string]),
 			count,
 			tostring,
 		),
@@ -67,8 +65,7 @@ func TestGroupBy(t *testing.T) {
 			source,
 			rx.GroupBy(
 				func(v string) string { return v },
-				func() rx.Subject[string] { panic(ErrTest) },
-			),
+			).WithGroupSupplier(func() rx.Subject[string] { panic(ErrTest) }),
 			count,
 			tostring,
 		),

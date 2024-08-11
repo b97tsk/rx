@@ -133,6 +133,7 @@
 // cancellation:
 //   - CombineLatest operators (due to use of [Synchronize]);
 //   - [Connect] (due to use of [Multicast]);
+//   - [GroupBy] (due to use of [Multicast]);
 //   - Merge operators (due to use of [Synchronize]);
 //   - [Multicast] and other relatives (due to use of [Context.AfterFunc] and
 //     [Synchronize]);
