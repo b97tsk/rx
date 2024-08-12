@@ -1,7 +1,5 @@
 package rx
 
-import "golang.org/x/exp/constraints"
-
 // A Pair is a struct of two elements.
 type Pair[K, V any] struct {
 	Key   K
@@ -97,7 +95,7 @@ func RightOf[_ Pair[K, V], K, V any]() Operator[Pair[K, V], V] {
 // Enumerate maps each value emitted by the source [Observable] to a [Pair]
 // where the Key field stores the index of each value starting from init
 // and the Value field stores each value.
-func Enumerate[V any, K constraints.Integer](init K) Operator[V, Pair[K, V]] {
+func Enumerate[V any, K Integer](init K) Operator[V, Pair[K, V]] {
 	return NewOperator(
 		func(source Observable[V]) Observable[Pair[K, V]] {
 			return func(c Context, o Observer[Pair[K, V]]) {
